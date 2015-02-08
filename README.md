@@ -1,2 +1,2 @@
-data-gener
+Distributed Stream
 ==========
