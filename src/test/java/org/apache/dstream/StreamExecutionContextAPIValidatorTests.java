@@ -11,7 +11,7 @@ import org.apache.dstream.io.OutputSpecification;
 import org.apache.dstream.io.TextFile;
 
 @SuppressWarnings("unused")
-public class StreamExecutionContextTypeCompileTests {
+public class StreamExecutionContextAPIValidatorTests {
 
 	/**
 	 * Will expose raw {@link InputStream} to the result data set
