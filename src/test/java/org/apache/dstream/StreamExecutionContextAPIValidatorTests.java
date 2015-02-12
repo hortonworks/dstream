@@ -35,7 +35,7 @@ public class StreamExecutionContextAPIValidatorTests {
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
 				).reduceByKey(Integer::sum, 2)
-				.saveAs(MockOutputSpec.get()).toStream();
+				.saveAs(MockOutputSpec.get()).stream();
 	}
 	
 	/**
@@ -55,7 +55,7 @@ public class StreamExecutionContextAPIValidatorTests {
 					.filter(s -> false)
 					.collect(Collectors.toMap(s -> 1, s -> 1, Integer::sum))
 				).reduce((a,b) -> toEntry(a.getValue(), a.getValue()), 4)
-				.saveAs(MockOutputSpec.get()).toStream();
+				.saveAs(MockOutputSpec.get()).stream();
 	}
 	
 	/**
@@ -75,7 +75,7 @@ public class StreamExecutionContextAPIValidatorTests {
 					.filter(s -> false)
 					.collect(Collectors.toMap(s -> 1, s -> 1, Integer::sum))
 				).reduce((a,b) -> toEntry(a.getValue(), a.getValue()), 4)
-				.saveAs(MockOutputSpec.get()).toStream();
+				.saveAs(MockOutputSpec.get()).stream();
 	}
 	
 	/**

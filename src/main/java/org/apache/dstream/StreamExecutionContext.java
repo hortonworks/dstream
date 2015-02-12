@@ -36,7 +36,7 @@ public class StreamExecutionContext<T> {
 		return null;
 	}
 	
-	public Stream<T> toStream() {
+	public Stream<T> stream() {
 		//http://stackoverflow.com/questions/22919013/inputstream-to-hadoop-sequencefile
 		return null;
 	}
