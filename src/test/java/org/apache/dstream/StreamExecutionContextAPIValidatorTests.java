@@ -1,6 +1,7 @@
 package org.apache.dstream;
 
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -10,6 +11,12 @@ import static org.apache.dstream.utils.Utils.*;
 import org.apache.dstream.io.OutputSpecification;
 import org.apache.dstream.io.TextFile;
 
+/**
+ * This test simply validates the type-safety and the API, so its successful compilation
+ * implies overall success of this test.
+ * 
+ *
+ */
 @SuppressWarnings("unused")
 public class StreamExecutionContextAPIValidatorTests {
 
@@ -76,6 +83,31 @@ public class StreamExecutionContextAPIValidatorTests {
 					.collect(Collectors.toMap(s -> 1, s -> 1, Integer::sum))
 				).reduce((a,b) -> toEntry(a.getValue(), a.getValue()), 4)
 				.saveAs(MockOutputSpec.get()).stream();
+	}
+	
+	public void computeTerminalMap(){
+		Map<String, Integer> map = StreamExecutionContext.of(TextFile.create(Long.class, String.class, "hdfs://hdp.com/foo/bar/hey.txt"))
+				.compute(stream -> stream
+					.flatMap(s -> Stream.of(s.split("\\s+")))
+					.map(s -> s.toUpperCase())
+					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
+				);
+	}
+	
+	public void computeTerminalLong(){
+		long count = StreamExecutionContext.of(TextFile.create(Long.class, String.class, "hdfs://hdp.com/foo/bar/hey.txt"))
+				.compute(stream -> stream
+					.flatMap(s -> Stream.of(s.split("\\s+")))
+					.count()
+				);
+	}
+	
+	public void computeTerminalWithOptional(){
+		String result = StreamExecutionContext.of(TextFile.create(Long.class, String.class, "hdfs://hdp.com/foo/bar/hey.txt"))
+				.compute(stream -> stream
+						.flatMap(s -> Stream.of(s.split("\\s+")))
+						.reduce((a, b) -> a + b.toUpperCase()).get()
+				);
 	}
 	
 	/**

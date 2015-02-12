@@ -27,6 +27,14 @@ public class StreamExecutionContext<T> {
 		return null;
 	}
 	
+	public <R> R compute(SerializableFunction<Stream<T>, R> function) {
+		System.out.println("Serializing: " + function);
+		System.out.println(Arrays.asList(function.getClass().getDeclaredFields()));
+		System.out.println(Arrays.asList(function.getClass().getDeclaredMethods()));
+		serialize(function);
+		return null;
+	}
+	
 	public Streamable<T> getSource() {
 		return null;
 	}
