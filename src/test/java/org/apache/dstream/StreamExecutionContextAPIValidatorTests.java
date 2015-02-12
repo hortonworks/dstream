@@ -10,6 +10,7 @@ import static org.apache.dstream.utils.Utils.*;
 
 import org.apache.dstream.io.OutputSpecification;
 import org.apache.dstream.io.TextFile;
+import org.apache.dstream.utils.Partitioner;
 
 /**
  * This test simply validates the type-safety and the API, so its successful compilation
@@ -62,6 +63,18 @@ public class StreamExecutionContextAPIValidatorTests {
 					.filter(s -> false)
 					.collect(Collectors.toMap(s -> 1, s -> 1, Integer::sum))
 				).reduce((a,b) -> toEntry(a.getValue(), a.getValue()), 4)
+				.saveAs(MockOutputSpec.get()).stream();
+	}
+	
+	/**
+	 * Partitioning for cases where no additional reduction needs to happen
+	 */
+	public void partitioning(){
+		Stream<Entry<String, Integer>> streamable = StreamExecutionContext.of(TextFile.create(Long.class, String.class, "hdfs://hdp.com/foo/bar/hey.txt"))
+				.computeAsKeyValue(String.class, Integer.class, stream -> stream
+					.flatMap(s -> Stream.of(s.split("\\s+")))
+					.collect(Collectors.toMap(s -> s, s -> 1))
+				).partition(MockPartitioner.get())
 				.saveAs(MockOutputSpec.get()).stream();
 	}
 	
@@ -123,6 +136,12 @@ public class StreamExecutionContextAPIValidatorTests {
 	public static class MockOutputSpec implements OutputSpecification{
 		public static MockOutputSpec get(){
 			return new MockOutputSpec();
+		}
+	}
+	
+	public static class MockPartitioner implements Partitioner{
+		public static MockPartitioner get(){
+			return new MockPartitioner();
 		}
 	}
 }
