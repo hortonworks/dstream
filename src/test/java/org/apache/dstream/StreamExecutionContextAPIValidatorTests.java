@@ -85,6 +85,10 @@ public class StreamExecutionContextAPIValidatorTests {
 				.saveAs(MockOutputSpec.get()).stream();
 	}
 	
+	/**
+	 * The following 'terminal' tests signify no continuation (hence the word terminal). In other words the compute 
+	 * is under a contract to simply return the results of the stream processing as is (e.g., Map, Long, String etc.). 
+	 */
 	public void computeTerminalMap(){
 		Map<String, Integer> map = StreamExecutionContext.of(TextFile.create(Long.class, String.class, "hdfs://hdp.com/foo/bar/hey.txt"))
 				.compute(stream -> stream
@@ -94,6 +98,8 @@ public class StreamExecutionContextAPIValidatorTests {
 				);
 	}
 	
+	/**
+	 */
 	public void computeTerminalLong(){
 		long count = StreamExecutionContext.of(TextFile.create(Long.class, String.class, "hdfs://hdp.com/foo/bar/hey.txt"))
 				.compute(stream -> stream
@@ -102,6 +108,8 @@ public class StreamExecutionContextAPIValidatorTests {
 				);
 	}
 	
+	/**
+	 */
 	public void computeTerminalWithOptional(){
 		String result = StreamExecutionContext.of(TextFile.create(Long.class, String.class, "hdfs://hdp.com/foo/bar/hey.txt"))
 				.compute(stream -> stream
