@@ -10,11 +10,13 @@ import static org.apache.dstream.utils.Utils.*;
 import org.apache.dstream.io.OutputSpecification;
 import org.apache.dstream.io.TextFile;
 
+@SuppressWarnings("unused")
 public class StreamExecutionContextTypeCompileTests {
 
 	/**
 	 * Will expose raw {@link InputStream} to the result data set
 	 */
+	
 	public void withResultInputStream(){
 		InputStream is = StreamExecutionContext.of(TextFile.create(Long.class, String.class, "hdfs://hdp.com/foo/bar/hey.txt"))
 				.computeAsKeyValue(String.class, Integer.class, stream -> stream
@@ -22,7 +24,7 @@ public class StreamExecutionContextTypeCompileTests {
 					.filter(s -> s.startsWith("foo"))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
 				).reduceByKey((a,b) -> a + b, 2)
-				.saveAs(null).toInputStream();
+				.saveAs(MockOutputSpec.get()).toInputStream();
 	}
 	/**
 	 * Will expose {@link Stream} to the result data set allowing result data to be streamed for local processing (e.g., iterate over results)
@@ -63,6 +65,7 @@ public class StreamExecutionContextTypeCompileTests {
 		Streamable<Entry<String, Integer>> streamable = StreamExecutionContext.of(TextFile.create(Long.class, String.class, "hdfs://hdp.com/foo/bar/hey.txt"))
 				.computeAsKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
+					.map(s -> s.toUpperCase())
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
 				).reduceByKey((a,b) -> a + b, 2)
 				.saveAs(MockOutputSpec.get()).getSource();
@@ -75,6 +78,8 @@ public class StreamExecutionContextTypeCompileTests {
 				.saveAs(MockOutputSpec.get()).toStream();
 	}
 	
+	/**
+	 */
 	public static class MockOutputSpec implements OutputSpecification{
 		public static MockOutputSpec get(){
 			return new MockOutputSpec();
