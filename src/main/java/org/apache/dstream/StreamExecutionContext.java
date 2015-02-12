@@ -3,7 +3,6 @@ package org.apache.dstream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Map;
@@ -25,6 +24,10 @@ public class StreamExecutionContext<T> {
 		System.out.println(Arrays.asList(function.getClass().getDeclaredFields()));
 		System.out.println(Arrays.asList(function.getClass().getDeclaredMethods()));
 		serialize(function);
+		return null;
+	}
+	
+	public Streamable<T> getSource() {
 		return null;
 	}
 	
