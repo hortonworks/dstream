@@ -34,7 +34,7 @@ public class StreamExecutionContextAPIValidatorTests {
 				.computeAsKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
-				).reduceByKey((a,b) -> a + b, 2)
+				).reduceByKey(Integer::sum, 2)
 				.saveAs(MockOutputSpec.get()).toStream();
 	}
 	
