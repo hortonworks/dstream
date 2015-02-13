@@ -155,5 +155,10 @@ public class StreamExecutionContextAPIValidatorTests {
 		public static MockPartitioner get(){
 			return new MockPartitioner();
 		}
+
+		@Override
+		public <T> int getPartition(T input, int reduceTasks) {
+			return 0;
+		}
 	}
 }
