@@ -2,14 +2,20 @@ package org.apache.dstream;
 
 import java.io.InputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.ServiceLoader;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.dstream.io.OutputSpecification;
 import org.apache.dstream.utils.Partitioner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * Base class which defines <b>Execution Context</b> for executing 
  * Java {@link Stream}s.
@@ -18,11 +24,32 @@ import org.apache.dstream.utils.Partitioner;
  */
 public abstract class StreamExecutionContext<T> {
 	
+	private static final Logger logger = LoggerFactory.getLogger(StreamExecutionContext.class);
+	
 	/**
 	 * Factory method that will return implementation of this {@link StreamExecutionContext}
 	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static <T> StreamExecutionContext<T> of(Streamable<T> source) {
-		return null;
+		List<StreamExecutionContext<T>> executionContexts = new ArrayList<StreamExecutionContext<T>>();
+		ServiceLoader<StreamExecutionContext> sl = ServiceLoader.load(StreamExecutionContext.class, ClassLoader.getSystemClassLoader());
+		Iterator<StreamExecutionContext> iter = sl.iterator();
+		while (iter.hasNext()){
+			StreamExecutionContext context = iter.next();
+			if (logger.isInfoEnabled()){
+				logger.info("Loading execution context: " + context);
+			}
+			executionContexts.add(context);
+		}
+		if (executionContexts.size() == 0){
+			throw new IllegalStateException("No suitable execution context was found");
+		}
+		StreamExecutionContext<T> primaryExecutionContext = executionContexts.get(0);
+		if (logger.isInfoEnabled()){
+			logger.info("Returning primary execution context: " + primaryExecutionContext);
+		}
+		
+		return primaryExecutionContext;
 	}
 	
 	/**
