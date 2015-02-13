@@ -79,6 +79,18 @@ public class StreamExecutionContextAPIValidatorTests {
 	}
 	
 	/**
+	 * Partitioning for cases where no additional reduction needs to happen
+	 */
+	public void partitioningWithLamda(){
+		Stream<Entry<String, Integer>> streamable = StreamExecutionContext.of(TextFile.create(Long.class, String.class, "hdfs://hdp.com/foo/bar/hey.txt"))
+				.computeAsKeyValue(String.class, Integer.class, stream -> stream
+					.flatMap(s -> Stream.of(s.split("\\s+")))
+					.collect(Collectors.toMap(s -> s, s -> 1))
+				).partition(s -> s.getKey().hashCode())
+				.saveAs(MockOutputSpec.get()).stream();
+	}
+	
+	/**
 	 * Same as above but each stage is represented as a separate DAG.
 	 */
 	public void multiDag(){

@@ -161,6 +161,14 @@ public abstract class StreamExecutionContext<T> {
 		 * @return
 		 */
 		public IntermediateEntryPoint<Entry<K,V>> partition(Partitioner partitioner);
+		
+		/**
+		 * ill partition the intermediate result using provided partitioning function.
+		 * 
+		 * @param partitionerFunction
+		 * @return
+		 */
+		public IntermediateEntryPoint<Entry<K,V>> partition(SerializableFunction<Entry<K,V>, Integer> partitionerFunction);
 	}
 	
 	/**
