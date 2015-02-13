@@ -1,5 +1,7 @@
 package org.apache.dstream.io;
 
+import java.net.URI;
+
 import org.apache.dstream.StreamExecutionContext.IntermediateKVResult;
 
 /**
@@ -17,4 +19,7 @@ import org.apache.dstream.StreamExecutionContext.IntermediateKVResult;
  */
 public interface OutputSpecification {
 
+	public URI getOutputUri();
+	
+	public <T> StreamableSource<T> toStreamableSource();
 }

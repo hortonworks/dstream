@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -162,6 +163,21 @@ public class StreamExecutionContextAPIValidatorTests {
 	public static class MockOutputSpec implements OutputSpecification{
 		public static MockOutputSpec get(){
 			return new MockOutputSpec();
+		}
+
+		@Override
+		public URI getOutputUri() {
+			try {
+				return new URI("file://foo.com/sample.txt");
+			} catch (URISyntaxException e) {
+				throw new IllegalArgumentException(e);
+			}
+		}
+
+		@Override
+		public <T> StreamableSource<T> toStreamableSource() {
+			// TODO Auto-generated method stub
+			return null;
 		}
 	}
 	
