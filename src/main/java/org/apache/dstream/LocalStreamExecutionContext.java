@@ -4,6 +4,8 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.apache.dstream.io.StreamableSource;
+
 public class LocalStreamExecutionContext<T> extends StreamExecutionContext<T> {
 	
 	private final String[] supportedProtocols = new String[]{"file"};
@@ -23,7 +25,7 @@ public class LocalStreamExecutionContext<T> extends StreamExecutionContext<T> {
 	}
 
 	@Override
-	public Streamable<T> getSource() {
+	public StreamableSource<T> getSource() {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -42,7 +44,7 @@ public class LocalStreamExecutionContext<T> extends StreamExecutionContext<T> {
 	
 	@Override
 	protected boolean isProtocolSupported(String protocol) {
-		for (String supportedProtocol : supportedProtocols) {
+		for (String supportedProtocol : this.supportedProtocols) {
 			if (supportedProtocol.equals(protocol)){
 				return true;
 			}

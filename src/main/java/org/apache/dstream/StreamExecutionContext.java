@@ -2,9 +2,7 @@ package org.apache.dstream;
 
 import java.io.InputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -14,6 +12,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.dstream.io.OutputSpecification;
+import org.apache.dstream.io.StreamableSource;
 import org.apache.dstream.utils.Partitioner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,44 +26,38 @@ public abstract class StreamExecutionContext<T> {
 	
 	private static final Logger logger = LoggerFactory.getLogger(StreamExecutionContext.class);
 	
-	protected volatile Streamable<T> source;
+	protected volatile StreamableSource<T> source;
 	
 	/**
 	 * Factory method that will return implementation of this {@link StreamExecutionContext}
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static <T> StreamExecutionContext<T> of(Streamable<T> source) {
+	public static <T> StreamExecutionContext<T> of(StreamableSource<T> source) {
 		Objects.requireNonNull(source, "Streamable source must not be null");
-		List<StreamExecutionContext<T>> executionContexts = new ArrayList<StreamExecutionContext<T>>();
 		ServiceLoader<StreamExecutionContext> sl = ServiceLoader.load(StreamExecutionContext.class, ClassLoader.getSystemClassLoader());
 		Iterator<StreamExecutionContext> iter = sl.iterator();
-		while (iter.hasNext()){
+		StreamExecutionContext<T> suitableContext = null;
+		while (iter.hasNext() && suitableContext == null){
 			StreamExecutionContext context = iter.next();
-			String protocol = source.getUrl().getProtocol();
+			String protocol = source.getUri().getScheme();
 			if (context.isProtocolSupported(protocol)){
 				if (logger.isInfoEnabled()){
-					logger.info("Loading execution context: " + context + " which supports source's protocol: " + protocol);
+					logger.info("Loading execution context: " + context + " which supports '" + 
+							protocol + "' protocol defined by the StreamableSource: " + source);
 				}
-				executionContexts.add(context);
+				suitableContext = context;
 			} else {
 				if (logger.isInfoEnabled()){
 					logger.info("Available context: " + context + " will not be loaded since it does not "
-							+ "support current source's protocol: " + protocol);
+							+ "support '" + protocol + "' defined by the StreamableSource: " + source);
 				}
 			}
 		}
-		if (executionContexts.size() == 0){
+		if (suitableContext == null){
 			throw new IllegalStateException("No suitable execution context was found");
 		}
-		/*
-		 * Last one takes priority since external contexts may be able to handle local and remote (e.g., Tez)
-		 */
-		StreamExecutionContext<T> primaryExecutionContext = executionContexts.get(executionContexts.size()-1);
-		if (logger.isInfoEnabled()){
-			logger.info("Returning primary execution context: " + primaryExecutionContext);
-		}
 		
-		return primaryExecutionContext;
+		return suitableContext;
 	}
 	
 	/**
@@ -140,11 +133,11 @@ public abstract class StreamExecutionContext<T> {
 	public abstract <R> R compute(SerializableFunction<Stream<T>, R> function);
 	
 	/**
-	 * Returns the source of this stream as {@link Streamable}
+	 * Returns the source of this stream as {@link StreamableSource}
 	 * 
 	 * @return
 	 */
-	public abstract Streamable<T> getSource();
+	public abstract StreamableSource<T> getSource();
 	
 	/**
 	 * Returns the raw {@link InputStream} to the result data set.
