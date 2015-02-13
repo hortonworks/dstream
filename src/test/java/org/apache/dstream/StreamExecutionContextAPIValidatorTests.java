@@ -1,6 +1,8 @@
 package org.apache.dstream;
 
+import java.io.File;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -21,12 +23,14 @@ import org.apache.dstream.utils.Partitioner;
 @SuppressWarnings("unused")
 public class StreamExecutionContextAPIValidatorTests {
 
+	
 	/**
 	 * Will expose raw {@link InputStream} to the result data set
 	 */
 	
-	public void withResultInputStream(){
-		InputStream is = StreamExecutionContext.of(TextFile.create(Long.class, String.class, "hdfs://hdp.com/foo/bar/hey.txt"))
+	public void withResultInputStream() throws Exception {
+		URL url = new File("src/test/java/org/apache/dstream/sample.txt").toURI().toURL();
+		InputStream is = StreamExecutionContext.of(TextFile.create(Long.class, String.class, url))
 				.computeAsKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.filter(s -> s.startsWith("foo"))
@@ -37,8 +41,9 @@ public class StreamExecutionContextAPIValidatorTests {
 	/**
 	 * Will expose {@link Stream} to the result data set allowing result data to be streamed for local processing (e.g., iterate over results)
 	 */
-	public void withResultStream(){
-		Stream<Entry<String, Integer>> resultStream = StreamExecutionContext.of(TextFile.create(Long.class, String.class, "hdfs://hdp.com/foo/bar/hey.txt"))
+	public void withResultStream() throws Exception {
+		URL url = new File("src/test/java/org/apache/dstream/sample.txt").toURI().toURL();
+		Stream<Entry<String, Integer>> resultStream = StreamExecutionContext.of(TextFile.create(Long.class, String.class, url))
 				.computeAsKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
@@ -53,8 +58,9 @@ public class StreamExecutionContextAPIValidatorTests {
 	 * the result of the first stream to be treated as an intermediate result of a stage within a multi-stage single DAG
 	 * See {@link #multiDag()}
 	 */
-	public void multiStage(){
-		StreamExecutionContext.of(TextFile.create(Long.class, String.class, "hdfs://hdp.com/foo/bar/hey.txt"))
+	public void multiStage() throws Exception {
+		URL url = new File("src/test/java/org/apache/dstream/sample.txt").toURI().toURL();
+		StreamExecutionContext.of(TextFile.create(Long.class, String.class, url))
 				.computeAsKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
@@ -69,8 +75,9 @@ public class StreamExecutionContextAPIValidatorTests {
 	/**
 	 * Partitioning for cases where no additional reduction needs to happen
 	 */
-	public void partitioning(){
-		Stream<Entry<String, Integer>> streamable = StreamExecutionContext.of(TextFile.create(Long.class, String.class, "hdfs://hdp.com/foo/bar/hey.txt"))
+	public void partitioning() throws Exception {
+		URL url = new File("src/test/java/org/apache/dstream/sample.txt").toURI().toURL();
+		Stream<Entry<String, Integer>> streamable = StreamExecutionContext.of(TextFile.create(Long.class, String.class, url))
 				.computeAsKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1))
@@ -81,8 +88,9 @@ public class StreamExecutionContextAPIValidatorTests {
 	/**
 	 * Partitioning for cases where no additional reduction needs to happen
 	 */
-	public void partitioningWithLamda(){
-		Stream<Entry<String, Integer>> streamable = StreamExecutionContext.of(TextFile.create(Long.class, String.class, "hdfs://hdp.com/foo/bar/hey.txt"))
+	public void partitioningWithLamda() throws Exception {
+		URL url = new File("src/test/java/org/apache/dstream/sample.txt").toURI().toURL();
+		Stream<Entry<String, Integer>> streamable = StreamExecutionContext.of(TextFile.create(Long.class, String.class, url))
 				.computeAsKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1))
@@ -93,8 +101,9 @@ public class StreamExecutionContextAPIValidatorTests {
 	/**
 	 * Same as above but each stage is represented as a separate DAG.
 	 */
-	public void multiDag(){
-		Streamable<Entry<String, Integer>> streamable = StreamExecutionContext.of(TextFile.create(Long.class, String.class, "hdfs://hdp.com/foo/bar/hey.txt"))
+	public void multiDag() throws Exception {
+		URL url = new File("src/test/java/org/apache/dstream/sample.txt").toURI().toURL();
+		Streamable<Entry<String, Integer>> streamable = StreamExecutionContext.of(TextFile.create(Long.class, String.class, url))
 				.computeAsKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.map(s -> s.toUpperCase())
@@ -114,8 +123,9 @@ public class StreamExecutionContextAPIValidatorTests {
 	 * The following 'terminal' tests signify no continuation (hence the word terminal). In other words the compute 
 	 * is under a contract to simply return the results of the stream processing as is (e.g., Map, Long, String etc.). 
 	 */
-	public void computeTerminalMap(){
-		Map<String, Integer> map = StreamExecutionContext.of(TextFile.create(Long.class, String.class, "hdfs://hdp.com/foo/bar/hey.txt"))
+	public void computeTerminalMap() throws Exception {
+		URL url = new File("src/test/java/org/apache/dstream/sample.txt").toURI().toURL();
+		Map<String, Integer> map = StreamExecutionContext.of(TextFile.create(Long.class, String.class, url))
 				.compute(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.map(s -> s.toUpperCase())
@@ -125,8 +135,9 @@ public class StreamExecutionContextAPIValidatorTests {
 	
 	/**
 	 */
-	public void computeTerminalLong(){
-		long count = StreamExecutionContext.of(TextFile.create(Long.class, String.class, "hdfs://hdp.com/foo/bar/hey.txt"))
+	public void computeTerminalLong() throws Exception {
+		URL url = new File("src/test/java/org/apache/dstream/sample.txt").toURI().toURL();
+		long count = StreamExecutionContext.of(TextFile.create(Long.class, String.class, url))
 				.compute(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.count()
@@ -135,8 +146,9 @@ public class StreamExecutionContextAPIValidatorTests {
 	
 	/**
 	 */
-	public void computeTerminalWithOptional(){
-		String result = StreamExecutionContext.of(TextFile.create(Long.class, String.class, "hdfs://hdp.com/foo/bar/hey.txt"))
+	public void computeTerminalWithOptional() throws Exception {
+		URL url = new File("src/test/java/org/apache/dstream/sample.txt").toURI().toURL();
+		String result = StreamExecutionContext.of(TextFile.create(Long.class, String.class, url))
 				.compute(stream -> stream
 						.flatMap(s -> Stream.of(s.split("\\s+")))
 						.reduce((a, b) -> a + b.toUpperCase()).get()

@@ -4,13 +4,13 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public class TestStreamExecutionContext<T> extends StreamExecutionContext<T> {
+public class LocalStreamExecutionContext<T> extends StreamExecutionContext<T> {
+	
+	private final String[] supportedProtocols = new String[]{"file"};
 
 	@Override
-	public <K, V, R> org.apache.dstream.StreamExecutionContext.IntermediateKVResult<K, V> computeAsKeyValue(
-			Class<K> outputKey,
-			Class<V> outputVal,
-			org.apache.dstream.StreamExecutionContext.SerializableFunction<Stream<T>, Map<K, V>> function) {
+	public <K, V, R> IntermediateKVResult<K, V> computeAsKeyValue(Class<K> outputKey, Class<V> outputVal,
+			SerializableFunction<Stream<T>, Map<K, V>> function) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -39,5 +39,16 @@ public class TestStreamExecutionContext<T> extends StreamExecutionContext<T> {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	@Override
+	protected boolean isProtocolSupported(String protocol) {
+		for (String supportedProtocol : supportedProtocols) {
+			if (supportedProtocol.equals(protocol)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
 
 }

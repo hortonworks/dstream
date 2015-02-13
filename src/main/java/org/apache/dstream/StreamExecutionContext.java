@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -26,31 +27,60 @@ public abstract class StreamExecutionContext<T> {
 	
 	private static final Logger logger = LoggerFactory.getLogger(StreamExecutionContext.class);
 	
+	protected volatile Streamable<T> source;
+	
 	/**
 	 * Factory method that will return implementation of this {@link StreamExecutionContext}
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static <T> StreamExecutionContext<T> of(Streamable<T> source) {
+		Objects.requireNonNull(source, "Streamable source must not be null");
 		List<StreamExecutionContext<T>> executionContexts = new ArrayList<StreamExecutionContext<T>>();
 		ServiceLoader<StreamExecutionContext> sl = ServiceLoader.load(StreamExecutionContext.class, ClassLoader.getSystemClassLoader());
 		Iterator<StreamExecutionContext> iter = sl.iterator();
 		while (iter.hasNext()){
 			StreamExecutionContext context = iter.next();
-			if (logger.isInfoEnabled()){
-				logger.info("Loading execution context: " + context);
+			String protocol = source.getUrl().getProtocol();
+			if (context.isProtocolSupported(protocol)){
+				if (logger.isInfoEnabled()){
+					logger.info("Loading execution context: " + context + " which supports source's protocol: " + protocol);
+				}
+				executionContexts.add(context);
+			} else {
+				if (logger.isInfoEnabled()){
+					logger.info("Available context: " + context + " will not be loaded since it does not "
+							+ "support current source's protocol: " + protocol);
+				}
 			}
-			executionContexts.add(context);
 		}
 		if (executionContexts.size() == 0){
 			throw new IllegalStateException("No suitable execution context was found");
 		}
-		StreamExecutionContext<T> primaryExecutionContext = executionContexts.get(0);
+		/*
+		 * Last one takes priority since external contexts may be able to handle local and remote (e.g., Tez)
+		 */
+		StreamExecutionContext<T> primaryExecutionContext = executionContexts.get(executionContexts.size()-1);
 		if (logger.isInfoEnabled()){
 			logger.info("Returning primary execution context: " + primaryExecutionContext);
 		}
 		
 		return primaryExecutionContext;
 	}
+	
+	/**
+	 * 
+	 */
+	public String toString(){
+		return this.getClass().getSimpleName();
+	}
+	
+	/**
+	 * 
+	 * @param protocol
+	 * @return
+	 */
+	protected abstract boolean isProtocolSupported(String protocol);
+
 	
 	/**
 	 * Defines <b>intermediate</b> computation entry point for a {@link Stream} which produces KEY/VALUE pairs.
