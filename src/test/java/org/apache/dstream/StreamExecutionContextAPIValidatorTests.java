@@ -7,6 +7,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -20,24 +22,19 @@ import org.apache.dstream.utils.Partitioner;
 /**
  * This test simply validates the type-safety and the API, so its successful compilation
  * implies overall success of this test.
- * 
- *
  */
 @SuppressWarnings("unused")
-public class StreamExecutionContextAPIValidatorTests {
-
-	
+public class StreamExecutionContextAPIValidatorTests { 
 	/**
 	 * Will expose raw {@link InputStream} to the result data set
 	 */
-	
 	public void withResultInputStream() throws Exception {
 		URI uri = new File("src/test/java/org/apache/dstream/sample.txt").toURI();
 		InputStream is = StreamExecutionContext.of(TextSource.create(Long.class, String.class, uri))
 				.computeAsKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.filter(s -> s.startsWith("foo"))
-					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
+					.collect(Collectors.<String, String, Integer>toMap(s -> s, s -> 1, Integer::sum))
 				).reduceByKey((a,b) -> a + b, 2)
 				.saveAs(MockOutputSpec.get()).toInputStream();
 	}

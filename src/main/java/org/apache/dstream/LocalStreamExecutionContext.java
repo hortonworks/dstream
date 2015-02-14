@@ -6,23 +6,13 @@ import java.util.stream.Stream;
 
 import org.apache.dstream.io.StreamableSource;
 
-public class LocalStreamExecutionContext<T> extends StreamExecutionContext<T> {
+/**
+ * 
+ * @param <T>
+ */
+public class LocalStreamExecutionContext<T> extends StreamExecutionContext<T> implements StageEntryPoint<T>{
 	
 	private final String[] supportedProtocols = new String[]{"file"};
-
-	@Override
-	public <K, V, R> IntermediateKVResult<K, V> computeAsKeyValue(Class<K> outputKey, Class<V> outputVal,
-			SerializableFunction<Stream<T>, Map<K, V>> function) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public <R> R compute(
-			org.apache.dstream.StreamExecutionContext.SerializableFunction<Stream<T>, R> function) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	@Override
 	public StreamableSource<T> getSource() {
@@ -51,6 +41,17 @@ public class LocalStreamExecutionContext<T> extends StreamExecutionContext<T> {
 		}
 		return false;
 	}
-	
 
+	@Override
+	public <K, V, R> IntermediateKVResult<K, V> computeAsKeyValue(Class<K> outputKey, Class<V> outputVal,
+			SerializableFunction<Stream<T>, Map<K, V>> function) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public <R> R compute(SerializableFunction<Stream<T>, R> function) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
