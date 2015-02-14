@@ -1,7 +1,8 @@
 package org.apache.dstream.io;
 
-import java.io.File;
 import java.net.URI;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 
 import junit.framework.Assert;
 
@@ -12,16 +13,16 @@ public class TextSourceTests {
 
 	@Test
 	public void validateNonNullInitialValues() throws Exception {
-		URI url = new File("src/test/java/org/apache/dstream/sample.txt").toURI();
+		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
 		try {
-			TextSource.create(null, String.class, url);
+			TextSource.create(null, String.class, path);
 			Assert.fail();
 		} catch (NullPointerException e) {
 			Assert.assertTrue(Strings.isNotEmpty(e.getMessage()));
 		}
 		
 		try {
-			TextSource.create(String.class, null, url);
+			TextSource.create(String.class, null, path);
 			Assert.fail();
 		} catch (NullPointerException e) {
 			Assert.assertTrue(Strings.isNotEmpty(e.getMessage()));

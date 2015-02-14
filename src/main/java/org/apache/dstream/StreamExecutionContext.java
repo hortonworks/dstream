@@ -32,17 +32,15 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 		StreamExecutionContext<T> suitableContext = null;
 		while (iter.hasNext() && suitableContext == null){
 			StreamExecutionContext context = iter.next();
-			String protocol = source.getUri().getScheme();
-			if (context.isProtocolSupported(protocol)){
+			if (context.isSourceSupported(source)){
 				if (logger.isInfoEnabled()){
-					logger.info("Loading execution context: " + context + " which supports '" + 
-							protocol + "' protocol defined by the StreamableSource: " + source);
+					logger.info("Loading execution context: " + context + " which supports '" + source);
 				}
 				suitableContext = context;
 			} else {
 				if (logger.isInfoEnabled()){
 					logger.info("Available context: " + context + " will not be loaded since it does not "
-							+ "support '" + protocol + "' defined by the StreamableSource: " + source);
+							+ "support '" +  source);
 				}
 			}
 		}
@@ -62,10 +60,10 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 	
 	/**
 	 * 
-	 * @param protocol
+	 * @param source
 	 * @return
 	 */
-	protected abstract boolean isProtocolSupported(String protocol);
+	protected abstract boolean isSourceSupported(StreamableSource<T> source);
 
 	/**
 	 * Returns the source of this stream as {@link StreamableSource}

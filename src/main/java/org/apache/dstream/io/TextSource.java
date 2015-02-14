@@ -1,17 +1,17 @@
 package org.apache.dstream.io;
 
-import java.net.URI;
+import java.nio.file.Path;
 import java.util.stream.Stream;
 
-public class TextSource<K,V> extends KeyValueStreamableSource<K, V> {
+public class TextSource<K,V> extends KeyValueFsStreamableSource<K, V> {
 	
 
-	protected TextSource(Class<K> keyClass, Class<V> valueClass, URI uri) {
-		super(keyClass, valueClass, uri);
+	protected TextSource(Class<K> keyClass, Class<V> valueClass, Path path) {
+		super(keyClass, valueClass, path);
 	}
 	
-	public static <K,V> TextSource<K,V> create(Class<K> keyClass, Class<V> valueClass, URI uri) {
-		return new TextSource<K, V>(keyClass, valueClass, uri);
+	public static <K,V> TextSource<K,V> create(Class<K> keyClass, Class<V> valueClass, Path path) {
+		return new TextSource<K, V>(keyClass, valueClass, path);
 	}
 
 	@Override
@@ -19,5 +19,4 @@ public class TextSource<K,V> extends KeyValueStreamableSource<K, V> {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 }

@@ -1,7 +1,8 @@
 package org.apache.dstream;
 
-import java.io.File;
 import java.net.URI;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 
 import org.apache.dstream.io.TextSource;
 import org.apache.logging.log4j.util.Strings;
@@ -24,8 +25,8 @@ public class StreamExecutionContextTests {
 	
 	@Test
 	public void validateExecutionContextFound() throws Exception {
-		URI uri = new File("src/test/java/org/apache/dstream/sample.txt").toURI();
-		Object executionContext = StreamExecutionContext.of(TextSource.create(Long.class, String.class, uri));
+		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
+		Object executionContext = StreamExecutionContext.of(TextSource.create(Long.class, String.class, path));
 		Assert.assertNotNull(executionContext);
 		Assert.assertTrue(executionContext instanceof LocalStreamExecutionContext);
 	}

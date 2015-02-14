@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BinaryOperator;
@@ -29,8 +31,8 @@ public class StreamExecutionContextAPIValidatorTests {
 	 * Will expose raw {@link InputStream} to the result data set
 	 */
 	public void withResultInputStream() throws Exception {
-		URI uri = new File("src/test/java/org/apache/dstream/sample.txt").toURI();
-		InputStream is = StreamExecutionContext.of(TextSource.create(Long.class, String.class, uri))
+		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
+		InputStream is = StreamExecutionContext.of(TextSource.create(Long.class, String.class, path))
 				.computeAsKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.filter(s -> s.startsWith("foo"))
@@ -42,8 +44,8 @@ public class StreamExecutionContextAPIValidatorTests {
 	 * Will expose {@link Stream} to the result data set allowing result data to be streamed for local processing (e.g., iterate over results)
 	 */
 	public void withResultStream() throws Exception {
-		URI url = new File("src/test/java/org/apache/dstream/sample.txt").toURI();
-		Stream<Entry<String, Integer>> resultStream = StreamExecutionContext.of(TextSource.create(Long.class, String.class, url))
+		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
+		Stream<Entry<String, Integer>> resultStream = StreamExecutionContext.of(TextSource.create(Long.class, String.class, path))
 				.computeAsKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
@@ -59,8 +61,8 @@ public class StreamExecutionContextAPIValidatorTests {
 	 * See {@link #multiDag()}
 	 */
 	public void multiStage() throws Exception {
-		URI url = new File("src/test/java/org/apache/dstream/sample.txt").toURI();
-		StreamExecutionContext.of(TextSource.create(Long.class, String.class, url))
+		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
+		StreamExecutionContext.of(TextSource.create(Long.class, String.class, path))
 				.computeAsKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
@@ -76,8 +78,8 @@ public class StreamExecutionContextAPIValidatorTests {
 	 * Partitioning for cases where no additional reduction needs to happen
 	 */
 	public void partitioning() throws Exception {
-		URI url = new File("src/test/java/org/apache/dstream/sample.txt").toURI();
-		Stream<Entry<String, Integer>> streamable = StreamExecutionContext.of(TextSource.create(Long.class, String.class, url))
+		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
+		Stream<Entry<String, Integer>> streamable = StreamExecutionContext.of(TextSource.create(Long.class, String.class, path))
 				.computeAsKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1))
@@ -89,8 +91,8 @@ public class StreamExecutionContextAPIValidatorTests {
 	 * Partitioning for cases where no additional reduction needs to happen
 	 */
 	public void partitioningWithLamda() throws Exception {
-		URI url = new File("src/test/java/org/apache/dstream/sample.txt").toURI();
-		Stream<Entry<String, Integer>> streamable = StreamExecutionContext.of(TextSource.create(Long.class, String.class, url))
+		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
+		Stream<Entry<String, Integer>> streamable = StreamExecutionContext.of(TextSource.create(Long.class, String.class, path))
 				.computeAsKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1))
@@ -102,8 +104,8 @@ public class StreamExecutionContextAPIValidatorTests {
 	 * Same as above but each stage is represented as a separate DAG.
 	 */
 	public void multiDag() throws Exception {
-		URI url = new File("src/test/java/org/apache/dstream/sample.txt").toURI();
-		StreamableSource<Entry<String, Integer>> streamable = StreamExecutionContext.of(TextSource.create(Long.class, String.class, url))
+		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
+		StreamableSource<Entry<String, Integer>> streamable = StreamExecutionContext.of(TextSource.create(Long.class, String.class, path))
 				.computeAsKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.map(s -> s.toUpperCase())
@@ -124,8 +126,8 @@ public class StreamExecutionContextAPIValidatorTests {
 	 * is under a contract to simply return the results of the stream processing as is (e.g., Map, Long, String etc.). 
 	 */
 	public void computeTerminalMap() throws Exception {
-		URI url = new File("src/test/java/org/apache/dstream/sample.txt").toURI();
-		Map<String, Integer> map = StreamExecutionContext.of(TextSource.create(Long.class, String.class, url))
+		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
+		Map<String, Integer> map = StreamExecutionContext.of(TextSource.create(Long.class, String.class, path))
 				.compute(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.map(s -> s.toUpperCase())
@@ -136,8 +138,8 @@ public class StreamExecutionContextAPIValidatorTests {
 	/**
 	 */
 	public void computeTerminalLong() throws Exception {
-		URI url = new File("src/test/java/org/apache/dstream/sample.txt").toURI();
-		long count = StreamExecutionContext.of(TextSource.create(Long.class, String.class, url))
+		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
+		long count = StreamExecutionContext.of(TextSource.create(Long.class, String.class, path))
 				.compute(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.count()
@@ -147,8 +149,8 @@ public class StreamExecutionContextAPIValidatorTests {
 	/**
 	 */
 	public void computeTerminalWithOptional() throws Exception {
-		URI url = new File("src/test/java/org/apache/dstream/sample.txt").toURI();
-		String result = StreamExecutionContext.of(TextSource.create(Long.class, String.class, url))
+		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
+		String result = StreamExecutionContext.of(TextSource.create(Long.class, String.class, path))
 				.compute(stream -> stream
 						.flatMap(s -> Stream.of(s.split("\\s+")))
 						.reduce((a, b) -> a + b.toUpperCase()).get()

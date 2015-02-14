@@ -34,13 +34,14 @@ public class LocalStreamExecutionContext<T> extends StreamExecutionContext<T> im
 	}
 	
 	@Override
-	protected boolean isProtocolSupported(String protocol) {
-		for (String supportedProtocol : this.supportedProtocols) {
-			if (supportedProtocol.equals(protocol)){
-				return true;
-			}
-		}
-		return false;
+	protected boolean isSourceSupported(StreamableSource<T> source) {
+//		for (String supportedProtocol : this.supportedProtocols) {
+//			if (supportedProtocol.equals(protocol)){
+//				return true;
+//			}
+//		}
+//		return false;
+		return true;
 	}
 
 	@Override
