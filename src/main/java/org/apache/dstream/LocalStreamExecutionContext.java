@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import org.apache.dstream.io.StreamableSource;
+import org.apache.dstream.utils.SerializableFunction;
 
 /**
  * 

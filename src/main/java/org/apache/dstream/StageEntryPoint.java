@@ -3,11 +3,10 @@ package org.apache.dstream;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.apache.dstream.StreamExecutionContext.IntermediateKVResult;
-import org.apache.dstream.StreamExecutionContext.SerializableFunction;
+import org.apache.dstream.utils.SerializableFunction;
 
 /**
- * Strategy which defines computation methods that serve as entry points for distributed computation stages 
+ * Strategy which defines computation methods that serve as initial entry points for distributed computation stages.
  * 
  * @param <T>
  */

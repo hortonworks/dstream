@@ -2,7 +2,7 @@ package org.apache.dstream.io;
 
 import java.net.URI;
 
-import org.apache.dstream.StreamExecutionContext.IntermediateKVResult;
+import org.apache.dstream.IntermediateKVResult;
 
 /**
  * Base marker interface allowing for the definition of the output specification to be used 
