@@ -76,8 +76,9 @@ public abstract class StreamExecutionContext<T> {
 
 	
 	/**
-	 * Defines <b>intermediate</b> computation entry point for a {@link Stream} which produces KEY/VALUE pairs.
-	 * Result of intermediate computation could be further reduced and/or partitioned via {@link IntermediateKVResult} 
+	 * Defines <b>intermediate</b> computation entry point (starting point for a new Stage/Vertex in a 
+	 * DAG-like implementation) for a {@link Stream} which produces KEY/VALUE pairs. Result of 
+	 * intermediate computation could be further reduced and/or partitioned via {@link IntermediateKVResult} 
 	 * and forwarded to the next computation via {@link IntermediateEntryPoint}.
 	 * 
 	 * <blockquote>
@@ -102,8 +103,8 @@ public abstract class StreamExecutionContext<T> {
 	public abstract <K,V,R> IntermediateKVResult<K,V> computeAsKeyValue(Class<K> outputKey, Class<V> outputVal, SerializableFunction<Stream<T>, Map<K,V>> function);
 	
 	/**
-	 * Defines <b>terminal</b> computation entry point for a {@link Stream}.
-	 * Result of terminal computation will be returned as is.
+	 * Defines <b>terminal</b> computation entry point (starting point for a new Stage/Vertex in a 
+	 * DAG-like implementation) for a {@link Stream}. Result of terminal computation will be returned as is.
 	 * 
 	 * <blockquote>
      * <pre>
@@ -175,6 +176,8 @@ public abstract class StreamExecutionContext<T> {
 		/**
 		 * Will perform a post-shuffle reduce by key, producing the same Key/Value types as declared by 
 		 * {@link IntermediateKVResult#computeAsKeyValue(Class, Class, SerializableFunction)} method.
+		 * Similar to the 'compute*' methods of {@link StreamExecutionContext} and {@link IntermediateEntryPoint} 
+		 * this method signifies starting point for a new Stage/Vertex in a DAG-like implementation.
 		 * 
 		 * @param mergeFunction
 		 * @param reducers
@@ -185,6 +188,8 @@ public abstract class StreamExecutionContext<T> {
 		/**
 		 * Will perform a post-shuffle reduce by value, producing the same Key/Value types as declared by 
 		 * {@link IntermediateKVResult#computeAsKeyValue(Class, Class, SerializableFunction)} method.
+		 * Similar to the 'compute*' methods of {@link StreamExecutionContext} and {@link IntermediateEntryPoint} 
+		 * this method signifies starting point for a new Stage/Vertex in a DAG-like implementation.
 		 * 
 		 * @param mergeFunction
 		 * @param reducers
@@ -195,6 +200,8 @@ public abstract class StreamExecutionContext<T> {
 		/**
 		 * Will perform a post-shuffle reduce passing the whole {@link Entry}, producing the same Key/Value types as declared by 
 		 * {@link IntermediateKVResult#computeAsKeyValue(Class, Class, SerializableFunction)} method.
+		 * Similar to the 'compute*' methods of {@link StreamExecutionContext} and {@link IntermediateEntryPoint} 
+		 * this method signifies starting point for a new Stage/Vertex in a DAG-like implementation.
 		 * 
 		 * See {@link #reduceByKey(BinaryOperator, int)} and {@link #reduceByValue(BinaryOperator, int)} as well
 		 * 
