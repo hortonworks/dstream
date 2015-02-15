@@ -165,9 +165,9 @@ public class StreamExecutionContextAPIValidatorTests {
 		}
 
 		@Override
-		public URI getOutputUri() {
+		public Path getOutputPath() {
 			try {
-				return new URI("file://foo.com/sample.txt");
+				return FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
 			} catch (URISyntaxException e) {
 				throw new IllegalArgumentException(e);
 			}
