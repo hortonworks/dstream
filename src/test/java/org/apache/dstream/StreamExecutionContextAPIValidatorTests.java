@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BinaryOperator;
@@ -16,6 +17,7 @@ import java.util.stream.Stream;
 
 import static org.apache.dstream.utils.Utils.*;
 
+import org.apache.dstream.io.CollectionStreamableSource;
 import org.apache.dstream.io.OutputSpecification;
 import org.apache.dstream.io.StreamableSource;
 import org.apache.dstream.io.TextSource;
@@ -118,6 +120,16 @@ public class StreamExecutionContextAPIValidatorTests {
 					.filter(s -> false)
 					.collect(Collectors.toMap(s -> 1, s -> 1, Integer::sum))
 				).reduce((a,b) -> toEntry(a.getValue(), a.getValue()), 4)
+				.saveAs(MockOutputSpec.get()).stream();
+	}
+	
+	
+	public void withCollectionStreamableSource() throws Exception {
+		Stream<Entry<String, Integer>> streamable = StreamExecutionContext.of(CollectionStreamableSource.<String>create(Arrays.asList(new String[]{"hi", "bye"})))
+				.computeAsKeyValue(String.class, Integer.class, stream -> stream
+					.flatMap(s -> Stream.of(s.split("\\s+")))
+					.collect(Collectors.toMap(s -> s, s -> 1))
+				).partition(s -> s.getKey().hashCode())
 				.saveAs(MockOutputSpec.get()).stream();
 	}
 	
