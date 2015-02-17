@@ -31,7 +31,7 @@ public class ListStreamableSource<T> implements StreamableSource<T> {
 
 	/**
 	 * Factory method to create {@link StreamableSource} for a provided
-	 * {@link Collection}
+	 * {@link List}
 	 * 
 	 * @param collection
 	 * @return
@@ -42,7 +42,7 @@ public class ListStreamableSource<T> implements StreamableSource<T> {
 
 	/**
 	 * Factory method to create {@link StreamableSource} for a provided
-	 * {@link Collection}. This method also allows you to specify (at most) the amount of
+	 * {@link List}. This method also allows you to specify (at most) the amount of
 	 * splits the provided list have to be divided to allow parallel processing. 
 	 * 
 	 * @param collection
@@ -72,6 +72,9 @@ public class ListStreamableSource<T> implements StreamableSource<T> {
 	 * @return
 	 */
 	public Stream<T> toStream(int partitionId) {
+		if (partitionId >= splits){
+			throw new IllegalArgumentException("Partition ID exeeds maximum amount of possible splits");
+		}
 		int actualSplits = this.list.size()/this.splits+1;
 		int counter = 0;
 		List<T> subList = null;
