@@ -1,7 +1,6 @@
 package org.apache.dstream.local;
 
 import java.io.InputStream;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import org.apache.dstream.IntermediateKVResult;
@@ -19,8 +18,8 @@ public class StreamExecutionContextImpl<T> extends StreamExecutionContext<T> imp
 	private final String[] supportedProtocols = new String[]{"file"};
 
 	@Override
-	public <K, V> IntermediateKVResult<K, V> computeKeyValue(Class<K> outputKey, Class<V> outputVal,
-			SerializableFunction<Stream<T>, Map<K, V>> function) {
+	public <K,V,R> IntermediateKVResult<K, V> computeKeyValue(Class<K> outputKey, Class<V> outputVal,
+			SerializableFunction<Stream<T>, R> function) {
 		// TODO Auto-generated method stub
 		return new IntermediateKVResultImpl<K, V>();
 	}

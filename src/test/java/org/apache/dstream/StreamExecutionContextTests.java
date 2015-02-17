@@ -51,7 +51,7 @@ public class StreamExecutionContextTests {
 				.computeKeyValue(Integer.class, Integer.class, stream -> stream
 						.filter(s -> s != 4)
 						.collect(Collectors.<Integer, Integer, Integer>toMap(s -> s, s -> 1, Integer::sum)))
-				.partition(s -> s.getKey(), 8)
+				.partition(s -> s.getKey(), Integer::sum)
 				.computeKeyValue(Integer.class, Integer.class, stream -> stream
 						.filter(s -> s.getKey() == 4)
 						.collect(Collectors.<Entry<Integer, Integer>, Integer, Integer>toMap(s -> s.getKey(), s -> s.getValue(), Integer::sum)));

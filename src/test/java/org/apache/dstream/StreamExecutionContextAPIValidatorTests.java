@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -22,6 +23,8 @@ import org.apache.dstream.io.OutputSpecification;
 import org.apache.dstream.io.StreamableSource;
 import org.apache.dstream.io.TextSource;
 import org.apache.dstream.utils.Partitioner;
+import org.apache.dstream.utils.Utils;
+import org.junit.Test;
 
 /**
  * This test simply validates the type-safety and the API, so its successful compilation
@@ -29,6 +32,34 @@ import org.apache.dstream.utils.Partitioner;
  */
 @SuppressWarnings("unused")
 public class StreamExecutionContextAPIValidatorTests { 
+	
+	/**
+	 * This is the example of quintessential WordCount with a few extras.
+	 * See comments in line
+	 * 
+	 * @throws Exception
+	 */
+	public void wordCount() throws Exception {
+		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
+		// Defines an FS based Stream source with resource type (e.g., text), key/value types etc.
+		InputStream is = StreamExecutionContext.of(TextSource.create(Long.class, String.class, path))
+				// Defines a KeyValue computation stage which allows one to define output KeyValue types and computation logic
+				// Computation logic is build using standard Java 8 Stream API and can end in terminal or intermediate function call. 
+				.computeKeyValue(String.class, Integer.class, stream -> stream
+					.flatMap(s -> Stream.of(s.split("\\s+")))
+					// essentially a combiner function.
+					.collect(Collectors.<String, String, Integer>toMap(s -> s, s -> 1, Integer::sum))
+				// Upon completion stages write to a shuffle or final output
+				// In this case we are asking for 10 reducers while also providing merge function which could be the same as the one used in collector
+				).partition(10, Integer::sum)
+				.computeKeyValue(Integer.class,  Integer.class, stream -> stream
+					.filter(s -> s.getValue() > 7)
+					.map(s -> s)
+				)
+				.saveAs(MockOutputSpec.get()).toInputStream();
+	}
+	
+	
 	/**
 	 * Will expose raw {@link InputStream} to the result data set
 	 */
@@ -39,10 +70,10 @@ public class StreamExecutionContextAPIValidatorTests {
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.filter(s -> s.startsWith("foo"))
 					.collect(Collectors.<String, String, Integer>toMap(s -> s, s -> 1, Integer::sum))
-				).partition(10)
+				).partition(10, Integer::sum)
 				.computeKeyValue(Integer.class,  Integer.class, stream -> stream
 					.collect(Collectors.<Entry<String, Integer>, Integer, Integer>toMap(s -> 34, s -> 1, Integer::sum))
-				).partition(5)
+				).partition(2, Integer::sum)
 				.saveAs(MockOutputSpec.get()).toInputStream();
 	}
 	/**
@@ -54,9 +85,9 @@ public class StreamExecutionContextAPIValidatorTests {
 				.computeKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
-				).partition(2)
+				).partition(2, Integer::sum)
 				.computeKeyValue(String.class, Integer.class, stream -> stream
-						.collect(Collectors.<Entry<String, Integer>, String, Integer>toMap(s -> s.getKey(), s -> s.getValue(), Integer::sum))
+					.collect(Collectors.<Entry<String, Integer>, String, Integer>toMap(s -> s.getKey(), s -> s.getValue(), Integer::sum))
 				)
 				.saveAs(MockOutputSpec.get()).stream();
 	}
@@ -74,11 +105,11 @@ public class StreamExecutionContextAPIValidatorTests {
 				.computeKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
-				).partition(4)
+				).partition(4, Integer::sum)
 				.computeKeyValue(Integer.class, Integer.class, stream -> stream
 					.filter(s -> s.getValue() == 4)
 					.collect(Collectors.<Entry<String, Integer>, Integer, Integer>toMap(s -> 5, s -> s.getValue(), Integer::sum))
-				).partition(2)
+				).partition(2, Integer::sum)
 				.saveAs(MockOutputSpec.get()).stream();
 	}
 	
@@ -91,7 +122,7 @@ public class StreamExecutionContextAPIValidatorTests {
 				.computeKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1))
-				).partition(3)
+				).partition(3, Integer::sum)
 				.saveAs(MockOutputSpec.get()).stream();
 	}
 	
@@ -104,7 +135,7 @@ public class StreamExecutionContextAPIValidatorTests {
 				.computeKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1))
-				).partition(s -> s.getKey().hashCode(), 5)
+				).partition(s -> s.getKey().hashCode(), Integer::sum)
 				.saveAs(MockOutputSpec.get()).stream();
 	}
 	
@@ -118,18 +149,18 @@ public class StreamExecutionContextAPIValidatorTests {
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.map(s -> s.toUpperCase())
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
-				).partition(2)
+				).partition(2, Integer::sum)
 				.computeKeyValue(String.class, Integer.class, stream -> stream
 					.filter(s -> s.getValue() == 4)
 					.collect(Collectors.<Entry<String, Integer>, String, Integer>toMap(s -> s.getKey(), s -> s.getValue(), Integer::sum))
-				).partition(1)
+				)
 				.saveAs(MockOutputSpec.get()).getSource();
 		
 		StreamExecutionContext.of(streamable)
 				.computeKeyValue(Integer.class, Integer.class, stream -> stream
 					.filter(s -> false)
 					.collect(Collectors.toMap(s -> 1, s -> 1, Integer::sum))
-				).partition(4)
+				).partition(4, Integer::sum)
 				.saveAs(MockOutputSpec.get()).stream();
 	}
 	
@@ -139,7 +170,7 @@ public class StreamExecutionContextAPIValidatorTests {
 				.computeKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1))
-				).partition(s -> s.getKey().hashCode(), 10)
+				).partition(s -> s.getKey().hashCode(), Integer::sum)
 				.saveAs(MockOutputSpec.get()).stream();
 	}
 	

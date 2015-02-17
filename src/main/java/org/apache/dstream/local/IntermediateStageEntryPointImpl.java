@@ -1,6 +1,5 @@
 package org.apache.dstream.local;
 
-import java.util.Map;
 import java.util.stream.Stream;
 
 import org.apache.dstream.IntermediateKVResult;
@@ -12,8 +11,8 @@ import org.apache.dstream.utils.SerializableFunction;
 public class IntermediateStageEntryPointImpl<T> implements IntermediateStageEntryPoint<T> {
 
 	@Override
-	public <K, V> IntermediateKVResult<K, V> computeKeyValue(Class<K> outputKey, Class<V> outputVal,
-			SerializableFunction<Stream<T>, Map<K, V>> function) {
+	public <K,V,R> IntermediateKVResult<K, V> computeKeyValue(Class<K> outputKey, Class<V> outputVal,
+			SerializableFunction<Stream<T>, R> function) {
 		// TODO Auto-generated method stub
 		return null;
 	}

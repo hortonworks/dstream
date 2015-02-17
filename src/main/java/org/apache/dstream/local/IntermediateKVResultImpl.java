@@ -1,7 +1,7 @@
 package org.apache.dstream.local;
 
-import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.BinaryOperator;
 import java.util.stream.Stream;
 
 import org.apache.dstream.IntermediateKVResult;
@@ -14,20 +14,20 @@ import org.apache.dstream.utils.SerializableFunction;
 public class IntermediateKVResultImpl<K, V> implements IntermediateKVResult<K,V> {
 
 	@Override
-	public IntermediateStageEntryPoint<Entry<K, V>> partition(int partitionSize) {
+	public IntermediateStageEntryPoint<Entry<K, V>> partition(int partitionSize, BinaryOperator<V> mergeFunction) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public IntermediateStageEntryPoint<Entry<K, V>> partition(Partitioner partitioner, int partitionSize) {
+	public IntermediateStageEntryPoint<Entry<K, V>> partition(Partitioner partitioner, BinaryOperator<V> mergeFunction) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public IntermediateStageEntryPoint<Entry<K, V>> partition(SerializableFunction<Entry<K, V>, Integer> partitionerFunction,
-			int partitionSize) {
+			BinaryOperator<V> mergeFunction) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -39,8 +39,8 @@ public class IntermediateKVResultImpl<K, V> implements IntermediateKVResult<K,V>
 	}
 
 	@Override
-	public <NK, NV> IntermediateKVResult<NK, NV> computeKeyValue(Class<NK> outputKey, Class<NV> outputVal,
-			SerializableFunction<Stream<Entry<K, V>>, Map<NK, NV>> function) {
+	public <NK,NV,R> IntermediateKVResult<NK, NV> computeKeyValue(Class<NK> outputKey, Class<NV> outputVal,
+			SerializableFunction<Stream<Entry<K, V>>, R> function) {
 		// TODO Auto-generated method stub
 		return null;
 	}
