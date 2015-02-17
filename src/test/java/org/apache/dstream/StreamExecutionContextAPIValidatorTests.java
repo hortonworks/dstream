@@ -1,8 +1,6 @@
 package org.apache.dstream;
 
-import java.io.File;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
@@ -10,21 +8,14 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.apache.dstream.utils.Utils.*;
-
-import org.apache.dstream.io.CollectionStreamableSource;
+import org.apache.dstream.io.ListStreamableSource;
 import org.apache.dstream.io.OutputSpecification;
 import org.apache.dstream.io.StreamableSource;
 import org.apache.dstream.io.TextSource;
 import org.apache.dstream.utils.Partitioner;
-import org.apache.dstream.utils.Utils;
-import org.junit.Test;
 
 /**
  * This test simply validates the type-safety and the API, so its successful compilation
@@ -166,7 +157,7 @@ public class StreamExecutionContextAPIValidatorTests {
 	
 	
 	public void withCollectionStreamableSource() throws Exception {
-		Stream<Entry<String, Integer>> streamable = StreamExecutionContext.of(CollectionStreamableSource.<String>create(Arrays.asList(new String[]{"hi", "bye"})))
+		Stream<Entry<String, Integer>> streamable = StreamExecutionContext.of(ListStreamableSource.<String>create(Arrays.asList(new String[]{"hi", "bye"})))
 				.computeKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1))

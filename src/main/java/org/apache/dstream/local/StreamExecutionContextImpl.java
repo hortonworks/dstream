@@ -6,8 +6,8 @@ import java.util.stream.Stream;
 import org.apache.dstream.IntermediateKVResult;
 import org.apache.dstream.StageEntryPoint;
 import org.apache.dstream.StreamExecutionContext;
-import org.apache.dstream.io.CollectionStreamableSource;
 import org.apache.dstream.io.FsStreamableSource;
+import org.apache.dstream.io.ListStreamableSource;
 import org.apache.dstream.io.StreamableSource;
 import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;
@@ -41,7 +41,7 @@ public class StreamExecutionContextImpl<T> extends StreamExecutionContext<T> imp
 
 	@Override
 	protected boolean isSourceSupported(StreamableSource<T> source) {
-		if (source instanceof CollectionStreamableSource){
+		if (source instanceof ListStreamableSource){
 			return true;
 		} else if (source instanceof FsStreamableSource) {
 			@SuppressWarnings("rawtypes")
