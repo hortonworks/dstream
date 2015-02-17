@@ -1,7 +1,6 @@
 package org.apache.dstream;
 
 import java.util.Map.Entry;
-import java.util.function.BinaryOperator;
 
 import org.apache.dstream.utils.Partitioner;
 import org.apache.dstream.utils.SerializableFunction;
@@ -15,52 +14,21 @@ import org.apache.dstream.utils.SerializableFunction;
  * @param <K>
  * @param <V>
  */
-public interface IntermediateKVResult<K,V> {
-	/**
-	 * Will perform a post-shuffle reduce by key, producing the same Key/Value types as declared by 
-	 * {@link IntermediateKVResult#computeAsKeyValue(Class, Class, SerializableFunction)} method.
-	 * Similar to the 'compute*' methods of {@link StreamExecutionContext} and {@link IntermediateStageEntryPoint} 
-	 * this method signifies starting point for a new Stage/Vertex in a DAG-like implementation.
-	 * 
-	 * @param mergeFunction
-	 * @param reducers
-	 * @return
-	 */
-	public IntermediateStageEntryPoint<Entry<K,V>> reduceByKey(BinaryOperator<V> mergeFunction, int reducers);
-		
-	/**
-	 * Will perform a post-shuffle reduce by value, producing the same Key/Value types as declared by 
-	 * {@link IntermediateKVResult#computeAsKeyValue(Class, Class, SerializableFunction)} method.
-	 * Similar to the 'compute*' methods of {@link StreamExecutionContext} and {@link IntermediateStageEntryPoint} 
-	 * this method signifies starting point for a new Stage/Vertex in a DAG-like implementation.
-	 * 
-	 * @param mergeFunction
-	 * @param reducers
-	 * @return
-	 */
-	public IntermediateStageEntryPoint<Entry<K,V>> reduceByValue(BinaryOperator<K> mergeFunction, int reducers);
-	
-	/**
-	 * Will perform a post-shuffle reduce passing the whole {@link Entry}, producing the same Key/Value types as declared by 
-	 * {@link IntermediateKVResult#computeAsKeyValue(Class, Class, SerializableFunction)} method.
-	 * Similar to the 'compute*' methods of {@link StreamExecutionContext} and {@link IntermediateStageEntryPoint} 
-	 * this method signifies starting point for a new Stage/Vertex in a DAG-like implementation.
-	 * 
-	 * See {@link #reduceByKey(BinaryOperator, int)} and {@link #reduceByValue(BinaryOperator, int)} as well
-	 * 
-	 * @param mergeFunction
-	 * @param reducers
-	 * @return
-	 */
-	public IntermediateStageEntryPoint<Entry<K,V>> reduce(BinaryOperator<Entry<K,V>> mergeFunction, int reducers);
-	
+public interface IntermediateKVResult<K,V> extends IntermediateStageEntryPoint<Entry<K,V>>{
 	/**
 	 * Will partition the intermediate result using provided {@link Partitioner}
 	 * 
 	 * @param partitioner
 	 * @return
 	 */
-	public IntermediateStageEntryPoint<Entry<K,V>> partition(Partitioner partitioner);
+	public IntermediateStageEntryPoint<Entry<K,V>> partition(int partitionSize);
+	/**
+	 * Will partition the intermediate result using provided {@link Partitioner}
+	 * 
+	 * @param partitioner
+	 * @return
+	 */
+	public IntermediateStageEntryPoint<Entry<K,V>> partition(Partitioner partitioner, int partitionSize);
 	
 	/**
 	 * ill partition the intermediate result using provided partitioning function.
@@ -68,5 +36,5 @@ public interface IntermediateKVResult<K,V> {
 	 * @param partitionerFunction
 	 * @return
 	 */
-	public IntermediateStageEntryPoint<Entry<K,V>> partition(SerializableFunction<Entry<K,V>, Integer> partitionerFunction);
+	public IntermediateStageEntryPoint<Entry<K,V>> partition(SerializableFunction<Entry<K,V>, Integer> partitionerFunction, int partitionSize);
 }

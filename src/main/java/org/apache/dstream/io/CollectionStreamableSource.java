@@ -16,6 +16,11 @@ public class CollectionStreamableSource<T> implements StreamableSource<T> {
 	public static <T> CollectionStreamableSource<T> create(Collection<T> collection){
 		return new CollectionStreamableSource<T>(collection);
 	}
+	
+	public static <T> CollectionStreamableSource<T> create(Collection<T> collection, int partitions){
+		return new CollectionStreamableSource<T>(collection);
+	}
+	
 
 	@Override
 	public Stream<T> toStream() {

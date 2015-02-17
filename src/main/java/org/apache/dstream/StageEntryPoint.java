@@ -36,7 +36,7 @@ public interface StageEntryPoint<T> {
 	 * 					  identified by 'outputKey'/'outputVal'
 	 * @return
 	 */
-	public abstract <K,V,R> IntermediateKVResult<K,V> computeAsKeyValue(Class<K> outputKey, Class<V> outputVal, SerializableFunction<Stream<T>, Map<K,V>> function);
+	public abstract <K,V> IntermediateKVResult<K,V> computeKeyValue(Class<K> outputKey, Class<V> outputVal, SerializableFunction<Stream<T>, Map<K,V>> function);
 	
 	/**
 	 * Defines <b>terminal</b> computation entry point (starting point for a new Stage/Vertex in a 

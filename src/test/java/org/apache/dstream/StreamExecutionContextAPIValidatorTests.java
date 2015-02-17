@@ -35,11 +35,14 @@ public class StreamExecutionContextAPIValidatorTests {
 	public void withResultInputStream() throws Exception {
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
 		InputStream is = StreamExecutionContext.of(TextSource.create(Long.class, String.class, path))
-				.computeAsKeyValue(String.class, Integer.class, stream -> stream
+				.computeKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.filter(s -> s.startsWith("foo"))
 					.collect(Collectors.<String, String, Integer>toMap(s -> s, s -> 1, Integer::sum))
-				).reduceByKey((a,b) -> a + b, 2)
+				).partition(10)
+				.computeKeyValue(Integer.class,  Integer.class, stream -> stream
+					.collect(Collectors.<Entry<String, Integer>, Integer, Integer>toMap(s -> 34, s -> 1, Integer::sum))
+				).partition(5)
 				.saveAs(MockOutputSpec.get()).toInputStream();
 	}
 	/**
@@ -48,10 +51,13 @@ public class StreamExecutionContextAPIValidatorTests {
 	public void withResultStream() throws Exception {
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
 		Stream<Entry<String, Integer>> resultStream = StreamExecutionContext.of(TextSource.create(Long.class, String.class, path))
-				.computeAsKeyValue(String.class, Integer.class, stream -> stream
+				.computeKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
-				).reduceByKey(Integer::sum, 2)
+				).partition(2)
+				.computeKeyValue(String.class, Integer.class, stream -> stream
+						.collect(Collectors.<Entry<String, Integer>, String, Integer>toMap(s -> s.getKey(), s -> s.getValue(), Integer::sum))
+				)
 				.saveAs(MockOutputSpec.get()).stream();
 	}
 	
@@ -65,14 +71,14 @@ public class StreamExecutionContextAPIValidatorTests {
 	public void multiStage() throws Exception {
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
 		StreamExecutionContext.of(TextSource.create(Long.class, String.class, path))
-				.computeAsKeyValue(String.class, Integer.class, stream -> stream
+				.computeKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
-				).reduceByKey((a,b) -> a + b, 2)
-				.computeAsKeyValue(Integer.class, Integer.class, stream -> stream
-					.filter(s -> false)
-					.collect(Collectors.toMap(s -> 1, s -> 1, Integer::sum))
-				).reduce((a,b) -> toEntry(a.getValue(), a.getValue()), 4)
+				).partition(4)
+				.computeKeyValue(Integer.class, Integer.class, stream -> stream
+					.filter(s -> s.getValue() == 4)
+					.collect(Collectors.<Entry<String, Integer>, Integer, Integer>toMap(s -> 5, s -> s.getValue(), Integer::sum))
+				).partition(2)
 				.saveAs(MockOutputSpec.get()).stream();
 	}
 	
@@ -82,10 +88,10 @@ public class StreamExecutionContextAPIValidatorTests {
 	public void partitioning() throws Exception {
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
 		Stream<Entry<String, Integer>> streamable = StreamExecutionContext.of(TextSource.create(Long.class, String.class, path))
-				.computeAsKeyValue(String.class, Integer.class, stream -> stream
+				.computeKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1))
-				).partition(MockPartitioner.get())
+				).partition(3)
 				.saveAs(MockOutputSpec.get()).stream();
 	}
 	
@@ -95,10 +101,10 @@ public class StreamExecutionContextAPIValidatorTests {
 	public void partitioningWithLamda() throws Exception {
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
 		Stream<Entry<String, Integer>> streamable = StreamExecutionContext.of(TextSource.create(Long.class, String.class, path))
-				.computeAsKeyValue(String.class, Integer.class, stream -> stream
+				.computeKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1))
-				).partition(s -> s.getKey().hashCode())
+				).partition(s -> s.getKey().hashCode(), 5)
 				.saveAs(MockOutputSpec.get()).stream();
 	}
 	
@@ -108,28 +114,32 @@ public class StreamExecutionContextAPIValidatorTests {
 	public void multiDag() throws Exception {
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
 		StreamableSource<Entry<String, Integer>> streamable = StreamExecutionContext.of(TextSource.create(Long.class, String.class, path))
-				.computeAsKeyValue(String.class, Integer.class, stream -> stream
+				.computeKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.map(s -> s.toUpperCase())
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
-				).reduceByKey((a,b) -> a + b, 2)
+				).partition(2)
+				.computeKeyValue(String.class, Integer.class, stream -> stream
+					.filter(s -> s.getValue() == 4)
+					.collect(Collectors.<Entry<String, Integer>, String, Integer>toMap(s -> s.getKey(), s -> s.getValue(), Integer::sum))
+				).partition(1)
 				.saveAs(MockOutputSpec.get()).getSource();
 		
 		StreamExecutionContext.of(streamable)
-				.computeAsKeyValue(Integer.class, Integer.class, stream -> stream
+				.computeKeyValue(Integer.class, Integer.class, stream -> stream
 					.filter(s -> false)
 					.collect(Collectors.toMap(s -> 1, s -> 1, Integer::sum))
-				).reduce((a,b) -> toEntry(a.getValue(), a.getValue()), 4)
+				).partition(4)
 				.saveAs(MockOutputSpec.get()).stream();
 	}
 	
 	
 	public void withCollectionStreamableSource() throws Exception {
 		Stream<Entry<String, Integer>> streamable = StreamExecutionContext.of(CollectionStreamableSource.<String>create(Arrays.asList(new String[]{"hi", "bye"})))
-				.computeAsKeyValue(String.class, Integer.class, stream -> stream
+				.computeKeyValue(String.class, Integer.class, stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1))
-				).partition(s -> s.getKey().hashCode())
+				).partition(s -> s.getKey().hashCode(), 10)
 				.saveAs(MockOutputSpec.get()).stream();
 	}
 	
