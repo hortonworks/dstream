@@ -15,7 +15,7 @@ public interface StageEntryPoint<T> {
 	 * Defines <b>intermediate</b> computation entry point (starting point for a new Stage/Vertex in a 
 	 * DAG-like implementation) for a {@link Stream} which produces KEY/VALUE pairs. Result of 
 	 * intermediate computation could be further reduced and/or partitioned via {@link IntermediateKVResult} 
-	 * and forwarded to the next computation via {@link IntermediateStageEntryPoint}.
+	 * and forwarded to the next computation via {@link Submittable}.
 	 * 
 	 * <blockquote>
      * <pre>

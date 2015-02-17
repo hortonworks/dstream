@@ -15,7 +15,7 @@ import org.apache.dstream.utils.SerializableFunction;
  * @param <K>
  * @param <V>
  */
-public interface IntermediateKVResult<K,V> extends IntermediateStageEntryPoint<Entry<K,V>> {
+public interface IntermediateKVResult<K,V> extends Submittable<Entry<K,V>> {
 	/**
 	 * Will partition the intermediate result using default {@link Partitioner} provided by the underlying execution environment.
 	 * When partitions are written the 'mergeFunction' will also be applied.
@@ -23,7 +23,7 @@ public interface IntermediateKVResult<K,V> extends IntermediateStageEntryPoint<E
 	 * @param partitioner
 	 * @return
 	 */
-	public IntermediateStageEntryPoint<Entry<K,V>> partition(int partitionSize, BinaryOperator<V> mergeFunction);
+	public Submittable<Entry<K,V>> partition(int partitionSize, BinaryOperator<V> mergeFunction);
 	/**
 	 * Will partition the intermediate result using provided {@link Partitioner}
 	 * When partitions are written the 'mergeFunction' will also be applied.
@@ -31,7 +31,7 @@ public interface IntermediateKVResult<K,V> extends IntermediateStageEntryPoint<E
 	 * @param partitioner
 	 * @return
 	 */
-	public IntermediateStageEntryPoint<Entry<K,V>> partition(Partitioner partitioner, BinaryOperator<V> mergeFunction);
+	public Submittable<Entry<K,V>> partition(Partitioner partitioner, BinaryOperator<V> mergeFunction);
 	
 	/**
 	 * Will partition the intermediate result using provided partitioning function. It is assumed that partitioning function 
@@ -41,6 +41,6 @@ public interface IntermediateKVResult<K,V> extends IntermediateStageEntryPoint<E
 	 * @param partitionerFunction
 	 * @return
 	 */
-	public IntermediateStageEntryPoint<Entry<K,V>> partition(SerializableFunction<Entry<K,V>, Integer> partitionerFunction, BinaryOperator<V> mergeFunction);
+	public Submittable<Entry<K,V>> partition(SerializableFunction<Entry<K,V>, Integer> partitionerFunction, BinaryOperator<V> mergeFunction);
 	
 }

@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.apache.dstream.io.CollectionStreamableSource;
 import org.apache.dstream.io.TextSource;
+import org.apache.dstream.local.OutputSpecificationImpl;
 import org.apache.dstream.local.StreamExecutionContextImpl;
 import org.apache.logging.log4j.util.Strings;
 import org.junit.Assert;
@@ -46,6 +47,7 @@ public class StreamExecutionContextTests {
 	
 	@Test
 	public void validateFlowWithCollection() throws Exception {
+		Path outputPath = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/out");
 		List<Integer> intList = Arrays.asList(new Integer[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3});
 		StreamExecutionContext.of(CollectionStreamableSource.<Integer>create(intList))
 				.computeKeyValue(Integer.class, Integer.class, stream -> stream
@@ -54,7 +56,8 @@ public class StreamExecutionContextTests {
 				.partition(s -> s.getKey(), Integer::sum)
 				.computeKeyValue(Integer.class, Integer.class, stream -> stream
 						.filter(s -> s.getKey() == 4)
-						.collect(Collectors.<Entry<Integer, Integer>, Integer, Integer>toMap(s -> s.getKey(), s -> s.getValue(), Integer::sum)));
+						.collect(Collectors.<Entry<Integer, Integer>, Integer, Integer>toMap(s -> s.getKey(), s -> s.getValue(), Integer::sum)))
+				.saveAs(OutputSpecificationImpl.create(outputPath));
 				
 	}
 	
