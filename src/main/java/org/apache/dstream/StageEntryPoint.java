@@ -1,5 +1,6 @@
 package org.apache.dstream;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -36,9 +37,19 @@ public interface StageEntryPoint<T> {
 	 * 					  identified by 'outputKey'/'outputVal'
 	 * @return
 	 */
-//	public abstract <K,V> IntermediateKVResult<K,V> computeKeyValue(Class<K> outputKey, Class<V> outputVal, SerializableFunction<Stream<T>, Map<K,V>> function);
 	
-	public abstract <K,V,R> IntermediateKVResult<K,V> computeKeyValue(Class<K> outputKey, Class<V> outputVal, SerializableFunction<Stream<T>, R> function);
+	public abstract int computeInt(SerializableFunction<Stream<T>, Integer> function);
+	
+	public abstract long computeLong(SerializableFunction<Stream<T>, Long> function);
+	
+	public abstract double computeDouble(SerializableFunction<Stream<T>, Double> function);
+	
+	public abstract boolean computeBoolean(SerializableFunction<Stream<T>, Boolean> function);
+
+	public abstract <R> IntermediateResult<R> computeCollection(SerializableFunction<Stream<T>, Collection<R>> function);
+	
+	public abstract <K,V> IntermediateKVResult<K,V> computePairs(SerializableFunction<Stream<T>, Map<K,V>> function);
+
 	
 	/**
 	 * Defines <b>terminal</b> computation entry point (starting point for a new Stage/Vertex in a 
@@ -69,5 +80,5 @@ public interface StageEntryPoint<T> {
 	 * 					  identified by 'outputKey'/'outputVal'
 	 * @return
 	 */
-	public abstract <R> R compute(SerializableFunction<Stream<T>, R> function);
+//	public abstract <R> R compute(SerializableFunction<Stream<T>, R> function);
 }

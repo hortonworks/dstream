@@ -1,9 +1,12 @@
 package org.apache.dstream.local;
 
 import java.io.InputStream;
+import java.util.Collection;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import org.apache.dstream.IntermediateKVResult;
+import org.apache.dstream.IntermediateResult;
 import org.apache.dstream.StageEntryPoint;
 import org.apache.dstream.StreamExecutionContext;
 import org.apache.dstream.io.FsStreamableSource;
@@ -22,22 +25,6 @@ public class StreamExecutionContextImpl<T> extends StreamExecutionContext<T> imp
 	private final Logger logger = LoggerFactory.getLogger(StreamExecutionContextImpl.class);
 	
 	private final String[] supportedProtocols = new String[]{"file"};
-
-	@Override
-	public <K,V,R> IntermediateKVResult<K, V> computeKeyValue(Class<K> outputKey, Class<V> outputVal,
-			SerializableFunction<Stream<T>, R> function) {
-		if (logger.isDebugEnabled()){
-			logger.debug("Accepted 'computeKeyValue' request with output KEY/VALUE as " + 
-					outputKey.getSimpleName() + "/" + outputVal.getSimpleName());
-		}
-		return new IntermediateKVResultImpl<K, V>();
-	}
-
-	@Override
-	public <R> R compute(SerializableFunction<Stream<T>, R> function) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	@Override
 	protected boolean isSourceSupported(StreamableSource<T> source) {
@@ -69,6 +56,45 @@ public class StreamExecutionContextImpl<T> extends StreamExecutionContext<T> imp
 
 	@Override
 	public Stream<T> stream() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public int computeInt(SerializableFunction<Stream<T>, Integer> function) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public long computeLong(SerializableFunction<Stream<T>, Long> function) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public double computeDouble(SerializableFunction<Stream<T>, Double> function) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public boolean computeBoolean(
+			SerializableFunction<Stream<T>, Boolean> function) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public <R> IntermediateResult<R> computeCollection(
+			SerializableFunction<Stream<T>, Collection<R>> function) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public <K, V> IntermediateKVResult<K, V> computePairs(
+			SerializableFunction<Stream<T>, Map<K, V>> function) {
 		// TODO Auto-generated method stub
 		return null;
 	}

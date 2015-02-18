@@ -15,21 +15,7 @@ public class TextSourceTests {
 	public void validateNonNullInitialValues() throws Exception {
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
 		try {
-			TextSource.create(null, String.class, path);
-			Assert.fail();
-		} catch (NullPointerException e) {
-			Assert.assertTrue(Strings.isNotEmpty(e.getMessage()));
-		}
-		
-		try {
-			TextSource.create(String.class, null, path);
-			Assert.fail();
-		} catch (NullPointerException e) {
-			Assert.assertTrue(Strings.isNotEmpty(e.getMessage()));
-		}
-		
-		try {
-			TextSource.create(String.class, String.class, null);
+			TextSource.create(path);
 			Assert.fail();
 		} catch (NullPointerException e) {
 			Assert.assertTrue(Strings.isNotEmpty(e.getMessage()));

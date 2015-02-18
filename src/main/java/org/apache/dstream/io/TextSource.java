@@ -3,19 +3,20 @@ package org.apache.dstream.io;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
-public class TextSource<K,V> extends KeyValueFsStreamableSource<K, V> {
+public class TextSource extends KeyValueFsStreamableSource<Long, String> {
 	
 
-	protected TextSource(Class<K> keyClass, Class<V> valueClass, Path path) {
-		super(keyClass, valueClass, path);
+	protected TextSource(Path path) {
+		super(Long.class, String.class, path);
+		
 	}
 	
-	public static <K,V> TextSource<K,V> create(Class<K> keyClass, Class<V> valueClass, Path path) {
-		return new TextSource<K, V>(keyClass, valueClass, path);
+	public static TextSource create(Path path) {
+		return new TextSource(path);
 	}
 
 	@Override
-	public Stream<V> toStream() {
+	public Stream<String> toStream() {
 		// TODO Auto-generated method stub
 		return null;
 	}

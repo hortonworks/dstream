@@ -21,9 +21,9 @@ public abstract class KeyValueFsStreamableSource<K,V> implements StreamableSourc
 	 * @param uri
 	 */
 	protected KeyValueFsStreamableSource(Class<K> keyClass, Class<V> valueClass, Path path){
-		Objects.requireNonNull(keyClass, "'keyClass' must not be null");
-		Objects.requireNonNull(valueClass, "'valueClass' must not be null");
-		Objects.requireNonNull(path, "'path' must not be null");
+//		Objects.requireNonNull(keyClass, "'keyClass' must not be null");
+//		Objects.requireNonNull(valueClass, "'valueClass' must not be null");
+//		Objects.requireNonNull(path, "'path' must not be null");
 		
 		this.keyClass = keyClass;
 		this.valueClass = valueClass;
