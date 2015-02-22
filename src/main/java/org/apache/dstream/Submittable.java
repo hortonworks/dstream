@@ -1,5 +1,7 @@
 package org.apache.dstream;
 
+import java.util.stream.Stream;
+
 import org.apache.dstream.io.OutputSpecification;
 
 /**
@@ -16,5 +18,5 @@ public interface Submittable<T> extends StageEntryPoint<T>{
 	 * @param outputSpec
 	 * @return
 	 */
-	public StreamExecutionContext<T> saveAs(OutputSpecification outputSpec);
+	public Stream<T> saveAs(OutputSpecification outputSpec);
 }

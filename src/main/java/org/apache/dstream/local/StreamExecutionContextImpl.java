@@ -32,7 +32,7 @@ public class StreamExecutionContextImpl<T> extends StreamExecutionContext<T> imp
 			return true;
 		} else if (source instanceof FsStreamableSource) {
 			@SuppressWarnings("rawtypes")
-			String protocol = ((FsStreamableSource)source).getPath().toUri().getScheme();
+			String protocol = ((FsStreamableSource)source).getScheme();
 			for (String supportedProtocol : this.supportedProtocols) {
 				if (supportedProtocol.equals(protocol)){
 					return true;

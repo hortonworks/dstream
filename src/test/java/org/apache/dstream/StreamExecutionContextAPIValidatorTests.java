@@ -30,24 +30,6 @@ import sun.reflect.generics.reflectiveObjects.TypeVariableImpl;
 @SuppressWarnings("unused")
 public class StreamExecutionContextAPIValidatorTests { 
 	
-//	public void foo() throws Exception {
-//		Stream<String> stream = null;
-//		
-//		Map<String, Integer> result =  stream
-//			.flatMap(s -> Stream.of(s.split("\\s+")))
-//			.collect(Collectors.<String, String, Integer>toMap(s -> s, s -> 1, Integer::sum));
-//			
-//			
-////		JavaRDD<String> lines = sc.textFile("hdfs://log.txt");
-////		JavaRDD<String> words =
-////		    lines.flatMap(line -> Arrays.asList(line.split(" ")));
-////		JavaPairRDD<String, Integer> counts =
-////		    words.mapToPair(w -> new Tuple2<String, Integer>(w, 1))
-////		         .reduceByKey((x, y) -> x + y);
-////		counts.saveAsTextFile("hdfs://counts.txt");
-//		
-//	}
-	
 	/**
 	 * This is the example of quintessential WordCount with a few extras.
 	 * See comments in line

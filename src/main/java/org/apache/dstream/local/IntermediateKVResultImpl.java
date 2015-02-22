@@ -9,7 +9,6 @@ import java.util.stream.Stream;
 import org.apache.dstream.IntermediateKVResult;
 import org.apache.dstream.IntermediateResult;
 import org.apache.dstream.Submittable;
-import org.apache.dstream.StreamExecutionContext;
 import org.apache.dstream.io.OutputSpecification;
 import org.apache.dstream.utils.Partitioner;
 import org.apache.dstream.utils.SerializableFunction;
@@ -20,12 +19,12 @@ public class IntermediateKVResultImpl<K, V> implements IntermediateKVResult<K,V>
 	
 	private final Logger logger = LoggerFactory.getLogger(IntermediateKVResultImpl.class);
 
-	@Override
-	public StreamExecutionContext<Entry<K, V>> saveAs(
-			OutputSpecification outputSpec) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	@Override
+//	public StreamExecutionContext<Entry<K, V>> saveAs(
+//			OutputSpecification outputSpec) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 
 	@Override
 	public int computeInt(
@@ -87,6 +86,12 @@ public class IntermediateKVResultImpl<K, V> implements IntermediateKVResult<K,V>
 	public Submittable<Entry<K, V>> partition(
 			SerializableFunction<Entry<K, V>, Integer> partitionerFunction,
 			BinaryOperator<V> mergeFunction) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Stream<Entry<K, V>> saveAs(OutputSpecification outputSpec) {
 		// TODO Auto-generated method stub
 		return null;
 	}

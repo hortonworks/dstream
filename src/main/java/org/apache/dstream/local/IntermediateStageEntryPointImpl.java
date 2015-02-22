@@ -61,10 +61,16 @@ public class IntermediateStageEntryPointImpl<T> implements Submittable<T> {
 	}
 
 	@Override
-	public StreamExecutionContext<T> saveAs(OutputSpecification outputSpec) {
+	public Stream<T> saveAs(OutputSpecification outputSpec) {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+//	@Override
+//	public StreamExecutionContext<T> saveAs(OutputSpecification outputSpec) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 
 	
 
