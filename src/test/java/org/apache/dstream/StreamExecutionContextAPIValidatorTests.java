@@ -39,7 +39,7 @@ public class StreamExecutionContextAPIValidatorTests {
 		ec.computePairs(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
-		  ).partition(3, Integer::sum)
+		  ).merge(3, Integer::sum)
 		   .saveAs(outputSpec);
 	}
 	
@@ -51,11 +51,11 @@ public class StreamExecutionContextAPIValidatorTests {
 		ec.<String, Integer>computePairs(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
-		  ).partition(3, Integer::sum)
+		  ).merge(3, Integer::sum)
 		   .computePairs(stream -> stream
 				   	 .filter(s -> true)
 				   	 .collect(Collectors.groupingBy(s -> s))
-		  ).partition(1, (a, b) -> a);
+		  ).merge(1, (a, b) -> a);
 	}
 	
 	public void computeBoolean() throws Exception {

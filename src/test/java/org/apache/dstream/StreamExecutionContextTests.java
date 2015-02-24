@@ -60,7 +60,7 @@ public class StreamExecutionContextTests {
 		ec.<String, Integer>computePairs(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)))
-		  .partition(3, Integer::sum)
+		  .merge(3, Integer::sum)
 		  .saveAs(outputSpec);
 	}
 	

@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.apache.dstream.IntermediateKVResult;
+import org.apache.dstream.Merger;
 import org.apache.dstream.IntermediateResult;
 import org.apache.dstream.StageEntryPoint;
 import org.apache.dstream.StreamExecutionContext;
@@ -94,7 +94,7 @@ public class StreamExecutionContextImpl<T> extends StreamExecutionContext<T> imp
 	}
 
 	@Override
-	public <K, V> IntermediateKVResult<K, V> computePairs(SerializableFunction<Stream<T>, Map<K, V>> function) {
+	public <K, V> Merger<K, V> computePairs(SerializableFunction<Stream<T>, Map<K, V>> function) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'computePairs' request");
 		}
@@ -102,7 +102,7 @@ public class StreamExecutionContextImpl<T> extends StreamExecutionContext<T> imp
 		Stage stage = new Stage(function);
 		this.dagContext.addStage(stage);
 	
-		return new IntermediateKVResultImpl<K, V>();
+		return new MergerImpl<K, V>();
 	}
 
 }

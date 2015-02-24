@@ -15,7 +15,7 @@ public interface StageEntryPoint<T> {
 	/**
 	 * Defines <b>intermediate</b> computation entry point (starting point for a new Stage/Vertex in a 
 	 * DAG-like implementation) for a {@link Stream} which produces KEY/VALUE pairs. Result of 
-	 * intermediate computation could be further reduced and/or partitioned via {@link IntermediateKVResult} 
+	 * intermediate computation could be further reduced and/or partitioned via {@link Merger} 
 	 * and forwarded to the next computation via {@link Submittable}.
 	 * 
 	 * <blockquote>
@@ -48,7 +48,7 @@ public interface StageEntryPoint<T> {
 
 	public abstract <R> IntermediateResult<R> computeCollection(SerializableFunction<Stream<T>, Collection<R>> function);
 	
-	public abstract <K,V> IntermediateKVResult<K,V> computePairs(SerializableFunction<Stream<T>, Map<K,V>> function);
+	public abstract <K,V> Merger<K,V> computePairs(SerializableFunction<Stream<T>, Map<K,V>> function);
 
 	
 	/**
