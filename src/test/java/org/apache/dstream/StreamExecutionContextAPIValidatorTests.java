@@ -31,25 +31,6 @@ import sun.reflect.generics.reflectiveObjects.TypeVariableImpl;
 @SuppressWarnings("unused")
 public class StreamExecutionContextAPIValidatorTests { 
 	
-	/**
-	 * This is the example of quintessential WordCount with a few extras.
-	 * See comments in line
-	 * 
-	 * @throws Exception
-	 */
-	
-	public void wordCount() throws Exception {
-		OutputSpecification outputSpec = null;
-		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		StreamExecutionContext<String> ec = StreamExecutionContext.of(TextSource.create(path));
-		
-		ec.<String, Integer>computePairs(stream -> stream
-					.flatMap(s -> Stream.of(s.split("\\s+")))
-					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)))
-		  .partition(3, Integer::sum)
-		  .saveAs(outputSpec);
-	}
-	
 	public void computePairs() throws Exception {
 		OutputSpecification outputSpec = null;
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");

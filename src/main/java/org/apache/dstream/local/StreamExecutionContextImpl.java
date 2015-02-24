@@ -93,10 +93,11 @@ public class StreamExecutionContextImpl<T> extends StreamExecutionContext<T> imp
 	}
 
 	@Override
-	public <K, V> IntermediateKVResult<K, V> computePairs(
-			SerializableFunction<Stream<T>, Map<K, V>> function) {
-		// TODO Auto-generated method stub
-		return null;
+	public <K, V> IntermediateKVResult<K, V> computePairs(SerializableFunction<Stream<T>, Map<K, V>> function) {
+		if (logger.isDebugEnabled()){
+			logger.debug("Accepted 'computePairs' request");
+		}
+		return new IntermediateKVResultImpl<K, V>();
 	}
 
 }
