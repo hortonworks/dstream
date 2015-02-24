@@ -2,8 +2,10 @@ package org.apache.dstream;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Stream;
 
+import org.apache.dstream.exec.StreamExecutor;
 import org.apache.dstream.io.OutputSpecification;
 import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;
@@ -17,10 +19,10 @@ public class IntermediateStageEntryPointImpl<T> implements Submittable<T> {
 	
 	private final Logger logger = LoggerFactory.getLogger(IntermediateStageEntryPointImpl.class);
 	
-	private final StreamExecutionContext<?> context;
+	private final StreamExecutionContext<T> executionContext;
 	
-	protected IntermediateStageEntryPointImpl(StreamExecutionContext<?> context){
-		this.context = context;
+	protected IntermediateStageEntryPointImpl(StreamExecutionContext<T> executionContext){
+		this.executionContext = executionContext;
 	}
 
 	@Override
@@ -54,12 +56,13 @@ public class IntermediateStageEntryPointImpl<T> implements Submittable<T> {
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <K, V> Merger<K, V> computePairs(SerializableFunction<Stream<T>, Map<K, V>> function) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'computePairs' request");
 		}
-		return new MergerImpl<K, V>(this.context);
+		return new MergerImpl<K, V>((StreamExecutionContext<Entry<K, V>>) this.executionContext);
 	}
 
 	@Override
@@ -67,8 +70,7 @@ public class IntermediateStageEntryPointImpl<T> implements Submittable<T> {
 		if (logger.isDebugEnabled()){
 			logger.debug("Submitting job. Output will be available at: " + outputSpec.getOutputPath());
 		}
-		//DagScheduler dagScheduler = 
-//		this.context
-		return null;
+		StreamExecutor<T> streamExecutor = this.executionContext.getStreamExecutor();
+		return streamExecutor.execute();
 	}
 }

@@ -4,11 +4,13 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.ServiceLoader;
 import java.util.stream.Stream;
 
 import org.apache.dstream.assembly.Stage;
 import org.apache.dstream.assembly.StreamAssembly;
+import org.apache.dstream.exec.StreamExecutor;
 import org.apache.dstream.io.StreamableSource;
 import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.ReflectionUtils;
@@ -27,7 +29,7 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 	
 	private volatile StreamableSource<T> source;
 	
-	protected final StreamAssembly dagContext = ReflectionUtils.newDefaultInstance(StreamAssembly.class);
+	protected final StreamAssembly streamAssembly = ReflectionUtils.newDefaultInstance(StreamAssembly.class);
 	
 	
 	/**
@@ -59,11 +61,11 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 			throw new IllegalStateException("No suitable execution context was found");
 		}
 		
-		ReflectionUtils.setFieldValue(suitableContext.dagContext, "jobName", jobName);
+		ReflectionUtils.setFieldValue(suitableContext.streamAssembly, "jobName", jobName);
 		if (logger.isDebugEnabled()){
 			logger.debug("DagContext jobName: " + jobName);
 		}
-		ReflectionUtils.setFieldValue(suitableContext.dagContext, "source", source);
+		ReflectionUtils.setFieldValue(suitableContext.streamAssembly, "source", source);
 		if (logger.isDebugEnabled()){
 			logger.debug("DagContext source: " + source);
 		}
@@ -79,6 +81,7 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 		return this.source;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public <K, V> Merger<K, V> computePairs(SerializableFunction<Stream<T>, Map<K, V>> function) {
 		if (logger.isDebugEnabled()){
@@ -86,9 +89,9 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 		}
 		
 		Stage stage = new Stage(function);
-		this.dagContext.addStage(stage);
+		this.streamAssembly.addStage(stage);
 	
-		return new MergerImpl<K, V>(this);
+		return new MergerImpl<K, V>((StreamExecutionContext<Entry<K, V>>) this);
 	}
 	
 	@Override
@@ -151,5 +154,5 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 	public abstract Stream<T> stream();
 	
 	
-	//public abstract void submit();
+	public abstract StreamExecutor<T> getStreamExecutor();
 }

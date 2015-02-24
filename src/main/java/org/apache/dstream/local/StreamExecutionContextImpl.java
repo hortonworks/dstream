@@ -1,19 +1,13 @@
 package org.apache.dstream.local;
 
 import java.io.InputStream;
-import java.util.Collection;
-import java.util.Map;
 import java.util.stream.Stream;
 
-import org.apache.dstream.Merger;
-import org.apache.dstream.IntermediateResult;
-import org.apache.dstream.StageEntryPoint;
 import org.apache.dstream.StreamExecutionContext;
-import org.apache.dstream.assembly.Stage;
+import org.apache.dstream.exec.StreamExecutor;
 import org.apache.dstream.io.FsStreamableSource;
 import org.apache.dstream.io.ListStreamableSource;
 import org.apache.dstream.io.StreamableSource;
-import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,5 +49,10 @@ public class StreamExecutionContextImpl<T> extends StreamExecutionContext<T> {
 	public Stream<T> stream() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public StreamExecutor<T> getStreamExecutor() {
+		return new StreamExecutorImpl<T>(this.streamAssembly);
 	}
 }

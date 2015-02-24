@@ -20,7 +20,7 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 
 	private final Logger logger = LoggerFactory.getLogger(MergerImpl.class);
 	
-	private transient final StreamExecutionContext<?> context;
+	private transient final StreamExecutionContext<Entry<K, V>> executionContext;
 	
 	private int partitionSize;
 
@@ -34,8 +34,8 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 	 * 
 	 * @param context
 	 */
-	protected MergerImpl(StreamExecutionContext<?> context){
-		this.context = context;
+	protected MergerImpl(StreamExecutionContext<Entry<K,V>> executionContext){
+		this.executionContext = executionContext;
 	}
 
 	@Override
@@ -45,8 +45,8 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 		}
 		this.partitionSize = partitionSize;
 		this.mergeFunction = mergeFunction;
-		this.context.dagContext.getLastStage().setMerger(this);
-		return new IntermediateStageEntryPointImpl<Entry<K,V>>(this.context);
+		this.executionContext.streamAssembly.getLastStage().setMerger(this);
+		return new IntermediateStageEntryPointImpl<Entry<K,V>>(this.executionContext);
 	}
 
 	@Override
@@ -56,8 +56,8 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 		}
 		this.partitioner = partitioner;
 		this.mergeFunction = mergeFunction;
-		this.context.dagContext.getLastStage().setMerger(this);
-		return new IntermediateStageEntryPointImpl<Entry<K,V>>(this.context);
+		this.executionContext.streamAssembly.getLastStage().setMerger(this);
+		return new IntermediateStageEntryPointImpl<Entry<K,V>>(this.executionContext);
 	}
 
 	@Override
@@ -68,8 +68,8 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 		}
 		this.partitionerFunction = partitionerFunction;
 		this.mergeFunction = mergeFunction;
-		this.context.dagContext.getLastStage().setMerger(this);
-		return new IntermediateStageEntryPointImpl<Entry<K,V>>(this.context);
+		this.executionContext.streamAssembly.getLastStage().setMerger(this);
+		return new IntermediateStageEntryPointImpl<Entry<K,V>>(this.executionContext);
 	}
 	
 	public int getPartitionSize() {

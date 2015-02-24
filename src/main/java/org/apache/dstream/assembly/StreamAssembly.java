@@ -1,6 +1,7 @@
 package org.apache.dstream.assembly;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.dstream.io.StreamableSource;
@@ -11,7 +12,7 @@ import org.slf4j.LoggerFactory;
 /**
  * 
  */
-public class StreamAssembly {
+public class StreamAssembly implements Iterable<Stage>{
 
 	private final Logger logger = LoggerFactory.getLogger(StreamAssembly.class);
 	
@@ -39,5 +40,10 @@ public class StreamAssembly {
 	
 	public Stage getLastStage(){
 		return stages.get(stages.size()-1);
+	}
+
+	@Override
+	public Iterator<Stage> iterator() {
+		return this.stages.iterator();
 	}
 }
