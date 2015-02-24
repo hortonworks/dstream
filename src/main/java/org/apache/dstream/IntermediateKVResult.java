@@ -15,7 +15,7 @@ import org.apache.dstream.utils.SerializableFunction;
  * @param <K>
  * @param <V>
  */
-public interface IntermediateKVResult<K,V> extends Submittable<Entry<K,V>> {
+public interface IntermediateKVResult<K,V> {//extends Submittable<Entry<K,V>> {
 	/**
 	 * Will partition the intermediate result using default {@link Partitioner} provided by the underlying execution environment.
 	 * When partitions are written the 'mergeFunction' will also be applied.

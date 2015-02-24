@@ -4,31 +4,47 @@ import java.nio.file.Path;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import org.apache.dstream.utils.Assert;
+
 public class TextSource extends KeyValueFsStreamableSource<Long, String> {
 	
-
-	private TextSource(Path path) {
+	/**
+	 * @param path
+	 */
+	private TextSource(Path... path) {
 		super(Long.class, String.class, new Supplier<Path[]>() {
 			@Override
 			public Path[] get() {
-				return new Path[]{path};
+				return path;
 			}
 		});	
 	}
 	
+	/**
+	 * @param sourceSupplier
+	 */
 	private TextSource(Supplier<Path[]> sourceSupplier) {
 		super(Long.class, String.class, sourceSupplier);	
 	}
 	
-	public static TextSource create(Path path) {
+	/**
+	 * Factory method to construct TextSource from the array of provided paths.
+	 * 
+	 * @param path
+	 */
+	public static TextSource create(Path... path) {
+		Assert.notEmpty(path);
 		return new TextSource(path);
 	}
 	
 	/**
-	 * Factory method which allows to create TextSource
+	 * Factory method to construct TextSource using a provided {@link Supplier}.
+	 * 
+	 * @param path
 	 */
 	public static TextSource create(Supplier<Path[]> sourceSupplier) {
-		return null;
+		Assert.notNull(sourceSupplier);
+		return new TextSource(sourceSupplier);
 	}
 
 	@Override

@@ -4,6 +4,8 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import org.apache.dstream.utils.Assert;
+
 /**
  * @param <K>
  * @param <V>
@@ -18,13 +20,14 @@ public abstract class KeyValueFsStreamableSource<K,V> implements StreamableSourc
 	private final String schema;
 	
 	protected KeyValueFsStreamableSource(Class<K> keyClass, Class<V> valueClass, Supplier<Path[]> sourceSupplier){
-		Objects.requireNonNull(keyClass, "'keyClass' must not be null");
-		Objects.requireNonNull(valueClass, "'valueClass' must not be null");
-		Objects.requireNonNull(sourceSupplier, "'sourceSupplier' must not be null");
+		Assert.notNull(keyClass, "'keyClass' must not be null");
+		Assert.notNull(valueClass, "'valueClass' must not be null");
+		Assert.notNull(sourceSupplier, "'sourceSupplier' must not be null");
 		
 		this.keyClass = keyClass;
 		this.valueClass = valueClass;
 		this.path = sourceSupplier.get();
+		Assert.notNull(this.path, "'sourceSupplier' resulted in null paths");
 		this.schema = this.path[0].toUri().getScheme();
 	}
 	
