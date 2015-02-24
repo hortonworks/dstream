@@ -1,6 +1,7 @@
 package org.apache.dstream.local;
 
 import org.apache.dstream.io.StreamableSource;
+import org.apache.dstream.io.TextSource;
 
 class SplitGenerationUtil {
 
@@ -12,6 +13,12 @@ class SplitGenerationUtil {
 	 * @param source
 	 */
 	public static <T> Split<T>[] generateSplits(StreamableSource<T> source){
-		return null;
+		Split<T>[] splits = null;
+		if (source instanceof TextSource){
+			splits = PourManTextFileSplitter.generateSplits((TextSource) source);
+		} else {
+			throw new UnsupportedOperationException("Source " + source + " is not currently supported");
+		}
+		return splits;
 	}
 }
