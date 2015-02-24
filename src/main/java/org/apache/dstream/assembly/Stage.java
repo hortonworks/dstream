@@ -1,6 +1,7 @@
 package org.apache.dstream.assembly;
 
 import java.io.Serializable;
+import java.util.stream.Stream;
 
 import org.apache.dstream.Merger;
 import org.apache.dstream.utils.SerializableFunction;
@@ -8,10 +9,10 @@ import org.apache.dstream.utils.SerializableFunction;
 /**
  * 
  */
-public class Stage implements Serializable {
+public class Stage<T,R> implements Serializable {
 	private static final long serialVersionUID = 5499538870738016508L;
 	
-	private final SerializableFunction<?, ?> stageFunction;
+	private final SerializableFunction<Stream<T>,R> stageFunction;
 
 	private volatile Merger<?,?> merger;
 
@@ -19,7 +20,7 @@ public class Stage implements Serializable {
 	 * 
 	 * @param stageFunction
 	 */
-	public Stage(SerializableFunction<?, ?> stageFunction){
+	public Stage(SerializableFunction<Stream<T>,R> stageFunction){
 		this.stageFunction = stageFunction;
 	}
 	
@@ -31,7 +32,7 @@ public class Stage implements Serializable {
 		return merger;
 	}
 	
-	public SerializableFunction<?, ?> getStageFunction() {
+	public SerializableFunction<Stream<T>,R> getStageFunction() {
 		return stageFunction;
 	}
 }

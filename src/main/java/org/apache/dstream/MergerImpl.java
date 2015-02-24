@@ -26,8 +26,6 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 
 	private BinaryOperator<V> mergeFunction;
 	
-	private Partitioner partitioner;
-	
 	private SerializableFunction<Entry<K, V>, Integer> partitionerFunction;
 	
 	/**
@@ -54,7 +52,12 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'merge' request with " + partitioner + " and merge function.");
 		}
-		this.partitioner = partitioner;
+		this.partitionerFunction = new SerializableFunction<Entry<K,V>, Integer>() {
+			@Override
+			public Integer apply(Entry<K, V> t) {
+				return partitioner.getPartition(t);
+			}
+		};
 		this.mergeFunction = mergeFunction;
 		this.executionContext.streamAssembly.getLastStage().setMerger(this);
 		return new IntermediateStageEntryPointImpl<Entry<K,V>>(this.executionContext);
@@ -78,10 +81,6 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 
 	public BinaryOperator<V> getMergeFunction() {
 		return mergeFunction;
-	}
-
-	public Partitioner getPartitioner() {
-		return partitioner;
 	}
 
 	public SerializableFunction<Entry<K, V>, Integer> getPartitionerFunction() {

@@ -17,8 +17,12 @@ public class Assert {
 	}
 	
 	public static <T> void notEmpty(T[] array) {
+		notEmpty(array, "'array' must not be null or empty");
+	}
+	
+	public static <T> void notEmpty(T[] array, String message) {
 		if (array == null || array.length == 0){
-			throw new IllegalArgumentException("'array' must not be null or empty");
+			throw new IllegalArgumentException(message);
 		}
 	}
 	

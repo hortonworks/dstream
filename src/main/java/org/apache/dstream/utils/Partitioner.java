@@ -1,6 +1,20 @@
 package org.apache.dstream.utils;
 
-public interface Partitioner {
+import java.io.Serializable;
 
-	<T> int getPartition(T input, int reduceTasks);
+public abstract class Partitioner implements Serializable {
+
+	private static final long serialVersionUID = -3799649258371438298L;
+
+	private final int partitionSize;
+	
+	public Partitioner(int partitionSize){
+		this.partitionSize = partitionSize;
+	}
+	
+	public abstract <T> int getPartition(T input);
+	
+	public int getPartitionSize() {
+		return partitionSize;
+	}
 }

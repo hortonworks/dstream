@@ -1,5 +1,6 @@
 package org.apache.dstream.assembly;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -7,10 +8,12 @@ import java.util.stream.Stream;
 
 import org.apache.dstream.utils.SerializableFunction;
 
-public class Task<T,R> {
-	private final SerializableFunction<Stream<T>, ?> function;
+public class Task<T,R> implements Serializable {
+	private static final long serialVersionUID = -1917576454386721759L;
 	
-	public Task(SerializableFunction<Stream<T>, ?> function) {
+	private final SerializableFunction<Stream<T>, R> function;
+	
+	public Task(SerializableFunction<Stream<T>, R> function) {
 		this.function = function;
 	}
 
@@ -26,5 +29,4 @@ public class Task<T,R> {
 			writer.write(null, (V) result);
 		}
 	}
-	
 }

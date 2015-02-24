@@ -8,7 +8,7 @@ import java.util.List;
 
 import org.apache.dstream.io.TextSource;
 
-public class PourManTexFileSplitter {
+public class PourManTextFileSplitter {
 
 	public static Split[] generateSplits(TextSource source) {
 		Path[] paths = source.getPath();

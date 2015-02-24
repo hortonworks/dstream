@@ -4,7 +4,7 @@ import java.util.stream.Stream;
 
 import org.apache.dstream.assembly.StreamAssembly;
 
-public abstract class StreamExecutor<T> {
+public abstract class StreamExecutor<R> {
 
 	protected final StreamAssembly streamAssembly;
 	
@@ -12,5 +12,5 @@ public abstract class StreamExecutor<T> {
 		this.streamAssembly = streamAssembly;
 	}
 	
-	public abstract Stream<T> execute();
+	public abstract <T> Stream<R> execute();
 }
