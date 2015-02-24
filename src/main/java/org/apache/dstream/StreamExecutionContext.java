@@ -7,8 +7,8 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.stream.Stream;
 
-import org.apache.dstream.dag.DagContext;
-import org.apache.dstream.dag.Stage;
+import org.apache.dstream.assembly.Stage;
+import org.apache.dstream.assembly.StreamAssembly;
 import org.apache.dstream.io.StreamableSource;
 import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.ReflectionUtils;
@@ -27,7 +27,7 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 	
 	private volatile StreamableSource<T> source;
 	
-	protected final DagContext dagContext = ReflectionUtils.newDefaultInstance(DagContext.class);
+	protected final StreamAssembly dagContext = ReflectionUtils.newDefaultInstance(StreamAssembly.class);
 	
 	
 	/**
@@ -88,7 +88,7 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 		Stage stage = new Stage(function);
 		this.dagContext.addStage(stage);
 	
-		return new MergerImpl<K, V>();
+		return new MergerImpl<K, V>(this);
 	}
 	
 	@Override
@@ -149,4 +149,7 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 	 * @return
 	 */
 	public abstract Stream<T> stream();
+	
+	
+	//public abstract void submit();
 }

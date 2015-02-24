@@ -16,6 +16,12 @@ import org.slf4j.LoggerFactory;
 public class IntermediateStageEntryPointImpl<T> implements Submittable<T> {
 	
 	private final Logger logger = LoggerFactory.getLogger(IntermediateStageEntryPointImpl.class);
+	
+	private final StreamExecutionContext<?> context;
+	
+	protected IntermediateStageEntryPointImpl(StreamExecutionContext<?> context){
+		this.context = context;
+	}
 
 	@Override
 	public int computeInt(SerializableFunction<Stream<T>, Integer> function) {
@@ -53,7 +59,7 @@ public class IntermediateStageEntryPointImpl<T> implements Submittable<T> {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'computePairs' request");
 		}
-		return new MergerImpl<K, V>();
+		return new MergerImpl<K, V>(this.context);
 	}
 
 	@Override
@@ -61,6 +67,8 @@ public class IntermediateStageEntryPointImpl<T> implements Submittable<T> {
 		if (logger.isDebugEnabled()){
 			logger.debug("Submitting job. Output will be available at: " + outputSpec.getOutputPath());
 		}
+		//DagScheduler dagScheduler = 
+//		this.context
 		return null;
 	}
 }

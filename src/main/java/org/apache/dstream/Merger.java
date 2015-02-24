@@ -1,5 +1,6 @@
 package org.apache.dstream;
 
+import java.io.Serializable;
 import java.util.Map.Entry;
 import java.util.function.BinaryOperator;
 
@@ -15,7 +16,7 @@ import org.apache.dstream.utils.SerializableFunction;
  * @param <K>
  * @param <V>
  */
-public interface Merger<K,V> {
+public interface Merger<K,V> extends Serializable {
 	/**
 	 * Will partition the intermediate result using default {@link Partitioner} provided by the underlying execution environment.
 	 * When partitions are written the 'mergeFunction' will also be applied.

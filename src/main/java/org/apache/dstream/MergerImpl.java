@@ -16,14 +16,37 @@ import org.slf4j.LoggerFactory;
  */
 public class MergerImpl<K, V> implements Merger<K,V> {
 	
+	private static final long serialVersionUID = 7020089231859026667L;
+
 	private final Logger logger = LoggerFactory.getLogger(MergerImpl.class);
+	
+	private transient final StreamExecutionContext<?> context;
+	
+	private int partitionSize;
+
+	private BinaryOperator<V> mergeFunction;
+	
+	private Partitioner partitioner;
+	
+	private SerializableFunction<Entry<K, V>, Integer> partitionerFunction;
+	
+	/**
+	 * 
+	 * @param context
+	 */
+	protected MergerImpl(StreamExecutionContext<?> context){
+		this.context = context;
+	}
 
 	@Override
 	public Submittable<Entry<K, V>> merge(int partitionSize, BinaryOperator<V> mergeFunction) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'merge' request for " + partitionSize + " partitions and merge function.");
 		}
-		return new IntermediateStageEntryPointImpl<Entry<K,V>>();
+		this.partitionSize = partitionSize;
+		this.mergeFunction = mergeFunction;
+		this.context.dagContext.getLastStage().setMerger(this);
+		return new IntermediateStageEntryPointImpl<Entry<K,V>>(this.context);
 	}
 
 	@Override
@@ -31,7 +54,10 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'merge' request with " + partitioner + " and merge function.");
 		}
-		return new IntermediateStageEntryPointImpl<Entry<K,V>>();
+		this.partitioner = partitioner;
+		this.mergeFunction = mergeFunction;
+		this.context.dagContext.getLastStage().setMerger(this);
+		return new IntermediateStageEntryPointImpl<Entry<K,V>>(this.context);
 	}
 
 	@Override
@@ -40,6 +66,25 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'merge' request with partitioner function and merge function.");
 		}
-		return new IntermediateStageEntryPointImpl<Entry<K,V>>();
+		this.partitionerFunction = partitionerFunction;
+		this.mergeFunction = mergeFunction;
+		this.context.dagContext.getLastStage().setMerger(this);
+		return new IntermediateStageEntryPointImpl<Entry<K,V>>(this.context);
+	}
+	
+	public int getPartitionSize() {
+		return partitionSize;
+	}
+
+	public BinaryOperator<V> getMergeFunction() {
+		return mergeFunction;
+	}
+
+	public Partitioner getPartitioner() {
+		return partitioner;
+	}
+
+	public SerializableFunction<Entry<K, V>, Integer> getPartitionerFunction() {
+		return partitionerFunction;
 	}
 }

@@ -9,7 +9,7 @@ import org.apache.dstream.Merger;
 import org.apache.dstream.IntermediateResult;
 import org.apache.dstream.StageEntryPoint;
 import org.apache.dstream.StreamExecutionContext;
-import org.apache.dstream.dag.Stage;
+import org.apache.dstream.assembly.Stage;
 import org.apache.dstream.io.FsStreamableSource;
 import org.apache.dstream.io.ListStreamableSource;
 import org.apache.dstream.io.StreamableSource;

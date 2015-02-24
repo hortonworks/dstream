@@ -1,4 +1,4 @@
-package org.apache.dstream.dag;
+package org.apache.dstream.assembly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,9 +11,9 @@ import org.slf4j.LoggerFactory;
 /**
  * 
  */
-public class DagContext {
+public class StreamAssembly {
 
-	private final Logger logger = LoggerFactory.getLogger(DagContext.class);
+	private final Logger logger = LoggerFactory.getLogger(StreamAssembly.class);
 	
 	private volatile String jobName;
 	
@@ -21,8 +21,12 @@ public class DagContext {
 	
 	private volatile StreamableSource<?> source;
 
-	private DagContext(){
+	private StreamAssembly(){
 		this.stages = new ArrayList<Stage>();
+	}
+	
+	public StreamableSource<?> getSource() {
+		return source;
 	}
 
 	public String getJobName() {
@@ -31,5 +35,9 @@ public class DagContext {
 	
 	public void addStage(Stage stage){
 		this.stages.add(stage);
+	}
+	
+	public Stage getLastStage(){
+		return stages.get(stages.size()-1);
 	}
 }
