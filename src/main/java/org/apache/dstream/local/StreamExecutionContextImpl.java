@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @param <T>
  */
-public class StreamExecutionContextImpl<T> extends StreamExecutionContext<T> implements StageEntryPoint<T> {
+public class StreamExecutionContextImpl<T> extends StreamExecutionContext<T> {
 	
 	private final Logger logger = LoggerFactory.getLogger(StreamExecutionContextImpl.class);
 	
@@ -43,11 +43,7 @@ public class StreamExecutionContextImpl<T> extends StreamExecutionContext<T> imp
 		return false;
 	}
 
-	@Override
-	public StreamableSource<T> getSource() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
 
 	@Override
 	public InputStream toInputStream() {
@@ -60,49 +56,4 @@ public class StreamExecutionContextImpl<T> extends StreamExecutionContext<T> imp
 		// TODO Auto-generated method stub
 		return null;
 	}
-
-	@Override
-	public int computeInt(SerializableFunction<Stream<T>, Integer> function) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public long computeLong(SerializableFunction<Stream<T>, Long> function) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public double computeDouble(SerializableFunction<Stream<T>, Double> function) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public boolean computeBoolean(
-			SerializableFunction<Stream<T>, Boolean> function) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public <R> IntermediateResult<R> computeCollection(
-			SerializableFunction<Stream<T>, Collection<R>> function) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public <K, V> Merger<K, V> computePairs(SerializableFunction<Stream<T>, Map<K, V>> function) {
-		if (logger.isDebugEnabled()){
-			logger.debug("Accepted 'computePairs' request");
-		}
-		
-		Stage stage = new Stage(function);
-		this.dagContext.addStage(stage);
-	
-		return new MergerImpl<K, V>();
-	}
-
 }

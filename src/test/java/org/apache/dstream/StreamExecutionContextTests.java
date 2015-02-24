@@ -8,8 +8,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.dstream.io.OutputSpecification;
+import org.apache.dstream.io.OutputSpecificationImpl;
 import org.apache.dstream.io.TextSource;
-import org.apache.dstream.local.OutputSpecificationImpl;
 import org.apache.dstream.local.StreamExecutionContextImpl;
 import org.apache.logging.log4j.util.Strings;
 import org.junit.Assert;

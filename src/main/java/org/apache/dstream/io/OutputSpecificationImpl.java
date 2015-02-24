@@ -1,10 +1,7 @@
-package org.apache.dstream.local;
+package org.apache.dstream.io;
 
 import java.nio.file.Path;
 import java.util.Objects;
-
-import org.apache.dstream.io.OutputSpecification;
-import org.apache.dstream.io.StreamableSource;
 
 public class OutputSpecificationImpl implements OutputSpecification {
 	

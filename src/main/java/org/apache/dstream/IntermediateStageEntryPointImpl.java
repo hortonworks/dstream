@@ -1,12 +1,9 @@
-package org.apache.dstream.local;
+package org.apache.dstream;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.apache.dstream.Merger;
-import org.apache.dstream.IntermediateResult;
-import org.apache.dstream.Submittable;
 import org.apache.dstream.io.OutputSpecification;
 import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;

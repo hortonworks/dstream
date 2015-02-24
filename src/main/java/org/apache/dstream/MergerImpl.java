@@ -1,10 +1,8 @@
-package org.apache.dstream.local;
+package org.apache.dstream;
 
 import java.util.Map.Entry;
 import java.util.function.BinaryOperator;
 
-import org.apache.dstream.Merger;
-import org.apache.dstream.Submittable;
 import org.apache.dstream.utils.Partitioner;
 import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;

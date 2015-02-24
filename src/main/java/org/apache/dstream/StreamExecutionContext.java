@@ -1,14 +1,18 @@
 package org.apache.dstream;
 
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.stream.Stream;
 
 import org.apache.dstream.dag.DagContext;
+import org.apache.dstream.dag.Stage;
 import org.apache.dstream.io.StreamableSource;
 import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.ReflectionUtils;
+import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
@@ -21,7 +25,7 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 	
 	private static final Logger logger = LoggerFactory.getLogger(StreamExecutionContext.class);
 	
-	protected volatile StreamableSource<T> source;
+	private volatile StreamableSource<T> source;
 	
 	protected final DagContext dagContext = ReflectionUtils.newDefaultInstance(DagContext.class);
 	
@@ -69,6 +73,56 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 	
 	/**
 	 * 
+	 * @return
+	 */
+	public StreamableSource<T> getSource() {
+		return this.source;
+	}
+	
+	@Override
+	public <K, V> Merger<K, V> computePairs(SerializableFunction<Stream<T>, Map<K, V>> function) {
+		if (logger.isDebugEnabled()){
+			logger.debug("Accepted 'computePairs' request");
+		}
+		
+		Stage stage = new Stage(function);
+		this.dagContext.addStage(stage);
+	
+		return new MergerImpl<K, V>();
+	}
+	
+	@Override
+	public int computeInt(SerializableFunction<Stream<T>, Integer> function) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public long computeLong(SerializableFunction<Stream<T>, Long> function) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public double computeDouble(SerializableFunction<Stream<T>, Double> function) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public boolean computeBoolean(SerializableFunction<Stream<T>, Boolean> function) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public <R> IntermediateResult<R> computeCollection(SerializableFunction<Stream<T>, Collection<R>> function) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	/**
+	 * 
 	 */
 	public String toString(){
 		return this.getClass().getSimpleName();
@@ -80,13 +134,6 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 	 * @return
 	 */
 	protected abstract boolean isSourceSupported(StreamableSource<T> source);
-
-	/**
-	 * Returns the source of this stream as {@link StreamableSource}
-	 * 
-	 * @return
-	 */
-	public abstract StreamableSource<T> getSource();
 	
 	/**
 	 * Returns the raw {@link InputStream} to the result data set.
