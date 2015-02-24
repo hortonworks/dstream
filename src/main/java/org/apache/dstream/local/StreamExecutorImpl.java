@@ -54,7 +54,7 @@ public class StreamExecutorImpl<R> extends StreamExecutor<R> {
 			Split<T>[] splits = SplitGenerationUtil.generateSplits(source);
 			Assert.notEmpty(splits, "Failed to generate splits from " + source);
 			
-			ShuffleWriterImpl shuffleWriter = this.createShuffleWriter();
+			ShuffleWriterImpl shuffleWriter = this.createShuffleWriter(stage);
 			Task<T, R> task = new Task<T, R>(stage.getStageFunction());
 				
 			AtomicReference<Exception> exception = new AtomicReference<>();
@@ -94,7 +94,7 @@ public class StreamExecutorImpl<R> extends StreamExecutor<R> {
 	 * 
 	 * @return
 	 */
-	private ShuffleWriterImpl createShuffleWriter(){
+	private ShuffleWriterImpl createShuffleWriter(Stage stage){
 		MergerImpl<?,?> merger = (MergerImpl<?,?>)stage.getMerger();
 		int partitionSize = merger.getPartitionSize();
 		Map<Integer, ConcurrentHashMap<?, ?>> partitions = new HashMap<>();
