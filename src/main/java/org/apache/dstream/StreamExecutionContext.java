@@ -2,11 +2,13 @@ package org.apache.dstream;
 
 import java.io.InputStream;
 import java.util.Iterator;
-import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.stream.Stream;
 
+import org.apache.dstream.dag.DagContext;
 import org.apache.dstream.io.StreamableSource;
+import org.apache.dstream.utils.Assert;
+import org.apache.dstream.utils.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
@@ -21,12 +23,17 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 	
 	protected volatile StreamableSource<T> source;
 	
+	protected final DagContext dagContext = ReflectionUtils.newDefaultInstance(DagContext.class);
+	
+	
 	/**
 	 * Factory method that will return implementation of this {@link StreamExecutionContext}
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static <T> StreamExecutionContext<T> of(StreamableSource<T> source) {
-		Objects.requireNonNull(source, "Streamable source must not be null");
+	public static <T> StreamExecutionContext<T> of(String jobName, StreamableSource<T> source) {
+		Assert.notNull(source, "Streamable source must not be null");
+		Assert.notEmpty(jobName, "'jobName' must not be null or empty");
+		
 		ServiceLoader<StreamExecutionContext> sl = ServiceLoader.load(StreamExecutionContext.class, ClassLoader.getSystemClassLoader());
 		Iterator<StreamExecutionContext> iter = sl.iterator();
 		StreamExecutionContext<T> suitableContext = null;
@@ -46,6 +53,15 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 		}
 		if (suitableContext == null){
 			throw new IllegalStateException("No suitable execution context was found");
+		}
+		
+		ReflectionUtils.setFieldValue(suitableContext.dagContext, "jobName", jobName);
+		if (logger.isDebugEnabled()){
+			logger.debug("DagContext jobName: " + jobName);
+		}
+		ReflectionUtils.setFieldValue(suitableContext.dagContext, "source", source);
+		if (logger.isDebugEnabled()){
+			logger.debug("DagContext source: " + source);
 		}
 		
 		return suitableContext;

@@ -9,6 +9,7 @@ import org.apache.dstream.IntermediateKVResult;
 import org.apache.dstream.IntermediateResult;
 import org.apache.dstream.StageEntryPoint;
 import org.apache.dstream.StreamExecutionContext;
+import org.apache.dstream.dag.Stage;
 import org.apache.dstream.io.FsStreamableSource;
 import org.apache.dstream.io.ListStreamableSource;
 import org.apache.dstream.io.StreamableSource;
@@ -97,6 +98,10 @@ public class StreamExecutionContextImpl<T> extends StreamExecutionContext<T> imp
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'computePairs' request");
 		}
+		
+		Stage stage = new Stage(function);
+		this.dagContext.addStage(stage);
+	
 		return new IntermediateKVResultImpl<K, V>();
 	}
 

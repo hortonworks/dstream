@@ -34,7 +34,7 @@ public class StreamExecutionContextTests {
 	@Test
 	public void validateNullSourceException() throws Exception {
 		try {
-			StreamExecutionContext.of(null);
+			StreamExecutionContext.of("foo", null);
 			Assert.fail();
 		} catch (NullPointerException e) {
 			Assert.assertTrue(Strings.isNotEmpty(e.getMessage()));
@@ -44,7 +44,7 @@ public class StreamExecutionContextTests {
 	@Test
 	public void validateExecutionContextFound() throws Exception {
 		Path path = this.fs.getPath("src/test/java/org/apache/dstream/sample.txt");
-		Object executionContext = StreamExecutionContext.of(TextSource.create(path));
+		Object executionContext = StreamExecutionContext.of("foo", TextSource.create(path));
 		Assert.assertNotNull(executionContext);
 		Assert.assertTrue(executionContext instanceof StreamExecutionContextImpl);
 	}
@@ -55,7 +55,7 @@ public class StreamExecutionContextTests {
 	@Test
 	public void fsWordCount() throws Exception {
 		OutputSpecification outputSpec = new OutputSpecificationImpl(this.fs.getPath("src/test/java/org/apache/dstream/out"));
-		StreamExecutionContext<String> ec = StreamExecutionContext.of(TextSource.create(this.fs.getPath("src/test/java/org/apache/dstream/sample.txt")));
+		StreamExecutionContext<String> ec = StreamExecutionContext.of("WordCount", TextSource.create(this.fs.getPath("src/test/java/org/apache/dstream/sample.txt")));
 		
 		ec.<String, Integer>computePairs(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))

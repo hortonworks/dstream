@@ -34,7 +34,7 @@ public class StreamExecutionContextAPIValidatorTests {
 	public void computePairs() throws Exception {
 		OutputSpecification outputSpec = null;
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		StreamExecutionContext<String> ec = StreamExecutionContext.of(TextSource.create(path));
+		StreamExecutionContext<String> ec = StreamExecutionContext.of("foo", TextSource.create(path));
 		
 		ec.computePairs(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
@@ -46,7 +46,7 @@ public class StreamExecutionContextAPIValidatorTests {
 	public void computePairsWithContinuation() throws Exception {
 		OutputSpecification outputSpec = null;
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		StreamExecutionContext<String> ec = StreamExecutionContext.of(TextSource.create(path));
+		StreamExecutionContext<String> ec = StreamExecutionContext.of("foo", TextSource.create(path));
 		
 		ec.<String, Integer>computePairs(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
@@ -60,7 +60,7 @@ public class StreamExecutionContextAPIValidatorTests {
 	
 	public void computeBoolean() throws Exception {
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		boolean result = StreamExecutionContext.of(TextSource.create(path))
+		boolean result = StreamExecutionContext.of("foo", TextSource.create(path))
 				.computeBoolean(stream -> !stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
@@ -70,7 +70,7 @@ public class StreamExecutionContextAPIValidatorTests {
 	
 	public void computeInt() throws Exception {
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		int result = StreamExecutionContext.of(TextSource.create(path))
+		int result = StreamExecutionContext.of("foo", TextSource.create(path))
 				.computeInt(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
@@ -80,7 +80,7 @@ public class StreamExecutionContextAPIValidatorTests {
 	
 	public void computeLong() throws Exception {
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		long result = StreamExecutionContext.of(TextSource.create(path))
+		long result = StreamExecutionContext.of("foo", TextSource.create(path))
 				.computeLong(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.count()

@@ -37,6 +37,11 @@ public class TextSource extends KeyValueFsStreamableSource<Long, String> {
 		return new TextSource(path);
 	}
 	
+	public String toString(){
+		String superValue = super.toString();
+		return superValue + " key/value:[Long/String];"; 
+	}
+	
 	/**
 	 * Factory method to construct TextSource using a provided {@link Supplier}.
 	 * 

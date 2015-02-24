@@ -22,6 +22,27 @@ public class Assert {
 		}
 	}
 	
+	public static void notEmpty(String string, String message) {
+		if (string == null || string.trim().length() == 0){
+			throw new IllegalArgumentException(message);
+		}
+	}
+	
+	public static boolean isTrue(boolean _true){
+		return isTrue(_true, "Result of boolean expression is not true");
+	}
+	
+	public static boolean isTrue(boolean _true, String message){
+		if (!_true){
+			throw new IllegalStateException(message);
+		}
+		return true;
+	}
+	
+	public static void notEmpty(String string) {
+		notEmpty(string, "'string' must not be null or empty");
+	}
+	
 	public static <T> void notNull(T object) {
 		notNull(object, "'object' must not be null");
 	}

@@ -42,6 +42,6 @@ public abstract class KeyValueFsStreamableSource<K,V> implements StreamableSourc
 	}
 	
 	public String toString(){
-		return this.getClass().getSimpleName();
+		return this.getClass().getSimpleName() + "; scheme:[" + this.getScheme() + "];";
 	}
 }
