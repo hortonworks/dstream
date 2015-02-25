@@ -29,8 +29,8 @@ public class Task<T,R> implements Serializable {
 
 	@SuppressWarnings("unchecked")
 	public <K,V> void execute(Stream<T> stream, ShuffleWriter<K, V> writer) {
-		if (logger.isInfoEnabled()){
-			logger.info("Executing task");
+		if (logger.isDebugEnabled()){
+			logger.debug("Executing task");
 		}
 		// executes user function
 		Object result = this.function.apply(stream);

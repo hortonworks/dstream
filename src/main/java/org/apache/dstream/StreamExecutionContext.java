@@ -1,8 +1,10 @@
 package org.apache.dstream;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.ServiceLoader;
@@ -11,6 +13,8 @@ import java.util.stream.Stream;
 import org.apache.dstream.assembly.Stage;
 import org.apache.dstream.assembly.StreamAssembly;
 import org.apache.dstream.exec.StreamExecutor;
+import org.apache.dstream.io.FsStreamableSource;
+import org.apache.dstream.io.ListStreamableSource;
 import org.apache.dstream.io.StreamableSource;
 import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.ReflectionUtils;
@@ -31,6 +35,8 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 	
 	protected final StreamAssembly streamAssembly = ReflectionUtils.newDefaultInstance(StreamAssembly.class);
 	
+	protected final List<String> supportedProtocols = new ArrayList<String>();
+	
 	
 	/**
 	 * Factory method that will return implementation of this {@link StreamExecutionContext}
@@ -47,7 +53,7 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 			StreamExecutionContext context = iter.next();
 			if (context.isSourceSupported(source)){
 				if (logger.isInfoEnabled()){
-					logger.info("Loading execution context: " + context + " which supports '" + source);
+					logger.info("Loaded " + context + " to process source: " + source);
 				}
 				suitableContext = context;
 			} else {
@@ -63,11 +69,11 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 		
 		ReflectionUtils.setFieldValue(suitableContext.streamAssembly, "jobName", jobName);
 		if (logger.isDebugEnabled()){
-			logger.debug("DagContext jobName: " + jobName);
+			logger.debug("StreamAssembly jobName: " + jobName);
 		}
 		ReflectionUtils.setFieldValue(suitableContext.streamAssembly, "source", source);
 		if (logger.isDebugEnabled()){
-			logger.debug("DagContext source: " + source);
+			logger.debug("StreamAssembly source: " + source);
 		}
 		
 		return suitableContext;
@@ -136,7 +142,20 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 	 * @param source
 	 * @return
 	 */
-	protected abstract boolean isSourceSupported(StreamableSource<T> source);
+	protected boolean isSourceSupported(StreamableSource<T> source){
+		if (source instanceof ListStreamableSource){
+			return true;
+		} else if (source instanceof FsStreamableSource) {
+			@SuppressWarnings("rawtypes")
+			String protocol = ((FsStreamableSource)source).getScheme();
+			for (String supportedProtocol : this.supportedProtocols) {
+				if (supportedProtocol.equals(protocol)){
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 	
 	/**
 	 * Returns the raw {@link InputStream} to the result data set.

@@ -39,7 +39,7 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 	@Override
 	public Submittable<Entry<K, V>> merge(int partitionSize, BinaryOperator<V> mergeFunction) {
 		if (logger.isDebugEnabled()){
-			logger.debug("Accepted 'merge' request for " + partitionSize + " partitions and merge function.");
+			logger.debug("Accepted 'merge' request for " + partitionSize + " partitions.");
 		}
 		this.partitionSize = partitionSize;
 		this.mergeFunction = mergeFunction;
@@ -58,7 +58,7 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 	@Override
 	public Submittable<Entry<K, V>> merge(Partitioner partitioner, BinaryOperator<V> mergeFunction) {
 		if (logger.isDebugEnabled()){
-			logger.debug("Accepted 'merge' request with " + partitioner + " and merge function.");
+			logger.debug("Accepted 'merge' request with " + partitioner + ".");
 		}
 		this.partitionerFunction = new SerializableFunction<Entry<K, V>, Integer>() {
 			private static final long serialVersionUID = 6530880100257370609L;
@@ -76,7 +76,7 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 	public Submittable<Entry<K, V>> merge(SerializableFunction<Entry<K, V>, Integer> partitionerFunction,
 			BinaryOperator<V> mergeFunction) {
 		if (logger.isDebugEnabled()){
-			logger.debug("Accepted 'merge' request with partitioner function and merge function.");
+			logger.debug("Accepted 'merge' request with partitioner function.");
 		}
 		this.partitionerFunction = partitionerFunction;
 		this.mergeFunction = mergeFunction;

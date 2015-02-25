@@ -5,9 +5,6 @@ import java.util.stream.Stream;
 
 import org.apache.dstream.StreamExecutionContext;
 import org.apache.dstream.exec.StreamExecutor;
-import org.apache.dstream.io.FsStreamableSource;
-import org.apache.dstream.io.ListStreamableSource;
-import org.apache.dstream.io.StreamableSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,25 +16,12 @@ public class StreamExecutionContextImpl<T> extends StreamExecutionContext<T> {
 	
 	private final Logger logger = LoggerFactory.getLogger(StreamExecutionContextImpl.class);
 	
-	private final String[] supportedProtocols = new String[]{"file"};
-
-	@Override
-	protected boolean isSourceSupported(StreamableSource<T> source) {
-		if (source instanceof ListStreamableSource){
-			return true;
-		} else if (source instanceof FsStreamableSource) {
-			@SuppressWarnings("rawtypes")
-			String protocol = ((FsStreamableSource)source).getScheme();
-			for (String supportedProtocol : this.supportedProtocols) {
-				if (supportedProtocol.equals(protocol)){
-					return true;
-				}
-			}
+	public StreamExecutionContextImpl(){
+		this.supportedProtocols.add("file");
+		if (logger.isInfoEnabled()){
+			logger.info("Created instance of StreamExecutionContext[" + this.getClass().getName() + "]; Supported protocols: " + this.supportedProtocols);
 		}
-		return false;
 	}
-
-	
 
 	@Override
 	public InputStream toInputStream() {
