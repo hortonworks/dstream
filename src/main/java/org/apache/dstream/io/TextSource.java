@@ -1,8 +1,11 @@
 package org.apache.dstream.io;
 
+import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+
 
 import org.apache.dstream.utils.Assert;
 
@@ -29,17 +32,25 @@ public class TextSource extends KeyValueFsStreamableSource<Long, String> {
 	
 	/**
 	 * Factory method to construct TextSource from the array of provided paths.
+	 * This method will validate the actual existence of the resources identified by the paths. 
 	 * 
 	 * @param path
 	 */
 	public static TextSource create(Path... path) {
 		Assert.notEmpty(path);
+		Arrays.stream(path).forEach(p -> {
+			try {
+				p.getFileSystem().provider().checkAccess(p);
+			} catch (Exception e) {
+				throw new IllegalStateException("Failed to create TextSource", e);
+			}
+		});
 		return new TextSource(path);
 	}
 	
 	public String toString(){
 		String superValue = super.toString();
-		return superValue + " key/value:[Long/String];"; 
+		return superValue + " key/value:[Long/String]; " + Arrays.asList(this.getPath()); 
 	}
 	
 	/**

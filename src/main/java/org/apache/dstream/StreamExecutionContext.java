@@ -37,6 +37,8 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 	
 	protected final List<String> supportedProtocols = new ArrayList<String>();
 	
+	private int stageIdCounter;
+	
 	
 	/**
 	 * Factory method that will return implementation of this {@link StreamExecutionContext}
@@ -94,7 +96,7 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
 			logger.debug("Accepted 'computePairs' request");
 		}
 		
-		Stage stage = new Stage(function);
+		Stage stage = new Stage(function, stageIdCounter++);
 		this.streamAssembly.addStage(stage);
 	
 		return new MergerImpl<K, V>((StreamExecutionContext<Entry<K, V>>) this);

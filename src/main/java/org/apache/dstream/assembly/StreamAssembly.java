@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.dstream.io.OutputSpecification;
 import org.apache.dstream.io.StreamableSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,8 @@ public class StreamAssembly implements Iterable<Stage>{
 	private volatile List<Stage> stages;
 	
 	private volatile StreamableSource<?> source;
+	
+	private volatile OutputSpecification outputSpecification;
 
 	private StreamAssembly(){
 		this.stages = new ArrayList<Stage>();
@@ -45,5 +48,17 @@ public class StreamAssembly implements Iterable<Stage>{
 	@Override
 	public Iterator<Stage> iterator() {
 		return this.stages.iterator();
+	}
+	
+	public int getStageCount(){
+		return stages.size();
+	}
+	
+	public OutputSpecification getOutputSpecification() {
+		return outputSpecification;
+	}
+
+	public void setOutputSpecification(OutputSpecification outputSpecification) {
+		this.outputSpecification = outputSpecification;
 	}
 }

@@ -15,13 +15,16 @@ public class Stage<T,R> implements Serializable {
 	private final SerializableFunction<Stream<T>,R> stageFunction;
 
 	private volatile Merger<?,?> merger;
+	
+	private final int stageId;
 
 	/**
 	 * 
 	 * @param stageFunction
 	 */
-	public Stage(SerializableFunction<Stream<T>,R> stageFunction){
+	public Stage(SerializableFunction<Stream<T>,R> stageFunction, int stageId){
 		this.stageFunction = stageFunction;
+		this.stageId = stageId;
 	}
 	
 	public void setMerger(Merger<?, ?> merger) {
@@ -34,5 +37,9 @@ public class Stage<T,R> implements Serializable {
 	
 	public SerializableFunction<Stream<T>,R> getStageFunction() {
 		return stageFunction;
+	}
+	
+	public int getStageId() {
+		return stageId;
 	}
 }
