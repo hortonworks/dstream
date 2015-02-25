@@ -7,8 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.dstream.io.TextSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PourManTextFileSplitter {
+	
+	private static Logger logger = LoggerFactory.getLogger(PourManTextFileSplitter.class);
 
 	public static Split[] generateSplits(TextSource source) {
 		Path[] paths = source.getPath();
@@ -23,6 +27,7 @@ public class PourManTextFileSplitter {
 		List<Split> offsets = new ArrayList<Split>();
 
 		FileInputStream fis = null;
+		int commonSplitCounter = 0;
 		try {
 			
 			for (Path path : paths) {
@@ -41,7 +46,10 @@ public class PourManTextFileSplitter {
 					}
 					int length = (int) (splits + overlayCounter);
 					if (!(start >= fileLength)) {
-						System.out.println("Split " + i + " - " + start + "/" + length);
+						if (logger.isDebugEnabled()){
+							logger.debug("Split " + commonSplitCounter++ + " - " + start + "/" + length);
+						}
+						
 						Split split = new Split(file, start, length);
 						offsets.add(split);
 						start += length;

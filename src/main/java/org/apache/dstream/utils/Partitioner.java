@@ -1,8 +1,9 @@
 package org.apache.dstream.utils;
 
 import java.io.Serializable;
+import java.util.Map.Entry;
 
-public abstract class Partitioner implements Serializable {
+public abstract class Partitioner<K,V> implements Serializable {
 
 	private static final long serialVersionUID = -3799649258371438298L;
 
@@ -12,7 +13,7 @@ public abstract class Partitioner implements Serializable {
 		this.partitionSize = partitionSize;
 	}
 	
-	public abstract <T> int getPartition(T input);
+	public abstract int getPartition(Entry<K,V> input);
 	
 	public int getPartitionSize() {
 		return partitionSize;

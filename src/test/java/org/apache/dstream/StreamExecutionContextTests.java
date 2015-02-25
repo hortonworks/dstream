@@ -58,10 +58,14 @@ public class StreamExecutionContextTests {
 		StreamExecutionContext<String> ec = StreamExecutionContext.of("WordCount", TextSource.create(this.fs.getPath("src/test/java/org/apache/dstream/sample.txt")));
 		
 		ec.<String, Integer>computePairs(stream -> stream
-					.flatMap(s -> Stream.of(s.split("\\s+")))
+					.flatMap(s -> {
+							System.out.println("flatMap: " + s);
+							return Stream.of(s.split("\\s+"));
+						}
+						)
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)))
 		  .merge(3, Integer::sum)
-		  .saveAs(outputSpec);
+		  .saveAs(outputSpec).forEach(System.out::println);
 	}
 	
 }

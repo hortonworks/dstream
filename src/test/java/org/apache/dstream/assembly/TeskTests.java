@@ -1,6 +1,7 @@
 package org.apache.dstream.assembly;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,8 +42,8 @@ public class TeskTests {
 	public static class MyShuffWriter<K,V> implements ShuffleWriter<K, V> {
 
 		@Override
-		public void write(K key, V value) {
-			System.out.println(key + " - " + value);
+		public void write(Entry<K, V> pair) {
+			System.out.println(pair.getKey() + " - " + pair.getValue());
 		}
 		
 	}

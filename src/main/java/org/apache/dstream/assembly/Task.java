@@ -7,9 +7,19 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.apache.dstream.utils.SerializableFunction;
+import org.apache.dstream.utils.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * 
+ * @param <T>
+ * @param <R>
+ */
 public class Task<T,R> implements Serializable {
 	private static final long serialVersionUID = -1917576454386721759L;
+	
+	private Logger logger = LoggerFactory.getLogger(Task.class);
 	
 	private final SerializableFunction<Stream<T>, R> function;
 	
@@ -19,14 +29,21 @@ public class Task<T,R> implements Serializable {
 
 	@SuppressWarnings("unchecked")
 	public <K,V> void execute(Stream<T> stream, ShuffleWriter<K, V> writer) {
+		if (logger.isInfoEnabled()){
+			logger.info("Executing task");
+		}
 		Object result = function.apply(stream);
 		if (result instanceof Map){
-			System.out.println("Result is Map: " + result);
+			if (logger.isDebugEnabled()){
+				logger.debug("Result is Map: " + result);
+			}
 			Set<Entry<K,V>> entry = ((Map<K,V>)result).entrySet();	
-			entry.forEach(s -> writer.write(s.getKey(), s.getValue()));
+			entry.forEach(s -> writer.write(s));
 		} else {
-			System.out.println("Result is terminal");
-			writer.write(null, (V) result);
+			if (logger.isDebugEnabled()){
+				logger.debug("Result is terminal value: " + result);
+			}
+			writer.write((Entry<K, V>) Utils.toEntry(null, result));
 		}
 	}
 }

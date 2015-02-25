@@ -33,7 +33,7 @@ public class StreamExecutorImpl<R> extends StreamExecutor<R> {
 
 	private final Logger logger = LoggerFactory.getLogger(StreamExecutorImpl.class);
 	
-	private ExecutorService executor;
+	private final ExecutorService executor = Executors.newCachedThreadPool();
 	
 	public StreamExecutorImpl(StreamAssembly streamAssembly) {
 		super(streamAssembly);
@@ -42,52 +42,57 @@ public class StreamExecutorImpl<R> extends StreamExecutor<R> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> Stream<R> execute() {
-		if (logger.isInfoEnabled()){
-			logger.info("Executing " + this.streamAssembly.getJobName());
-		}
-		
-		StreamableSource<T> source = (StreamableSource<T>) this.streamAssembly.getSource();
-		this.executor = Executors.newCachedThreadPool();
-		ShuffleWriterImpl finalShuffle = null;
-		
-		for (Stage<T,R> stage : this.streamAssembly) {
-			Split<T>[] splits = SplitGenerationUtil.generateSplits(source);
-			Assert.notEmpty(splits, "Failed to generate splits from " + source);
+		try {
+			if (logger.isInfoEnabled()){
+				logger.info("Executing " + this.streamAssembly.getJobName());
+			}
 			
-			ShuffleWriterImpl shuffleWriter = this.createShuffleWriter(stage);
-			Task<T, R> task = new Task<T, R>(stage.getStageFunction());
+			StreamableSource<T> source = (StreamableSource<T>) this.streamAssembly.getSource();
+		
+			ShuffleWriterImpl finalShuffle = null;
+			
+			for (Stage<T,R> stage : this.streamAssembly) {
+				Split<T>[] splits = SplitGenerationUtil.generateSplits(source);
+				Assert.notEmpty(splits, "Failed to generate splits from " + source);
 				
-			AtomicReference<Exception> exception = new AtomicReference<>();
-			CountDownLatch taskCompletionLatch = new CountDownLatch(splits.length);	
-			for (Split<T> split : splits) {
-				this.executor.execute(new Runnable() {
-					@Override
-					public void run() {
-						try {
-							task.execute(split.toStream(), shuffleWriter);
-						} catch (Exception e) {
-							e.printStackTrace();
-							exception.set(e);
-						} finally {
-							taskCompletionLatch.countDown();
+				ShuffleWriterImpl shuffleWriter = this.createShuffleWriter(stage);
+				Task<T, R> task = new Task<T, R>(stage.getStageFunction());
+					
+				AtomicReference<Exception> exception = new AtomicReference<>();
+				CountDownLatch taskCompletionLatch = new CountDownLatch(splits.length);	
+				for (Split<T> split : splits) {
+					this.executor.execute(new Runnable() {
+						@Override
+						public void run() {
+							try {
+								task.execute(split.toStream(), shuffleWriter);
+							} catch (Exception e) {
+								e.printStackTrace();
+								exception.set(e);
+							} finally {
+								taskCompletionLatch.countDown();
+							}
 						}
-					}
-				});
-			}
-			try {
-				taskCompletionLatch.await();
-				if (exception.get() != null){
-					throw new IllegalStateException("Failed to execute stream", exception.get());
+					});
 				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-				Thread.currentThread().interrupt();
+				try {
+					taskCompletionLatch.await();
+					if (exception.get() != null){
+						throw new IllegalStateException("Failed to execute stream", exception.get());
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+					Thread.currentThread().interrupt();
+				}
+				source = shuffleWriter.toStreamableSource();
+				finalShuffle = shuffleWriter;
 			}
-			source = shuffleWriter.toStreamableSource();
-			finalShuffle = shuffleWriter;
+			
+			return finalShuffle.toStreamableSource().toStream();
+		} finally {
+			this.executor.shutdown();
 		}
 		
-		return finalShuffle.toStreamableSource().toStream();
 	}
 	
 	/**

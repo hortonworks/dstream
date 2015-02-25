@@ -43,6 +43,14 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 		}
 		this.partitionSize = partitionSize;
 		this.mergeFunction = mergeFunction;
+		Partitioner defaultPartitioner = new DefaultPartitioner(this.partitionSize);
+		this.partitionerFunction = new SerializableFunction<Entry<K, V>, Integer>() {
+			private static final long serialVersionUID = -8996083508793084950L;
+			@Override
+			public Integer apply(Entry<K, V> t) {
+				return defaultPartitioner.getPartition(t);
+			}
+		};
 		this.executionContext.streamAssembly.getLastStage().setMerger(this);
 		return new IntermediateStageEntryPointImpl<Entry<K,V>>(this.executionContext);
 	}
@@ -52,7 +60,8 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'merge' request with " + partitioner + " and merge function.");
 		}
-		this.partitionerFunction = new SerializableFunction<Entry<K,V>, Integer>() {
+		this.partitionerFunction = new SerializableFunction<Entry<K, V>, Integer>() {
+			private static final long serialVersionUID = 6530880100257370609L;
 			@Override
 			public Integer apply(Entry<K, V> t) {
 				return partitioner.getPartition(t);
@@ -85,5 +94,22 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 
 	public SerializableFunction<Entry<K, V>, Integer> getPartitionerFunction() {
 		return partitionerFunction;
+	}
+	
+	/**
+	 * 
+	 */
+	private class DefaultPartitioner extends Partitioner<K,V> {
+		private static final long serialVersionUID = -7960042449579121912L;
+
+		public DefaultPartitioner(int partitionSize) {
+			super(partitionSize);
+		}
+
+		@Override
+		public int getPartition(Entry<K,V> input) {
+			return (input.getKey().hashCode() & Integer.MAX_VALUE) % partitionSize;
+		}
+		
 	}
 }
