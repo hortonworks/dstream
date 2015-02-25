@@ -1,5 +1,6 @@
 package org.apache.dstream;
 
+import java.io.Closeable;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,7 +28,7 @@ import org.slf4j.LoggerFactory;
  *
  * @param <T>
  */
-public abstract class StreamExecutionContext<T> implements StageEntryPoint<T> {
+public abstract class StreamExecutionContext<T> implements StageEntryPoint<T>, Closeable {
 	
 	private static final Logger logger = LoggerFactory.getLogger(StreamExecutionContext.class);
 	

@@ -61,4 +61,8 @@ public class StreamAssembly implements Iterable<Stage>{
 	public void setOutputSpecification(OutputSpecification outputSpecification) {
 		this.outputSpecification = outputSpecification;
 	}
+	
+	public String toString(){
+		return this.jobName + " - Stages:[" + stages.size() + "]";
+	}
 }

@@ -1,5 +1,6 @@
 package org.apache.dstream.local;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.stream.Stream;
 
@@ -38,5 +39,11 @@ public class StreamExecutionContextImpl<T> extends StreamExecutionContext<T> {
 	@Override
 	public StreamExecutor<T> getStreamExecutor() {
 		return new StreamExecutorImpl<T>(this.streamAssembly);
+	}
+
+	@Override
+	public void close() throws IOException {
+		// TODO Auto-generated method stub
+		
 	}
 }
