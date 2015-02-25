@@ -32,7 +32,9 @@ public class Task<T,R> implements Serializable {
 		if (logger.isInfoEnabled()){
 			logger.info("Executing task");
 		}
-		Object result = function.apply(stream);
+		// executes user function
+		Object result = this.function.apply(stream);
+		//
 		if (result instanceof Map){
 			if (logger.isDebugEnabled()){
 				logger.debug("Result is Map: " + result);
