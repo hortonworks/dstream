@@ -1,10 +1,11 @@
 package org.apache.dstream.io;
 
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import org.apache.dstream.utils.Assert;
+import org.apache.dstream.utils.SerializableFunction;
 
 /**
  * @param <K>
@@ -18,6 +19,8 @@ public abstract class KeyValueFsStreamableSource<K,V> implements StreamableSourc
 	protected final Path[] path;
 	
 	private final String schema;
+	
+	private SerializableFunction<Stream<?>, Stream<?>> preProcessFunction;
 	
 	protected KeyValueFsStreamableSource(Class<K> keyClass, Class<V> valueClass, Supplier<Path[]> sourceSupplier){
 		Assert.notNull(keyClass, "'keyClass' must not be null");
@@ -43,5 +46,15 @@ public abstract class KeyValueFsStreamableSource<K,V> implements StreamableSourc
 	
 	public String toString(){
 		return this.getClass().getSimpleName() + "; scheme:[" + this.getScheme() + "];";
+	}
+	
+	@Override
+	public void setPreprocessFunction(SerializableFunction<Stream<?>, Stream<?>> preProcessFunction) {
+		this.preProcessFunction = preProcessFunction;
+	}
+
+	@Override
+	public SerializableFunction<Stream<?>, Stream<?>> getPreprocessFunction() {
+		return this.preProcessFunction;
 	}
 }

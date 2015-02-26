@@ -6,27 +6,23 @@ import java.util.List;
 
 import org.apache.dstream.io.OutputSpecification;
 import org.apache.dstream.io.StreamableSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
  * 
  */
-public class StreamAssembly implements Iterable<Stage>{
+public class StreamAssembly<T> implements Iterable<Stage<T>>{
 
-	private final Logger logger = LoggerFactory.getLogger(StreamAssembly.class);
-	
 	private volatile String jobName;
 	
-	private volatile List<Stage> stages;
+	private volatile List<Stage<T>> stages;
 	
 	private volatile StreamableSource<?> source;
 	
 	private volatile OutputSpecification outputSpecification;
 
 	private StreamAssembly(){
-		this.stages = new ArrayList<Stage>();
+		this.stages = new ArrayList<Stage<T>>();
 	}
 	
 	public StreamableSource<?> getSource() {
@@ -37,16 +33,16 @@ public class StreamAssembly implements Iterable<Stage>{
 		return jobName;
 	}
 	
-	public void addStage(Stage stage){
+	public void addStage(Stage<T> stage){
 		this.stages.add(stage);
 	}
 	
-	public Stage getLastStage(){
+	public Stage<T> getLastStage(){
 		return stages.get(stages.size()-1);
 	}
 
 	@Override
-	public Iterator<Stage> iterator() {
+	public Iterator<Stage<T>> iterator() {
 		return this.stages.iterator();
 	}
 	

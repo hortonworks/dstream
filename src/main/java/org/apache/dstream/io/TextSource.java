@@ -1,14 +1,16 @@
 package org.apache.dstream.io;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-
 import org.apache.dstream.utils.Assert;
 
+/**
+ * Implementation of {@link StreamableSource} and {@link KeyValueFsStreamableSource} which 
+ * represents a typical text file.
+ */
 public class TextSource extends KeyValueFsStreamableSource<Long, String> {
 	
 	/**

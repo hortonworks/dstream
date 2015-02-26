@@ -10,14 +10,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import org.apache.dstream.MergerImpl;
-import org.apache.dstream.assembly.ShuffleWriter;
 import org.apache.dstream.assembly.Stage;
 import org.apache.dstream.assembly.StreamAssembly;
 import org.apache.dstream.assembly.Task;
 import org.apache.dstream.exec.StreamExecutor;
 import org.apache.dstream.io.StreamableSource;
 import org.apache.dstream.utils.Assert;
-import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,19 +27,19 @@ import org.slf4j.LoggerFactory;
  *
  * @param <T>
  */
-public class StreamExecutorImpl<R> extends StreamExecutor<R> {
+public class StreamExecutorImpl<T,R> extends StreamExecutor<T,R> {
 
 	private final Logger logger = LoggerFactory.getLogger(StreamExecutorImpl.class);
 	
 	private final ExecutorService executor = Executors.newCachedThreadPool();
 	
-	public StreamExecutorImpl(StreamAssembly streamAssembly) {
+	public StreamExecutorImpl(StreamAssembly<T> streamAssembly) {
 		super(streamAssembly);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> Stream<R> execute() {
+	public Stream<R> execute() {
 		try {
 			if (logger.isInfoEnabled()){
 				logger.info("Executing " + this.streamAssembly.getJobName());
@@ -51,12 +49,12 @@ public class StreamExecutorImpl<R> extends StreamExecutor<R> {
 		
 			ShuffleWriterImpl finalShuffle = null;
 			
-			for (Stage<T,R> stage : this.streamAssembly) {
+			for (Stage<T> stage : this.streamAssembly) {
 				Split<T>[] splits = SplitGenerationUtil.generateSplits(source);
 				Assert.notEmpty(splits, "Failed to generate splits from " + source);
 				
 				ShuffleWriterImpl shuffleWriter = this.createShuffleWriter(stage);
-				Task<T, R> task = new Task<T, R>(stage.getStageFunction());
+				Task<T, R> task = new Task<T, R>(stage.getStageFunction(), null);
 					
 				AtomicReference<Exception> exception = new AtomicReference<>();
 				CountDownLatch taskCompletionLatch = new CountDownLatch(splits.length);	

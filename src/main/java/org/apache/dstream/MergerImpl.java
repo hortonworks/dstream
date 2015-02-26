@@ -43,7 +43,7 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 		}
 		this.partitionSize = partitionSize;
 		this.mergeFunction = mergeFunction;
-		Partitioner defaultPartitioner = new DefaultPartitioner(this.partitionSize);
+		Partitioner<K,V> defaultPartitioner = new DefaultPartitioner(this.partitionSize);
 		this.partitionerFunction = new SerializableFunction<Entry<K, V>, Integer>() {
 			private static final long serialVersionUID = -8996083508793084950L;
 			@Override
@@ -56,7 +56,7 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 	}
 
 	@Override
-	public Submittable<Entry<K, V>> merge(Partitioner partitioner, BinaryOperator<V> mergeFunction) {
+	public Submittable<Entry<K, V>> merge(Partitioner<K, V> partitioner, BinaryOperator<V> mergeFunction) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'merge' request with " + partitioner + ".");
 		}
@@ -110,6 +110,5 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 		public int getPartition(Entry<K,V> input) {
 			return (input.getKey().hashCode() & Integer.MAX_VALUE) % partitionSize;
 		}
-		
 	}
 }

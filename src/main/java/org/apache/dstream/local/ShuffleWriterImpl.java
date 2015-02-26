@@ -56,6 +56,21 @@ public class ShuffleWriterImpl<K,V> implements ShuffleWriter<K, V> {
 				Stream<Entry<K,V>> targetStream = StreamSupport.stream(Spliterators.spliteratorUnknownSize(shuffleIterator, Spliterator.ORDERED), false);
 				return targetStream;
 			}
+
+			@Override
+			public SerializableFunction<Stream<?>, Stream<?>> getPreprocessFunction() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public void setPreprocessFunction(
+					SerializableFunction<Stream<?>, Stream<?>> preProcessFunction) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			
 		};
 		return source;
 	}

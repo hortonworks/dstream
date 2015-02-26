@@ -9,10 +9,12 @@ import org.apache.dstream.utils.SerializableFunction;
 /**
  * 
  */
-public class Stage<T,R> implements Serializable {
+public class Stage<T> implements Serializable {
 	private static final long serialVersionUID = 5499538870738016508L;
 	
-	private final SerializableFunction<Stream<T>,R> stageFunction;
+	private final SerializableFunction<Stream<T>,?> stageFunction;
+	
+	private final SerializableFunction<Stream<?>,Stream<?>> preProcessFunction;
 
 	private volatile Merger<?,?> merger;
 	
@@ -22,24 +24,29 @@ public class Stage<T,R> implements Serializable {
 	 * 
 	 * @param stageFunction
 	 */
-	public Stage(SerializableFunction<Stream<T>,R> stageFunction, int stageId){
+	public Stage(SerializableFunction<Stream<T>,?> stageFunction, SerializableFunction<Stream<?>,Stream<?>> preProcessFunction, int stageId){
 		this.stageFunction = stageFunction;
 		this.stageId = stageId;
+		this.preProcessFunction = preProcessFunction;
 	}
 	
-	public void setMerger(Merger<?, ?> merger) {
+	public void setMerger(Merger<?,?> merger) {
 		this.merger = merger;
 	}
 	
-	public Merger<?, ?> getMerger() {
+	public Merger<?,?> getMerger() {
 		return merger;
 	}
 	
-	public SerializableFunction<Stream<T>,R> getStageFunction() {
+	public SerializableFunction<Stream<T>,?> getStageFunction() {
 		return stageFunction;
 	}
 	
 	public int getStageId() {
 		return stageId;
+	}
+	
+	public SerializableFunction<Stream<?>, Stream<?>> getPreProcessFunction() {
+		return preProcessFunction;
 	}
 }

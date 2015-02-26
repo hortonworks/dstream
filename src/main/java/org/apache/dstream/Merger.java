@@ -32,7 +32,7 @@ public interface Merger<K,V> extends Serializable {
 	 * @param partitioner
 	 * @return
 	 */
-	public Submittable<Entry<K,V>> merge(Partitioner partitioner, BinaryOperator<V> mergeFunction);
+	public Submittable<Entry<K,V>> merge(Partitioner<K, V> partitioner, BinaryOperator<V> mergeFunction);
 	
 	/**
 	 * Will partition the intermediate result using provided partitioning function. It is assumed that partitioning function 

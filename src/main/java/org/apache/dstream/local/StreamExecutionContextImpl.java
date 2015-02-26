@@ -36,14 +36,25 @@ public class StreamExecutionContextImpl<T> extends StreamExecutionContext<T> {
 		return null;
 	}
 
-	@Override
-	public StreamExecutor<T> getStreamExecutor() {
-		return new StreamExecutorImpl<T>(this.streamAssembly);
-	}
+//	@Override
+//	public StreamExecutor<T> getStreamExecutor() {
+//		return new StreamExecutorImpl<T>(this.streamAssembly);
+//	}
 
 	@Override
 	public void close() throws IOException {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public void preProcessSource() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public <R> StreamExecutor<T,R> getStreamExecutor() {
+		return new StreamExecutorImpl<T,R>(this.streamAssembly);
 	}
 }

@@ -71,7 +71,7 @@ public class IntermediateStageEntryPointImpl<T> implements Submittable<T> {
 			logger.debug("Submitting job. Output will be available at: " + outputSpec.getOutputPath());
 		}
 		this.executionContext.streamAssembly.setOutputSpecification(outputSpec);
-		StreamExecutor<T> streamExecutor = this.executionContext.getStreamExecutor();
+		StreamExecutor<?, T> streamExecutor = this.executionContext.getStreamExecutor();
 		return streamExecutor.execute();
 	}
 }

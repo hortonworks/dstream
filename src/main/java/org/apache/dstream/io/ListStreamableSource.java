@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.apache.dstream.utils.Assert;
+import org.apache.dstream.utils.SerializableFunction;
 
 /**
  * 
@@ -91,4 +92,19 @@ public class ListStreamableSource<T> implements StreamableSource<T> {
 	    }
 		return subList.stream();
 	}
+
+	@Override
+	public SerializableFunction<Stream<?>, Stream<?>> getPreprocessFunction() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setPreprocessFunction(
+			SerializableFunction<Stream<?>, Stream<?>> preProcessFunction) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	
 }

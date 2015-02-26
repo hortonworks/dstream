@@ -35,7 +35,7 @@ public class TeskTests {
 			}
 		};
 		
-		Task<String, Map<String, Integer>> task = new Task<String, Map<String, Integer>>(function);
+		Task<String, Map<String, Integer>> task = new Task<String, Map<String, Integer>>(function, null);
 		return (Task<T, R>) task;
 	}
 	

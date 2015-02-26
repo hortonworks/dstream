@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.dstream.utils.SerializableFunction;
@@ -21,12 +22,34 @@ public class Task<T,R> implements Serializable {
 	
 	private Logger logger = LoggerFactory.getLogger(Task.class);
 	
-	private final SerializableFunction<Stream<T>, R> function;
-	
-	public Task(SerializableFunction<Stream<T>, R> function) {
-		this.function = function;
+	private final SerializableFunction<Stream<T>, ?> function;
+	/**
+	 * 
+	 * @param function
+	 * @param preProcessFunction
+	 */
+	public Task(SerializableFunction<Stream<T>, ?> function, SerializableFunction<Stream<?>, Stream<?>> preProcessFunction) {
+		if (preProcessFunction == null){
+			this.function = function;
+		} else {
+			this.function = new SerializableFunction<Stream<T>, R>() {
+				private static final long serialVersionUID = -1235381577031239367L;
+				@Override
+				public R apply(Stream<T> t) {
+					@SuppressWarnings({"unchecked", "rawtypes"})
+					Function<Stream<T>, R> f = (Function<Stream<T>, R>) function.compose((Function) preProcessFunction);
+					return f.apply(t);
+				}
+			};
+		}
+		
 	}
 
+	/**
+	 * 
+	 * @param stream
+	 * @param writer
+	 */
 	@SuppressWarnings("unchecked")
 	public <K,V> void execute(Stream<T> stream, ShuffleWriter<K, V> writer) {
 		if (logger.isDebugEnabled()){

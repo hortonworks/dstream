@@ -32,9 +32,10 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T>, C
 	
 	private static final Logger logger = LoggerFactory.getLogger(StreamExecutionContext.class);
 	
-	private volatile StreamableSource<T> source;
+	protected volatile StreamableSource<T> source;
 	
-	protected final StreamAssembly streamAssembly = ReflectionUtils.newDefaultInstance(StreamAssembly.class);
+	@SuppressWarnings("unchecked")
+	protected final StreamAssembly<T> streamAssembly = ReflectionUtils.newDefaultInstance(StreamAssembly.class);
 	
 	protected final List<String> supportedProtocols = new ArrayList<String>();
 	
@@ -70,6 +71,10 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T>, C
 			throw new IllegalStateException("No suitable execution context was found");
 		}
 		
+		suitableContext.source = source;
+		
+		suitableContext.preProcessSource();
+		
 		ReflectionUtils.setFieldValue(suitableContext.streamAssembly, "jobName", jobName);
 		if (logger.isDebugEnabled()){
 			logger.debug("StreamAssembly jobName: " + jobName);
@@ -96,8 +101,8 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T>, C
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'computePairs' request");
 		}
-		
-		Stage stage = new Stage(function, stageIdCounter++);
+
+		Stage<T> stage = new Stage<T>(function, this.source.getPreprocessFunction(), this.stageIdCounter++);
 		this.streamAssembly.addStage(stage);
 	
 		return new MergerImpl<K, V>((StreamExecutionContext<Entry<K, V>>) this);
@@ -176,5 +181,7 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T>, C
 	public abstract Stream<T> stream();
 	
 	
-	public abstract StreamExecutor<T> getStreamExecutor();
+	public abstract <R> StreamExecutor<T,R> getStreamExecutor();
+	
+	public abstract void preProcessSource();
 }
