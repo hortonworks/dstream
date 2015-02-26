@@ -14,6 +14,7 @@ public class ReflectionUtils {
 			throw new IllegalStateException(e);
 		}
 	}
+	
 
 	public static void setFieldValue(Object instance, String fieldPath, Object newValue) {
 		String[] parsedFieldPaths = fieldPath.split("\\.");
@@ -61,5 +62,22 @@ public class ReflectionUtils {
 			searchType = searchType.getSuperclass();
 		}
 		return null;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <T> T getFieldValue(Object rootInstance, String fieldPath, Class<T> targetFieldType) {
+		String[] parsedFieldPaths = fieldPath.split("\\.");
+		Object result = rootInstance;
+		for (int i = 1; i < parsedFieldPaths.length; i++) {
+			result = doGetFieldValue(result, parsedFieldPaths[i]);
+		}
+		
+		try {
+			Field field = result.getClass().getDeclaredField(parsedFieldPaths[parsedFieldPaths.length - 1]);
+			field.setAccessible(true);
+			return (T) field.get(result);
+		} catch (Exception e) {
+			throw new IllegalStateException(e);
+		}
 	}
 }
