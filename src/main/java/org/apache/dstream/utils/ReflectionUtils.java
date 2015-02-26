@@ -19,12 +19,14 @@ public class ReflectionUtils {
 	public static void setFieldValue(Object instance, String fieldPath, Object newValue) {
 		String[] parsedFieldPaths = fieldPath.split("\\.");
 		Object result = instance;
+		int fieldIndex = 0;
 		for (int i = 1; i < parsedFieldPaths.length; i++) {
 			result = doGetFieldValue(result, parsedFieldPaths[i]);
+			fieldIndex++;
 		}
 		
 		try {
-			Field field = result.getClass().getDeclaredField(parsedFieldPaths[parsedFieldPaths.length - 1]);
+			Field field = result.getClass().getDeclaredField(parsedFieldPaths[fieldIndex]);
 			field.setAccessible(true);
 			field.set(result, newValue);
 		} catch (Exception e) {
@@ -68,12 +70,14 @@ public class ReflectionUtils {
 	public static <T> T getFieldValue(Object rootInstance, String fieldPath, Class<T> targetFieldType) {
 		String[] parsedFieldPaths = fieldPath.split("\\.");
 		Object result = rootInstance;
+		int fieldIndex = 0;
 		for (int i = 1; i < parsedFieldPaths.length; i++) {
 			result = doGetFieldValue(result, parsedFieldPaths[i]);
+			fieldIndex++;
 		}
 		
-		try {
-			Field field = result.getClass().getDeclaredField(parsedFieldPaths[parsedFieldPaths.length - 1]);
+		try {	
+			Field field = findField(result.getClass(), parsedFieldPaths[fieldIndex], targetFieldType);
 			field.setAccessible(true);
 			return (T) field.get(result);
 		} catch (Exception e) {
