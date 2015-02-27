@@ -31,6 +31,10 @@ public class Utils {
 			public V setValue(V value) {
 				throw new UnsupportedOperationException("This entry is immutable");
 			}
+			
+			public String toString(){
+				return "(" + key + " -> " + val + ")";
+			}
 		};
 	}
 }

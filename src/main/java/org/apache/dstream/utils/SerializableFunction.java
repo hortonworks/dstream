@@ -1,7 +1,6 @@
 package org.apache.dstream.utils;
 
 import java.io.Serializable;
-import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -12,9 +11,9 @@ import java.util.function.Function;
  */
 public interface SerializableFunction<T,R> extends Function<T, R>, Serializable {
 	
-	default <V> Function<V, R> compose(Function<? super V, ? extends T> before) {
-        Objects.requireNonNull(before);
-        return (V v) -> apply(before.apply(v));
-    }
-	
+//	default <V> Function<V, R> compose(Function<? super V, ? extends T> before) {
+//        Objects.requireNonNull(before);
+//        return (V v) -> apply(before.apply(v));
+//    }
+//	
 }

@@ -10,7 +10,7 @@ import java.util.function.BinaryOperator;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.apache.dstream.assembly.ShuffleWriter;
+import org.apache.dstream.assembly.Writer;
 import org.apache.dstream.io.StreamableSource;
 import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;
@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
  * @param <K>
  * @param <V>
  */
-public class ShuffleWriterImpl<K,V> implements ShuffleWriter<K, V> {
+public class ShuffleWriterImpl<K,V> implements Writer<Entry<K,V>> {
 	
 	private final Logger logger = LoggerFactory.getLogger(ShuffleWriterImpl.class);
 	
@@ -36,7 +36,7 @@ public class ShuffleWriterImpl<K,V> implements ShuffleWriter<K, V> {
 		this.partitions = partitions;
 		this.mergerFunction = mergerFunction;
 	}
-	
+
 	@Override
 	public void write(Entry<K, V> pair) {
 		int partitionId = partitioner.apply(pair);

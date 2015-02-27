@@ -1,9 +1,9 @@
 package org.apache.dstream;
 
 import java.util.Map.Entry;
-import java.util.function.BinaryOperator;
 
 import org.apache.dstream.utils.Partitioner;
+import org.apache.dstream.utils.SerializableBinaryOperator;
 import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +24,7 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 	
 	private int partitionSize;
 
-	private BinaryOperator<V> mergeFunction;
+	private SerializableBinaryOperator<V> mergeFunction;
 	
 	private SerializableFunction<Entry<K, V>, Integer> partitionerFunction;
 	
@@ -37,7 +37,7 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 	}
 
 	@Override
-	public Submittable<Entry<K, V>> merge(int partitionSize, BinaryOperator<V> mergeFunction) {
+	public Submittable<Entry<K, V>> merge(int partitionSize, SerializableBinaryOperator<V> mergeFunction) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'merge' request for " + partitionSize + " partitions.");
 		}
@@ -56,7 +56,7 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 	}
 
 	@Override
-	public Submittable<Entry<K, V>> merge(Partitioner<K, V> partitioner, BinaryOperator<V> mergeFunction) {
+	public Submittable<Entry<K, V>> merge(Partitioner<K, V> partitioner, SerializableBinaryOperator<V> mergeFunction) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'merge' request with " + partitioner + ".");
 		}
@@ -74,7 +74,7 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 
 	@Override
 	public Submittable<Entry<K, V>> merge(SerializableFunction<Entry<K, V>, Integer> partitionerFunction,
-			BinaryOperator<V> mergeFunction) {
+			SerializableBinaryOperator<V> mergeFunction) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'merge' request with partitioner function.");
 		}
@@ -88,7 +88,7 @@ public class MergerImpl<K, V> implements Merger<K,V> {
 		return partitionSize;
 	}
 
-	public BinaryOperator<V> getMergeFunction() {
+	public SerializableBinaryOperator<V> getMergeFunction() {
 		return mergeFunction;
 	}
 

@@ -2,9 +2,9 @@ package org.apache.dstream;
 
 import java.io.Serializable;
 import java.util.Map.Entry;
-import java.util.function.BinaryOperator;
 
 import org.apache.dstream.utils.Partitioner;
+import org.apache.dstream.utils.SerializableBinaryOperator;
 import org.apache.dstream.utils.SerializableFunction;
 
 /**
@@ -24,7 +24,7 @@ public interface Merger<K,V> extends Serializable {
 	 * @param partitioner
 	 * @return
 	 */
-	public Submittable<Entry<K,V>> merge(int partitionSize, BinaryOperator<V> mergeFunction);
+	public Submittable<Entry<K,V>> merge(int partitionSize, SerializableBinaryOperator<V> mergeFunction);
 	/**
 	 * Will partition the intermediate result using provided {@link Partitioner}
 	 * When partitions are written the 'mergeFunction' will also be applied.
@@ -32,7 +32,7 @@ public interface Merger<K,V> extends Serializable {
 	 * @param partitioner
 	 * @return
 	 */
-	public Submittable<Entry<K,V>> merge(Partitioner<K, V> partitioner, BinaryOperator<V> mergeFunction);
+	public Submittable<Entry<K,V>> merge(Partitioner<K, V> partitioner, SerializableBinaryOperator<V> mergeFunction);
 	
 	/**
 	 * Will partition the intermediate result using provided partitioning function. It is assumed that partitioning function 
@@ -42,6 +42,6 @@ public interface Merger<K,V> extends Serializable {
 	 * @param partitionerFunction
 	 * @return
 	 */
-	public Submittable<Entry<K,V>> merge(SerializableFunction<Entry<K,V>, Integer> partitionerFunction, BinaryOperator<V> mergeFunction);
+	public Submittable<Entry<K,V>> merge(SerializableFunction<Entry<K,V>, Integer> partitionerFunction, SerializableBinaryOperator<V> mergeFunction);
 	
 }
