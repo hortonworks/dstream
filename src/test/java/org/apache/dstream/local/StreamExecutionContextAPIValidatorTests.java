@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.dstream.IntermediateResult;
 import org.apache.dstream.StreamExecutionContext;
 import org.apache.dstream.io.OutputSpecification;
 import org.apache.dstream.io.TextSource;

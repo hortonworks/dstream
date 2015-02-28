@@ -130,4 +130,16 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 		return null;
 	}
 
+	@Override
+	public IntermediateResult<K, V> join(IntermediateResult<K, V> intermediateResult) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Submittable<Entry<K, V>> groupByKey() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

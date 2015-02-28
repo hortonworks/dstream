@@ -16,7 +16,7 @@ import org.apache.dstream.utils.SerializableFunction;
  * @param <K>
  * @param <V>
  */
-public interface IntermediateResult<K,V> extends Partitionable<Entry<K,V>>, Serializable {
+public interface IntermediateResult<K,V> extends Partitionable<Entry<K,V>>, Joinable<K,V>, Groupable<K, V>, Serializable {
 	
 	/**
 	 * Will partition the intermediate result using default {@link Partitioner} provided by the underlying execution environment.
