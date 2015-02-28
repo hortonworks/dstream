@@ -3,6 +3,7 @@ package org.apache.dstream;
 import java.util.Map.Entry;
 
 import org.apache.dstream.utils.Partitioner;
+import org.apache.dstream.utils.SerializableBiFunction;
 import org.apache.dstream.utils.SerializableBinaryOperator;
 import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;
@@ -138,6 +139,14 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 
 	@Override
 	public Submittable<Entry<K, V>> groupByKey() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public <KK, VV, R> IntermediateResult<K, R> join(
+			IntermediateResult<KK, VV> intermediateResult,
+			SerializableBiFunction<V, VV, R> valueCombiner) {
 		// TODO Auto-generated method stub
 		return null;
 	}
