@@ -1,5 +1,6 @@
 package org.apache.dstream.io;
 
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -12,7 +13,7 @@ import org.apache.dstream.utils.SerializableFunction;
  * 
  * @param <T>
  */
-public class ListStreamableSource<T> implements StreamableSource<T> {
+public class ListStreamableSource<T> implements StreamSource<T> {
 	private final List<T> list;
 	
 	private final int splits;
@@ -31,7 +32,7 @@ public class ListStreamableSource<T> implements StreamableSource<T> {
 	}
 
 	/**
-	 * Factory method to create {@link StreamableSource} for a provided
+	 * Factory method to create {@link StreamSource} for a provided
 	 * {@link List}
 	 * 
 	 * @param collection
@@ -42,7 +43,7 @@ public class ListStreamableSource<T> implements StreamableSource<T> {
 	}
 
 	/**
-	 * Factory method to create {@link StreamableSource} for a provided
+	 * Factory method to create {@link StreamSource} for a provided
 	 * {@link List}. This method also allows you to specify (at most) the amount of
 	 * splits the provided list have to be divided to allow parallel processing. 
 	 * 
@@ -104,6 +105,13 @@ public class ListStreamableSource<T> implements StreamableSource<T> {
 			SerializableFunction<Stream<?>, Stream<?>> preProcessFunction) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public StreamSource<T> preProcessSource(
+			SerializableFunction<Path[], Path[]> sourcePreProcessFunction) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	

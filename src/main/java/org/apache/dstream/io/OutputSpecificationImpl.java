@@ -23,7 +23,7 @@ public class OutputSpecificationImpl implements OutputSpecification {
 	}
 
 	@Override
-	public <T> StreamableSource<T> toStreamableSource() {
+	public <T> StreamSource<T> toStreamableSource() {
 		// TODO Auto-generated method stub
 		return null;
 	}

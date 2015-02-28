@@ -1,18 +1,18 @@
 package org.apache.dstream.local;
 
-import org.apache.dstream.io.StreamableSource;
+import org.apache.dstream.io.StreamSource;
 import org.apache.dstream.io.TextSource;
 
 class SplitGenerationUtil {
 
 	/**
-	 * This methods will generate splits from {@link StreamableSource} to mainly emulate the behavior of
-	 * the underlying distributed system allowing {@link StreamableSource} to be processed parallelized as if
+	 * This methods will generate splits from {@link StreamSource} to mainly emulate the behavior of
+	 * the underlying distributed system allowing {@link StreamSource} to be processed parallelized as if
 	 * it was parallelized in such system.
 	 * 
 	 * @param source
 	 */
-	public static <T> Split<T>[] generateSplits(StreamableSource<T> source){
+	public static <T> Split<T>[] generateSplits(StreamSource<T> source){
 		Split<T>[] splits = null;
 		if (source instanceof TextSource){
 			splits = PourManTextFileSplitter.generateSplits((TextSource) source);

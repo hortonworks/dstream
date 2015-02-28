@@ -16,8 +16,10 @@ import org.apache.dstream.assembly.StreamAssembly;
 import org.apache.dstream.exec.StreamExecutor;
 import org.apache.dstream.io.FsStreamableSource;
 import org.apache.dstream.io.ListStreamableSource;
-import org.apache.dstream.io.StreamableSource;
+import org.apache.dstream.io.StreamSource;
 import org.apache.dstream.utils.Assert;
+import org.apache.dstream.utils.NullType;
+import org.apache.dstream.utils.Partitioner;
 import org.apache.dstream.utils.ReflectionUtils;
 import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;
@@ -28,17 +30,17 @@ import org.slf4j.LoggerFactory;
  *
  * @param <T>
  */
-public abstract class StreamExecutionContext<T> implements StageEntryPoint<T>, Closeable {
+public abstract class StreamExecutionContext<T> implements StageEntryPoint<T>, Partitionable<T>, Closeable {
 	
 	private static final Logger logger = LoggerFactory.getLogger(StreamExecutionContext.class);
 	
-	protected volatile StreamableSource<T> source;
+	private volatile StreamSource<T> source;
 	
 	@SuppressWarnings("unchecked")
-	protected final StreamAssembly<T> streamAssembly = ReflectionUtils.newDefaultInstance(StreamAssembly.class);
-	
-	protected final List<String> supportedProtocols = new ArrayList<String>();
-	
+	private final StreamAssembly<T> streamAssembly = ReflectionUtils.newDefaultInstance(StreamAssembly.class);
+
+	private final List<String> supportedProtocols = new ArrayList<String>();
+
 	private int stageIdCounter;
 	
 	
@@ -46,7 +48,7 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T>, C
 	 * Factory method that will return implementation of this {@link StreamExecutionContext}
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static <T> StreamExecutionContext<T> of(String jobName, StreamableSource<T> source) {
+	public static <T> StreamExecutionContext<T> of(String jobName, StreamSource<T> source) {
 		Assert.notNull(source, "Streamable source must not be null");
 		Assert.notEmpty(jobName, "'jobName' must not be null or empty");
 		
@@ -89,15 +91,10 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T>, C
 	
 	/**
 	 * 
-	 * @return
 	 */
-	public StreamableSource<T> getSource() {
-		return this.source;
-	}
-	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <K, V> Merger<K, V> computePairs(SerializableFunction<Stream<T>, Map<K, V>> function) {
+	public <K, V> IntermediateResult<K, V> computePairs(SerializableFunction<Stream<T>, Map<K, V>> function) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'computePairs' request");
 		}
@@ -105,7 +102,7 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T>, C
 		Stage<T> stage = new Stage<T>(function, this.source.getPreprocessFunction(), this.stageIdCounter++);
 		this.streamAssembly.addStage(stage);
 	
-		return new MergerImpl<K, V>((StreamExecutionContext<Entry<K, V>>) this);
+		return new IntermediateResultImpl<K, V>((StreamExecutionContext<Entry<K, V>>) this);
 	}
 	
 	@Override
@@ -133,7 +130,26 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T>, C
 	}
 
 	@Override
-	public <R> IntermediateResult<R> computeCollection(SerializableFunction<Stream<T>, Collection<R>> function) {
+	public <R> IntermediateResult<NullType,R> computeCollection(SerializableFunction<Stream<T>, Collection<R>> function) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	@Override
+	public Submittable<T> partition(int partitionSize) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Submittable<T> partition(Partitioner<T> partitioner) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Submittable<T> partition(
+			SerializableFunction<T, Integer> partitionerFunction) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -145,12 +161,28 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T>, C
 		return this.getClass().getSimpleName();
 	}
 	
+	protected StreamAssembly<T> getStreamAssembly() {
+		return streamAssembly;
+	}
+	
+	protected List<String> getSupportedProtocols() {
+		return supportedProtocols;
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	protected StreamSource<T> getSource() {
+		return this.source;
+	}
+	
 	/**
 	 * 
 	 * @param source
 	 * @return
 	 */
-	protected boolean isSourceSupported(StreamableSource<T> source){
+	protected boolean isSourceSupported(StreamSource<T> source){
 		if (source instanceof ListStreamableSource){
 			return true;
 		} else if (source instanceof FsStreamableSource) {
@@ -178,10 +210,17 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T>, C
 	 * 
 	 * @return
 	 */
-	public abstract Stream<T> stream();
+	public abstract Stream<T> toStream();
 	
+	protected abstract <R> StreamExecutor<T,R> getStreamExecutor();
 	
-	public abstract <R> StreamExecutor<T,R> getStreamExecutor();
+	/**
+	 * Will compose final pipeline by prepending additional pre-processing function to the pipeline.
+	 * Such function is typically a map function. For example in the case of TextSource which 
+	 * corresponds to TextInputFormat in Hadoop, such function may map <LongWritable, Text> to String.
+	 * 
+	 * If no function can be located, nothing will be prepended to the main pipeline.
+	 */
+	protected abstract void preProcessSource();
 	
-	public abstract void preProcessSource();
 }

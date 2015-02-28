@@ -5,18 +5,29 @@ import java.util.stream.Stream;
 import org.apache.dstream.io.OutputSpecification;
 
 /**
- * Strategy which extends {@link StageEntryPoint} and defines functionality which will result 
- * in submission of job to execution environment.
+ * Strategy which defines functionality to trigger distributed execution of the {@link Stream}.
  * 
- * @param <T>
+ * @param <R> - the result type
  */
-public interface Submittable<T> extends StageEntryPoint<T>{
+public interface Submittable<R> extends StageEntryPoint<R>{
 	/**
-	 * Will save the results of the intermediate computation to the disk based on 
-	 * provided {@link OutputSpecification} returning new {@link StreamExecutionContext}
+	 * Will trigger execution of the source {@link Stream} saving its to the location 
+	 * identified by the {@link OutputSpecification} and returning a {@link Stream} over the 
+	 * results of this execution, allowing immediate access to the result regardless of its size.
+	 * 
+	 * Aside from the output location, {@link OutputSpecification} implementation may contain environment specific 
+	 * properties (e.g., In Hadoop - InputFormat, Writable etc.) 
 	 * 
 	 * @param outputSpec
 	 * @return
 	 */
-	public Stream<T> saveAs(OutputSpecification outputSpec);
+	public Stream<R> save(OutputSpecification outputSpec);
+	
+	/**
+	 * Will trigger execution of the source {@link Stream} returning a {@link Stream} over the results of the execution, 
+	 * thus allowing immediate access to the result regardless of its size.
+	 * 
+	 * @return
+	 */
+	public Stream<R> collect();
 }

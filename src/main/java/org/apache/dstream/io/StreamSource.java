@@ -1,10 +1,11 @@
 package org.apache.dstream.io;
 
+import java.nio.file.Path;
 import java.util.stream.Stream;
 
 import org.apache.dstream.utils.SerializableFunction;
 
-public interface StreamableSource<T> {
+public interface StreamSource<T> {
 	
 	public abstract Stream<T> toStream();
 	
@@ -15,5 +16,7 @@ public interface StreamableSource<T> {
 	public abstract SerializableFunction<Stream<?>, Stream<?>> getPreprocessFunction();
 	
 	public abstract void setPreprocessFunction(SerializableFunction<Stream<?>, Stream<?>> preProcessFunction);
+	
+	public abstract StreamSource<T> preProcessSource(SerializableFunction<Path[], Path[]> sourcePreProcessFunction);
 	
 }

@@ -1,10 +1,8 @@
 package org.apache.dstream.assembly;
 
 import java.io.Serializable;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
-import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

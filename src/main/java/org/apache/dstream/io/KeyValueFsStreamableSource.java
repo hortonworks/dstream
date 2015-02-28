@@ -11,7 +11,7 @@ import org.apache.dstream.utils.SerializableFunction;
  * @param <K>
  * @param <V>
  */
-public abstract class KeyValueFsStreamableSource<K,V> implements StreamableSource<V>, FsStreamableSource<V> {
+public abstract class KeyValueFsStreamableSource<K,V> implements StreamSource<V>, FsStreamableSource<V> {
 	protected final Class<K> keyClass;
 	
 	protected final Class<V> valueClass;

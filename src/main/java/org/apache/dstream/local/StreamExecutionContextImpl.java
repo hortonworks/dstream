@@ -5,7 +5,10 @@ import java.io.InputStream;
 import java.util.stream.Stream;
 
 import org.apache.dstream.StreamExecutionContext;
+import org.apache.dstream.Submittable;
 import org.apache.dstream.exec.StreamExecutor;
+import org.apache.dstream.utils.Partitioner;
+import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,9 +21,9 @@ public class StreamExecutionContextImpl<T> extends StreamExecutionContext<T> {
 	private final Logger logger = LoggerFactory.getLogger(StreamExecutionContextImpl.class);
 	
 	public StreamExecutionContextImpl(){
-		this.supportedProtocols.add("file");
+		this.getSupportedProtocols().add("file");
 		if (logger.isInfoEnabled()){
-			logger.info("Created instance of StreamExecutionContext[" + this.getClass().getName() + "]; Supported protocols: " + this.supportedProtocols);
+			logger.info("Created instance of StreamExecutionContext[" + this.getClass().getName() + "]; Supported protocols: " + this.getSupportedProtocols());
 		}
 	}
 
@@ -31,15 +34,10 @@ public class StreamExecutionContextImpl<T> extends StreamExecutionContext<T> {
 	}
 
 	@Override
-	public Stream<T> stream() {
+	public Stream<T> toStream() {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
-//	@Override
-//	public StreamExecutor<T> getStreamExecutor() {
-//		return new StreamExecutorImpl<T>(this.streamAssembly);
-//	}
 
 	@Override
 	public void close() throws IOException {
@@ -48,13 +46,13 @@ public class StreamExecutionContextImpl<T> extends StreamExecutionContext<T> {
 	}
 
 	@Override
-	public void preProcessSource() {
-		// TODO Auto-generated method stub
-		
+	public <R> StreamExecutor<T,R> getStreamExecutor() {
+		return new StreamExecutorImpl<T,R>(this.getStreamAssembly());
 	}
 
 	@Override
-	public <R> StreamExecutor<T,R> getStreamExecutor() {
-		return new StreamExecutorImpl<T,R>(this.streamAssembly);
+	protected void preProcessSource() {
+		// TODO Auto-generated method stub
+		
 	}
 }

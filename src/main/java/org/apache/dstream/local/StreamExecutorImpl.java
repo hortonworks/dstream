@@ -7,7 +7,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.MergerImpl;
+import org.apache.dstream.IntermediateResultImpl;
 import org.apache.dstream.assembly.Stage;
 import org.apache.dstream.assembly.StreamAssembly;
 import org.apache.dstream.exec.StreamExecutor;
@@ -93,7 +93,7 @@ public class StreamExecutorImpl<T,R> extends StreamExecutor<T,R> {
 	 * @return
 	 */
 	private ShuffleWriterImpl createShuffleWriter(Stage stage){
-		MergerImpl<?,?> merger = (MergerImpl<?,?>)stage.getMerger();
+		IntermediateResultImpl<?,?> merger = (IntermediateResultImpl<?,?>)stage.getMerger();
 		int partitionSize = merger.getPartitionSize();
 		Map<Integer, ConcurrentHashMap<?, ?>> partitions = new HashMap<>();
 		for (int i = 0; i < partitionSize; i++) {

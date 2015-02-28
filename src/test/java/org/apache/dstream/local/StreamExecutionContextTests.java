@@ -1,4 +1,4 @@
-package org.apache.dstream;
+package org.apache.dstream.local;
 
 import java.net.URI;
 import java.nio.file.FileSystem;
@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.dstream.StreamExecutionContext;
 import org.apache.dstream.io.OutputSpecification;
 import org.apache.dstream.io.OutputSpecificationImpl;
 import org.apache.dstream.io.TextSource;
@@ -65,7 +66,7 @@ public class StreamExecutionContextTests {
 						)
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)))
 		  .merge(3, Integer::sum)
-		  .saveAs(outputSpec).forEach(System.out::println);
+		  .save(outputSpec).forEach(System.out::println);
 	}
 	
 }

@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.apache.dstream.utils.NullType;
 import org.apache.dstream.utils.SerializableFunction;
 
 /**
@@ -48,7 +49,7 @@ public interface StageEntryPoint<T> {
 	
 	public boolean computeBoolean(SerializableFunction<Stream<T>, Boolean> function);
 
-	public <R> IntermediateResult<R> computeCollection(SerializableFunction<Stream<T>, Collection<R>> function);
+	public <R> IntermediateResult<NullType, R> computeCollection(SerializableFunction<Stream<T>, Collection<R>> function);
 	
-	public <K,V> Merger<K,V> computePairs(SerializableFunction<Stream<T>, Map<K,V>> function);
+	public <K,V> IntermediateResult<K,V> computePairs(SerializableFunction<Stream<T>, Map<K,V>> function);
 }

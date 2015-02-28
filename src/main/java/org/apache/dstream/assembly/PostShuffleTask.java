@@ -1,9 +1,6 @@
 package org.apache.dstream.assembly;
 
-import java.io.Serializable;
-import java.util.Comparator;
 import java.util.Map.Entry;
-import java.util.function.BinaryOperator;
 import java.util.stream.Stream;
 
 import org.apache.dstream.utils.SerializableBinaryOperator;

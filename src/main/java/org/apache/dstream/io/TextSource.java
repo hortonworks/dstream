@@ -6,9 +6,10 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.apache.dstream.utils.Assert;
+import org.apache.dstream.utils.SerializableFunction;
 
 /**
- * Implementation of {@link StreamableSource} and {@link KeyValueFsStreamableSource} which 
+ * Implementation of {@link StreamSource} and {@link KeyValueFsStreamableSource} which 
  * represents a typical text file.
  */
 public class TextSource extends KeyValueFsStreamableSource<Long, String> {
@@ -67,6 +68,13 @@ public class TextSource extends KeyValueFsStreamableSource<Long, String> {
 
 	@Override
 	public Stream<String> toStream() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public StreamSource<String> preProcessSource(
+			SerializableFunction<Path[], Path[]> sourcePreProcessFunction) {
 		// TODO Auto-generated method stub
 		return null;
 	}

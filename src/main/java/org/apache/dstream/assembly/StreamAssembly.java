@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.dstream.io.OutputSpecification;
-import org.apache.dstream.io.StreamableSource;
+import org.apache.dstream.io.StreamSource;
 
 
 /**
@@ -17,7 +17,7 @@ public class StreamAssembly<T> implements Iterable<Stage<T>>{
 	
 	private volatile List<Stage<T>> stages;
 	
-	private volatile StreamableSource<?> source;
+	private volatile StreamSource<?> source;
 	
 	private volatile OutputSpecification outputSpecification;
 
@@ -25,7 +25,7 @@ public class StreamAssembly<T> implements Iterable<Stage<T>>{
 		this.stages = new ArrayList<Stage<T>>();
 	}
 	
-	public StreamableSource<?> getSource() {
+	public StreamSource<?> getSource() {
 		return source;
 	}
 
