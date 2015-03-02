@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.dstream.io.OutputSpecification;
-import org.apache.dstream.io.StreamSource;
+import javax.xml.transform.stream.StreamSource;
+
+import org.apache.dstream.DistributableSource;
+import org.apache.dstream.OutputSpecification;
 
 
 /**
@@ -17,7 +19,7 @@ public class StreamAssembly<T> implements Iterable<Stage<T>>{
 	
 	private volatile List<Stage<T>> stages;
 	
-	private volatile StreamSource<?> source;
+	private volatile DistributableSource<?> source;
 	
 	private volatile OutputSpecification outputSpecification;
 
@@ -25,7 +27,7 @@ public class StreamAssembly<T> implements Iterable<Stage<T>>{
 		this.stages = new ArrayList<Stage<T>>();
 	}
 	
-	public StreamSource<?> getSource() {
+	public DistributableSource<?> getSource() {
 		return source;
 	}
 

@@ -5,14 +5,14 @@ import java.util.Arrays;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import org.apache.dstream.Source;
 import org.apache.dstream.utils.Assert;
-import org.apache.dstream.utils.SerializableFunction;
 
 /**
- * Implementation of {@link StreamSource} and {@link KeyValueFsStreamableSource} which 
+ * Implementation of {@link ComputableSource} and {@link KeyValueFsStreamableSource} which 
  * represents a typical text file.
  */
-public class TextSource extends KeyValueFsStreamableSource<Long, String> {
+public class TextSource extends KeyValueFsSource<Long, String> {
 	
 	/**
 	 * @param path
@@ -39,7 +39,7 @@ public class TextSource extends KeyValueFsStreamableSource<Long, String> {
 	 * 
 	 * @param path
 	 */
-	public static TextSource create(Path... path) {
+	public static Source<String> create(Path... path) {
 		Assert.notEmpty(path);
 		Arrays.stream(path).forEach(p -> {
 			try {
@@ -71,11 +71,5 @@ public class TextSource extends KeyValueFsStreamableSource<Long, String> {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
-	@Override
-	public StreamSource<String> preProcessSource(
-			SerializableFunction<Path[], Path[]> sourcePreProcessFunction) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
 }

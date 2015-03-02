@@ -2,7 +2,9 @@ package org.apache.dstream.io;
 
 import java.nio.file.Path;
 
-public interface FsStreamableSource<T> extends StreamSource<T> {
+import org.apache.dstream.Source;
+
+public interface FsSource<T> extends Source<T> {
 	
 	public abstract Path[] getPath();
 	

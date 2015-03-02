@@ -2,8 +2,6 @@ package org.apache.dstream;
 
 import java.util.stream.Stream;
 
-import org.apache.dstream.io.OutputSpecification;
-
 /**
  * Strategy which defines functionality to trigger distributed execution of the {@link Stream}.
  * 
@@ -21,7 +19,7 @@ public interface Submittable<R> extends StageEntryPoint<R>{
 	 * @param outputSpec
 	 * @return
 	 */
-	public Stream<R> save(OutputSpecification outputSpec);
+	public DistributableSource<R> save(OutputSpecification outputSpec);
 	
 	/**
 	 * Will trigger execution of the source {@link Stream} returning a {@link Stream} over the results of the execution, 
@@ -29,5 +27,5 @@ public interface Submittable<R> extends StageEntryPoint<R>{
 	 * 
 	 * @return
 	 */
-	public Stream<R> collect();
+	public DistributableSource<R> save();
 }

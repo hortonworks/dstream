@@ -4,6 +4,8 @@ import java.nio.file.Path;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import org.apache.dstream.DistributableSource;
+import org.apache.dstream.DistributableSourceImpl;
 import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.SerializableFunction;
 
@@ -11,7 +13,7 @@ import org.apache.dstream.utils.SerializableFunction;
  * @param <K>
  * @param <V>
  */
-public abstract class KeyValueFsStreamableSource<K,V> implements StreamSource<V>, FsStreamableSource<V> {
+public abstract class KeyValueFsSource<K,V> implements FsSource<V> {
 	protected final Class<K> keyClass;
 	
 	protected final Class<V> valueClass;
@@ -20,9 +22,7 @@ public abstract class KeyValueFsStreamableSource<K,V> implements StreamSource<V>
 	
 	private final String schema;
 	
-	private SerializableFunction<Stream<?>, Stream<?>> preProcessFunction;
-	
-	protected KeyValueFsStreamableSource(Class<K> keyClass, Class<V> valueClass, Supplier<Path[]> sourceSupplier){
+	protected KeyValueFsSource(Class<K> keyClass, Class<V> valueClass, Supplier<Path[]> sourceSupplier){
 		Assert.notNull(keyClass, "'keyClass' must not be null");
 		Assert.notNull(valueClass, "'valueClass' must not be null");
 		Assert.notNull(sourceSupplier, "'sourceSupplier' must not be null");
@@ -49,12 +49,8 @@ public abstract class KeyValueFsStreamableSource<K,V> implements StreamSource<V>
 	}
 	
 	@Override
-	public void setPreprocessFunction(SerializableFunction<Stream<?>, Stream<?>> preProcessFunction) {
-		this.preProcessFunction = preProcessFunction;
-	}
-
-	@Override
-	public SerializableFunction<Stream<?>, Stream<?>> getPreprocessFunction() {
-		return this.preProcessFunction;
+	public DistributableSource<V> forJob(String name){
+		DistributableSourceImpl<V> distributableSource = new DistributableSourceImpl<>();
+		return distributableSource;
 	}
 }

@@ -1,27 +1,16 @@
 package org.apache.dstream;
 
-import java.io.Closeable;
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.ServiceLoader;
 import java.util.stream.Stream;
 
-import org.apache.dstream.assembly.Stage;
 import org.apache.dstream.assembly.StreamAssembly;
 import org.apache.dstream.exec.StreamExecutor;
-import org.apache.dstream.io.FsStreamableSource;
-import org.apache.dstream.io.ListStreamableSource;
-import org.apache.dstream.io.StreamSource;
+import org.apache.dstream.io.FsSource;
 import org.apache.dstream.utils.Assert;
-import org.apache.dstream.utils.NullType;
-import org.apache.dstream.utils.Partitioner;
 import org.apache.dstream.utils.ReflectionUtils;
-import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
@@ -30,11 +19,11 @@ import org.slf4j.LoggerFactory;
  *
  * @param <T>
  */
-public abstract class StreamExecutionContext<T> implements StageEntryPoint<T>, Partitionable<T>, Closeable {
+public abstract class StreamExecutionContext<T> {//implements StageEntryPoint<T>, Partitionable<T>, Closeable {
 	
 	private static final Logger logger = LoggerFactory.getLogger(StreamExecutionContext.class);
 	
-	private volatile StreamSource<T> source;
+	private volatile AbstractDistributableSource<T> source;
 	
 	@SuppressWarnings("unchecked")
 	private final StreamAssembly<T> streamAssembly = ReflectionUtils.newDefaultInstance(StreamAssembly.class);
@@ -48,7 +37,7 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T>, P
 	 * Factory method that will return implementation of this {@link StreamExecutionContext}
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static <T> StreamExecutionContext<T> of(String jobName, StreamSource<T> source) {
+	protected static <T> StreamExecutionContext<T> of(String jobName, AbstractDistributableSource<T> source) {
 		Assert.notNull(source, "Streamable source must not be null");
 		Assert.notEmpty(jobName, "'jobName' must not be null or empty");
 		
@@ -88,77 +77,16 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T>, P
 		
 		return suitableContext;
 	}
-	
-	/**
-	 * 
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
-	public <K, V> IntermediateResult<K, V> computePairs(SerializableFunction<Stream<T>, Map<K, V>> function) {
-		if (logger.isDebugEnabled()){
-			logger.debug("Accepted 'computePairs' request");
-		}
 
-		Stage<T> stage = new Stage<T>(function, this.source.getPreprocessFunction(), this.stageIdCounter++);
-		this.streamAssembly.addStage(stage);
-	
-		return new IntermediateResultImpl<K, V>((StreamExecutionContext<Entry<K, V>>) this);
-	}
-	
-	@Override
-	public int computeInt(SerializableFunction<Stream<T>, Integer> function) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public long computeLong(SerializableFunction<Stream<T>, Long> function) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public double computeDouble(SerializableFunction<Stream<T>, Double> function) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public boolean computeBoolean(SerializableFunction<Stream<T>, Boolean> function) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public <R> IntermediateResult<NullType,R> computeCollection(SerializableFunction<Stream<T>, Collection<R>> function) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	@Override
-	public Submittable<T> partition(int partitionSize) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Submittable<T> partition(Partitioner<T> partitioner) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Submittable<T> partition(
-			SerializableFunction<T, Integer> partitionerFunction) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
 	/**
 	 * 
 	 */
 	public String toString(){
 		return this.getClass().getSimpleName();
+	}
+	
+	protected int nextStageId(){
+		return stageIdCounter++;
 	}
 	
 	protected StreamAssembly<T> getStreamAssembly() {
@@ -173,7 +101,7 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T>, P
 	 * 
 	 * @return
 	 */
-	protected StreamSource<T> getSource() {
+	protected AbstractDistributableSource<T> getSource() {
 		return this.source;
 	}
 	
@@ -182,35 +110,35 @@ public abstract class StreamExecutionContext<T> implements StageEntryPoint<T>, P
 	 * @param source
 	 * @return
 	 */
-	protected boolean isSourceSupported(StreamSource<T> source){
-		if (source instanceof ListStreamableSource){
-			return true;
-		} else if (source instanceof FsStreamableSource) {
+	protected boolean isSourceSupported(DistributableSource<T> source){
+		if (source instanceof FsSource) {
 			@SuppressWarnings("rawtypes")
-			String protocol = ((FsStreamableSource)source).getScheme();
+			String protocol = ((FsSource)source).getScheme();
 			for (String supportedProtocol : this.supportedProtocols) {
 				if (supportedProtocol.equals(protocol)){
 					return true;
 				}
 			}
+		} else {
+			throw new IllegalArgumentException("Unsupported source type: " + source);
 		}
 		return false;
 	}
 	
-	/**
-	 * Returns the raw {@link InputStream} to the result data set.
-	 * @return
-	 */
-	//http://stackoverflow.com/questions/22919013/inputstream-to-hadoop-sequencefile
-	public abstract InputStream toInputStream(); 
+//	/**
+//	 * Returns the raw {@link InputStream} to the result data set.
+//	 * @return
+//	 */
+//	//http://stackoverflow.com/questions/22919013/inputstream-to-hadoop-sequencefile
+//	public abstract InputStream toInputStream(); 
 	
-	/**
-	 * Returns the {@link Stream} to the result data set allowing result data to be streamed for 
-	 * local processing (e.g., iterate over results)
-	 * 
-	 * @return
-	 */
-	public abstract Stream<T> toStream();
+//	/**
+//	 * Returns the {@link Stream} to the result data set allowing result data to be streamed for 
+//	 * local processing (e.g., iterate over results)
+//	 * 
+//	 * @return
+//	 */
+//	public abstract Stream<T> toStream();
 	
 	protected abstract <R> StreamExecutor<T,R> getStreamExecutor();
 	

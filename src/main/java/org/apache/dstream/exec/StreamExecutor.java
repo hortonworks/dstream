@@ -1,7 +1,6 @@
 package org.apache.dstream.exec;
 
-import java.util.stream.Stream;
-
+import org.apache.dstream.DistributableSource;
 import org.apache.dstream.assembly.StreamAssembly;
 
 public abstract class StreamExecutor<T,R> {
@@ -12,5 +11,5 @@ public abstract class StreamExecutor<T,R> {
 		this.streamAssembly = streamAssembly;
 	}
 	
-	public abstract Stream<R> execute();
+	public abstract DistributableSource<R> execute();
 }

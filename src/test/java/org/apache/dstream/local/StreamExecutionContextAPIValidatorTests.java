@@ -6,9 +6,10 @@ import java.nio.file.Path;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.dstream.DistributableSource;
 import org.apache.dstream.IntermediateResult;
+import org.apache.dstream.OutputSpecification;
 import org.apache.dstream.StreamExecutionContext;
-import org.apache.dstream.io.OutputSpecification;
 import org.apache.dstream.io.TextSource;
 
 /**
@@ -21,33 +22,33 @@ public class StreamExecutionContextAPIValidatorTests {
 	public void computePairs() throws Exception {
 		OutputSpecification outputSpec = null;
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		StreamExecutionContext<String> ec = StreamExecutionContext.of("foo", TextSource.create(path));
+		DistributableSource<String> source = TextSource.create(path).forJob("foo");
 		
-		ec.computePairs(stream -> stream
+		source.computePairs(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
-		  ).merge(3, Integer::sum)
+		  ).aggregate(3, Integer::sum)
 		   .save(outputSpec);
 	}
 	
 	public void computePairsWithContinuation() throws Exception {
 		OutputSpecification outputSpec = null;
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		StreamExecutionContext<String> ec = StreamExecutionContext.of("foo", TextSource.create(path));
+		DistributableSource<String> source = TextSource.create(path).forJob("foo");
 		
-		ec.<String, Integer>computePairs(stream -> stream
+		source.<Integer>computePairs(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
-		  ).merge(3, Integer::sum)
+		  ).aggregate(3, Integer::sum)
 		   .computePairs(stream -> stream
 				   	 .filter(s -> true)
 				   	 .collect(Collectors.groupingBy(s -> s))
-		  ).merge(1, (a, b) -> a);
+		  ).aggregate(1, (a, b) -> a);
 	}
 	
 	public void computeBoolean() throws Exception {
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		boolean result = StreamExecutionContext.of("foo", TextSource.create(path))
+		boolean result = TextSource.create(path).forJob("foo")
 				.computeBoolean(stream -> !stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
@@ -57,7 +58,7 @@ public class StreamExecutionContextAPIValidatorTests {
 	
 	public void computeInt() throws Exception {
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		int result = StreamExecutionContext.of("foo", TextSource.create(path))
+		int result = TextSource.create(path).forJob("foo")
 				.computeInt(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
@@ -67,7 +68,7 @@ public class StreamExecutionContextAPIValidatorTests {
 	
 	public void computeLong() throws Exception {
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		long result = StreamExecutionContext.of("foo", TextSource.create(path))
+		long result = TextSource.create(path).forJob("foo")
 				.computeLong(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.count()
@@ -77,25 +78,25 @@ public class StreamExecutionContextAPIValidatorTests {
 	public void partitionSourceWithFunction() throws Exception {
 		OutputSpecification outputSpec = null;
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		StreamExecutionContext<String> ec = StreamExecutionContext.of("foo", TextSource.create(path));
+		DistributableSource<String> source = TextSource.create(path).forJob("foo");
 		
-		ec.partition(s -> s.hashCode()).save(outputSpec);
+		source.partition(s -> s.hashCode()).save();
 	}
 	
 	public void partitionSourceWithDefaultPartitioner() throws Exception {
 		OutputSpecification outputSpec = null;
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		StreamExecutionContext<String> ec = StreamExecutionContext.of("foo", TextSource.create(path));
+		DistributableSource<String> source = TextSource.create(path).forJob("foo");
 		
-		ec.partition(4).save(outputSpec);
+		source.partition(4).save(outputSpec);
 	}
 	
 	public void partitionSourceWithFunctionAfterComputation() throws Exception {
 		OutputSpecification outputSpec = null;
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		StreamExecutionContext<String> ec = StreamExecutionContext.of("foo", TextSource.create(path));
+		DistributableSource<String> source = TextSource.create(path).forJob("foo");
 		
-		ec.computePairs(stream -> stream
+		source.computePairs(stream -> stream
 				.flatMap(s -> Stream.of(s.split("\\s+")))
 				.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
 	  ).partition(s -> s.hashCode())

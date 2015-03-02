@@ -8,9 +8,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.dstream.IntermediateResult;
+import org.apache.dstream.OutputSpecification;
 import org.apache.dstream.StreamExecutionContext;
+import org.apache.dstream.DistributableSource;
 import org.apache.dstream.Submittable;
-import org.apache.dstream.io.OutputSpecification;
 import org.apache.dstream.io.TextSource;
 
 public class JoinApiTests {
@@ -18,14 +19,15 @@ public class JoinApiTests {
 	public void join() throws Exception {
 		OutputSpecification outputSpec = null;
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		StreamExecutionContext<String> ec = StreamExecutionContext.of("foo", TextSource.create(path));
 		
-		IntermediateResult<String, Integer> resultA = ec.computePairs(stream -> stream
+		DistributableSource<String> source = TextSource.create(path).forJob("foo");
+		
+		IntermediateResult<String, Integer> resultA = source.computePairs(stream -> stream
 				.flatMap(s -> Stream.of(s.split("\\s+")))
 				.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
 	    );
 		
-		IntermediateResult<String, Integer> resultB = ec.computePairs(stream -> stream
+		IntermediateResult<String, Integer> resultB = source.computePairs(stream -> stream
 				.flatMap(s -> Stream.of(s.split("\\s+")))
 				.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
 	    );
@@ -36,14 +38,14 @@ public class JoinApiTests {
 	public void joinWithDifferentValueTypes() throws Exception {
 		OutputSpecification outputSpec = null;
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		StreamExecutionContext<String> ec = StreamExecutionContext.of("foo", TextSource.create(path));
+		DistributableSource<String> source = TextSource.create(path).forJob("foo");
 		
-		IntermediateResult<String, Integer> resultA = ec.computePairs(stream -> stream
+		IntermediateResult<String, Integer> resultA = source.computePairs(stream -> stream
 				.flatMap(s -> Stream.of(s.split("\\s+")))
 				.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
 	    );
 		
-		IntermediateResult<String, Long> resultB = ec.computePairs(stream -> stream
+		IntermediateResult<String, Long> resultB = source.computePairs(stream -> stream
 				.flatMap(s -> Stream.of(s.split("\\s+")))
 				.collect(Collectors.toMap(s -> s, s -> 1L, Long::sum))
 	    );

@@ -1,18 +1,13 @@
 package org.apache.dstream.local;
 
-import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BinaryOperator;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
+import org.apache.dstream.DistributableSource;
 import org.apache.dstream.assembly.Writer;
-import org.apache.dstream.io.StreamSource;
 import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,38 +44,39 @@ public class ShuffleWriterImpl<K,V> implements Writer<Entry<K,V>> {
 	 * 
 	 * @return
 	 */
-	public StreamSource<Entry<K,V>> toStreamableSource(){
-		StreamSource<Entry<K,V>> source = new StreamSource<Map.Entry<K,V>>() {
-			@Override
-			public Stream<Entry<K, V>> toStream() {
-				EntryIterator shuffleIterator = new EntryIterator();
-				Stream<Entry<K,V>> targetStream = StreamSupport.stream(Spliterators.spliteratorUnknownSize(shuffleIterator, Spliterator.ORDERED), false);
-				return targetStream;
-			}
-
-			@Override
-			public SerializableFunction<Stream<?>, Stream<?>> getPreprocessFunction() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setPreprocessFunction(
-					SerializableFunction<Stream<?>, Stream<?>> preProcessFunction) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public StreamSource<Entry<K, V>> preProcessSource(
-					SerializableFunction<Path[], Path[]> sourcePreProcessFunction) {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			
-		};
-		return source;
+	public DistributableSource<Entry<K,V>> toStreamableSource(){
+//		ComputableSource<Entry<K,V>> source = new ComputableSource<Map.Entry<K,V>>() {
+//			@Override
+//			public Stream<Entry<K, V>> toStream() {
+//				EntryIterator shuffleIterator = new EntryIterator();
+//				Stream<Entry<K,V>> targetStream = StreamSupport.stream(Spliterators.spliteratorUnknownSize(shuffleIterator, Spliterator.ORDERED), false);
+//				return targetStream;
+//			}
+//
+//			@Override
+//			public SerializableFunction<Stream<?>, Stream<?>> getPreprocessFunction() {
+//				// TODO Auto-generated method stub
+//				return null;
+//			}
+//
+//			@Override
+//			public void setPreprocessFunction(
+//					SerializableFunction<Stream<?>, Stream<?>> preProcessFunction) {
+//				// TODO Auto-generated method stub
+//				
+//			}
+//
+//			@Override
+//			public ComputableSource<Entry<K, V>> preProcessSource(
+//					SerializableFunction<Path[], Path[]> sourcePreProcessFunction) {
+//				// TODO Auto-generated method stub
+//				return null;
+//			}
+//
+//			
+//		};
+//		return source;
+		return null;
 	}
 	
 	/**

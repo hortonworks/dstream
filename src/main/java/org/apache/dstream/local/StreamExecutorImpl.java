@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Stream;
 
+import org.apache.dstream.DistributableSource;
 import org.apache.dstream.IntermediateResultImpl;
 import org.apache.dstream.assembly.Stage;
 import org.apache.dstream.assembly.StreamAssembly;
@@ -34,7 +34,7 @@ public class StreamExecutorImpl<T,R> extends StreamExecutor<T,R> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public Stream<R> execute() {
+	public DistributableSource<R> execute() {
 //		try {
 //			if (logger.isInfoEnabled()){
 //				logger.info("Executing " + this.streamAssembly.getJobName());

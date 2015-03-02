@@ -1,8 +1,6 @@
-package org.apache.dstream.io;
+package org.apache.dstream;
 
 import java.nio.file.Path;
-
-import org.apache.dstream.IntermediateResult;
 
 /**
  * Base marker interface allowing for the definition of the output specification to be used 
@@ -21,5 +19,5 @@ public interface OutputSpecification {
 
 	public Path getOutputPath();
 	
-	public <T> StreamSource<T> toStreamableSource();
+	public <T> DistributableSource<T> toStreamableSource();
 }

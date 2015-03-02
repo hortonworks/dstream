@@ -1,4 +1,4 @@
-package org.apache.dstream.io;
+package org.apache.dstream;
 
 import java.nio.file.Path;
 import java.util.Objects;
@@ -23,7 +23,7 @@ public class OutputSpecificationImpl implements OutputSpecification {
 	}
 
 	@Override
-	public <T> StreamSource<T> toStreamableSource() {
+	public <T> DistributableSource<T> toStreamableSource() {
 		// TODO Auto-generated method stub
 		return null;
 	}

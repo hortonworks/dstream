@@ -25,7 +25,7 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 	
 	private int partitionSize;
 
-	private SerializableBinaryOperator<V> mergeFunction;
+	private SerializableBinaryOperator<V> aggregateFunction;
 	
 	private SerializableFunction<Entry<K, V>, Integer> partitionerFunction;
 	
@@ -38,12 +38,12 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 	}
 
 	@Override
-	public Submittable<Entry<K, V>> merge(int partitionSize, SerializableBinaryOperator<V> mergeFunction) {
+	public Submittable<Entry<K, V>> aggregate(int partitionSize, SerializableBinaryOperator<V> aggregateFunction) {
 		if (logger.isDebugEnabled()){
-			logger.debug("Accepted 'merge' request for " + partitionSize + " partitions.");
+			logger.debug("Accepted 'aggregate' request for " + partitionSize + " partitions.");
 		}
 		this.partitionSize = partitionSize;
-		this.mergeFunction = mergeFunction;
+		this.aggregateFunction = aggregateFunction;
 		Partitioner<Entry<K, V>> defaultPartitioner = new DefaultPartitioner(this.partitionSize);
 		this.partitionerFunction = new SerializableFunction<Entry<K, V>, Integer>() {
 			private static final long serialVersionUID = -8996083508793084950L;
@@ -57,9 +57,9 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 	}
 
 	@Override
-	public Submittable<Entry<K, V>> merge(Partitioner<Entry<K,V>> partitioner, SerializableBinaryOperator<V> mergeFunction) {
+	public Submittable<Entry<K, V>> aggregate(Partitioner<Entry<K,V>> partitioner, SerializableBinaryOperator<V> aggregateFunction) {
 		if (logger.isDebugEnabled()){
-			logger.debug("Accepted 'merge' request with " + partitioner + ".");
+			logger.debug("Accepted 'aggregate' request with " + partitioner + ".");
 		}
 		this.partitionerFunction = new SerializableFunction<Entry<K, V>, Integer>() {
 			private static final long serialVersionUID = 6530880100257370609L;
@@ -68,19 +68,19 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 				return partitioner.getPartition(t);
 			}
 		};
-		this.mergeFunction = mergeFunction;
+		this.aggregateFunction = aggregateFunction;
 		this.executionContext.getStreamAssembly().getLastStage().setMerger(this);
 		return new IntermediateStageEntryPointImpl<Entry<K,V>>(this.executionContext);
 	}
 
 	@Override
-	public Submittable<Entry<K, V>> merge(SerializableFunction<Entry<K, V>, Integer> partitionerFunction,
-			SerializableBinaryOperator<V> mergeFunction) {
+	public Submittable<Entry<K, V>> aggregate(SerializableFunction<Entry<K, V>, Integer> partitionerFunction,
+			SerializableBinaryOperator<V> aggregateFunction) {
 		if (logger.isDebugEnabled()){
-			logger.debug("Accepted 'merge' request with partitioner function.");
+			logger.debug("Accepted 'aggregate' request with partitioner function.");
 		}
 		this.partitionerFunction = partitionerFunction;
-		this.mergeFunction = mergeFunction;
+		this.aggregateFunction = aggregateFunction;
 		this.executionContext.getStreamAssembly().getLastStage().setMerger(this);
 		return new IntermediateStageEntryPointImpl<Entry<K,V>>(this.executionContext);
 	}
@@ -90,7 +90,7 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 	}
 
 	public SerializableBinaryOperator<V> getMergeFunction() {
-		return mergeFunction;
+		return aggregateFunction;
 	}
 
 	public SerializableFunction<Entry<K, V>, Integer> getPartitionerFunction() {

@@ -20,29 +20,29 @@ public interface IntermediateResult<K,V> extends Partitionable<Entry<K,V>>, Join
 	
 	/**
 	 * Will partition the intermediate result using default {@link Partitioner} provided by the underlying execution environment.
-	 * When partitions are written the 'mergeFunction' will also be applied.
+	 * When partitions are written the 'aggregateFunction' will also be applied.
 	 * 
 	 * @param partitioner
 	 * @return
 	 */
-	public Submittable<Entry<K,V>> merge(int partitionSize, SerializableBinaryOperator<V> mergeFunction);
+	public Submittable<Entry<K,V>> aggregate(int partitionSize, SerializableBinaryOperator<V> aggregateFunction);
 	/**
 	 * Will partition the intermediate result using provided {@link Partitioner}
-	 * When partitions are written the 'mergeFunction' will also be applied.
+	 * When partitions are written the 'aggregateFunction' will also be applied.
 	 * 
 	 * @param partitioner
 	 * @return
 	 */
-	public Submittable<Entry<K,V>> merge(Partitioner<Entry<K,V>> partitioner, SerializableBinaryOperator<V> mergeFunction);
+	public Submittable<Entry<K,V>> aggregate(Partitioner<Entry<K,V>> partitioner, SerializableBinaryOperator<V> aggregateFunction);
 	
 	/**
 	 * Will partition the intermediate result using provided partitioning function. It is assumed that partitioning function 
 	 * maintains knows about the maximum number of partitions. 
-	 * When partitions are written the 'mergeFunction' will also be applied.
+	 * When partitions are written the 'aggregateFunction' will also be applied.
 	 * 
 	 * @param partitionerFunction
 	 * @return
 	 */
-	public Submittable<Entry<K,V>> merge(SerializableFunction<Entry<K,V>, Integer> partitionerFunction, SerializableBinaryOperator<V> mergeFunction);
+	public Submittable<Entry<K,V>> aggregate(SerializableFunction<Entry<K,V>, Integer> partitionerFunction, SerializableBinaryOperator<V> aggregateFunction);
 	
 }
