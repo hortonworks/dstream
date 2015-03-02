@@ -132,30 +132,21 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 	}
 
 	@Override
-	public IntermediateResult<K, V> join(IntermediateResult<K, V> intermediateResult) {
+	public <R> IntermediateResult<K, Entry<V,R>> join(IntermediateResult<K, R> intermediateResult) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public <KK, VV, R> IntermediateResult<K, R> join(
-			IntermediateResult<KK, VV> intermediateResult,
+	public <KK, VV, R> IntermediateResult<K, R> join(IntermediateResult<KK, VV> intermediateResult,
 			SerializableBiFunction<V, VV, R> valueCombiner) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public IntermediateResult<K, V> groupByKey() {
+	public IntermediateResult<K, Iterable<V>> groupByKey() {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
-	@Override
-	public <R> IntermediateResult<K, R> groupByKey(
-			SerializableBiFunction<V, V, R> valueCombiner) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 }

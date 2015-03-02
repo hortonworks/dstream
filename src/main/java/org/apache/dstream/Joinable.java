@@ -6,8 +6,7 @@ import org.apache.dstream.utils.SerializableBiFunction;
 
 /**
  * 
- * Strategy which defines functionality to perform joins between to {@link IntermediateResult}s 
- * based on the key.
+ * Strategy which defines functionality to perform key-based joins between two {@link IntermediateResult}s.
  *
  * @param <K>
  * @param <V>
@@ -21,7 +20,7 @@ public interface Joinable<K,V> {
 	 * @param intermediateResult
 	 * @return
 	 */
-	public IntermediateResult<K,V> join(IntermediateResult<K, V> intermediateResult);
+	public <R> IntermediateResult<K,Entry<V,R>> join(IntermediateResult<K, R> intermediateResult);
 	
 	/**
 	 * Will join two {@link IntermediateResult}s together based on the key.
