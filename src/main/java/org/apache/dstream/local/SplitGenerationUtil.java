@@ -1,6 +1,6 @@
 package org.apache.dstream.local;
 
-import org.apache.dstream.DistributableSource;
+import org.apache.dstream.DistributedPipeline;
 import org.apache.dstream.io.TextSource;
 
 class SplitGenerationUtil {
@@ -12,7 +12,7 @@ class SplitGenerationUtil {
 	 * 
 	 * @param source
 	 */
-	public static <T> Split<T>[] generateSplits(DistributableSource<T> source){
+	public static <T> Split<T>[] generateSplits(DistributedPipeline<T> source){
 		Split<T>[] splits = null;
 		if (source instanceof TextSource){
 			splits = PourManTextFileSplitter.generateSplits((TextSource) source);

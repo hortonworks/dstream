@@ -9,7 +9,7 @@ import org.apache.dstream.utils.SerializableFunction;
 
 /**
  * Strategy which represents intermediate KEY/VALUE results as {@link Entry}. It is returned by 
- * {@link StreamExecutionContext#computeAsKeyValue(Class, Class, SerializableFunction)} method.
+ * {@link DistributedPipelineExecutionProvider#computeAsKeyValue(Class, Class, SerializableFunction)} method.
  * <br>
  * Intermediate results are the post-shuffle (read from the shuffled input) 
  * 

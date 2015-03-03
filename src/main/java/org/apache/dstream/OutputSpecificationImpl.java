@@ -23,7 +23,7 @@ public class OutputSpecificationImpl implements OutputSpecification {
 	}
 
 	@Override
-	public <T> DistributableSource<T> toStreamableSource() {
+	public <T> DistributedPipeline<T> toStreamableSource() {
 		// TODO Auto-generated method stub
 		return null;
 	}

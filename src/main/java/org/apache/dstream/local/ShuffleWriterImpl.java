@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BinaryOperator;
 
-import org.apache.dstream.DistributableSource;
+import org.apache.dstream.DistributedPipeline;
 import org.apache.dstream.assembly.Writer;
 import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;
@@ -44,7 +44,8 @@ public class ShuffleWriterImpl<K,V> implements Writer<Entry<K,V>> {
 	 * 
 	 * @return
 	 */
-	public DistributableSource<Entry<K,V>> toStreamableSource(){
+	public DistributedPipeline<Entry<K,V>> toStreamableSource(){
+//		DistributedPipeline<Entry<K,V>> distributedPipeline = new DefaultDistributedPipeline<Entry<K,V>>(jobName)
 //		ComputableSource<Entry<K,V>> source = new ComputableSource<Map.Entry<K,V>>() {
 //			@Override
 //			public Stream<Entry<K, V>> toStream() {
@@ -75,7 +76,6 @@ public class ShuffleWriterImpl<K,V> implements Writer<Entry<K,V>> {
 //
 //			
 //		};
-//		return source;
 		return null;
 	}
 	

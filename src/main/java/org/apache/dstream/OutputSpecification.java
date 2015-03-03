@@ -19,5 +19,5 @@ public interface OutputSpecification {
 
 	public Path getOutputPath();
 	
-	public <T> DistributableSource<T> toStreamableSource();
+	public <T> DistributedPipeline<T> toStreamableSource();
 }

@@ -1,18 +1,10 @@
 package org.apache.dstream.local;
 
-import java.io.File;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
-import java.nio.file.Path;
 
-import org.apache.dstream.Source;
-import org.apache.dstream.StreamExecutionContext;
-import org.apache.dstream.io.TextSource;
-import org.apache.logging.log4j.util.Strings;
-import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
 
 /**
  */

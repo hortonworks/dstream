@@ -4,31 +4,29 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.xml.transform.stream.StreamSource;
-
-import org.apache.dstream.DistributableSource;
+import org.apache.dstream.DistributedPipeline;
 import org.apache.dstream.OutputSpecification;
 
 
 /**
  * 
  */
-public class StreamAssembly<T> implements Iterable<Stage<T>>{
+public class DistributedPipelineAssembly<T> implements Iterable<Stage<T>>{
 
 	private volatile String jobName;
 	
 	private volatile List<Stage<T>> stages;
 	
-	private volatile DistributableSource<?> source;
+	private volatile DistributedPipeline<T> pipeline;
 	
 	private volatile OutputSpecification outputSpecification;
 
-	private StreamAssembly(){
+	private DistributedPipelineAssembly(){
 		this.stages = new ArrayList<Stage<T>>();
 	}
 	
-	public DistributableSource<?> getSource() {
-		return source;
+	public DistributedPipeline<T> getPipeline() {
+		return pipeline;
 	}
 
 	public String getJobName() {
@@ -62,5 +60,9 @@ public class StreamAssembly<T> implements Iterable<Stage<T>>{
 	
 	public String toString(){
 		return this.jobName + " - Stages:[" + stages.size() + "]";
+	}
+	
+	protected void setPipeline(DistributedPipeline<T> pipeline){
+		this.pipeline = pipeline;
 	}
 }

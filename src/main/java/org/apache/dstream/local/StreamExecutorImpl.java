@@ -6,11 +6,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.apache.dstream.DistributableSource;
+import org.apache.dstream.DistributedPipeline;
 import org.apache.dstream.IntermediateResultImpl;
 import org.apache.dstream.assembly.Stage;
-import org.apache.dstream.assembly.StreamAssembly;
-import org.apache.dstream.exec.StreamExecutor;
+import org.apache.dstream.assembly.DistributedPipelineAssembly;
+import org.apache.dstream.exec.DistributedPipelineExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,19 +22,19 @@ import org.slf4j.LoggerFactory;
  *
  * @param <T>
  */
-public class StreamExecutorImpl<T,R> extends StreamExecutor<T,R> {
+public class StreamExecutorImpl<T,R> extends DistributedPipelineExecutor<T,R> {
 
 	private final Logger logger = LoggerFactory.getLogger(StreamExecutorImpl.class);
 	
 	private final ExecutorService executor = Executors.newCachedThreadPool();
 	
-	public StreamExecutorImpl(StreamAssembly<T> streamAssembly) {
+	public StreamExecutorImpl(DistributedPipelineAssembly<T> streamAssembly) {
 		super(streamAssembly);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public DistributableSource<R> execute() {
+	public DistributedPipeline<R> execute() {
 //		try {
 //			if (logger.isInfoEnabled()){
 //				logger.info("Executing " + this.streamAssembly.getJobName());

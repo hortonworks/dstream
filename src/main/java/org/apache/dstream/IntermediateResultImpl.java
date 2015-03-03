@@ -21,7 +21,7 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 
 	private final Logger logger = LoggerFactory.getLogger(IntermediateResultImpl.class);
 	
-	private transient final StreamExecutionContext<Entry<K, V>> executionContext;
+	private transient final DistributedPipelineExecutionProvider<Entry<K, V>> executionContext;
 	
 	private int partitionSize;
 
@@ -33,7 +33,7 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 	 * 
 	 * @param context
 	 */
-	protected IntermediateResultImpl(StreamExecutionContext<Entry<K,V>> executionContext){
+	protected IntermediateResultImpl(DistributedPipelineExecutionProvider<Entry<K,V>> executionContext){
 		this.executionContext = executionContext;
 	}
 
@@ -52,7 +52,7 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 				return defaultPartitioner.getPartition(t);
 			}
 		};
-		this.executionContext.getStreamAssembly().getLastStage().setMerger(this);
+		this.executionContext.getAssembly().getLastStage().setMerger(this);
 		return new IntermediateStageEntryPointImpl<Entry<K,V>>(this.executionContext);
 	}
 
@@ -69,7 +69,7 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 			}
 		};
 		this.aggregateFunction = aggregateFunction;
-		this.executionContext.getStreamAssembly().getLastStage().setMerger(this);
+		this.executionContext.getAssembly().getLastStage().setMerger(this);
 		return new IntermediateStageEntryPointImpl<Entry<K,V>>(this.executionContext);
 	}
 
@@ -81,7 +81,7 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 		}
 		this.partitionerFunction = partitionerFunction;
 		this.aggregateFunction = aggregateFunction;
-		this.executionContext.getStreamAssembly().getLastStage().setMerger(this);
+		this.executionContext.getAssembly().getLastStage().setMerger(this);
 		return new IntermediateStageEntryPointImpl<Entry<K,V>>(this.executionContext);
 	}
 	

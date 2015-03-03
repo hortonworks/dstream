@@ -1,11 +1,14 @@
 package org.apache.dstream;
 
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
-import org.apache.dstream.exec.StreamExecutor;
+import org.apache.dstream.exec.DistributedPipelineExecutor;
 import org.apache.dstream.utils.NullType;
 import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;
@@ -19,10 +22,10 @@ public class IntermediateStageEntryPointImpl<T> implements Submittable<T> {
 	
 	private final Logger logger = LoggerFactory.getLogger(IntermediateStageEntryPointImpl.class);
 	
-	private final StreamExecutionContext<T> executionContext;
+	private final DistributedPipelineExecutionProvider<T> executionProvider;
 	
-	protected IntermediateStageEntryPointImpl(StreamExecutionContext<T> executionContext){
-		this.executionContext = executionContext;
+	protected IntermediateStageEntryPointImpl(DistributedPipelineExecutionProvider<T> executionProvider){
+		this.executionProvider = executionProvider;
 	}
 
 	@Override
@@ -62,22 +65,27 @@ public class IntermediateStageEntryPointImpl<T> implements Submittable<T> {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'computePairs' request");
 		}
-		return new IntermediateResultImpl<T, V>((StreamExecutionContext<Entry<T, V>>) this.executionContext);
+		return new IntermediateResultImpl<T, V>((DistributedPipelineExecutionProvider<Entry<T, V>>) this.executionProvider);
 	}
 
 	@Override
-	public DistributableSource<T> save(OutputSpecification outputSpec) {
+	public DistributedPipeline<T> save(OutputSpecification outputSpec) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Submitting job. Output will be available at: " + outputSpec.getOutputPath());
 		}
-		this.executionContext.getStreamAssembly().setOutputSpecification(outputSpec);
-		StreamExecutor<?, T> streamExecutor = this.executionContext.getStreamExecutor();
+		this.executionProvider.getAssembly().setOutputSpecification(outputSpec);
+		DistributedPipelineExecutor<?, T> streamExecutor = this.executionProvider.getExecutor();
 		return streamExecutor.execute();
 	}
 
 	@Override
-	public DistributableSource<T> save() {
-		// TODO Auto-generated method stub
-		return null;
+	public DistributedPipeline<T> save(FileSystem fs) {
+		OutputSpecification outputSpec = new OutputSpecificationImpl(fs.getPath(this.executionProvider.getAssembly().getJobName() + "/out"));
+		if (logger.isDebugEnabled()){
+			logger.debug("Submitting job. Output will be available at: " + outputSpec.getOutputPath());
+		}
+		this.executionProvider.getAssembly().setOutputSpecification(outputSpec);
+		DistributedPipelineExecutor<?, T> streamExecutor = this.executionProvider.getExecutor();
+		return streamExecutor.execute();
 	}
 }

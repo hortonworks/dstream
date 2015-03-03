@@ -1,16 +1,18 @@
 package org.apache.dstream;
 
+import java.nio.file.FileSystem;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.stream.Stream;
 
-import org.apache.dstream.assembly.StreamAssembly;
-import org.apache.dstream.exec.StreamExecutor;
+import org.apache.dstream.assembly.DistributedPipelineAssembly;
+import org.apache.dstream.exec.DistributedPipelineExecutor;
 import org.apache.dstream.io.FsSource;
 import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.ReflectionUtils;
+import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
@@ -19,14 +21,14 @@ import org.slf4j.LoggerFactory;
  *
  * @param <T>
  */
-public abstract class StreamExecutionContext<T> {//implements StageEntryPoint<T>, Partitionable<T>, Closeable {
+public abstract class DistributedPipelineExecutionProvider<T> {
 	
-	private static final Logger logger = LoggerFactory.getLogger(StreamExecutionContext.class);
+	private static final Logger logger = LoggerFactory.getLogger(DistributedPipelineExecutionProvider.class);
 	
-	private volatile AbstractDistributableSource<T> source;
+//	private volatile AbstractDistributedPipeline<T> pipeline;
 	
 	@SuppressWarnings("unchecked")
-	private final StreamAssembly<T> streamAssembly = ReflectionUtils.newDefaultInstance(StreamAssembly.class);
+	private final DistributedPipelineAssembly<T> streamAssembly = ReflectionUtils.newDefaultInstance(DistributedPipelineAssembly.class);
 
 	private final List<String> supportedProtocols = new ArrayList<String>();
 
@@ -34,46 +36,50 @@ public abstract class StreamExecutionContext<T> {//implements StageEntryPoint<T>
 	
 	
 	/**
-	 * Factory method that will return implementation of this {@link StreamExecutionContext}
+	 * Factory method that will return implementation of this {@link DistributedPipelineExecutionProvider}
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	protected static <T> StreamExecutionContext<T> of(String jobName, AbstractDistributableSource<T> source) {
-		Assert.notNull(source, "Streamable source must not be null");
+	protected static <T> DistributedPipelineExecutionProvider<T> of(String jobName, AbstractDistributedPipeline<T> pipeline) {
+		Assert.notNull(pipeline, "'pipeline' must not be null");
 		Assert.notEmpty(jobName, "'jobName' must not be null or empty");
 		
-		ServiceLoader<StreamExecutionContext> sl = ServiceLoader.load(StreamExecutionContext.class, ClassLoader.getSystemClassLoader());
-		Iterator<StreamExecutionContext> iter = sl.iterator();
-		StreamExecutionContext<T> suitableContext = null;
+		ServiceLoader<DistributedPipelineExecutionProvider> sl = ServiceLoader.load(DistributedPipelineExecutionProvider.class, ClassLoader.getSystemClassLoader());
+		Iterator<DistributedPipelineExecutionProvider> iter = sl.iterator();
+		DistributedPipelineExecutionProvider<T> suitableContext = null;
 		while (iter.hasNext() && suitableContext == null){
-			StreamExecutionContext context = iter.next();
-			if (context.isSourceSupported(source)){
+			DistributedPipelineExecutionProvider context = iter.next();
+			if (context.isSourceSupported(pipeline)){
 				if (logger.isInfoEnabled()){
-					logger.info("Loaded " + context + " to process source: " + source);
+					logger.info("Loaded " + context + " to process source: " + pipeline);
 				}
 				suitableContext = context;
 			} else {
 				if (logger.isInfoEnabled()){
 					logger.info("Available context: " + context + " will not be loaded since it does not "
-							+ "support '" +  source);
+							+ "support '" +  pipeline);
 				}
 			}
 		}
 		if (suitableContext == null){
-			throw new IllegalStateException("No suitable execution context was found");
+			throw new IllegalStateException("No suitable execution provider found to process: " + pipeline);
 		}
+		ReflectionUtils.setFieldValue(suitableContext.streamAssembly, "pipeline", pipeline);
+//		suitableContext.source = source;
 		
-		suitableContext.source = source;
-		
-		suitableContext.preProcessSource();
+//		SerializableFunction<Stream<?>, Stream<?>> sourcePreprocessFunction = suitableContext.getSourcePreProcessFunction();
+//		if (sourcePreprocessFunction != null){
+//			pipeline.setPreprocessFunction(sourcePreprocessFunction);
+//		}
+//		suitableContext.preProcessSource();
 		
 		ReflectionUtils.setFieldValue(suitableContext.streamAssembly, "jobName", jobName);
 		if (logger.isDebugEnabled()){
 			logger.debug("StreamAssembly jobName: " + jobName);
 		}
-		ReflectionUtils.setFieldValue(suitableContext.streamAssembly, "source", source);
-		if (logger.isDebugEnabled()){
-			logger.debug("StreamAssembly source: " + source);
-		}
+//		ReflectionUtils.setFieldValue(suitableContext.streamAssembly, "source", source);
+//		if (logger.isDebugEnabled()){
+//			logger.debug("StreamAssembly source: " + source);
+//		}
 		
 		return suitableContext;
 	}
@@ -89,7 +95,7 @@ public abstract class StreamExecutionContext<T> {//implements StageEntryPoint<T>
 		return stageIdCounter++;
 	}
 	
-	protected StreamAssembly<T> getStreamAssembly() {
+	protected DistributedPipelineAssembly<T> getAssembly() {
 		return streamAssembly;
 	}
 	
@@ -97,20 +103,21 @@ public abstract class StreamExecutionContext<T> {//implements StageEntryPoint<T>
 		return supportedProtocols;
 	}
 	
-	/**
-	 * 
-	 * @return
-	 */
-	protected AbstractDistributableSource<T> getSource() {
-		return this.source;
-	}
+//	/**
+//	 * 
+//	 * @return
+//	 */
+//	protected AbstractDistributedPipeline<T> getSource() {
+//		return this.source;
+//	}
 	
 	/**
 	 * 
 	 * @param source
 	 * @return
 	 */
-	protected boolean isSourceSupported(DistributableSource<T> source){
+	protected boolean isSourceSupported(DistributedPipeline<T> pipeline){
+		Source<T> source = pipeline.getSource();
 		if (source instanceof FsSource) {
 			@SuppressWarnings("rawtypes")
 			String protocol = ((FsSource)source).getScheme();
@@ -140,7 +147,7 @@ public abstract class StreamExecutionContext<T> {//implements StageEntryPoint<T>
 //	 */
 //	public abstract Stream<T> toStream();
 	
-	protected abstract <R> StreamExecutor<T,R> getStreamExecutor();
+	protected abstract <R> DistributedPipelineExecutor<T,R> getExecutor();
 	
 	/**
 	 * Will compose final pipeline by prepending additional pre-processing function to the pipeline.
@@ -149,6 +156,7 @@ public abstract class StreamExecutionContext<T> {//implements StageEntryPoint<T>
 	 * 
 	 * If no function can be located, nothing will be prepended to the main pipeline.
 	 */
-	protected abstract void preProcessSource();
-	
+	protected SerializableFunction<Stream<?>, Stream<?>> getSourcePreProcessFunction() {
+		return null;
+	}
 }

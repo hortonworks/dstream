@@ -2,12 +2,8 @@ package org.apache.dstream.io;
 
 import java.nio.file.Path;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
-import org.apache.dstream.DistributableSource;
-import org.apache.dstream.DistributableSourceImpl;
 import org.apache.dstream.utils.Assert;
-import org.apache.dstream.utils.SerializableFunction;
 
 /**
  * @param <K>
@@ -48,9 +44,9 @@ public abstract class KeyValueFsSource<K,V> implements FsSource<V> {
 		return this.getClass().getSimpleName() + "; scheme:[" + this.getScheme() + "];";
 	}
 	
-	@Override
-	public DistributableSource<V> forJob(String name){
-		DistributableSourceImpl<V> distributableSource = new DistributableSourceImpl<>();
-		return distributableSource;
-	}
+//	@Override
+//	public DistributedPipeline<V> asPipeline(String jobName){
+//		DefaultDistributedPipeline<V> distributableSource = new DefaultDistributedPipeline<>(jobName);
+//		return distributableSource;
+//	}
 }

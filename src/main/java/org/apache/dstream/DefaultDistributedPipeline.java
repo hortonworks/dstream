@@ -14,13 +14,16 @@ import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DistributableSourceImpl<T> extends AbstractDistributableSource<T> {
-	protected final Logger logger = LoggerFactory.getLogger(DistributableSourceImpl.class);
+public class DefaultDistributedPipeline<T> extends AbstractDistributedPipeline<T> {
+	protected final Logger logger = LoggerFactory.getLogger(DefaultDistributedPipeline.class);
 	
-	private final StreamExecutionContext<T> executionContext;
+	private final DistributedPipelineExecutionProvider<T> executionContext;
 	
-	public DistributableSourceImpl(){
-		this.executionContext = StreamExecutionContext.of("foo", this);
+	private final Source<T> source;
+	
+	public DefaultDistributedPipeline(Source<T> source, String jobName){
+		this.source = source;
+		this.executionContext = DistributedPipelineExecutionProvider.of(jobName, this);
 	}
 	@Override
 	public int computeInt(SerializableFunction<Stream<T>, Integer> function) {
@@ -55,10 +58,10 @@ public class DistributableSourceImpl<T> extends AbstractDistributableSource<T> {
 			logger.debug("Accepted 'computePairs' request");
 		}
 
-		Stage<T> stage = new Stage<T>(function, this.executionContext.getSource().getPreprocessFunction(), this.executionContext.nextStageId());
-		this.executionContext.getStreamAssembly().addStage(stage);
+		Stage<T> stage = new Stage<T>(function, this.executionContext.getSourcePreProcessFunction(), this.executionContext.nextStageId());
+		this.executionContext.getAssembly().addStage(stage);
 	
-		return new IntermediateResultImpl<T, V>((StreamExecutionContext<Entry<T, V>>) this.executionContext);
+		return new IntermediateResultImpl<T, V>((DistributedPipelineExecutionProvider<Entry<T, V>>) this.executionContext);
 	}
 	
 	@Override
@@ -72,15 +75,13 @@ public class DistributableSourceImpl<T> extends AbstractDistributableSource<T> {
 		return null;
 	}
 	@Override
-	public Submittable<T> partition(
-			SerializableFunction<T, Integer> partitionerFunction) {
+	public Submittable<T> partition(SerializableFunction<T, Integer> partitionerFunction) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 	@Override
 	public Stream<T> toStream() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.source.toStream();
 	}
 	@Override
 	public void close() throws IOException {
@@ -89,7 +90,17 @@ public class DistributableSourceImpl<T> extends AbstractDistributableSource<T> {
 	}
 	
 	@Override
-	protected DistributableSource<T> preProcessSource(SerializableFunction<Path[], Path[]> sourcePreProcessFunction) {
+	public Source<T> getSource() {
+		return source;
+	}
+	
+	@Override
+	public String toString() {
+		return this.getClass().getSimpleName() + "[" + this.source.toString() + "]";
+	}
+	
+	@Override
+	protected DistributedPipeline<T> preProcessSource(SerializableFunction<Path[], Path[]> sourcePreProcessFunction) {
 		// TODO Auto-generated method stub
 		return null;
 	}

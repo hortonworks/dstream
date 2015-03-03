@@ -7,14 +7,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.dstream.IntermediateResult;
-import org.apache.dstream.DistributableSource;
+import org.apache.dstream.DistributedPipeline;
 import org.apache.dstream.io.TextSource;
 
 public class GroupByApiTests {
 
 	public void join() throws Exception {
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		DistributableSource<String> source = TextSource.create(path).forJob("foo");
+		DistributedPipeline<String> source = TextSource.create(path).asPipeline("foo");
 		
 		IntermediateResult<String, Integer> resultA = source.computePairs(stream -> stream
 				.flatMap(s -> Stream.of(s.split("\\s+")))

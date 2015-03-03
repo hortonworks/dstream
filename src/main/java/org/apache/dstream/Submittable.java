@@ -1,5 +1,6 @@
 package org.apache.dstream;
 
+import java.nio.file.FileSystem;
 import java.util.stream.Stream;
 
 /**
@@ -19,7 +20,7 @@ public interface Submittable<R> extends StageEntryPoint<R>{
 	 * @param outputSpec
 	 * @return
 	 */
-	public DistributableSource<R> save(OutputSpecification outputSpec);
+	public DistributedPipeline<R> save(OutputSpecification outputSpec);
 	
 	/**
 	 * Will trigger execution of the source {@link Stream} returning a {@link Stream} over the results of the execution, 
@@ -27,5 +28,5 @@ public interface Submittable<R> extends StageEntryPoint<R>{
 	 * 
 	 * @return
 	 */
-	public DistributableSource<R> save();
+	public DistributedPipeline<R> save(FileSystem fs);
 }
