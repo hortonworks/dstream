@@ -1,10 +1,10 @@
 ### Distributed Streams
 ==========
 
-Java 8 Streams and lambdas introduced several abstractions that greatly simplify data processing by exposing a set of well-known _collection 
+_Java 8 Streams_ and _lambdas_ introduced several abstractions that greatly simplify data processing by exposing a set of well-known _collection 
 processing patterns_ (e.g., map, group, join etc.) together with _functional programming paradigms_. 
 
-**Distributed Streams** - provides an API, which builds on clear separation of concerns between _**data processing**_
+**Distributed Streams** - provides an API, which builds on _Java 8 Streams_ and _lambdas_ while also maintaining a clear separation of concerns between _**data processing**_
 and _**data distribution**_, allowing [Streams API](http://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html) (used for _**data processing**_) 
 to evolve naturally and in isolation, while unobtrusively adding functionality **only** to address _**data distribution**_ concerns.
 
