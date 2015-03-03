@@ -30,14 +30,15 @@ public class WordCount {
 		FileSystem fs = FileSystems.getFileSystem(new URI("hdfs:///"));
 		Path inputPath = fs.getPath("samples.txt");
 		
-		DistributedPipeline<String> sourcePipeline = TextSource.create(inputPath)
-													.asPipeline("WordCount");
+		Source<String> source = TextSource.create(inputPath);
 		
-		Stream<Entry<String, Integer>> result = sourcePipeline.computePairs(stream -> stream
+		Stream<Entry<String, Integer>> result = source.asPipeline("WordCount")
+			.computePairs(stream -> stream
 				  .flatMap(s -> Stream.of(s.split("\\s+")))
-				  .collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)))
-		  .aggregate(2, Integer::sum)
-		  .save(fs).toStream();
+				  .collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
+			)
+		    .aggregate(2, Integer::sum)
+		    .save(fs).toStream();
 		
 		// print results to console
 		result.forEach(System.out::println);
