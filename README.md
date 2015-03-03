@@ -28,9 +28,8 @@ public class WordCount {
 
 	public static void main(String... args) throws Exception {
 		FileSystem fs = FileSystems.getFileSystem(new URI("hdfs:///"));
-		Path inputPath = fs.getPath("samples.txt");
 		
-		Source<String> source = TextSource.create(inputPath);
+		Source<String> source = TextSource.create(fs.getPath("samples.txt"));
 		
 		Stream<Entry<String, Integer>> result = source.asPipeline("WordCount")
 			.computePairs(stream -> stream
