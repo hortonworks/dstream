@@ -50,7 +50,7 @@ This is a complete sample that includes _import_ statements to demonstrate one o
 Yet you don't see any dependencies on Tez, Hadoop, HDFS etc. That is because the target execution environment is completely externalized and is loaded using standard Java mechanisms for configuring and loading _services_ and _providers_, allowing different _target execution providers_ to be loaded without requiring any changes to the end user code. Custom _FileSystemProviders_ are also supported 
 (HDFS in this case) allowing for a variety of _java.nio.file.FileSystem_ bindings, thus keeping your code clean and concise giving you out most flexibility between _**designing data processing applications**_ vs. _**choosing their target execution environment**_.  
 
-For more information please read [Getting Started](Getting_Started)
+For more information please read [Getting Started](https://github.com/hortonworks/dstream/wiki/Getting-Started)
 
 =======
 
