@@ -8,7 +8,7 @@ processing patterns_ (e.g., map, group, join etc.) together with _functional pro
 and _**data distribution**_, allowing [Streams API](http://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html) (used for _**data processing**_) 
 to evolve naturally and in isolation, while unobtrusively adding functionality **only** to address _**data distribution**_ concerns.
 
-The following code snippet depicts a quintessential _WordCount_ and how it is realized using the API provided by **Distributed Streams**
+The following code snippet depicts a quintessential _WordCount_ and how it is realized using the API provided by **Distributed Streams**:
 
 ```
 import java.nio.file.FileSystem;
@@ -27,7 +27,8 @@ public class WordCount {
 		FileSystem fs = FileSystems.getFileSystem(new URI("hdfs:///"));
 		Path inputPath = fs.getPath("samples.txt");
 		
-		DistributedPipeline<String> sourcePipeline = TextSource.create(inputPath).asPipeline("WordCount");
+		DistributedPipeline<String> sourcePipeline = TextSource.create(inputPath)
+													.asPipeline("WordCount");
 		
 		Stream<Entry<String, Integer>> result = sourcePipeline.computePairs(stream -> stream
 				  .flatMap(s -> Stream.of(s.split("\\s+")))
