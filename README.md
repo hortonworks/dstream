@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.net.URI;
 
 import org.apache.dstream.DistributedPipeline;
 import org.apache.dstream.io.TextSource;
