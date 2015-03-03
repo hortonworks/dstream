@@ -10,7 +10,7 @@ to evolve naturally and in isolation, while unobtrusively adding functionality *
 
 The following code snippet depicts a quintessential _WordCount_ and how it is realized using the API provided by **Distributed Streams**:
 
-```
+```java
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
