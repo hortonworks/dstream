@@ -44,5 +44,5 @@ public class WordCount {
 As you can see this is a complete sample which includes _import_ statements to demonstrate one of the features of the API, which completely decouples you from the _target execution environment_ 
 (e.g., Tez, Spark, Flink etc.) and its dependencies. In fact, this example was copied from [Apache Tez implementation](https://github.com/hortonworks/dstream-tez/) of the Distributed Streams. 
 Yet you don't see any dependencies on Tez, Hadoop, HDFS etc. That is because the environment is loaded using standard Java mechanisms for loading services and providers allowing bootstrapping of different execution providers without requiring any changes to the end user code. Custom _FileSystemProviders_ are also supported (HDFS in this case) allowing various file systems to be represented as 
-_java.nio.file.FileSystem_, thus keeping your code clean and concise giving end user out most flexibility.
+_java.nio.file.FileSystem_, thus keeping your code clean and concise giving you out most flexibility between designing data processing application vs. choosing the target execution environment for them.  
 
