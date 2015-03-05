@@ -51,5 +51,5 @@ public interface StageEntryPoint<T> {
 
 	public <R> IntermediateResult<NullType, R> computeCollection(SerializableFunction<Stream<T>, Collection<R>> function);
 	
-	public <V> IntermediateResult<T,V> computeMappings(SerializableFunction<Stream<T>, Map<T,V>> function);
+	public <K,V> IntermediateResult<K,V> computeMappings(SerializableFunction<Stream<T>, Map<K,V>> function);
 }

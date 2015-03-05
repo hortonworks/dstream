@@ -34,7 +34,7 @@ public class StreamExecutionContextAPIValidatorTests {
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
 		DistributedPipeline<String> source = TextSource.create(path).asPipeline("foo");
 		
-		source.<Integer>computeMappings(stream -> stream
+		source.<String, Integer>computeMappings(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
 		  ).combine(3, Integer::sum)

@@ -59,11 +59,11 @@ public class IntermediateStageEntryPointImpl<T> implements Triggerable<T> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <V> IntermediateResult<T, V> computeMappings(SerializableFunction<Stream<T>, Map<T, V>> function) {
+	public <K,V> IntermediateResult<K, V> computeMappings(SerializableFunction<Stream<T>, Map<K, V>> function) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'computePairs' request");
 		}
-		return new IntermediateResultImpl<T, V>((DistributedPipelineExecutionProvider<Entry<T, V>>) this.executionProvider);
+		return new IntermediateResultImpl<K, V>((DistributedPipelineExecutionProvider<Entry<K, V>>) this.executionProvider);
 	}
 
 	@Override

@@ -21,7 +21,7 @@ public class WordCount {
 		
 		DistributedPipeline<String> sourcePipeline = TextSource.create(inputPath).asPipeline("WordCount");
 	
-		DistributedPipeline<Entry<String, Integer>> resultPipeline = sourcePipeline.computeMappings(stream -> stream
+		DistributedPipeline<Entry<String, Integer>> resultPipeline = sourcePipeline.<String, Integer>computeMappings(stream -> stream
 				  .flatMap(s -> Stream.of(s.split("\\s+")))
 				  .collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)))
 		  .combine(2, Integer::sum)

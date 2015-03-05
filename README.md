@@ -33,11 +33,11 @@ public class WordCount {
 		Source<String> source = TextSource.create(fs.getPath("samples.txt"));
 		
 		Stream<Entry<String, Integer>> result = source.asPipeline("WordCount")
-			.computePairs(stream -> stream
+			.computeMappings(stream -> stream
 				  .flatMap(s -> Stream.of(s.split("\\s+")))
 				  .collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
 			)
-		    .aggregate(2, Integer::sum)
+		    .combine(2, Integer::sum)
 		    .save(fs).toStream();
 		
 		// print results to console
