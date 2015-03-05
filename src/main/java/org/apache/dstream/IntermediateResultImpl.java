@@ -11,12 +11,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implementation of {@link IntermediateResult}
+ * Implementation of {@link Distributable}
  * 
  * @param <K>
  * @param <V>
  */
-public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
+public class IntermediateResultImpl<K, V> implements Distributable<K,V> {
 	
 	private static final long serialVersionUID = 7020089231859026667L;
 
@@ -39,7 +39,7 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 	}
 
 	@Override
-	public Triggerable<Entry<K, V>> combine(int partitionSize, SerializableBinaryOperator<V> aggregateFunction) {
+	public Persistable<Entry<K, V>> combine(int partitionSize, SerializableBinaryOperator<V> aggregateFunction) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'aggregate' request for " + partitionSize + " partitions.");
 		}
@@ -58,7 +58,7 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 	}
 
 	@Override
-	public Triggerable<Entry<K, V>> combine(Partitioner<Entry<K,V>> partitioner, SerializableBinaryOperator<V> aggregateFunction) {
+	public Persistable<Entry<K, V>> combine(Partitioner<Entry<K,V>> partitioner, SerializableBinaryOperator<V> aggregateFunction) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'aggregate' request with " + partitioner + ".");
 		}
@@ -75,7 +75,7 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 	}
 
 	@Override
-	public Triggerable<Entry<K, V>> combine(SerializableFunction<Entry<K, V>, Integer> partitionerFunction,
+	public Persistable<Entry<K, V>> combine(SerializableFunction<Entry<K, V>, Integer> partitionerFunction,
 			SerializableBinaryOperator<V> aggregateFunction) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'aggregate' request with partitioner function.");
@@ -115,37 +115,37 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 	}
 
 	@Override
-	public <R> IntermediateResult<K, Pair<V,R>> join(IntermediateResult<K, R> intermediateResult) {
+	public <R> Distributable<K, Pair<V,R>> join(Distributable<K, R> intermediateResult) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public <KK,VV,R> IntermediateResult<K,R> join(IntermediateResult<KK, VV> intermediateResult, SerializableBiFunction<V, VV, R> valueCombiner){
+	public <KK,VV,R> Distributable<K,R> join(Distributable<KK, VV> intermediateResult, SerializableBiFunction<V, VV, R> valueCombiner){
 		return null;
 	}
 
 	@Override
-	public IntermediateResult<K, Iterable<V>> groupByKey() {
+	public Distributable<K, Iterable<V>> groupByKey() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Triggerable<Entry<K, V>> partition(int partitionSize) {
+	public Persistable<Entry<K, V>> partition(int partitionSize) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Triggerable<Entry<K, V>> partition(
+	public Persistable<Entry<K, V>> partition(
 			Partitioner<Entry<K, V>> partitioner) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Triggerable<Entry<K, V>> partition(
+	public Persistable<Entry<K, V>> partition(
 			SerializableFunction<Entry<K, V>, Integer> partitionerFunction) {
 		// TODO Auto-generated method stub
 		return null;

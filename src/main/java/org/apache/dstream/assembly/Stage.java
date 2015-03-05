@@ -3,7 +3,7 @@ package org.apache.dstream.assembly;
 import java.io.Serializable;
 import java.util.stream.Stream;
 
-import org.apache.dstream.IntermediateResult;
+import org.apache.dstream.Distributable;
 import org.apache.dstream.utils.SerializableFunction;
 
 /**
@@ -16,7 +16,7 @@ public class Stage<T> implements Serializable {
 	
 	private final SerializableFunction<Stream<?>,Stream<?>> preProcessFunction;
 
-	private volatile IntermediateResult<?,?> merger;
+	private volatile Distributable<?,?> merger;
 	
 	private final int stageId;
 
@@ -30,11 +30,11 @@ public class Stage<T> implements Serializable {
 		this.preProcessFunction = preProcessFunction;
 	}
 	
-	public void setMerger(IntermediateResult<?,?> merger) {
+	public void setMerger(Distributable<?,?> merger) {
 		this.merger = merger;
 	}
 	
-	public IntermediateResult<?,?> getMerger() {
+	public Distributable<?,?> getMerger() {
 		return merger;
 	}
 	

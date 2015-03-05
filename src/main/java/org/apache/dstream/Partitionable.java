@@ -1,15 +1,13 @@
 package org.apache.dstream;
 
-import java.util.Map.Entry;
-
 import org.apache.dstream.utils.Partitioner;
 import org.apache.dstream.utils.SerializableFunction;
 
-public interface Partitionable<K,V> {
+public interface Partitionable<T> {
 
-	public Triggerable<Entry<K,V>> partition(int partitionSize);
+	public Persistable<T> partition(int partitionSize);
 	
-	public Triggerable<Entry<K,V>> partition(Partitioner<Entry<K,V>> partitioner);
+	public Persistable<T> partition(Partitioner<T> partitioner);
 	
-	public Triggerable<Entry<K,V>> partition(SerializableFunction<Entry<K,V>, Integer> partitionerFunction);
+	public Persistable<T> partition(SerializableFunction<T, Integer> partitionerFunction);
 }

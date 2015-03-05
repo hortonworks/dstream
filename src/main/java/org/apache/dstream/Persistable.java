@@ -1,18 +1,14 @@
 package org.apache.dstream;
 
 import java.nio.file.FileSystem;
-import java.util.stream.Stream;
 
 /**
- * Strategy which defines functionality to trigger distributed execution of the {@link Stream}.
- * 
- * The reason why its extends form {@link StageEntryPoint} is to enable implicit triggering and/or
- * provide an ability to assemble a single execution pipeline consisting of multiple stages.
- * TODO - need to refine the above argument 
+ * Strategy which defines additional triggering operators to specify <i>how</i> 
+ * and <i>where</i> to store the results of the computation.
  * 
  * @param <R> - the result type
  */
-public interface Triggerable<R> extends StageEntryPoint<R>{
+public interface Persistable<R> extends Computable<R>{
 	/**
 	 * Will trigger execution of the {@link DistributedPipeline} saving its results to the location 
 	 * identified by the {@link OutputSpecification} and returning a new {@link DistributedPipeline} over the 

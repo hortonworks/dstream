@@ -1,13 +1,11 @@
 package org.apache.dstream;
 
 import java.nio.file.FileSystem;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
 import org.apache.dstream.exec.DistributedPipelineExecutor;
-import org.apache.dstream.utils.NullType;
 import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +14,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @param <T>
  */
-public class IntermediateStageEntryPointImpl<T> implements Triggerable<T> {
+public class IntermediateStageEntryPointImpl<T> implements Persistable<T> {
 	
 	private final Logger logger = LoggerFactory.getLogger(IntermediateStageEntryPointImpl.class);
 	
@@ -51,15 +49,9 @@ public class IntermediateStageEntryPointImpl<T> implements Triggerable<T> {
 		return false;
 	}
 
-	@Override
-	public <R> IntermediateResult<NullType, R> computeCollection(SerializableFunction<Stream<T>, Collection<R>> function) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 	@SuppressWarnings("unchecked")
 	@Override
-	public <K,V> IntermediateResult<K, V> computeMappings(SerializableFunction<Stream<T>, Map<K, V>> function) {
+	public <K,V> Distributable<K, V> computeMappings(SerializableFunction<Stream<T>, Map<K, V>> function) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'computePairs' request");
 		}

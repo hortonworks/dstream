@@ -45,15 +45,10 @@ public class DefaultDistributedPipeline<T> extends AbstractDistributedPipeline<T
 		// TODO Auto-generated method stub
 		return false;
 	}
-	@Override
-	public <R> IntermediateResult<NullType, R> computeCollection(SerializableFunction<Stream<T>, Collection<R>> function) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <K,V> IntermediateResult<K, V> computeMappings(SerializableFunction<Stream<T>, Map<K, V>> function) {
+	public <K,V> Distributable<K, V> computeMappings(SerializableFunction<Stream<T>, Map<K, V>> function) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'computePairs' request");
 		}
@@ -90,20 +85,20 @@ public class DefaultDistributedPipeline<T> extends AbstractDistributedPipeline<T
 		return null;
 	}
 	@Override
-	public Triggerable<Entry<NullType, T>> partition(int partitionSize) {
+	public Persistable<T> partition(int partitionSize) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 	@Override
-	public Triggerable<Entry<NullType, T>> partition(
-			Partitioner<Entry<NullType, T>> partitioner) {
+	public Persistable<T> partition(Partitioner<T> partitioner) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 	@Override
-	public Triggerable<Entry<NullType, T>> partition(
-			SerializableFunction<Entry<NullType, T>, Integer> partitionerFunction) {
+	public Persistable<T> partition(
+			SerializableFunction<T, Integer> partitionerFunction) {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
 }

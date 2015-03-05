@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.IntermediateResult;
+import org.apache.dstream.Distributable;
 import org.apache.dstream.DistributedPipeline;
 import org.apache.dstream.io.TextSource;
 
@@ -16,7 +16,7 @@ public class GroupByApiTests {
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
 		DistributedPipeline<String> source = TextSource.create(path).asPipeline("foo");
 		
-		IntermediateResult<String, Integer> resultA = source.computeMappings(stream -> stream
+		Distributable<String, Integer> resultA = source.computeMappings(stream -> stream
 				.flatMap(s -> Stream.of(s.split("\\s+")))
 				.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
 	    );

@@ -1,6 +1,7 @@
 package org.apache.dstream;
 
 import java.io.Serializable;
+import java.util.Map.Entry;
 
 /**
  * Strategy which exposes operations that are carriers of the <i>partitioning</i> instruction 
@@ -11,6 +12,6 @@ import java.io.Serializable;
  * @param <K> - 'key' of Key/Value pairs
  * @param <V> - 'value' of Key/Value pairs
  */
-public interface IntermediateResult<K,V> extends Partitionable<K,V>, Combinable<K, V>, Joinable<K,V>, Groupable<K, V>, Serializable {
+public interface Distributable<K,V> extends Partitionable<Entry<K,V>>, Combinable<K, V>, Joinable<K,V>, Groupable<K, V>, Serializable {
 	
 }

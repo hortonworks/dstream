@@ -15,5 +15,5 @@ public interface Groupable<K,V> {
 	 * 
 	 * @return
 	 */
-	public IntermediateResult<K,Iterable<V>> groupByKey();
+	public Distributable<K,Iterable<V>> groupByKey();
 }
