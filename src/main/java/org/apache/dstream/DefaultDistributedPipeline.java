@@ -56,7 +56,7 @@ public class DefaultDistributedPipeline<T> extends AbstractDistributedPipeline<T
 		Stage<T> stage = new Stage<T>(function, this.executionContext.getSourcePreProcessFunction(), this.executionContext.nextStageId());
 		this.executionContext.getAssembly().addStage(stage);
 	
-		return new IntermediateResultImpl<K, V>((DistributedPipelineExecutionProvider<Entry<K, V>>) this.executionContext);
+		return new DefaultDistributable<K, V>((DistributedPipelineExecutionProvider<Entry<K, V>>) this.executionContext);
 	}
 
 	@Override

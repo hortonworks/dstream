@@ -16,11 +16,11 @@ import org.slf4j.LoggerFactory;
  * @param <K>
  * @param <V>
  */
-public class IntermediateResultImpl<K, V> implements Distributable<K,V> {
+public class DefaultDistributable<K, V> implements Distributable<K,V> {
 	
 	private static final long serialVersionUID = 7020089231859026667L;
 
-	private final Logger logger = LoggerFactory.getLogger(IntermediateResultImpl.class);
+	private final Logger logger = LoggerFactory.getLogger(DefaultDistributable.class);
 	
 	private transient final DistributedPipelineExecutionProvider<Entry<K, V>> executionContext;
 	
@@ -34,7 +34,7 @@ public class IntermediateResultImpl<K, V> implements Distributable<K,V> {
 	 * 
 	 * @param context
 	 */
-	protected IntermediateResultImpl(DistributedPipelineExecutionProvider<Entry<K,V>> executionContext){
+	protected DefaultDistributable(DistributedPipelineExecutionProvider<Entry<K,V>> executionContext){
 		this.executionContext = executionContext;
 	}
 
@@ -54,7 +54,7 @@ public class IntermediateResultImpl<K, V> implements Distributable<K,V> {
 			}
 		};
 		this.executionContext.getAssembly().getLastStage().setMerger(this);
-		return new IntermediateStageEntryPointImpl<Entry<K,V>>(this.executionContext);
+		return new DefaultPersistable<Entry<K,V>>(this.executionContext);
 	}
 
 	@Override
@@ -71,7 +71,7 @@ public class IntermediateResultImpl<K, V> implements Distributable<K,V> {
 		};
 		this.aggregateFunction = aggregateFunction;
 		this.executionContext.getAssembly().getLastStage().setMerger(this);
-		return new IntermediateStageEntryPointImpl<Entry<K,V>>(this.executionContext);
+		return new DefaultPersistable<Entry<K,V>>(this.executionContext);
 	}
 
 	@Override
@@ -83,7 +83,7 @@ public class IntermediateResultImpl<K, V> implements Distributable<K,V> {
 		this.partitionerFunction = partitionerFunction;
 		this.aggregateFunction = aggregateFunction;
 		this.executionContext.getAssembly().getLastStage().setMerger(this);
-		return new IntermediateStageEntryPointImpl<Entry<K,V>>(this.executionContext);
+		return new DefaultPersistable<Entry<K,V>>(this.executionContext);
 	}
 	
 	public int getPartitionSize() {

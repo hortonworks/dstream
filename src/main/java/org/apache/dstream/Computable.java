@@ -7,7 +7,7 @@ import java.util.stream.Stream;
 import org.apache.dstream.utils.SerializableFunction;
 
 /**
- * Strategy which defines a set of <i>compute operators</i>.
+ * Strategy which defines a set of generic <i>compute operators</i>.
  * Each <i>compute operator</i> is a <b>carrier</b> operator and carries an instance of 
  * {@link SerializableFunction} to be applied on a local {@link Stream}.
  * <br>

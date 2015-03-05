@@ -14,13 +14,13 @@ import org.slf4j.LoggerFactory;
  * 
  * @param <T>
  */
-public class IntermediateStageEntryPointImpl<T> implements Persistable<T> {
+public class DefaultPersistable<T> implements Persistable<T> {
 	
-	private final Logger logger = LoggerFactory.getLogger(IntermediateStageEntryPointImpl.class);
+	private final Logger logger = LoggerFactory.getLogger(DefaultPersistable.class);
 	
 	private final DistributedPipelineExecutionProvider<T> executionProvider;
 	
-	protected IntermediateStageEntryPointImpl(DistributedPipelineExecutionProvider<T> executionProvider){
+	protected DefaultPersistable(DistributedPipelineExecutionProvider<T> executionProvider){
 		this.executionProvider = executionProvider;
 	}
 
@@ -55,7 +55,7 @@ public class IntermediateStageEntryPointImpl<T> implements Persistable<T> {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'computePairs' request");
 		}
-		return new IntermediateResultImpl<K, V>((DistributedPipelineExecutionProvider<Entry<K, V>>) this.executionProvider);
+		return new DefaultDistributable<K, V>((DistributedPipelineExecutionProvider<Entry<K, V>>) this.executionProvider);
 	}
 
 	@Override
@@ -70,7 +70,7 @@ public class IntermediateStageEntryPointImpl<T> implements Persistable<T> {
 
 	@Override
 	public DistributedPipeline<T> save(FileSystem fs) {
-		OutputSpecification outputSpec = new OutputSpecificationImpl(fs.getPath(this.executionProvider.getAssembly().getJobName() + "/out"));
+		OutputSpecification outputSpec = new SimpleOutputSpecification(fs.getPath(this.executionProvider.getAssembly().getJobName() + "/out"));
 		if (logger.isDebugEnabled()){
 			logger.debug("Submitting job. Output will be available at: " + outputSpec.getOutputPath());
 		}

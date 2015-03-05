@@ -3,18 +3,18 @@ package org.apache.dstream;
 import java.nio.file.Path;
 import java.util.Objects;
 
-public class OutputSpecificationImpl implements OutputSpecification {
+public class SimpleOutputSpecification implements OutputSpecification {
 	
 	private final Path path;
 	
-	public OutputSpecificationImpl(Path path){
+	public SimpleOutputSpecification(Path path){
 		Objects.requireNonNull(path, "'path' must not be null");
 		
 		this.path = path;
 	}
 	
-	public static OutputSpecificationImpl create(Path path){
-		return new OutputSpecificationImpl(path);
+	public static SimpleOutputSpecification create(Path path){
+		return new SimpleOutputSpecification(path);
 	}
 
 	@Override
