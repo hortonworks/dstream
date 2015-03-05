@@ -22,10 +22,10 @@ public class StreamExecutionContextAPIValidatorTests {
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
 		DistributedPipeline<String> source = TextSource.create(path).asPipeline("foo");
 		
-		source.computePairs(stream -> stream
+		source.computeMappings(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
-		  ).aggregate(3, Integer::sum)
+		  ).combine(3, Integer::sum)
 		   .save(outputSpec);
 	}
 	
@@ -34,14 +34,14 @@ public class StreamExecutionContextAPIValidatorTests {
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
 		DistributedPipeline<String> source = TextSource.create(path).asPipeline("foo");
 		
-		source.<Integer>computePairs(stream -> stream
+		source.<Integer>computeMappings(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
 					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
-		  ).aggregate(3, Integer::sum)
-		   .computePairs(stream -> stream
+		  ).combine(3, Integer::sum)
+		   .computeMappings(stream -> stream
 				   	 .filter(s -> true)
 				   	 .collect(Collectors.groupingBy(s -> s))
-		  ).aggregate(1, (a, b) -> a);
+		  ).combine(1, (a, b) -> a);
 	}
 	
 	public void computeBoolean() throws Exception {
@@ -94,7 +94,7 @@ public class StreamExecutionContextAPIValidatorTests {
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
 		DistributedPipeline<String> source = TextSource.create(path).asPipeline("foo");
 		
-		source.computePairs(stream -> stream
+		source.computeMappings(stream -> stream
 				.flatMap(s -> Stream.of(s.split("\\s+")))
 				.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
 	  ).partition(s -> s.hashCode())

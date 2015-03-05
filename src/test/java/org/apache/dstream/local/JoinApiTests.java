@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 import org.apache.dstream.DistributedPipeline;
 import org.apache.dstream.IntermediateResult;
 import org.apache.dstream.OutputSpecification;
-import org.apache.dstream.Submittable;
+import org.apache.dstream.Triggerable;
 import org.apache.dstream.io.TextSource;
 
 public class JoinApiTests {
@@ -21,12 +21,12 @@ public class JoinApiTests {
 		
 		DistributedPipeline<String> source = TextSource.create(path).asPipeline("foo");
 		
-		IntermediateResult<String, Integer> resultA = source.computePairs(stream -> stream
+		IntermediateResult<String, Integer> resultA = source.computeMappings(stream -> stream
 				.flatMap(s -> Stream.of(s.split("\\s+")))
 				.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
 	    );
 		
-		IntermediateResult<String, Integer> resultB = source.computePairs(stream -> stream
+		IntermediateResult<String, Integer> resultB = source.computeMappings(stream -> stream
 				.flatMap(s -> Stream.of(s.split("\\s+")))
 				.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
 	    );
@@ -39,16 +39,15 @@ public class JoinApiTests {
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
 		DistributedPipeline<String> source = TextSource.create(path).asPipeline("foo");
 		
-		IntermediateResult<String, Integer> resultA = source.computePairs(stream -> stream
+		IntermediateResult<String, Integer> resultA = source.computeMappings(stream -> stream
 				.flatMap(s -> Stream.of(s.split("\\s+")))
 				.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
 	    );
 		
-		IntermediateResult<String, Long> resultB = source.computePairs(stream -> stream
+		IntermediateResult<String, Long> resultB = source.computeMappings(stream -> stream
 				.flatMap(s -> Stream.of(s.split("\\s+")))
 				.collect(Collectors.toMap(s -> s, s -> 1L, Long::sum))
 	    );
-		
-		Submittable<Entry<String, String>> submittable = resultA.join(resultB, (a, b) -> "six").partition(4);
+		Triggerable<Entry<String, String>> submittable = resultA.join(resultB, (a, b) -> "blah").partition(4);
 	}
 }

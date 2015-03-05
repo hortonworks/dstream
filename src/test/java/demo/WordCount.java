@@ -20,11 +20,11 @@ public class WordCount {
 		Path inputPath = fs.getPath(localFile.getName());
 		
 		DistributedPipeline<String> sourcePipeline = TextSource.create(inputPath).asPipeline("WordCount");
-		
-		DistributedPipeline<Entry<String, Integer>> resultPipeline = sourcePipeline.computePairs(stream -> stream
+	
+		DistributedPipeline<Entry<String, Integer>> resultPipeline = sourcePipeline.computeMappings(stream -> stream
 				  .flatMap(s -> Stream.of(s.split("\\s+")))
 				  .collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)))
-		  .aggregate(2, Integer::sum)
+		  .combine(2, Integer::sum)
 		  .save(fs);
 		
 		// print results to console

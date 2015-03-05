@@ -53,7 +53,7 @@ public class DefaultDistributedPipeline<T> extends AbstractDistributedPipeline<T
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <V> IntermediateResult<T, V> computePairs(SerializableFunction<Stream<T>, Map<T, V>> function) {
+	public <V> IntermediateResult<T, V> computeMappings(SerializableFunction<Stream<T>, Map<T, V>> function) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'computePairs' request");
 		}
@@ -64,21 +64,21 @@ public class DefaultDistributedPipeline<T> extends AbstractDistributedPipeline<T
 		return new IntermediateResultImpl<T, V>((DistributedPipelineExecutionProvider<Entry<T, V>>) this.executionContext);
 	}
 	
-	@Override
-	public Submittable<T> partition(int partitionSize) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	@Override
-	public Submittable<T> partition(Partitioner<T> partitioner) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	@Override
-	public Submittable<T> partition(SerializableFunction<T, Integer> partitionerFunction) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	@Override
+//	public Triggerable<T> partition(int partitionSize) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+//	@Override
+//	public Triggerable<T> partition(Partitioner<T> partitioner) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+//	@Override
+//	public Triggerable<T> partition(SerializableFunction<T, Integer> partitionerFunction) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 	@Override
 	public Stream<T> toStream() {
 		return this.source.toStream();
@@ -101,6 +101,23 @@ public class DefaultDistributedPipeline<T> extends AbstractDistributedPipeline<T
 	
 	@Override
 	protected DistributedPipeline<T> preProcessSource(SerializableFunction<Path[], Path[]> sourcePreProcessFunction) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public Triggerable<Entry<NullType, T>> partition(int partitionSize) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public Triggerable<Entry<NullType, T>> partition(
+			Partitioner<Entry<NullType, T>> partitioner) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public Triggerable<Entry<NullType, T>> partition(
+			SerializableFunction<Entry<NullType, T>, Integer> partitionerFunction) {
 		// TODO Auto-generated method stub
 		return null;
 	}

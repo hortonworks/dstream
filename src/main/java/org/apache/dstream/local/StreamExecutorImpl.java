@@ -99,7 +99,8 @@ public class StreamExecutorImpl<T,R> extends DistributedPipelineExecutor<T,R> {
 		for (int i = 0; i < partitionSize; i++) {
 			partitions.put(i, new ConcurrentHashMap());
 		}
-		ShuffleWriterImpl shuffleWriter = new ShuffleWriterImpl(partitions, merger.getPartitionerFunction(), merger.getMergeFunction());
-		return shuffleWriter;
+//		ShuffleWriterImpl shuffleWriter = new ShuffleWriterImpl(partitions, merger.getPartitionerFunction(), merger.getMergeFunction());
+//		return shuffleWriter;
+		return null;
 	}
 }

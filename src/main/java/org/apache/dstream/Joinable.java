@@ -1,7 +1,6 @@
 package org.apache.dstream;
 
-import java.util.Map.Entry;
-
+import org.apache.dstream.utils.Pair;
 import org.apache.dstream.utils.SerializableBiFunction;
 
 /**
@@ -15,12 +14,12 @@ public interface Joinable<K,V> {
 
 	/**
 	 * Will join two {@link IntermediateResult}s together based on the key.
-	 * Values will be combined into a pair represented as {@link Entry}.[QUESTION] - use of Entry is still discussed
+	 * Values will be combined into a pair represented as {@link Pair}.
 	 * 
 	 * @param intermediateResult
 	 * @return
 	 */
-	public <R> IntermediateResult<K,Entry<V,R>> join(IntermediateResult<K, R> intermediateResult);
+	public <R> IntermediateResult<K,Pair<V,R>> join(IntermediateResult<K, R> intermediateResult);
 	
 	/**
 	 * Will join two {@link IntermediateResult}s together based on the key.

@@ -2,6 +2,7 @@ package org.apache.dstream;
 
 import java.util.Map.Entry;
 
+import org.apache.dstream.utils.Pair;
 import org.apache.dstream.utils.Partitioner;
 import org.apache.dstream.utils.SerializableBiFunction;
 import org.apache.dstream.utils.SerializableBinaryOperator;
@@ -38,7 +39,7 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 	}
 
 	@Override
-	public Submittable<Entry<K, V>> aggregate(int partitionSize, SerializableBinaryOperator<V> aggregateFunction) {
+	public Triggerable<Entry<K, V>> combine(int partitionSize, SerializableBinaryOperator<V> aggregateFunction) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'aggregate' request for " + partitionSize + " partitions.");
 		}
@@ -57,7 +58,7 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 	}
 
 	@Override
-	public Submittable<Entry<K, V>> aggregate(Partitioner<Entry<K,V>> partitioner, SerializableBinaryOperator<V> aggregateFunction) {
+	public Triggerable<Entry<K, V>> combine(Partitioner<Entry<K,V>> partitioner, SerializableBinaryOperator<V> aggregateFunction) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'aggregate' request with " + partitioner + ".");
 		}
@@ -74,7 +75,7 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 	}
 
 	@Override
-	public Submittable<Entry<K, V>> aggregate(SerializableFunction<Entry<K, V>, Integer> partitionerFunction,
+	public Triggerable<Entry<K, V>> combine(SerializableFunction<Entry<K, V>, Integer> partitionerFunction,
 			SerializableBinaryOperator<V> aggregateFunction) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'aggregate' request with partitioner function.");
@@ -114,38 +115,38 @@ public class IntermediateResultImpl<K, V> implements IntermediateResult<K,V> {
 	}
 
 	@Override
-	public Submittable<Entry<K, V>> partition(int partitionSize) {
+	public <R> IntermediateResult<K, Pair<V,R>> join(IntermediateResult<K, R> intermediateResult) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Submittable<Entry<K, V>> partition(Partitioner<Entry<K,V>> partitioner) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Submittable<Entry<K, V>> partition(SerializableFunction<Entry<K, V>, Integer> partitionerFunction) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public <R> IntermediateResult<K, Entry<V,R>> join(IntermediateResult<K, R> intermediateResult) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public <KK, VV, R> IntermediateResult<K, R> join(IntermediateResult<KK, VV> intermediateResult,
-			SerializableBiFunction<V, VV, R> valueCombiner) {
-		// TODO Auto-generated method stub
+	public <KK,VV,R> IntermediateResult<K,R> join(IntermediateResult<KK, VV> intermediateResult, SerializableBiFunction<V, VV, R> valueCombiner){
 		return null;
 	}
 
 	@Override
 	public IntermediateResult<K, Iterable<V>> groupByKey() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Triggerable<Entry<K, V>> partition(int partitionSize) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Triggerable<Entry<K, V>> partition(
+			Partitioner<Entry<K, V>> partitioner) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Triggerable<Entry<K, V>> partition(
+			SerializableFunction<Entry<K, V>, Integer> partitionerFunction) {
 		// TODO Auto-generated method stub
 		return null;
 	}

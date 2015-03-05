@@ -1,6 +1,5 @@
 package org.apache.dstream;
 
-import java.nio.file.FileSystem;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;

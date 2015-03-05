@@ -1,8 +1,6 @@
 package org.apache.dstream;
 
-import java.net.URI;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -18,7 +16,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @param <T>
  */
-public class IntermediateStageEntryPointImpl<T> implements Submittable<T> {
+public class IntermediateStageEntryPointImpl<T> implements Triggerable<T> {
 	
 	private final Logger logger = LoggerFactory.getLogger(IntermediateStageEntryPointImpl.class);
 	
@@ -61,7 +59,7 @@ public class IntermediateStageEntryPointImpl<T> implements Submittable<T> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <V> IntermediateResult<T, V> computePairs(SerializableFunction<Stream<T>, Map<T, V>> function) {
+	public <V> IntermediateResult<T, V> computeMappings(SerializableFunction<Stream<T>, Map<T, V>> function) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'computePairs' request");
 		}
