@@ -15,16 +15,13 @@ import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
- * Base class which defines <b>Execution Context</b> for distributing and executing 
- * Java {@link Stream}s.
+ * Base class which implements . . .
  *
  * @param <T>
  */
-public abstract class DistributedPipelineExecutionProvider<T> {
+public abstract class AbstractDistributedPipelineExecutionProvider<T> {
 	
-	private static final Logger logger = LoggerFactory.getLogger(DistributedPipelineExecutionProvider.class);
-	
-//	private volatile AbstractDistributedPipeline<T> pipeline;
+	private static final Logger logger = LoggerFactory.getLogger(AbstractDistributedPipelineExecutionProvider.class);
 	
 	@SuppressWarnings("unchecked")
 	private final DistributedPipelineAssembly<T> streamAssembly = ReflectionUtils.newDefaultInstance(DistributedPipelineAssembly.class);
@@ -35,18 +32,18 @@ public abstract class DistributedPipelineExecutionProvider<T> {
 	
 	
 	/**
-	 * Factory method that will return implementation of this {@link DistributedPipelineExecutionProvider}
+	 * Factory method that will return implementation of this {@link AbstractDistributedPipelineExecutionProvider}
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	protected static <T> DistributedPipelineExecutionProvider<T> of(String jobName, AbstractDistributedPipeline<T> pipeline) {
+	protected static <T> AbstractDistributedPipelineExecutionProvider<T> of(String jobName, AbstractDistributedPipeline<T> pipeline) {
 		Assert.notNull(pipeline, "'pipeline' must not be null");
 		Assert.notEmpty(jobName, "'jobName' must not be null or empty");
 		
-		ServiceLoader<DistributedPipelineExecutionProvider> sl = ServiceLoader.load(DistributedPipelineExecutionProvider.class, ClassLoader.getSystemClassLoader());
-		Iterator<DistributedPipelineExecutionProvider> iter = sl.iterator();
-		DistributedPipelineExecutionProvider<T> suitableContext = null;
+		ServiceLoader<AbstractDistributedPipelineExecutionProvider> sl = ServiceLoader.load(AbstractDistributedPipelineExecutionProvider.class, ClassLoader.getSystemClassLoader());
+		Iterator<AbstractDistributedPipelineExecutionProvider> iter = sl.iterator();
+		AbstractDistributedPipelineExecutionProvider<T> suitableContext = null;
 		while (iter.hasNext() && suitableContext == null){
-			DistributedPipelineExecutionProvider context = iter.next();
+			AbstractDistributedPipelineExecutionProvider context = iter.next();
 			if (context.isSourceSupported(pipeline)){
 				if (logger.isInfoEnabled()){
 					logger.info("Loaded " + context + " to process source: " + pipeline);

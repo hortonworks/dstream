@@ -22,7 +22,7 @@ public class DefaultDistributable<K, V> implements Distributable<K,V> {
 
 	private final Logger logger = LoggerFactory.getLogger(DefaultDistributable.class);
 	
-	private transient final DistributedPipelineExecutionProvider<Entry<K, V>> executionContext;
+	private transient final AbstractDistributedPipelineExecutionProvider<Entry<K, V>> executionContext;
 	
 	private int partitionSize;
 
@@ -34,7 +34,7 @@ public class DefaultDistributable<K, V> implements Distributable<K,V> {
 	 * 
 	 * @param context
 	 */
-	protected DefaultDistributable(DistributedPipelineExecutionProvider<Entry<K,V>> executionContext){
+	protected DefaultDistributable(AbstractDistributedPipelineExecutionProvider<Entry<K,V>> executionContext){
 		this.executionContext = executionContext;
 	}
 

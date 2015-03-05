@@ -18,9 +18,9 @@ public class DefaultPersistable<T> implements Persistable<T> {
 	
 	private final Logger logger = LoggerFactory.getLogger(DefaultPersistable.class);
 	
-	private final DistributedPipelineExecutionProvider<T> executionProvider;
+	private final AbstractDistributedPipelineExecutionProvider<T> executionProvider;
 	
-	protected DefaultPersistable(DistributedPipelineExecutionProvider<T> executionProvider){
+	protected DefaultPersistable(AbstractDistributedPipelineExecutionProvider<T> executionProvider){
 		this.executionProvider = executionProvider;
 	}
 
@@ -55,7 +55,7 @@ public class DefaultPersistable<T> implements Persistable<T> {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'computePairs' request");
 		}
-		return new DefaultDistributable<K, V>((DistributedPipelineExecutionProvider<Entry<K, V>>) this.executionProvider);
+		return new DefaultDistributable<K, V>((AbstractDistributedPipelineExecutionProvider<Entry<K, V>>) this.executionProvider);
 	}
 
 	@Override

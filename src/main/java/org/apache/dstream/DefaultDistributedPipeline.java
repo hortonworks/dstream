@@ -2,48 +2,30 @@ package org.apache.dstream;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
 import org.apache.dstream.assembly.Stage;
-import org.apache.dstream.utils.NullType;
 import org.apache.dstream.utils.Partitioner;
 import org.apache.dstream.utils.SerializableFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * 
+ * @param <T>
+ */
 public class DefaultDistributedPipeline<T> extends AbstractDistributedPipeline<T> {
 	protected final Logger logger = LoggerFactory.getLogger(DefaultDistributedPipeline.class);
 	
-	private final DistributedPipelineExecutionProvider<T> executionContext;
+	private final AbstractDistributedPipelineExecutionProvider<T> executionContext;
 	
 	private final Source<T> source;
 	
 	public DefaultDistributedPipeline(Source<T> source, String jobName){
 		this.source = source;
-		this.executionContext = DistributedPipelineExecutionProvider.of(jobName, this);
-	}
-	@Override
-	public int computeInt(SerializableFunction<Stream<T>, Integer> function) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-	@Override
-	public long computeLong(SerializableFunction<Stream<T>, Long> function) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-	@Override
-	public double computeDouble(SerializableFunction<Stream<T>, Double> function) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-	@Override
-	public boolean computeBoolean(SerializableFunction<Stream<T>, Boolean> function) {
-		// TODO Auto-generated method stub
-		return false;
+		this.executionContext = AbstractDistributedPipelineExecutionProvider.of(jobName, this);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -56,7 +38,7 @@ public class DefaultDistributedPipeline<T> extends AbstractDistributedPipeline<T
 		Stage<T> stage = new Stage<T>(function, this.executionContext.getSourcePreProcessFunction(), this.executionContext.nextStageId());
 		this.executionContext.getAssembly().addStage(stage);
 	
-		return new DefaultDistributable<K, V>((DistributedPipelineExecutionProvider<Entry<K, V>>) this.executionContext);
+		return new DefaultDistributable<K, V>((AbstractDistributedPipelineExecutionProvider<Entry<K, V>>) this.executionContext);
 	}
 
 	@Override
@@ -99,6 +81,34 @@ public class DefaultDistributedPipeline<T> extends AbstractDistributedPipeline<T
 			SerializableFunction<T, Integer> partitionerFunction) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public int computeInt(
+			SerializableFunction<Stream<T>, Integer> computeFunction) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public long computeLong(
+			SerializableFunction<Stream<T>, Long> computeFunction) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public double computeDouble(
+			SerializableFunction<Stream<T>, Double> computeFunction) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public boolean computeBoolean(
+			SerializableFunction<Stream<T>, Boolean> computeFunction) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 	
 }
