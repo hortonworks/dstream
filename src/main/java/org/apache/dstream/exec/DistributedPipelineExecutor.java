@@ -1,6 +1,6 @@
 package org.apache.dstream.exec;
 
-import org.apache.dstream.DistributedPipeline;
+import org.apache.dstream.DataPipeline;
 import org.apache.dstream.assembly.DistributedPipelineAssembly;
 
 public abstract class DistributedPipelineExecutor<T,R> {
@@ -11,5 +11,5 @@ public abstract class DistributedPipelineExecutor<T,R> {
 		this.streamAssembly = streamAssembly;
 	}
 	
-	public abstract DistributedPipeline<R> execute();
+	public abstract DataPipeline<R> execute();
 }

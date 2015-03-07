@@ -14,7 +14,7 @@ import org.apache.dstream.utils.SerializableFunction;
  * Compute operators can be <i>intermediate</i> or <i>terminal</i>
  * <br>
  * The <i>intermediate</i> operators return an instance of {@link Distributable} allowing data 
- * distribution functionality to be added to the {@link DistributedPipeline} (e.g., combine(..), 
+ * distribution functionality to be added to the {@link DataPipeline} (e.g., combine(..), 
  * partition(..) etc.). These operators <i><b>will not</b></i> trigger execution of the pipeline.
  * To trigger the execution of the pipeline you would need to terminate it with
  * one of the <i>terminal</i> operators (see {@link Persistable}, {@link Computable}). 

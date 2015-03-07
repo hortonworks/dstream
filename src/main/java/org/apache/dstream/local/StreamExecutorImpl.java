@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.apache.dstream.DistributedPipeline;
+import org.apache.dstream.DataPipeline;
 import org.apache.dstream.DefaultDistributable;
 import org.apache.dstream.assembly.Stage;
 import org.apache.dstream.assembly.DistributedPipelineAssembly;
@@ -34,7 +34,7 @@ public class StreamExecutorImpl<T,R> extends DistributedPipelineExecutor<T,R> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public DistributedPipeline<R> execute() {
+	public DataPipeline<R> execute() {
 //		try {
 //			if (logger.isInfoEnabled()){
 //				logger.info("Executing " + this.streamAssembly.getJobName());

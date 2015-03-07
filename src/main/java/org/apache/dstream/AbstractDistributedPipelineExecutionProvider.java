@@ -112,7 +112,7 @@ public abstract class AbstractDistributedPipelineExecutionProvider<T> {
 	 * @param source
 	 * @return
 	 */
-	protected boolean isSourceSupported(DistributedPipeline<T> pipeline){
+	protected boolean isSourceSupported(DataPipeline<T> pipeline){
 		Source<T> source = pipeline.getSource();
 		if (source instanceof FsSource) {
 			@SuppressWarnings("rawtypes")

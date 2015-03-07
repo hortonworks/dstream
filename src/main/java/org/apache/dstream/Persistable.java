@@ -10,8 +10,8 @@ import java.nio.file.FileSystem;
  */
 public interface Persistable<R> extends Computable<R>{
 	/**
-	 * Will trigger execution of the {@link DistributedPipeline} saving its results to the location 
-	 * identified by the {@link OutputSpecification} and returning a new {@link DistributedPipeline} over the 
+	 * Will trigger execution of the {@link DataPipeline} saving its results to the location 
+	 * identified by the {@link OutputSpecification} and returning a new {@link DataPipeline} over the 
 	 * results of this execution.
 	 * 
 	 * Aside from the output location, {@link OutputSpecification} implementation may contain environment specific 
@@ -20,15 +20,15 @@ public interface Persistable<R> extends Computable<R>{
 	 * @param outputSpec
 	 * @return
 	 */
-	public DistributedPipeline<R> save(OutputSpecification outputSpec);
+	public DataPipeline<R> save(OutputSpecification outputSpec);
 	
 	/**
-	 * Will trigger execution of the {@link DistributedPipeline} saving its results to the default location 
+	 * Will trigger execution of the {@link DataPipeline} saving its results to the default location 
 	 * on the provided {@link FileSystem}. The default location is <i>jobName + "/out"</i>
-	 * It returns a new {@link DistributedPipeline} over the results of this execution.
+	 * It returns a new {@link DataPipeline} over the results of this execution.
 	 * 
 	 * @param fs
 	 * @return
 	 */
-	public DistributedPipeline<R> save(FileSystem fs);
+	public DataPipeline<R> save(FileSystem fs);
 }

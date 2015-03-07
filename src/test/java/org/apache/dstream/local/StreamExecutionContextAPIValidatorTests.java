@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.DistributedPipeline;
+import org.apache.dstream.DataPipeline;
 import org.apache.dstream.OutputSpecification;
 import org.apache.dstream.io.TextSource;
 
@@ -20,7 +20,7 @@ public class StreamExecutionContextAPIValidatorTests {
 	public void computePairs() throws Exception {
 		OutputSpecification outputSpec = null;
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		DistributedPipeline<String> source = TextSource.create(path).asPipeline("foo");
+		DataPipeline<String> source = TextSource.create(path).asPipeline("foo");
 		
 		source.computeMappings(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
@@ -32,7 +32,7 @@ public class StreamExecutionContextAPIValidatorTests {
 	public void computePairsWithContinuation() throws Exception {
 		OutputSpecification outputSpec = null;
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		DistributedPipeline<String> source = TextSource.create(path).asPipeline("foo");
+		DataPipeline<String> source = TextSource.create(path).asPipeline("foo");
 		
 		source.<String, Integer>computeMappings(stream -> stream
 					.flatMap(s -> Stream.of(s.split("\\s+")))
@@ -76,7 +76,7 @@ public class StreamExecutionContextAPIValidatorTests {
 	public void partitionSourceWithFunction() throws Exception {
 		OutputSpecification outputSpec = null;
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		DistributedPipeline<String> source = TextSource.create(path).asPipeline("foo");
+		DataPipeline<String> source = TextSource.create(path).asPipeline("foo");
 		
 		source.partition(s -> s.hashCode()).save(outputSpec);
 	}
@@ -84,7 +84,7 @@ public class StreamExecutionContextAPIValidatorTests {
 	public void partitionSourceWithDefaultPartitioner() throws Exception {
 		OutputSpecification outputSpec = null;
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		DistributedPipeline<String> source = TextSource.create(path).asPipeline("foo");
+		DataPipeline<String> source = TextSource.create(path).asPipeline("foo");
 		
 		source.partition(4).save(outputSpec);
 	}
@@ -92,7 +92,7 @@ public class StreamExecutionContextAPIValidatorTests {
 	public void partitionSourceWithFunctionAfterComputation() throws Exception {
 		OutputSpecification outputSpec = null;
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		DistributedPipeline<String> source = TextSource.create(path).asPipeline("foo");
+		DataPipeline<String> source = TextSource.create(path).asPipeline("foo");
 		
 		source.computeMappings(stream -> stream
 				.flatMap(s -> Stream.of(s.split("\\s+")))

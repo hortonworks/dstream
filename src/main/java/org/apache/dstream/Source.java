@@ -4,8 +4,8 @@ import java.util.stream.Stream;
 
 public interface Source<T> {
 
-	public default DistributedPipeline<T> asPipeline(String name){
-		DefaultDistributedPipeline<T> distributableSource = new DefaultDistributedPipeline<>(this, name);
+	public default DataPipeline<T> asPipeline(String name){
+		DefaultDataPipeline<T> distributableSource = new DefaultDataPipeline<>(this, name);
 		return distributableSource;
 	}
 	

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.dstream.DistributedPipeline;
+import org.apache.dstream.DataPipeline;
 import org.apache.dstream.OutputSpecification;
 
 
@@ -17,7 +17,7 @@ public class DistributedPipelineAssembly<T> implements Iterable<Stage<T>>{
 	
 	private volatile List<Stage<T>> stages;
 	
-	private volatile DistributedPipeline<T> pipeline;
+	private volatile DataPipeline<T> pipeline;
 	
 	private volatile OutputSpecification outputSpecification;
 
@@ -25,7 +25,7 @@ public class DistributedPipelineAssembly<T> implements Iterable<Stage<T>>{
 		this.stages = new ArrayList<Stage<T>>();
 	}
 	
-	public DistributedPipeline<T> getPipeline() {
+	public DataPipeline<T> getPipeline() {
 		return pipeline;
 	}
 
@@ -62,7 +62,7 @@ public class DistributedPipelineAssembly<T> implements Iterable<Stage<T>>{
 		return this.jobName + " - Stages:[" + stages.size() + "]";
 	}
 	
-	protected void setPipeline(DistributedPipeline<T> pipeline){
+	protected void setPipeline(DataPipeline<T> pipeline){
 		this.pipeline = pipeline;
 	}
 }

@@ -9,7 +9,7 @@ import org.apache.dstream.utils.SerializableFunction;
  * 
  * @param <T>
  */
-public abstract class AbstractDistributedPipeline<T> implements DistributedPipeline<T> {
+public abstract class AbstractDistributedPipeline<T> implements DataPipeline<T> {
 	
 	private SerializableFunction<Stream<?>, Stream<?>> preProcessFunction;
 	
@@ -22,12 +22,12 @@ public abstract class AbstractDistributedPipeline<T> implements DistributedPipel
 	}
 	
 	/**
-	 * Allows source to be pre-processed to render final {@link DistributedPipeline}. An example of such pre-processing may be 
+	 * Allows source to be pre-processed to render final {@link DataPipeline}. An example of such pre-processing may be 
 	 * additional file filtering
 	 * 
 	 * @param sourcePreProcessFunction
 	 * @return
 	 */
-	protected abstract DistributedPipeline<T> preProcessSource(SerializableFunction<Path[], Path[]> sourcePreProcessFunction);
+	protected abstract DataPipeline<T> preProcessSource(SerializableFunction<Path[], Path[]> sourcePreProcessFunction);
 	
 }

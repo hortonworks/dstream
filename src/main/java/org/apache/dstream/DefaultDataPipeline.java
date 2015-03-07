@@ -16,14 +16,14 @@ import org.slf4j.LoggerFactory;
  * 
  * @param <T>
  */
-public class DefaultDistributedPipeline<T> extends AbstractDistributedPipeline<T> {
-	protected final Logger logger = LoggerFactory.getLogger(DefaultDistributedPipeline.class);
+public class DefaultDataPipeline<T> extends AbstractDistributedPipeline<T> {
+	protected final Logger logger = LoggerFactory.getLogger(DefaultDataPipeline.class);
 	
 	private final AbstractDistributedPipelineExecutionProvider<T> executionContext;
 	
 	private final Source<T> source;
 	
-	public DefaultDistributedPipeline(Source<T> source, String jobName){
+	public DefaultDataPipeline(Source<T> source, String jobName){
 		this.source = source;
 		this.executionContext = AbstractDistributedPipelineExecutionProvider.of(jobName, this);
 	}
@@ -62,7 +62,7 @@ public class DefaultDistributedPipeline<T> extends AbstractDistributedPipeline<T
 	}
 	
 	@Override
-	protected DistributedPipeline<T> preProcessSource(SerializableFunction<Path[], Path[]> sourcePreProcessFunction) {
+	protected DataPipeline<T> preProcessSource(SerializableFunction<Path[], Path[]> sourcePreProcessFunction) {
 		// TODO Auto-generated method stub
 		return null;
 	}

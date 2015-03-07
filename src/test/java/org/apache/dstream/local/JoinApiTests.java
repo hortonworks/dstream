@@ -7,7 +7,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.DistributedPipeline;
+import org.apache.dstream.DataPipeline;
 import org.apache.dstream.Distributable;
 import org.apache.dstream.OutputSpecification;
 import org.apache.dstream.Persistable;
@@ -19,7 +19,7 @@ public class JoinApiTests {
 		OutputSpecification outputSpec = null;
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
 		
-		DistributedPipeline<String> source = TextSource.create(path).asPipeline("foo");
+		DataPipeline<String> source = TextSource.create(path).asPipeline("foo");
 		
 		Distributable<String, Integer> resultA = source.computeMappings(stream -> stream
 				.flatMap(s -> Stream.of(s.split("\\s+")))
@@ -37,7 +37,7 @@ public class JoinApiTests {
 	public void joinWithDifferentValueTypes() throws Exception {
 		OutputSpecification outputSpec = null;
 		Path path = FileSystems.getFileSystem(new URI("file:///")).getPath("src/test/java/org/apache/dstream/sample.txt");
-		DistributedPipeline<String> source = TextSource.create(path).asPipeline("foo");
+		DataPipeline<String> source = TextSource.create(path).asPipeline("foo");
 		
 		Distributable<String, Integer> resultA = source.computeMappings(stream -> stream
 				.flatMap(s -> Stream.of(s.split("\\s+")))

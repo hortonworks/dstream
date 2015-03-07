@@ -9,7 +9,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.DistributedPipeline;
+import org.apache.dstream.DataPipeline;
 import org.apache.dstream.io.TextSource;
 
 public class WordCount {
@@ -19,8 +19,8 @@ public class WordCount {
 		FileSystem fs = FileSystems.getFileSystem(new URI("hdfs:///"));
 		Path inputPath = fs.getPath(localFile.getName());
 		
-		DistributedPipeline<String> sourcePipeline = TextSource.create(inputPath).asPipeline("WordCount");
-		DistributedPipeline<Entry<String, Integer>> resultPipeline = sourcePipeline.<String, Integer>computeMappings(stream -> stream
+		DataPipeline<String> sourcePipeline = TextSource.create(inputPath).asPipeline("WordCount");
+		DataPipeline<Entry<String, Integer>> resultPipeline = sourcePipeline.<String, Integer>computeMappings(stream -> stream
 				  .flatMap(s -> Stream.of(s.split("\\s+")))
 				  .collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)))
 		  .combine(2, Integer::sum)

@@ -59,7 +59,7 @@ public class DefaultPersistable<T> implements Persistable<T> {
 	}
 
 	@Override
-	public DistributedPipeline<T> save(OutputSpecification outputSpec) {
+	public DataPipeline<T> save(OutputSpecification outputSpec) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Submitting job. Output will be available at: " + outputSpec.getOutputPath());
 		}
@@ -69,7 +69,7 @@ public class DefaultPersistable<T> implements Persistable<T> {
 	}
 
 	@Override
-	public DistributedPipeline<T> save(FileSystem fs) {
+	public DataPipeline<T> save(FileSystem fs) {
 		OutputSpecification outputSpec = new SimpleOutputSpecification(fs.getPath(this.executionProvider.getAssembly().getJobName() + "/out"));
 		if (logger.isDebugEnabled()){
 			logger.debug("Submitting job. Output will be available at: " + outputSpec.getOutputPath());
