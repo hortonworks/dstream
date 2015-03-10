@@ -9,7 +9,7 @@ import org.apache.dstream.utils.SerializableFunction;
  * 
  * @param <T>
  */
-public abstract class AbstractDistributedPipeline<T> implements DataPipeline<T> {
+public abstract class AbstractDataPipeline<T> implements DataPipeline<T> {
 	
 	private SerializableFunction<Stream<?>, Stream<?>> preProcessFunction;
 	

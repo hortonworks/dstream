@@ -11,22 +11,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implementation of {@link Distributable}
+ * Base implementation of {@link Distributable}
  * 
  * @param <K>
  * @param <V>
  */
-public class DefaultDistributable<K, V> implements Distributable<K,V> {
+public abstract class AbstractDistributable<K, V> implements Distributable<K,V> {
 	
 	private static final long serialVersionUID = 7020089231859026667L;
 
-	private final Logger logger = LoggerFactory.getLogger(DefaultDistributable.class);
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
-	private transient final AbstractDistributedPipelineExecutionProvider<Entry<K, V>> executionContext;
+	private transient final AbstractDataPipelineExecutionProvider<Entry<K, V>> executionContext;
 	
 	private int partitionSize;
 
-	private SerializableBinaryOperator<V> aggregateFunction;
+	private SerializableBinaryOperator<V> combineFunction;
 	
 	private SerializableFunction<Entry<K, V>, Integer> partitionerFunction;
 	
@@ -34,17 +34,17 @@ public class DefaultDistributable<K, V> implements Distributable<K,V> {
 	 * 
 	 * @param context
 	 */
-	protected DefaultDistributable(AbstractDistributedPipelineExecutionProvider<Entry<K,V>> executionContext){
+	protected AbstractDistributable(AbstractDataPipelineExecutionProvider<Entry<K,V>> executionContext){
 		this.executionContext = executionContext;
 	}
 
 	@Override
-	public Persistable<Entry<K, V>> combine(int partitionSize, SerializableBinaryOperator<V> aggregateFunction) {
+	public Persistable<Entry<K, V>> combine(int partitionSize, SerializableBinaryOperator<V> combineFunction) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'aggregate' request for " + partitionSize + " partitions.");
 		}
 		this.partitionSize = partitionSize;
-		this.aggregateFunction = aggregateFunction;
+		this.combineFunction = combineFunction;
 		Partitioner<Entry<K, V>> defaultPartitioner = new DefaultPartitioner(this.partitionSize);
 		this.partitionerFunction = new SerializableFunction<Entry<K, V>, Integer>() {
 			private static final long serialVersionUID = -8996083508793084950L;
@@ -58,7 +58,7 @@ public class DefaultDistributable<K, V> implements Distributable<K,V> {
 	}
 
 	@Override
-	public Persistable<Entry<K, V>> combine(Partitioner<Entry<K,V>> partitioner, SerializableBinaryOperator<V> aggregateFunction) {
+	public Persistable<Entry<K, V>> combine(Partitioner<Entry<K,V>> partitioner, SerializableBinaryOperator<V> combineFunction) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'aggregate' request with " + partitioner + ".");
 		}
@@ -69,33 +69,33 @@ public class DefaultDistributable<K, V> implements Distributable<K,V> {
 				return partitioner.getPartition(t);
 			}
 		};
-		this.aggregateFunction = aggregateFunction;
+		this.combineFunction = combineFunction;
 		this.executionContext.getAssembly().getLastStage().setMerger(this);
 		return new DefaultPersistable<Entry<K,V>>(this.executionContext);
 	}
 
 	@Override
 	public Persistable<Entry<K, V>> combine(SerializableFunction<Entry<K, V>, Integer> partitionerFunction,
-			SerializableBinaryOperator<V> aggregateFunction) {
+			SerializableBinaryOperator<V> combineFunction) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'aggregate' request with partitioner function.");
 		}
 		this.partitionerFunction = partitionerFunction;
-		this.aggregateFunction = aggregateFunction;
+		this.combineFunction = combineFunction;
 		this.executionContext.getAssembly().getLastStage().setMerger(this);
 		return new DefaultPersistable<Entry<K,V>>(this.executionContext);
 	}
 	
 	public int getPartitionSize() {
-		return partitionSize;
+		return this.partitionSize;
 	}
 
-	public SerializableBinaryOperator<V> getMergeFunction() {
-		return aggregateFunction;
+	public SerializableBinaryOperator<V> getCombineFunction() {
+		return this.combineFunction;
 	}
 
 	public SerializableFunction<Entry<K, V>, Integer> getPartitionerFunction() {
-		return partitionerFunction;
+		return this.partitionerFunction;
 	}
 	
 	/**

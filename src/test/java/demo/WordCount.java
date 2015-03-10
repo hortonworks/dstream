@@ -19,6 +19,8 @@ public class WordCount {
 		FileSystem fs = FileSystems.getFileSystem(new URI("hdfs:///"));
 		Path inputPath = fs.getPath(localFile.getName());
 		
+		//SerializableBinaryOperator<Integer> booo = Integer::sum;
+		
 		DataPipeline<String> sourcePipeline = TextSource.create(inputPath).asPipeline("WordCount");
 		DataPipeline<Entry<String, Integer>> resultPipeline = sourcePipeline.<String, Integer>computeMappings(stream -> stream
 				  .flatMap(s -> Stream.of(s.split("\\s+")))

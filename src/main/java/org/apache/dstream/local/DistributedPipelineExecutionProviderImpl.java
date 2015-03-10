@@ -1,6 +1,6 @@
 package org.apache.dstream.local;
 
-import org.apache.dstream.AbstractDistributedPipelineExecutionProvider;
+import org.apache.dstream.AbstractDataPipelineExecutionProvider;
 import org.apache.dstream.exec.DistributedPipelineExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @param <T>
  */
-public class DistributedPipelineExecutionProviderImpl<T> extends AbstractDistributedPipelineExecutionProvider<T> {
+public class DistributedPipelineExecutionProviderImpl<T> extends AbstractDataPipelineExecutionProvider<T> {
 	
 	private final Logger logger = LoggerFactory.getLogger(DistributedPipelineExecutionProviderImpl.class);
 	

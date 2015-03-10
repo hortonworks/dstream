@@ -16,7 +16,7 @@ public class Stage<T> implements Serializable {
 	
 	private final SerializableFunction<Stream<?>,Stream<?>> preProcessFunction;
 
-	private volatile Distributable<?,?> merger;
+	private volatile Distributable<?,?> postShuffleOperations;
 	
 	private final int stageId;
 
@@ -30,12 +30,12 @@ public class Stage<T> implements Serializable {
 		this.preProcessFunction = preProcessFunction;
 	}
 	
-	public void setMerger(Distributable<?,?> merger) {
-		this.merger = merger;
+	public void setMerger(Distributable<?,?> postShuffleOperations) {
+		this.postShuffleOperations = postShuffleOperations;
 	}
 	
-	public Distributable<?,?> getMerger() {
-		return merger;
+	public Distributable<?,?> getPostShuffleOperations() {
+		return postShuffleOperations;
 	}
 	
 	public SerializableFunction<Stream<T>,?> getStageFunction() {

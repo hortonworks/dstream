@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.apache.dstream.AbstractDistributable;
 import org.apache.dstream.DataPipeline;
 import org.apache.dstream.DefaultDistributable;
 import org.apache.dstream.assembly.Stage;
@@ -93,8 +94,8 @@ public class StreamExecutorImpl<T,R> extends DistributedPipelineExecutor<T,R> {
 	 * @return
 	 */
 	private ShuffleWriterImpl createShuffleWriter(Stage stage){
-		DefaultDistributable<?,?> merger = (DefaultDistributable<?,?>)stage.getMerger();
-		int partitionSize = merger.getPartitionSize();
+		AbstractDistributable<?,?> postShuffleOperations = (AbstractDistributable<?,?>)stage.getPostShuffleOperations();
+		int partitionSize = postShuffleOperations.getPartitionSize();
 		Map<Integer, ConcurrentHashMap<?, ?>> partitions = new HashMap<>();
 		for (int i = 0; i < partitionSize; i++) {
 			partitions.put(i, new ConcurrentHashMap());

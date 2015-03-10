@@ -19,9 +19,9 @@ import org.slf4j.LoggerFactory;
  *
  * @param <T>
  */
-public abstract class AbstractDistributedPipelineExecutionProvider<T> {
+public abstract class AbstractDataPipelineExecutionProvider<T> {
 	
-	private static final Logger logger = LoggerFactory.getLogger(AbstractDistributedPipelineExecutionProvider.class);
+	private static final Logger logger = LoggerFactory.getLogger(AbstractDataPipelineExecutionProvider.class);
 	
 	@SuppressWarnings("unchecked")
 	private final DistributedPipelineAssembly<T> streamAssembly = ReflectionUtils.newDefaultInstance(DistributedPipelineAssembly.class);
@@ -32,18 +32,18 @@ public abstract class AbstractDistributedPipelineExecutionProvider<T> {
 	
 	
 	/**
-	 * Factory method that will return implementation of this {@link AbstractDistributedPipelineExecutionProvider}
+	 * Factory method that will return implementation of this {@link AbstractDataPipelineExecutionProvider}
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	protected static <T> AbstractDistributedPipelineExecutionProvider<T> of(String jobName, AbstractDistributedPipeline<T> pipeline) {
+	protected static <T> AbstractDataPipelineExecutionProvider<T> of(String jobName, AbstractDataPipeline<T> pipeline) {
 		Assert.notNull(pipeline, "'pipeline' must not be null");
 		Assert.notEmpty(jobName, "'jobName' must not be null or empty");
 		
-		ServiceLoader<AbstractDistributedPipelineExecutionProvider> sl = ServiceLoader.load(AbstractDistributedPipelineExecutionProvider.class, ClassLoader.getSystemClassLoader());
-		Iterator<AbstractDistributedPipelineExecutionProvider> iter = sl.iterator();
-		AbstractDistributedPipelineExecutionProvider<T> suitableContext = null;
+		ServiceLoader<AbstractDataPipelineExecutionProvider> sl = ServiceLoader.load(AbstractDataPipelineExecutionProvider.class, ClassLoader.getSystemClassLoader());
+		Iterator<AbstractDataPipelineExecutionProvider> iter = sl.iterator();
+		AbstractDataPipelineExecutionProvider<T> suitableContext = null;
 		while (iter.hasNext() && suitableContext == null){
-			AbstractDistributedPipelineExecutionProvider context = iter.next();
+			AbstractDataPipelineExecutionProvider context = iter.next();
 			if (context.isSourceSupported(pipeline)){
 				if (logger.isInfoEnabled()){
 					logger.info("Loaded " + context + " to process source: " + pipeline);

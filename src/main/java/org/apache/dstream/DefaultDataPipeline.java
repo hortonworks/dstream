@@ -16,16 +16,16 @@ import org.slf4j.LoggerFactory;
  * 
  * @param <T>
  */
-public class DefaultDataPipeline<T> extends AbstractDistributedPipeline<T> {
+public class DefaultDataPipeline<T> extends AbstractDataPipeline<T> {
 	protected final Logger logger = LoggerFactory.getLogger(DefaultDataPipeline.class);
 	
-	private final AbstractDistributedPipelineExecutionProvider<T> executionContext;
+	private final AbstractDataPipelineExecutionProvider<T> executionContext;
 	
 	private final Source<T> source;
 	
 	public DefaultDataPipeline(Source<T> source, String jobName){
 		this.source = source;
-		this.executionContext = AbstractDistributedPipelineExecutionProvider.of(jobName, this);
+		this.executionContext = AbstractDataPipelineExecutionProvider.of(jobName, this);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -38,7 +38,7 @@ public class DefaultDataPipeline<T> extends AbstractDistributedPipeline<T> {
 		Stage<T> stage = new Stage<T>(function, this.executionContext.getSourcePreProcessFunction(), this.executionContext.nextStageId());
 		this.executionContext.getAssembly().addStage(stage);
 	
-		return new DefaultDistributable<K, V>((AbstractDistributedPipelineExecutionProvider<Entry<K, V>>) this.executionContext);
+		return new DefaultDistributable<K, V>((AbstractDataPipelineExecutionProvider<Entry<K, V>>) this.executionContext);
 	}
 
 	@Override
