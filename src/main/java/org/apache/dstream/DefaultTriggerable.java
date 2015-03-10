@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @param <T>
  */
-public class DefaultTriggerable<T> implements Triggerable<T> {
+public class DefaultTriggerable<T> implements Triggerable<T>, Computable<T> {
 	
 	private final Logger logger = LoggerFactory.getLogger(DefaultTriggerable.class);
 	
@@ -43,8 +43,7 @@ public class DefaultTriggerable<T> implements Triggerable<T> {
 	}
 
 	@Override
-	public boolean computeBoolean(
-			SerializableFunction<Stream<T>, Boolean> function) {
+	public boolean computeBoolean(SerializableFunction<Stream<T>, Boolean> function) {
 		// TODO Auto-generated method stub
 		return false;
 	}
@@ -84,4 +83,5 @@ public class DefaultTriggerable<T> implements Triggerable<T> {
 		// TODO Auto-generated method stub
 		return 0;
 	}
+
 }

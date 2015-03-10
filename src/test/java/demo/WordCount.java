@@ -19,14 +19,19 @@ public class WordCount {
 		FileSystem fs = FileSystems.getFileSystem(new URI("hdfs:///"));
 		Path inputPath = fs.getPath(localFile.getName());
 		
-		//SerializableBinaryOperator<Integer> booo = Integer::sum;
-		
 		DataPipeline<String> sourcePipeline = TextSource.create(inputPath).asPipeline("WordCount");
-		DataPipeline<Entry<String, Integer>> resultPipeline = sourcePipeline.<String, Integer>computeMappings(stream -> stream
+		
+		sourcePipeline.<String, Integer>computeMappings(stream -> stream
 				  .flatMap(s -> Stream.of(s.split("\\s+")))
-				  .collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)))
-		  .combine(2, Integer::sum)
-		  .save(fs);
+				  .collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
+			);
+		
+//		DataPipeline<String> sourcePipeline = TextSource.create(inputPath).asPipeline("WordCount");
+//		DataPipeline<Entry<String, Integer>> resultPipeline = sourcePipeline.<String, Integer>computeMappings(stream -> stream
+//				  .flatMap(s -> Stream.of(s.split("\\s+")))
+//				  .collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)))
+//		  .combine(2, Integer::sum)
+//		  .save(fs);
 		
 		// print results to console
 		//result.forEach(System.out::println);

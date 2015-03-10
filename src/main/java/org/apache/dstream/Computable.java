@@ -66,12 +66,4 @@ public interface Computable<T> {
 	 * @return
 	 */
 	<K,V> Distributable<K,V> computeMappings(SerializableFunction<Stream<T>, Map<K,V>> computeFunction);
-	
-	/**
-	 * A <i>terminal</i> operator returning a result of type {@link Long} which represents the 
-	 * count of elements in the result {@link DataPipeline} 
-	 * 
-	 * @return
-	 */
-	long count();
 }

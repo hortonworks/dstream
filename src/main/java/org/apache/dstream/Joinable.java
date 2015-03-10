@@ -29,5 +29,5 @@ public interface Joinable<K,V> {
 	 * @param valueCombiner 
 	 * @return
 	 */
-	public <KK,VV,R> Distributable<K,R> join(Distributable<KK, VV> intermediateResult, SerializableBiFunction<V, VV, R> valueCombiner);
+	public <W,R> Distributable<K,R> join(Distributable<K, W> intermediateResult, SerializableBiFunction<V, W, R> valueCombiner);
 }

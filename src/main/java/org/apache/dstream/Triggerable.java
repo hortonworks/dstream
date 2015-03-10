@@ -8,7 +8,7 @@ import java.nio.file.FileSystem;
  * 
  * @param <R> - the result type
  */
-public interface Triggerable<R> extends Computable<R>{
+public interface Triggerable<R> extends Computable<R> {
 	/**
 	 * Will trigger execution of the {@link DataPipeline} saving its results to the location 
 	 * identified by the {@link OutputSpecification} and returning a new {@link DataPipeline} over the 
@@ -20,7 +20,7 @@ public interface Triggerable<R> extends Computable<R>{
 	 * @param outputSpec
 	 * @return
 	 */
-	public DataPipeline<R> save(OutputSpecification outputSpec);
+	DataPipeline<R> save(OutputSpecification outputSpec);
 	
 	/**
 	 * Will trigger execution of the {@link DataPipeline} saving its results to the default location 
@@ -30,5 +30,7 @@ public interface Triggerable<R> extends Computable<R>{
 	 * @param fs
 	 * @return
 	 */
-	public DataPipeline<R> save(FileSystem fs);
+	DataPipeline<R> save(FileSystem fs);
+	
+	long count();
 }
