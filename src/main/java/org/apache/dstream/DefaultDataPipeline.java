@@ -110,5 +110,11 @@ public class DefaultDataPipeline<T> extends AbstractDistributedPipeline<T> {
 		// TODO Auto-generated method stub
 		return false;
 	}
+
+	@Override
+	public long count() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 	
 }

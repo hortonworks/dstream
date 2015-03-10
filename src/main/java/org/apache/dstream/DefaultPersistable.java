@@ -78,4 +78,10 @@ public class DefaultPersistable<T> implements Persistable<T> {
 		DistributedPipelineExecutor<?, T> streamExecutor = this.executionProvider.getExecutor();
 		return streamExecutor.execute();
 	}
+
+	@Override
+	public long count() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }
