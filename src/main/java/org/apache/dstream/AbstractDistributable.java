@@ -39,7 +39,7 @@ public abstract class AbstractDistributable<K, V> implements Distributable<K,V> 
 	}
 
 	@Override
-	public Persistable<Entry<K, V>> combine(int partitionSize, SerializableBinaryOperator<V> combineFunction) {
+	public Triggerable<Entry<K, V>> combine(int partitionSize, SerializableBinaryOperator<V> combineFunction) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'aggregate' request for " + partitionSize + " partitions.");
 		}
@@ -54,11 +54,11 @@ public abstract class AbstractDistributable<K, V> implements Distributable<K,V> 
 			}
 		};
 		this.executionContext.getAssembly().getLastStage().setMerger(this);
-		return new DefaultPersistable<Entry<K,V>>(this.executionContext);
+		return new DefaultTriggerable<Entry<K,V>>(this.executionContext);
 	}
 
 	@Override
-	public Persistable<Entry<K, V>> combine(Partitioner<Entry<K,V>> partitioner, SerializableBinaryOperator<V> combineFunction) {
+	public Triggerable<Entry<K, V>> combine(Partitioner<Entry<K,V>> partitioner, SerializableBinaryOperator<V> combineFunction) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'aggregate' request with " + partitioner + ".");
 		}
@@ -71,11 +71,11 @@ public abstract class AbstractDistributable<K, V> implements Distributable<K,V> 
 		};
 		this.combineFunction = combineFunction;
 		this.executionContext.getAssembly().getLastStage().setMerger(this);
-		return new DefaultPersistable<Entry<K,V>>(this.executionContext);
+		return new DefaultTriggerable<Entry<K,V>>(this.executionContext);
 	}
 
 	@Override
-	public Persistable<Entry<K, V>> combine(SerializableFunction<Entry<K, V>, Integer> partitionerFunction,
+	public Triggerable<Entry<K, V>> combine(SerializableFunction<Entry<K, V>, Integer> partitionerFunction,
 			SerializableBinaryOperator<V> combineFunction) {
 		if (logger.isDebugEnabled()){
 			logger.debug("Accepted 'aggregate' request with partitioner function.");
@@ -83,7 +83,7 @@ public abstract class AbstractDistributable<K, V> implements Distributable<K,V> 
 		this.partitionerFunction = partitionerFunction;
 		this.combineFunction = combineFunction;
 		this.executionContext.getAssembly().getLastStage().setMerger(this);
-		return new DefaultPersistable<Entry<K,V>>(this.executionContext);
+		return new DefaultTriggerable<Entry<K,V>>(this.executionContext);
 	}
 	
 	public int getPartitionSize() {
@@ -132,20 +132,20 @@ public abstract class AbstractDistributable<K, V> implements Distributable<K,V> 
 	}
 
 	@Override
-	public Persistable<Entry<K, V>> partition(int partitionSize) {
+	public Triggerable<Entry<K, V>> partition(int partitionSize) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Persistable<Entry<K, V>> partition(
+	public Triggerable<Entry<K, V>> partition(
 			Partitioner<Entry<K, V>> partitioner) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Persistable<Entry<K, V>> partition(
+	public Triggerable<Entry<K, V>> partition(
 			SerializableFunction<Entry<K, V>, Integer> partitionerFunction) {
 		// TODO Auto-generated method stub
 		return null;

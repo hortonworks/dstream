@@ -17,7 +17,7 @@ import org.apache.dstream.utils.SerializableFunction;
  * distribution functionality to be added to the {@link DataPipeline} (e.g., combine(..), 
  * partition(..) etc.). These operators <i><b>will not</b></i> trigger execution of the pipeline.
  * To trigger the execution of the pipeline you would need to terminate it with
- * one of the <i>terminal</i> operators (see {@link Persistable}, {@link Computable}). 
+ * one of the <i>terminal</i> operators (see {@link Triggerable}, {@link Computable}). 
  * <br>
  * The <i>terminal</i> operators will trigger the execution of the pipeline returning a single result.
  * 

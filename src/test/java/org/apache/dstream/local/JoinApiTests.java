@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 import org.apache.dstream.DataPipeline;
 import org.apache.dstream.Distributable;
 import org.apache.dstream.OutputSpecification;
-import org.apache.dstream.Persistable;
+import org.apache.dstream.Triggerable;
 import org.apache.dstream.io.TextSource;
 
 public class JoinApiTests {
@@ -48,6 +48,6 @@ public class JoinApiTests {
 				.flatMap(s -> Stream.of(s.split("\\s+")))
 				.collect(Collectors.toMap(s -> s, s -> 1L, Long::sum))
 	    );
-		Persistable<Entry<String, String>> submittable = resultA.join(resultB, (a, b) -> "blah").partition(4);
+		Triggerable<Entry<String, String>> submittable = resultA.join(resultB, (a, b) -> "blah").partition(4);
 	}
 }

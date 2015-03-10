@@ -67,17 +67,17 @@ public class DefaultDataPipeline<T> extends AbstractDataPipeline<T> {
 		return null;
 	}
 	@Override
-	public Persistable<T> partition(int partitionSize) {
+	public Triggerable<T> partition(int partitionSize) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 	@Override
-	public Persistable<T> partition(Partitioner<T> partitioner) {
+	public Triggerable<T> partition(Partitioner<T> partitioner) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 	@Override
-	public Persistable<T> partition(
+	public Triggerable<T> partition(
 			SerializableFunction<T, Integer> partitionerFunction) {
 		// TODO Auto-generated method stub
 		return null;

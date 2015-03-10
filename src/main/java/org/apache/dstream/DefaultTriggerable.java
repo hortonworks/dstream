@@ -14,13 +14,13 @@ import org.slf4j.LoggerFactory;
  * 
  * @param <T>
  */
-public class DefaultPersistable<T> implements Persistable<T> {
+public class DefaultTriggerable<T> implements Triggerable<T> {
 	
-	private final Logger logger = LoggerFactory.getLogger(DefaultPersistable.class);
+	private final Logger logger = LoggerFactory.getLogger(DefaultTriggerable.class);
 	
 	private final AbstractDataPipelineExecutionProvider<T> executionProvider;
 	
-	protected DefaultPersistable(AbstractDataPipelineExecutionProvider<T> executionProvider){
+	protected DefaultTriggerable(AbstractDataPipelineExecutionProvider<T> executionProvider){
 		this.executionProvider = executionProvider;
 	}
 

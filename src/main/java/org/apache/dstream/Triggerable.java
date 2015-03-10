@@ -8,7 +8,7 @@ import java.nio.file.FileSystem;
  * 
  * @param <R> - the result type
  */
-public interface Persistable<R> extends Computable<R>{
+public interface Triggerable<R> extends Computable<R>{
 	/**
 	 * Will trigger execution of the {@link DataPipeline} saving its results to the location 
 	 * identified by the {@link OutputSpecification} and returning a new {@link DataPipeline} over the 

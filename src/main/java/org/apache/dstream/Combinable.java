@@ -27,10 +27,10 @@ public interface Combinable<K,V> {
 	 * 
 	 * @param partitionSize
 	 * @param combineFunction function that accepts two partial results and merges them
-	 * @return an instance of {@link Persistable} allowing {@link DataPipeline} to be executed and materialized 
+	 * @return an instance of {@link Triggerable} allowing {@link DataPipeline} to be executed and materialized 
 	 * into new {@link DataPipeline} or terminal value, representing the results of the distributed computation.
 	 */
-	public Persistable<Entry<K,V>> combine(int partitionSize, SerializableBinaryOperator<V> combineFunction);
+	public Triggerable<Entry<K,V>> combine(int partitionSize, SerializableBinaryOperator<V> combineFunction);
 	
 	/**
 	 * An <i>intermediate</i> operation to supply instructions to partition the results of the computation 
@@ -41,10 +41,10 @@ public interface Combinable<K,V> {
 	 * 
 	 * @param partitioner {@link Partitioner} to be used to partition entries
 	 * @param combineFunction function that accepts two partial results and merges them
-	 * @return an instance of {@link Persistable} allowing {@link DataPipeline} to be executed and materialized 
+	 * @return an instance of {@link Triggerable} allowing {@link DataPipeline} to be executed and materialized 
 	 * into new {@link DataPipeline} or terminal value, representing the results of the distributed computation.
 	 */
-	public Persistable<Entry<K,V>> combine(Partitioner<Entry<K,V>> partitioner, SerializableBinaryOperator<V> combineFunction);
+	public Triggerable<Entry<K,V>> combine(Partitioner<Entry<K,V>> partitioner, SerializableBinaryOperator<V> combineFunction);
 	
 	/**
 	 * An <i>intermediate</i> operation to supply instructions to partition the results of the computation 
@@ -55,8 +55,8 @@ public interface Combinable<K,V> {
 	 * 
 	 * @param partitionerFunction function to determine partition id
 	 * @param combineFunction function that accepts two partial results and merges them
-	 * @return an instance of {@link Persistable} allowing {@link DataPipeline} to be executed and materialized 
+	 * @return an instance of {@link Triggerable} allowing {@link DataPipeline} to be executed and materialized 
 	 * into new {@link DataPipeline} or terminal value, representing the results of the distributed computation.
 	 */
-	public Persistable<Entry<K,V>> combine(SerializableFunction<Entry<K,V>, Integer> partitionerFunction, SerializableBinaryOperator<V> combineFunction);
+	public Triggerable<Entry<K,V>> combine(SerializableFunction<Entry<K,V>, Integer> partitionerFunction, SerializableBinaryOperator<V> combineFunction);
 }
