@@ -19,7 +19,7 @@ public interface Joinable<K,V> {
 	 * @param intermediateResult
 	 * @return
 	 */
-	public <R> Distributable<K,Pair<V,R>> join(Distributable<K, R> intermediateResult);
+	public <W> Distributable<K,Pair<V,W>> join(Distributable<K, W> intermediateResult);
 	
 	/**
 	 * Will join two {@link Distributable}s together based on the key.
