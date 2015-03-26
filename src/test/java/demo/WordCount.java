@@ -1,7 +1,6 @@
 package demo;
 
 import java.io.File;
-import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
@@ -9,8 +8,6 @@ import java.util.stream.Stream;
 import org.apache.dstream.Pipeline;
 import org.apache.dstream.PipelineFactory;
 import org.apache.dstream.utils.Utils;
-
-import sun.misc.Unsafe;
 
 public class WordCount {
 	public static void main(String... args) throws Exception {
