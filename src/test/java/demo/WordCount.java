@@ -1,39 +1,46 @@
 package demo;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
 import java.net.URI;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.DataPipeline;
-import org.apache.dstream.io.TextSource;
+import org.apache.dstream.Pipeline;
+import org.apache.dstream.PipelineFactory;
+import org.apache.dstream.utils.Utils;
+
+import sun.misc.Unsafe;
 
 public class WordCount {
 	public static void main(String... args) throws Exception {
-		File localFile = new File("src/test/java/demo/monte-cristo-small.txt");
+		URI uri = new File("data/monte-cristo.txt").toURI();
 		
-		FileSystem fs = FileSystems.getFileSystem(new URI("hdfs:///"));
-		Path inputPath = fs.getPath(localFile.getName());
+		Pipeline<String> sourcePipeline = PipelineFactory.<String>from(uri);
 		
-		DataPipeline<String> sourcePipeline = TextSource.create(inputPath).asPipeline("WordCount");
+		Stream<Entry<String, Integer>> result = 
+			sourcePipeline.<String, Integer>computeMappings(stream -> stream
+				.flatMap(line -> Stream.of(line.split("\\s+")))
+				.map(word -> Utils.toEntry(word, 1))
+			).computeMappings(stream -> stream
+				.filter(s -> s.getKey().startsWith("s"))
+			).combine(Integer::sum)
+			 .submit("WordCount");
 		
-		sourcePipeline.<String, Integer>computeMappings(stream -> stream
-				  .flatMap(s -> Stream.of(s.split("\\s+")))
-				  .collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
-			);
+//		Stream<Entry<String, Integer>> result = sourcePipeline.<String, Integer>computeMappings(stream -> stream
+//					.flatMap(line -> Stream.of(line.split("\\s+")))
+//					.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)).entrySet().stream()
+//				).submit("WordCount");
 		
-//		DataPipeline<String> sourcePipeline = TextSource.create(inputPath).asPipeline("WordCount");
-//		DataPipeline<Entry<String, Integer>> resultPipeline = sourcePipeline.<String, Integer>computeMappings(stream -> stream
-//				  .flatMap(s -> Stream.of(s.split("\\s+")))
-//				  .collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)))
-//		  .combine(2, Integer::sum)
-//		  .save(fs);
-		
-		// print results to console
-		//result.forEach(System.out::println);
+		result.limit(100).forEach(System.out::println);
+
+	}
+	
+//	public String 
+	
+	public static Unsafe getUnsafe() throws Exception{
+		Constructor unsafeConstructor = Unsafe.class.getDeclaredConstructor();
+		unsafeConstructor.setAccessible(true);
+		return (Unsafe) unsafeConstructor.newInstance();
 	}
 }

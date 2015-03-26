@@ -2,6 +2,8 @@ package org.apache.dstream.utils;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 
 public class ReflectionUtils {
 	
@@ -15,6 +17,54 @@ public class ReflectionUtils {
 		}
 	}
 	
+	public static <T> T newInstance(Class<T> clazz, Class<?>[] argumentTypes,  Object[] arguments) {
+		if (argumentTypes == null || argumentTypes.length < 1){
+			return newDefaultInstance(clazz);
+		}
+		try {
+			Constructor<T> ctr = clazz.getDeclaredConstructor(argumentTypes);
+			ctr.setAccessible(true);
+			return ctr.newInstance(arguments);
+		} catch (Exception e) {
+			throw new IllegalStateException(e);
+		}
+	}
+	
+	public static Method findMethod(Class<?> targetClass, Class<?> returnType, Class<?>... inputParams) throws Exception {
+		Class<?> searchType = targetClass;
+		while (searchType != null) {
+			Method[] methods = (searchType.isInterface() ? searchType.getMethods() : searchType.getDeclaredMethods());
+			for (Method method : methods) {
+				if (method.getReturnType().isAssignableFrom(returnType)){
+					Class<?>[] paramTypes = method.getParameterTypes();
+					if (Arrays.equals(paramTypes, inputParams)){
+						return method;
+					}
+				}
+			}
+			searchType = searchType.getSuperclass();
+		}
+		throw new NoSuchMethodException("Method which takes " + Arrays.asList(inputParams) + 
+				" parameters and return " + returnType + 
+				" is not found in object of class " + targetClass);
+	}
+	
+	public static Method findMethod(String name, Class<?> clazz, Class<?> returnType, Class<?>... inputParams) throws Exception {
+		Class<?> searchType = clazz;
+		while (searchType != null) {
+			Method[] methods = (searchType.isInterface() ? searchType.getMethods() : searchType.getDeclaredMethods());
+			for (Method method : methods) {
+				if (name.equals(method.getName()) &&
+						(inputParams == null || Arrays.equals(inputParams, method.getParameterTypes()))) {
+					return method;
+				}
+			}
+			searchType = searchType.getSuperclass();
+		}
+		throw new NoSuchMethodException("Method which takes " + Arrays.asList(inputParams) + 
+				" parameters and return " + returnType + 
+				" is not found in object of class " + clazz);
+	}
 
 	public static void setFieldValue(Object instance, String fieldPath, Object newValue) {
 		String[] parsedFieldPaths = fieldPath.split("\\.");
