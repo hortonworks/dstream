@@ -35,12 +35,5 @@ public class WordCount {
 		result.limit(100).forEach(System.out::println);
 
 	}
-	
-//	public String 
-	
-	public static Unsafe getUnsafe() throws Exception{
-		Constructor unsafeConstructor = Unsafe.class.getDeclaredConstructor();
-		unsafeConstructor.setAccessible(true);
-		return (Unsafe) unsafeConstructor.newInstance();
-	}
+
 }
