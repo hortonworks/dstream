@@ -43,6 +43,17 @@ public class Assert {
 		return true;
 	}
 	
+	public static boolean isFalse(boolean _false){
+		return isFalse(_false, "Result of boolean expression is not false");
+	}
+	
+	public static boolean isFalse(boolean _false, String message){
+		if (!_false){
+			throw new IllegalStateException(message);
+		}
+		return true;
+	}
+	
 	public static void notEmpty(String string) {
 		notEmpty(string, "'string' must not be null or empty");
 	}
