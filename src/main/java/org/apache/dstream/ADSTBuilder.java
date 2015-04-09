@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.UUID;
-import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -57,9 +56,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	 * @param proxyType
 	 */
 	@SuppressWarnings("unchecked")
-	private ADSTBuilder(Class<?> sourceItemType, SourceSupplier<?> sourcesSupplier, Class<? extends Distributable<?>> proxyType){
-		this.sourceItemType = sourceItemType;
-		this.sourcesSupplier = sourcesSupplier;
+	private ADSTBuilder(Class<?> sourceItemType, SourceSupplier<?> sourcesSupplier, Class<? extends Distributable<?>> proxyType) {
 		
 		Assert.isTrue(DistributableStream.class.isAssignableFrom(proxyType) 
 				|| DistributablePipeline.class.isAssignableFrom(proxyType), "Unsupported proxy type " + 
@@ -79,7 +76,8 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 		pf.addAdvice(this);
 		
 		this.targetDistributable =  (R) pf.getProxy();
-	
+		this.sourceItemType = sourceItemType;
+		this.sourcesSupplier = sourcesSupplier;
 		this.stages = new ArrayList<Stage>();
 		
 		if (logger.isDebugEnabled()){
@@ -128,24 +126,17 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 					throw new IllegalStateException("fooo");
 				}
 				else {
-					if (this.previousInvocation == null){
-						this.previousInvocation = invocation;
-					} else {
-						String previousOpName = this.previousInvocation.getMethod().getName();
-						if (previousOpName.equals("reduceByKey")){
-							KeyValuesStreamAggregator aggregator = new KeyValuesStreamAggregator((BinaryOperator) this.previousInvocation.getArguments()[0]);
-							KeyValuesAggregatingStreamProcessingFunction stageFunction = new KeyValuesAggregatingStreamProcessingFunction((Function) arguments[0], aggregator);
-							Stage stage = this.constructStage(operationName, stageFunction);
-							this.stages.add(stage);
-							this.previousInvocation = null;
-						}
+					if (operationName.equals("computeKeyValues")){
+						this.createStage(operationName, (Function<?,?>) arguments[0]);
+						this.previousInvocation = null;
+					} 
+					else {
+						throw new IllegalStateException("Unsupported: " + operationName);
 					}
 				}
 			}
 			else if (DistributableKeyValuePipeline.class.isAssignableFrom(invocation.getMethod().getDeclaringClass())){
 				if (operationName.equals("reduceByKey")){
-					Stage stage = this.constructStage(this.previousInvocation.getMethod().getName(), (Function) this.previousInvocation.getArguments()[0]);
-					this.stages.add(stage);
 					this.previousInvocation = invocation;
 				}
 			}
@@ -156,11 +147,29 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	
 	/**
 	 * 
+	 * @param currentOperationName
+	 * @param currentOperationFunction
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private void createStage(String currentOperationName, Function<?,?> currentOperationFunction){
+		Function composedFunction = currentOperationFunction;
+		String stageName = currentOperationName;
+		if (this.previousInvocation != null){
+			KeyValuesStreamAggregator<?,?> aggregator = new KeyValuesStreamAggregator<>((BinaryOperator<?>) this.previousInvocation.getArguments()[0]);
+			composedFunction = new KeyValuesAggregatingStreamProcessingFunction(currentOperationFunction, aggregator);
+			stageName = this.previousInvocation.getMethod().getName();
+		}
+		Stage stage = this.constructStage(stageName, composedFunction);
+		this.stages.add(stage);
+	}
+	
+	/**
+	 * 
 	 * @param operationName
 	 * @param processingInstructions
 	 * @return
 	 */
-	private Stage constructStage(String operationName, Function processingFunction) {
+	private Stage constructStage(String operationName, Function<?,?> processingFunction) {	
 		SourceSupplier<?> sources = this.stageIdCounter == 0 ? this.sourcesSupplier : null; 
 		int stageId = this.stageIdCounter++;
 		Stage stage = new Stage() {
@@ -191,6 +200,9 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 				return processingFunction;
 			}
 		};
+		if (logger.isDebugEnabled()){
+			logger.debug("Constructed stage: " + stage);
+		}
 		return stage;
 	}
 	
@@ -209,16 +221,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	 * @return
 	 */
 	private PipelineSpecification build(String name){
-		if (this.previousInvocation != null){
-			String previousOpName = this.previousInvocation.getMethod().getName();
-			if (previousOpName.equals("reduceByKey")){
-				KeyValuesStreamAggregator aggregator = new KeyValuesStreamAggregator((BinaryOperator) this.previousInvocation.getArguments()[0]);
-				KeyValuesAggregatingStreamProcessingFunction stageFunction = new KeyValuesAggregatingStreamProcessingFunction(aggregator);
-				Stage stage = this.constructStage(this.previousInvocation.getMethod().getName(), stageFunction);
-				this.stages.add(stage);
-				this.previousInvocation = null;
-			}
-		}
+		this.createStage(this.previousInvocation.getMethod().getName(), null);
 		
 		PipelineSpecification specification = new PipelineSpecification() {		
 			private static final long serialVersionUID = -4119037144503084569L;
@@ -244,11 +247,9 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	
 	/**
 	 * 
-	 * @author ozhurakousky
 	 *
 	 */
 	private static class StageFunctionAssembler {
-//		private boolean mapSideCombine = true;
 		private List<Entry<String, Object>> streamOps = new ArrayList<Map.Entry<String,Object>>();
 		
 		private Collector collector;
@@ -291,6 +292,12 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 		}
 	}
 	
+	/**
+	 * 
+	 * @param pipelineSpecification
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
 	private Stream<?>[] trigger(PipelineSpecification pipelineSpecification) {
 		
 		Properties prop = PipelineConfigurationUtils.loadDelegatesConfig();
@@ -318,7 +325,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 				messageSuffix = "Probable cause: Your specified implementation '"
 						+ pipelineExecutionDelegateClassName
 						+ "' does not expose a method with the following signature - "
-						+ "<anyModifier> java.util.stream.Stream<?> <anyName>(org.apache.dstream.PipelineSpecification pipelineSpecification)";
+						+ "<anyModifier> java.util.stream.Stream<?>[] <anyName>(org.apache.dstream.PipelineSpecification pipelineSpecification)";
 			}
 			throw new IllegalStateException("Failed to execute pipeline '"
 					+ pipelineSpecification.getName() + "'. " + messageSuffix, e);
