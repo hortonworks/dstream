@@ -53,14 +53,14 @@ public interface DistributablePipeline<T> extends Distributable<T> {
 	<R> DistributablePipeline<R> compute(Function<? extends Stream<T>, ? extends Stream<R>> computeFunction);
 	
 	
-	/**
-	 * Returns a pipeline consisting of the key/value results of applying computation to the 
-	 * elements of the underlying stream.
-	 * 
-	 * @param computeFunction a mapping function to map {@link Stream&lt;T&gt;} to key/value {@link Stream&lt;Entry&lt;K,V&gt;&gt;}.
-	 * @return the new {@link DistributableKeyValuePipeline} of type K,V
-	 */
-	<K,V> DistributableKeyValuePipeline<K,V> computeKeyValues(Function<? extends Stream<T>, ? extends Stream<Entry<K,V>>> computeFunction);
+//	/**
+//	 * Returns a pipeline consisting of the key/value results of applying computation to the 
+//	 * elements of the underlying stream.
+//	 * 
+//	 * @param computeFunction a mapping function to map {@link Stream&lt;T&gt;} to key/value {@link Stream&lt;Entry&lt;K,V&gt;&gt;}.
+//	 * @return the new {@link DistributableKeyValuePipeline} of type K,V
+//	 */
+//	<K,V> DistributableKeyValuePipeline<K,V> computeKeyValues(Function<? extends Stream<T>, ? extends Stream<Entry<K,V>>> computeFunction);
 	
 	
 	/**

@@ -11,13 +11,13 @@ public class WordCountPipe {
 	
 	public static void main(String... args) throws Exception {
 	
-		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class,  UriSourceSupplier.from(new File("src/test/java/org/apache/dstream/local/sample.txt").toURI()));
-		
-		Stream<Entry<String, Integer>>[] result = sourcePipeline.<String, Integer>computeKeyValues(stream -> stream
-					.flatMap(line -> Stream.of(line.split(" ")))
-					.map(word -> Utils.kv(word,  1))
-		).reduceByKey(Integer::sum)
-		 .executeAs("WordCount");
+//		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class,  UriSourceSupplier.from(new File("src/test/java/org/apache/dstream/local/sample.txt").toURI()));
+//		
+//		Stream<Entry<String, Integer>>[] result = sourcePipeline.<String, Integer>computeKeyValues(stream -> stream
+//					.flatMap(line -> Stream.of(line.split(" ")))
+//					.map(word -> Utils.kv(word,  1))
+//		).reduceByKey(Integer::sum)
+//		 .executeAs("WordCount");
 		
 //		result.forEach(System.out::println);
 		

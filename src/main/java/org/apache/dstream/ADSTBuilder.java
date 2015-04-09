@@ -25,6 +25,7 @@ import org.apache.dstream.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.aop.framework.ReflectiveMethodInvocation;
 
 class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	
@@ -65,7 +66,6 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 		ProxyFactory pf = new ProxyFactory();
 		if (DistributablePipeline.class.isAssignableFrom(proxyType)){
 			pf.addInterface(DistributablePipeline.class);
-			pf.addInterface(DistributableKeyValuePipeline.class);
 			this.isPipeline = true;
 		} else {
 			pf.addInterface(DistributableStream.class);
@@ -108,7 +108,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 		
 		if (this.isTriggerOperation(operationName)){
 			String pipelineName = arguments.length == 1 ? arguments[0].toString() : UUID.randomUUID().toString();
-			PipelineSpecification pipelineSpec = this.build(pipelineName);
+			PipelineSpecification pipelineSpec = this.buildPipelineSpecification(pipelineName);
 			if (logger.isInfoEnabled()){
 				logger.info("Pipeline spec: " + pipelineSpec);
 			}
@@ -120,29 +120,74 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 						+ "(" + (argNames.isEmpty() ? "" : argNames.toString()) + ")");
 			}
 			
-			if (DistributablePipeline.class.isAssignableFrom(invocation.getMethod().getDeclaringClass())){
-				if (operationName.equals("reduce")){
-					// build reduce function
-					throw new IllegalStateException("fooo");
-				}
-				else {
-					if (operationName.equals("computeKeyValues")){
-						this.createStage(operationName, (Function<?,?>) arguments[0]);
-						this.previousInvocation = null;
-					} 
-					else {
-						throw new IllegalStateException("Unsupported: " + operationName);
-					}
-				}
+			if (operationName.equals("compute")){
+				this.doCompute((ReflectiveMethodInvocation) invocation);
 			}
-			else if (DistributableKeyValuePipeline.class.isAssignableFrom(invocation.getMethod().getDeclaringClass())){
-				if (operationName.equals("reduceByKey")){
-					this.previousInvocation = invocation;
-				}
+			else if (operationName.equals("reduce")){
+				this.doReduce((ReflectiveMethodInvocation) invocation);
+			} else {
+				throw new UnsupportedOperationException("Operation " + operationName + " is not supported");
 			}
-			
+			this.previousInvocation = invocation;
+
 			return this.targetDistributable;
 		}
+	}
+	
+	/**
+	 * 
+	 * @param invocation
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private void doCompute(ReflectiveMethodInvocation invocation){
+		Function finalFunction = (Function) invocation.getArguments()[0];
+		if (this.previousInvocation != null){
+			if (this.previousInvocation.getMethod().getName().equals("reduce")){
+				finalFunction = this.createKVStreapProcessingFunction(finalFunction);
+			}
+			else if (this.previousInvocation.getMethod().getName().equals("compute")){
+				finalFunction = (Function) ((Function)this.previousInvocation.getArguments()[0]).andThen(finalFunction);
+			}
+			else {
+				throw new UnsupportedOperationException("Transition from '" + invocation.getMethod().getName() + "' to '" + 
+						this.previousInvocation.getMethod().getName() + "' is not supported");
+			}
+		}
+		invocation.setArguments(new Object[]{finalFunction});
+	}
+	
+	/**
+	 * 
+	 * @param invocation
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private void doReduce(ReflectiveMethodInvocation invocation){
+		Object[] arguments = invocation.getArguments();
+		Function finalFunction = new KeyValueExtractor((Function)arguments[0], (Function)arguments[1]);
+		String stageName = invocation.getMethod().getName();
+		if (this.previousInvocation != null) {
+			if (this.previousInvocation.getMethod().getName().equals("compute")){
+				Function mapperFunction = (Function) this.previousInvocation.getArguments()[0];
+				finalFunction = (Function) mapperFunction.andThen(finalFunction);
+				stageName = this.previousInvocation.getMethod().getName();
+			} 
+			else if (this.previousInvocation.getMethod().getName().equals("reduce")){			
+				Function stageFunction = this.createKVStreapProcessingFunction(null);
+				finalFunction = (Function) stageFunction.andThen(finalFunction);
+			} 
+			else {
+				throw new UnsupportedOperationException("Transition from '" + invocation.getMethod().getName() + "' to '" + 
+						this.previousInvocation.getMethod().getName() + "' is not supported");
+			}
+		} 
+		Stage stage = this.constructStage(stageName, finalFunction);
+		this.stages.add(stage);
+	}
+	
+	private Function createKVStreapProcessingFunction(Function mapperFunction){
+		KeyValuesStreamAggregator<?,?> aggregator = new KeyValuesStreamAggregator<>((BinaryOperator<?>) this.previousInvocation.getArguments()[2]);
+		Function stageFunction = new KeyValuesAggregatingStreamProcessingFunction(mapperFunction, aggregator);
+		return stageFunction;
 	}
 	
 	/**
@@ -220,9 +265,17 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	 * @param name
 	 * @return
 	 */
-	private PipelineSpecification build(String name){
-		this.createStage(this.previousInvocation.getMethod().getName(), null);
-		
+	private PipelineSpecification buildPipelineSpecification(String name){
+//		this.createStage(this.previousInvocation.getMethod().getName(), null);
+	
+		Function finalFunction = (Function)this.previousInvocation.getArguments()[0];
+		if (this.previousInvocation.getMethod().getName().equals("reduce")){
+			KeyValuesStreamAggregator<?,?> aggregator = new KeyValuesStreamAggregator<>((BinaryOperator<?>) this.previousInvocation.getArguments()[2]);
+			finalFunction = new KeyValuesAggregatingStreamProcessingFunction(aggregator);
+		}
+		Stage stage = this.constructStage(this.previousInvocation.getMethod().getName(), finalFunction);
+		this.stages.add(stage);
+
 		PipelineSpecification specification = new PipelineSpecification() {		
 			private static final long serialVersionUID = -4119037144503084569L;
 			
