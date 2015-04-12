@@ -7,8 +7,8 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.SerializableHelpers.Function;
-import org.apache.dstream.SerializableHelpers.Predicate;
+import org.apache.dstream.support.SerializableFunctionConverters.Function;
+import org.apache.dstream.support.SerializableFunctionConverters.Predicate;
 import org.apache.dstream.utils.KVUtils;
 import org.apache.dstream.utils.ReflectionUtils;
 import org.junit.Assert;

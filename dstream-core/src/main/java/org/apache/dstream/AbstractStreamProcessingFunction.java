@@ -2,7 +2,7 @@ package org.apache.dstream;
 
 import java.util.stream.Stream;
 
-import org.apache.dstream.SerializableHelpers.Function;
+import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.utils.Assert;
 
 /**
@@ -16,11 +16,18 @@ public abstract class AbstractStreamProcessingFunction<I,O> implements Function<
 	
 	protected final Function<Stream<I>, Stream<O>> streamProcessingFunction;
 
+	/**
+	 * 
+	 * @param streamProcessingFunction
+	 */
 	public AbstractStreamProcessingFunction(Function<Stream<I>, Stream<O>> streamProcessingFunction) {
 		Assert.notNull(streamProcessingFunction, "'streamProcessingFunction' must not be null");
 		this.streamProcessingFunction = streamProcessingFunction;
 	}
 	
+	/**
+	 * 
+	 */
 	@Override
 	public Stream<O> apply(Stream<I> streamIn){	
 		return this.streamProcessingFunction.apply(streamIn);

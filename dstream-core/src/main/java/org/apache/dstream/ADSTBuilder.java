@@ -12,9 +12,10 @@ import java.util.stream.Stream;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
-import org.apache.dstream.PipelineSpecification.Stage;
-import org.apache.dstream.SerializableHelpers.BinaryOperator;
-import org.apache.dstream.SerializableHelpers.Function;
+import org.apache.dstream.DistributablePipelineSpecification.Stage;
+import org.apache.dstream.support.SourceSupplier;
+import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
+import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.PipelineConfigurationUtils;
 import org.apache.dstream.utils.ReflectionUtils;
@@ -105,7 +106,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 		
 		if (this.isTriggerOperation(operationName)){
 			String pipelineName = arguments.length == 1 ? arguments[0].toString() : UUID.randomUUID().toString();
-			PipelineSpecification pipelineSpec = this.buildPipelineSpecification(pipelineName);
+			DistributablePipelineSpecification pipelineSpec = this.buildPipelineSpecification(pipelineName);
 			if (logger.isInfoEnabled()){
 				logger.info("Pipeline spec: " + pipelineSpec);
 			}
@@ -145,7 +146,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 			this.stageFunctionAssembler.addIntrmediate(operationName, arguments[0]);
 		} 
 		else if (operationName.equals("reduce")){
-			Function mappingFunction = new KeyValueExtractor((Function)arguments[0], (Function)arguments[1]);
+			Function mappingFunction = new KeyValueExtractorFunction((Function)arguments[0], (Function)arguments[1]);
 			String stageName = "compute";
 			Function rootFunction = this.stageFunctionAssembler.buildFunction();
 			Function finalFunction = (Function) rootFunction.andThen(mappingFunction);
@@ -205,7 +206,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void doReduce(ReflectiveMethodInvocation invocation){
 		Object[] arguments = invocation.getArguments();
-		Function finalFunction = new KeyValueExtractor((Function)arguments[0], (Function)arguments[1]);
+		Function finalFunction = new KeyValueExtractorFunction((Function)arguments[0], (Function)arguments[1]);
 		String stageName = invocation.getMethod().getName();
 		if (this.previousInvocation != null) {
 			Function rootFunction;
@@ -294,11 +295,11 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	 * @param name
 	 * @return
 	 */
-	private PipelineSpecification buildPipelineSpecification(String name){
+	private DistributablePipelineSpecification buildPipelineSpecification(String name){
 
 		this.finishLastStageIfNecessary();
 
-		PipelineSpecification specification = new PipelineSpecification() {		
+		DistributablePipelineSpecification specification = new DistributablePipelineSpecification() {		
 			private static final long serialVersionUID = -4119037144503084569L;
 			
 			@Override
@@ -339,7 +340,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	private Stream<?>[] releaseADST(PipelineSpecification pipelineSpecification) {
+	private Stream<?>[] releaseADST(DistributablePipelineSpecification pipelineSpecification) {
 		
 		Properties prop = PipelineConfigurationUtils.loadDelegatesConfig();
 
@@ -356,7 +357,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 			Object pipelineExecutionDelegate = ReflectionUtils.newDefaultInstance(Class
 					.forName(pipelineExecutionDelegateClassName, true, 
 							Thread.currentThread().getContextClassLoader()));
-			Method delegateMethod = ReflectionUtils.findMethod(pipelineExecutionDelegate.getClass(), Stream[].class, PipelineSpecification.class);
+			Method delegateMethod = ReflectionUtils.findMethod(pipelineExecutionDelegate.getClass(), Stream[].class, DistributablePipelineSpecification.class);
 			delegateMethod.setAccessible(true);
 
 			return (Stream<Entry<?, ?>>[]) delegateMethod.invoke(pipelineExecutionDelegate, pipelineSpecification);

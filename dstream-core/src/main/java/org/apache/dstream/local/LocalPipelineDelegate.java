@@ -11,9 +11,9 @@ import java.util.Properties;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import org.apache.dstream.PipelineSpecification;
-import org.apache.dstream.PipelineSpecification.Stage;
-import org.apache.dstream.SerializableHelpers.Function;
+import org.apache.dstream.DistributablePipelineSpecification;
+import org.apache.dstream.DistributablePipelineSpecification.Stage;
+import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.utils.PipelineConfigurationUtils;
 import org.apache.dstream.utils.ReflectionUtils;
 import org.slf4j.Logger;
@@ -33,7 +33,7 @@ class LocalPipelineDelegate {
 	 * @param pipelineSpecification
 	 * @return
 	 */
-	public Stream<?> execute(PipelineSpecification pipelineSpecification) {
+	public Stream<?> execute(DistributablePipelineSpecification pipelineSpecification) {
 		if (logger.isInfoEnabled()){
 			logger.info("Executing pipeline: " + pipelineSpecification);
 		}

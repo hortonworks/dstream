@@ -8,7 +8,7 @@ import java.util.Map.Entry;
 import java.util.stream.Stream;
 
 import org.apache.dstream.DistributablePipeline;
-import org.apache.dstream.SourceSupplier;
+import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.support.UriSourceSupplier;
 import org.apache.dstream.tez.TezConstants;
 /**

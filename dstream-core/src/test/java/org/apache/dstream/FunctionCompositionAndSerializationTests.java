@@ -7,7 +7,7 @@ import java.io.ObjectOutputStream;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
-import org.apache.dstream.SerializableHelpers.Function;
+import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.utils.KVUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -60,7 +60,7 @@ public class FunctionCompositionAndSerializationTests {
 			byte[] arr = bos.toByteArray();
 			
 			ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(arr));
-			function = (org.apache.dstream.SerializableHelpers.Function) ois.readObject();
+			function = (org.apache.dstream.support.SerializableFunctionConverters.Function) ois.readObject();
 			return function;
 		} catch (Exception e) {
 			throw new RuntimeException(e);

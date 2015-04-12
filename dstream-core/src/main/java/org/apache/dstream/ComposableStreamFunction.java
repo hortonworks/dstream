@@ -3,7 +3,7 @@ package org.apache.dstream;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.apache.dstream.SerializableHelpers.Function;
+import org.apache.dstream.support.SerializableFunctionConverters.Function;
 
 /**
  * And implementation of {@link Function} which represents all invocations on 
@@ -17,10 +17,17 @@ class ComposableStreamFunction implements Function<Stream<?>, Stream<?>> {
 	
 	private final List<Function<Stream<?>, Stream<?>>> streamOps;
 	
+	/**
+	 * 
+	 * @param streamOps
+	 */
 	ComposableStreamFunction(List<Function<Stream<?>, Stream<?>>> streamOps){
 		this.streamOps = streamOps;
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public Stream<?> apply(Stream<?> streamIn) {
 		Function<Stream<?>, Stream<?>> composedFunction = this.streamOps.stream().reduce((fa, fb) -> fb.compose(fa)).get(); 

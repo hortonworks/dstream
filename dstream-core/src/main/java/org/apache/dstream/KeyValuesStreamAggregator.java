@@ -7,8 +7,8 @@ import java.util.Map.Entry;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.apache.dstream.SerializableHelpers.BinaryOperator;
-import org.apache.dstream.SerializableHelpers.Function;
+import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
+import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.utils.KVUtils;
 
 /**
@@ -25,15 +25,27 @@ public class KeyValuesStreamAggregator<K,V> implements Function<Stream<Entry<K,I
 	
 	private final BinaryOperator<V> aggregationOperator;
 	
+	/**
+	 * 
+	 * @param aggregationOperator
+	 */
 	public KeyValuesStreamAggregator(BinaryOperator<V> aggregationOperator) {
 		this.aggregationOperator = aggregationOperator;
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public Stream<Entry<K, V>> apply(Stream<Entry<K, Iterator<V>>> sourceStream) {
 		return sourceStream.map(entry -> this.mergeValuesForCurrentKey(entry));
 	}
 
+	/**
+	 * 
+	 * @param currentEntry
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	private Entry<K, V> mergeValuesForCurrentKey(Entry<K, Iterator<V>> currentEntry){
 		Stream<V> valuesStream = (Stream<V>) StreamSupport.stream(Spliterators.spliteratorUnknownSize(currentEntry.getValue(), Spliterator.ORDERED), false);

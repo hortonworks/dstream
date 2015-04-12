@@ -8,9 +8,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
-import org.apache.dstream.PipelineSpecification;
-import org.apache.dstream.PipelineSpecification.Stage;
-import org.apache.dstream.SourceSupplier;
+import org.apache.dstream.DistributablePipelineSpecification;
+import org.apache.dstream.DistributablePipelineSpecification.Stage;
+import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.tez.utils.HadoopUtils;
 import org.apache.dstream.utils.PipelineConfigurationUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -43,7 +43,7 @@ public class TezPipelineExecutionDelegate {
 	 * each delegate must quickly determine if it can process sources provided in pipelineSpecification.
 	 * That could be included as a first call in 'execute' method which will delegate to isSourceSupported and then to doExecute. . .
 	 */
-	public Stream<Object>[] execute(PipelineSpecification pipelineSpecification) throws Exception {
+	public Stream<Object>[] execute(DistributablePipelineSpecification pipelineSpecification) throws Exception {
 		if (logger.isInfoEnabled()){
 			logger.info("Executing pipeline: " + pipelineSpecification);
 		}
@@ -86,7 +86,7 @@ public class TezPipelineExecutionDelegate {
 	 * 
 	 * @param pipelineSpecification
 	 */
-	private void createAndTezClient(PipelineSpecification pipelineSpecification){
+	private void createAndTezClient(DistributablePipelineSpecification pipelineSpecification){
 		
 		TezConfiguration tezConfiguration = new TezConfiguration(new Configuration());
 		FileSystem fs;

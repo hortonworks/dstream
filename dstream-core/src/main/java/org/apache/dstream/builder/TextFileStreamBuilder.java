@@ -7,6 +7,11 @@ import java.util.stream.Stream;
 
 class TextFileStreamBuilder {
 
+	/**
+	 * 
+	 * @param uri
+	 * @return
+	 */
 	public Stream<String> toStream(URI uri) {
 		try {
 			Stream<String> lines = Files.lines(Paths.get(uri));

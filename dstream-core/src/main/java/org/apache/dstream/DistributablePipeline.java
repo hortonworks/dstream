@@ -4,10 +4,11 @@ import java.util.Map.Entry;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import org.apache.dstream.SerializableHelpers.BiFunction;
-import org.apache.dstream.SerializableHelpers.BinaryOperator;
-import org.apache.dstream.SerializableHelpers.Function;
 import org.apache.dstream.support.DefaultHashPartitioner;
+import org.apache.dstream.support.SourceSupplier;
+import org.apache.dstream.support.SerializableFunctionConverters.BiFunction;
+import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
+import org.apache.dstream.support.SerializableFunctionConverters.Function;
 
 public interface DistributablePipeline<T> extends Distributable<T> {
 

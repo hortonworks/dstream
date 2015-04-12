@@ -13,5 +13,10 @@ public interface Distributable<T> {
 	public static String SRC_URL_SUPPLIER = DSTR_PREFIX + ".supplier.url";
 	public static String PARTITIONER = DSTR_PREFIX + ".partitioner";
 	
+	/**
+	 * 
+	 * @param name
+	 * @return
+	 */
 	Stream<T>[] executeAs(String name);
 }

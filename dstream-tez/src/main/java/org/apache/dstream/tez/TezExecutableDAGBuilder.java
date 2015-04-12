@@ -10,9 +10,9 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.PipelineSpecification.Stage;
-import org.apache.dstream.SerializableHelpers.Function;
-import org.apache.dstream.SourceSupplier;
+import org.apache.dstream.DistributablePipelineSpecification.Stage;
+import org.apache.dstream.support.SourceSupplier;
+import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.tez.io.KeyWritable;
 import org.apache.dstream.tez.io.ValueWritable;
 import org.apache.dstream.tez.utils.HdfsSerializerUtils;

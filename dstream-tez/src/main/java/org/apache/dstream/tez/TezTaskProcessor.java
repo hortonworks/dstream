@@ -5,7 +5,7 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import org.apache.dstream.SerializableHelpers.Function;
+import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.tez.io.KeyWritable;
 import org.apache.dstream.tez.io.ValueWritable;
 import org.apache.dstream.tez.utils.HdfsSerializerUtils;

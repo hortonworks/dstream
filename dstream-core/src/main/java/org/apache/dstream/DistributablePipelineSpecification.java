@@ -3,16 +3,25 @@ package org.apache.dstream;
 import java.io.Serializable;
 import java.util.List;
 
-import org.apache.dstream.SerializableHelpers.Function;
 import org.apache.dstream.support.DefaultHashPartitioner;
 import org.apache.dstream.support.Partitioner;
+import org.apache.dstream.support.SourceSupplier;
+import org.apache.dstream.support.SerializableFunctionConverters.Function;
 
-public interface PipelineSpecification extends Serializable {
+/**
+ * 
+ *
+ */
+public interface DistributablePipelineSpecification extends Serializable {
 	
 	public String getName();
 
 	public List<Stage> getStages();
 	
+	/**
+	 * 
+	 *
+	 */
 	public abstract class Stage implements Serializable {
 		private static final long serialVersionUID = 4321682502843990767L;
 		public abstract String getName();

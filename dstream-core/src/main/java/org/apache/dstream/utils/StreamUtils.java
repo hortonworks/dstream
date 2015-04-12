@@ -2,7 +2,7 @@ package org.apache.dstream.utils;
 
 import java.util.stream.Stream;
 
-import org.apache.dstream.SerializableHelpers.Function;
+import org.apache.dstream.support.SerializableFunctionConverters.Function;
 
 public class StreamUtils {
 

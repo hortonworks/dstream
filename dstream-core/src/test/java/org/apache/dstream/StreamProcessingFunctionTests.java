@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 
 import junit.framework.Assert;
 
-import org.apache.dstream.SerializableHelpers.Function;
+import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.utils.KVUtils;
 import org.junit.Test;
 

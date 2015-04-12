@@ -2,8 +2,8 @@ package org.apache.dstream;
 
 import java.util.stream.Stream;
 
-import org.apache.dstream.SerializableHelpers.Function;
-import org.apache.dstream.SerializableHelpers.Predicate;
+import org.apache.dstream.support.SerializableFunctionConverters.Function;
+import org.apache.dstream.support.SerializableFunctionConverters.Predicate;
 
 /**
  * An implementation of {@link Function} which will translate Stream-like
@@ -21,11 +21,19 @@ class DistributableStreamToStreamAdapterFunction implements Function<Stream<?>, 
 	
 	private final Object sourceFunction;
 	
+	/**
+	 * 
+	 * @param streamOperationName
+	 * @param sourceFunction
+	 */
 	DistributableStreamToStreamAdapterFunction(String streamOperationName, Object sourceFunction){
 		this.sourceFunction = sourceFunction;
 		this.streamOperationName = streamOperationName;
 	}
 
+	/**
+	 * 
+	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public Stream<?> apply(Stream<?> streamIn) {

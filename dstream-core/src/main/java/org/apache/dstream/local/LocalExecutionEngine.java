@@ -10,11 +10,11 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import org.apache.dstream.PipelineSpecification;
-import org.apache.dstream.PipelineSpecification.Stage;
-import org.apache.dstream.SerializableHelpers.Function;
-import org.apache.dstream.SourceSupplier;
+import org.apache.dstream.DistributablePipelineSpecification;
+import org.apache.dstream.DistributablePipelineSpecification.Stage;
 import org.apache.dstream.support.Partitioner;
+import org.apache.dstream.support.SourceSupplier;
+import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.PipelineConfigurationUtils;
 import org.apache.dstream.utils.ReflectionUtils;
@@ -23,7 +23,7 @@ public class LocalExecutionEngine<T> {
 	
 	private final Properties pipelineConfig;
 	
-	private final PipelineSpecification pipelineSpecification;
+	private final DistributablePipelineSpecification pipelineSpecification;
 	
 	private final Map<Integer, Map<Integer, ?>> stageResults;
 	
@@ -38,7 +38,7 @@ public class LocalExecutionEngine<T> {
 	 */
 	
 	
-	public LocalExecutionEngine(PipelineSpecification pipelineSpecification){
+	public LocalExecutionEngine(DistributablePipelineSpecification pipelineSpecification){
 		Assert.notNull(pipelineSpecification, "'pipelineSpecification' must not be null");
 		this.pipelineConfig = PipelineConfigurationUtils.loadPipelineConfig(pipelineSpecification.getName());
 		this.pipelineSpecification = pipelineSpecification;

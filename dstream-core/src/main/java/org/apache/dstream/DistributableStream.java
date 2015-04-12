@@ -6,10 +6,11 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.SerializableHelpers.BiFunction;
-import org.apache.dstream.SerializableHelpers.BinaryOperator;
-import org.apache.dstream.SerializableHelpers.Function;
-import org.apache.dstream.SerializableHelpers.Predicate;
+import org.apache.dstream.support.SourceSupplier;
+import org.apache.dstream.support.SerializableFunctionConverters.BiFunction;
+import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
+import org.apache.dstream.support.SerializableFunctionConverters.Function;
+import org.apache.dstream.support.SerializableFunctionConverters.Predicate;
 
 /**
  * A sequence of elements supporting sequential and distributable aggregate 
@@ -138,5 +139,4 @@ public interface DistributableStream<T> extends Distributable<T>{
 			BiFunction<Stream<T>, Stream<TT>, Stream<R>> joinFunction);
 	
 	Stream<T> stream();
-	
 }
