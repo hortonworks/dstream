@@ -9,7 +9,7 @@ import org.apache.dstream.support.SerializableFunctionConverters.Function;
  * And implementation of {@link Function} which represents all invocations on 
  * the {@link DistributableStream} within a single stage.
  * 
- * See {@link ADSTBuilder} and {@link DistributableStreamToStreamAdapterFunction}
+ * See {@link DistributablePipelineSpecificationBuilder} and {@link DistributableStreamToStreamAdapterFunction}
  *
  */
 class ComposableStreamFunction implements Function<Stream<?>, Stream<?>> {

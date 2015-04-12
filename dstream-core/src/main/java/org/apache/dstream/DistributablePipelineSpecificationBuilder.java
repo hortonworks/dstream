@@ -28,9 +28,9 @@ import org.springframework.aop.framework.ReflectiveMethodInvocation;
  * @param <T>
  * @param <R>
  */
-class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
+class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	
-	private static Logger logger = LoggerFactory.getLogger(ADSTBuilder.class);
+	private static Logger logger = LoggerFactory.getLogger(DistributablePipelineSpecificationBuilder.class);
 	
 	private final R targetDistributable;
 	
@@ -54,32 +54,15 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	 * @param sourcesSupplier
 	 * @param proxyType
 	 */
-	@SuppressWarnings("unchecked")
-	private ADSTBuilder(Class<?> sourceItemType, SourceSupplier<?> sourcesSupplier, Class<? extends Distributable<?>> proxyType) {
-		
+	private DistributablePipelineSpecificationBuilder(Class<?> sourceItemType, SourceSupplier<?> sourcesSupplier, Class<? extends Distributable<?>> proxyType) {	
 		Assert.isTrue(DistributableStream.class.isAssignableFrom(proxyType) 
 				|| DistributablePipeline.class.isAssignableFrom(proxyType), "Unsupported proxy type " + 
 						proxyType + ". Supported types are " + DistributablePipeline.class + " & " + DistributableStream.class);
-		
-		ProxyFactory pf = new ProxyFactory();
-		if (DistributablePipeline.class.isAssignableFrom(proxyType)){
-			pf.addInterface(DistributablePipeline.class);
-		} 
-		else {
-			pf.addInterface(DistributableStream.class);
-			this.stageFunctionAssembler = new ComposableStreamFunctionBuilder();
-		}
-	
-		pf.addAdvice(this);
-		
-		this.targetDistributable =  (R) pf.getProxy();
+
+		this.targetDistributable =  this.generateDistributableProxy(proxyType);
 		this.sourceItemType = sourceItemType;
 		this.sourcesSupplier = sourcesSupplier;
 		this.stages = new ArrayList<Stage>();
-		
-		if (logger.isDebugEnabled()){
-			logger.debug("Constructed builder proxy for " + Stream.of(pf.getProxiedInterfaces()).collect(Collectors.toList()));
-		}
 	}
 	
 	/**
@@ -90,7 +73,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	 * @return
 	 */
 	static <T,R extends Distributable<T>> R getAs(Class<T> sourceItemType, SourceSupplier<?> sourcesSupplier, Class<? extends R> distributableType) {
-		ADSTBuilder<T,R> builder = new ADSTBuilder<T,R>(sourceItemType, sourcesSupplier, distributableType);
+		DistributablePipelineSpecificationBuilder<T,R> builder = new DistributablePipelineSpecificationBuilder<T,R>(sourceItemType, sourcesSupplier, distributableType);
 		return builder.targetDistributable;
 	}
 
@@ -109,7 +92,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 			if (logger.isInfoEnabled()){
 				logger.info("Pipeline spec: " + pipelineSpec);
 			}
-			return this.buildADSTAndDelegate(pipelineSpec);
+			return this.delegateSpecExecution(pipelineSpec);
 		} 
 		else {
 			if (logger.isDebugEnabled()){
@@ -125,7 +108,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 				this.doDistributablePipeline((ReflectiveMethodInvocation) invocation);
 			} 
 			else {
-				// should really never happen
+				// should really never happen, but since we are dealing with a proxy, nice to have as fail all check
 				throw new IllegalStateException("Unrecognized target Distributable: " + this.targetDistributable);
 			}
 			
@@ -256,7 +239,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 			
 			@Override
 			public Class<?> getSourceItemType() {
-				return ADSTBuilder.this.sourceItemType;
+				return DistributablePipelineSpecificationBuilder.this.sourceItemType;
 			}
 			
 			@Override
@@ -294,7 +277,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 			
 			@Override
 			public List<Stage> getStages() {
-				return Collections.unmodifiableList(ADSTBuilder.this.stages);
+				return Collections.unmodifiableList(DistributablePipelineSpecificationBuilder.this.stages);
 			}
 			
 			@Override
@@ -329,7 +312,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	 * @param pipelineSpecification
 	 * @return
 	 */
-	private Stream<Stream<?>> buildADSTAndDelegate(DistributablePipelineSpecification pipelineSpecification) {
+	private Stream<Stream<?>> delegateSpecExecution(DistributablePipelineSpecification pipelineSpecification) {
 		
 		Properties prop = PipelineConfigurationUtils.loadDelegatesConfig();
 
@@ -363,6 +346,29 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 			throw new IllegalStateException("Failed to execute pipeline '"
 					+ pipelineSpecification.getName() + "'. " + messageSuffix, e);
 		}
+	}
+	
+	/**
+	 * 
+	 * @param proxyType
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	private R generateDistributableProxy(Class<?> proxyType){
+		ProxyFactory pf = new ProxyFactory();
+		if (DistributablePipeline.class.isAssignableFrom(proxyType)){
+			pf.addInterface(DistributablePipeline.class);
+		} 
+		else {
+			pf.addInterface(DistributableStream.class);
+			this.stageFunctionAssembler = new ComposableStreamFunctionBuilder();
+		}
+	
+		pf.addAdvice(this);
+		if (logger.isDebugEnabled()){
+			logger.debug("Constructed builder proxy for " + Stream.of(pf.getProxiedInterfaces()).collect(Collectors.toList()));
+		}
+		return (R) pf.getProxy();
 	}
 	
 	/**

@@ -49,7 +49,7 @@ public interface DistributableStream<T> extends Distributable<T>{
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> DistributableStream<T> ofType(Class<T> sourceItemType, SourceSupplier<?> sourceSuppliers) {	
-		return ADSTBuilder.getAs(sourceItemType, sourceSuppliers, DistributableStream.class);
+		return DistributablePipelineSpecificationBuilder.getAs(sourceItemType, sourceSuppliers, DistributableStream.class);
 	}
 	
 	/*

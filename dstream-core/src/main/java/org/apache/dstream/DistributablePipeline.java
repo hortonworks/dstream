@@ -41,7 +41,7 @@ public interface DistributablePipeline<T> extends Distributable<T> {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> DistributablePipeline<T> ofType(Class<T> sourceItemType, SourceSupplier<?> sourcesSupplier) {	
-		return ADSTBuilder.getAs(sourceItemType, sourcesSupplier, DistributablePipeline.class);
+		return DistributablePipelineSpecificationBuilder.getAs(sourceItemType, sourcesSupplier, DistributablePipeline.class);
 	}
 	
 	/**
