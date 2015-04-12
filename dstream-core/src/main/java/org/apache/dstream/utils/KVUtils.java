@@ -1,17 +1,11 @@
 package org.apache.dstream.utils;
 
-import java.util.List;
 import java.util.Map.Entry;
 /**
  * 
  *
  */
-public class Utils {
-	
-	public static Entry<Object,List<Object>> mergeEntries(Entry<Object,List<Object>> t, Entry<Object,List<Object>> u) {
-		t.getValue().addAll(u.getValue());
-		return t;
-	}
+public class KVUtils {
 
 	/**
 	 * Utility method to create {@link Entry} from provided key/value pairs
@@ -40,14 +34,15 @@ public class Utils {
 			
 			@Override
 			public String toString(){
-				return "(" + key + " -> " + val + ")";
+				return key + "=" + val;
 			}
 			
 			@Override
 			public boolean equals(Object obj) {
 				if (obj instanceof Entry){
 					return ((Entry<?,?>)obj).getKey().equals(this.getKey()) && ((Entry<?,?>)obj).getValue().equals(this.getValue()); 
-				} else {
+				} 
+				else {
 					return false;
 				}
 		    }

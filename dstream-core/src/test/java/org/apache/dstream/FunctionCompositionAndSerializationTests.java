@@ -4,52 +4,66 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
 import org.apache.dstream.SerializableHelpers.Function;
-import org.apache.dstream.utils.Utils;
+import org.apache.dstream.utils.KVUtils;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class FunctionCompositionAndSerializationTests {
 
-	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Test
-	public void entryFromValue(){
-		Stream<Entry<Long, String>> sourceStream = Stream.of(Utils.kv(0L, "Hello"));
+	public void validateCompositionAndSerialization(){
+		Stream<Entry<Long, String>> sourceStream = Stream.of(KVUtils.kv(0L, "Hello"));
 		
-		Stream<String> sourceStream2 = Stream.of("Oleg");
-		
-		Function<Stream<String>, ?> rootFunction = inStream -> inStream.map(word -> {
-			System.out.println(word);
-			return word.toUpperCase();}).toArray()[0];
+		Function<Stream<String>, ?> rootFunction = inStream -> inStream.map(word -> word.toUpperCase()).toArray()[0];
 		Function<Stream<Entry>, ?> entryFunction = inStream -> inStream.map(entry -> entry.getValue());
 		
 		Function deTypedRootFunction = rootFunction;
 		
 		deTypedRootFunction = deTypedRootFunction.compose(entryFunction);
 		
-//		deTypedRootFunction = (Function) entryFunction.andThen(deTypedRootFunction);
+		deTypedRootFunction = this.serializeDeserialize(deTypedRootFunction);
 		
-
-//		System.out.println(deTypedRootFunction.apply(sourceStream));
+		String result = (String) deTypedRootFunction.apply(sourceStream);
+		Assert.assertEquals("HELLO", result);
+	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@Test
+	public void validateAndThenAndSerialization(){
+		Stream<Entry<Long, String>> sourceStream = Stream.of(KVUtils.kv(0L, "Hello"));
 		
+		Function<Stream<String>, ?> rootFunction = inStream -> inStream.map(word -> word.toUpperCase()).toArray()[0];
+		Function<Stream<Entry>, ?> entryFunction = inStream -> inStream.map(entry -> entry.getValue());
 		
+		Function deTypedRootFunction = rootFunction;
+		
+		deTypedRootFunction = entryFunction.andThen(deTypedRootFunction);
+		
+		deTypedRootFunction = this.serializeDeserialize(deTypedRootFunction);
+		
+		String result = (String) deTypedRootFunction.apply(sourceStream);
+		Assert.assertEquals("HELLO", result);
+	}
+	
+	@SuppressWarnings("rawtypes")
+	private Function serializeDeserialize(Function function){
 		try {
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutputStream oos = new ObjectOutputStream(bos);
-			oos.writeObject(deTypedRootFunction);
+			oos.writeObject(function);
 			oos.close();
 			byte[] arr = bos.toByteArray();
 			
 			ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(arr));
-			deTypedRootFunction = (org.apache.dstream.SerializableHelpers.Function) ois.readObject();
-			System.out.println(deTypedRootFunction.apply(sourceStream));
+			function = (org.apache.dstream.SerializableHelpers.Function) ois.readObject();
+			return function;
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
-		
-		
 	}
 }

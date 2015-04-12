@@ -65,7 +65,7 @@ public class HadoopUtils {
 	 * @param applicationName
 	 * @return
 	 */
-	public static Path provisionResourceToFs(File localResource, FileSystem fs, String applicationName) {
+	public static Path provisionResourceToFs(File localResource, FileSystem fs, String applicationName) throws Exception {
 		String destinationFilePath = applicationName + "/" + localResource.getName();
 		Path provisionedPath = new Path(fs.getHomeDirectory(), destinationFilePath);
 		provisioinResourceToFs(fs, new Path(localResource.getAbsolutePath()), provisionedPath);
@@ -139,8 +139,15 @@ public class HadoopUtils {
 				String destinationFilePath = applicationName + "/" + f.getName();
 				Path provisionedPath = new Path(fs.getHomeDirectory(), destinationFilePath);
 				if (shouldProvision(provisionedPath.getName(), classPathExclusions)){
-					provisioinResourceToFs(fs, new Path(f.getAbsolutePath()), provisionedPath);
-					provisionedPaths.add(provisionedPath);
+					try {
+						provisioinResourceToFs(fs, new Path(f.getAbsolutePath()), provisionedPath);
+						provisionedPaths.add(provisionedPath);
+					} catch (Exception e) {
+						logger.warn("Failed to provision " + provisionedPath + "; " + e.getMessage());
+						if (logger.isDebugEnabled()){
+							logger.trace("Failed to provision " + provisionedPath, e);
+						}
+					}
 				}
 			}
 			
@@ -184,9 +191,18 @@ public class HadoopUtils {
 			File jarFile = doGenerateJar(confDir, jarFileName, generatedJars, "configuration (HADOOP_CONF_DIR)");
 			String destinationFilePath = applicationName + "/" + jarFile.getName();
 			Path provisionedPath = new Path(fs.getHomeDirectory(), destinationFilePath);
-			provisioinResourceToFs(fs, new Path(jarFile.getAbsolutePath()), provisionedPath);
-			provisionedPaths.add(provisionedPath);
-			generated = true;
+			
+			try {
+				provisioinResourceToFs(fs, new Path(jarFile.getAbsolutePath()), provisionedPath);
+				provisionedPaths.add(provisionedPath);
+				generated = true;
+			} catch (Exception e) {
+				logger.warn("Failed to provision " + provisionedPath + "; " + e.getMessage());
+				if (logger.isDebugEnabled()){
+					logger.warn("Failed to provision " + provisionedPath, e);
+				}	
+				throw new IllegalStateException(e);
+			}
 		}
 		
 		String tezConfDir = System.getenv().get("TEZ_CONF_DIR");
@@ -201,15 +217,24 @@ public class HadoopUtils {
 				m.setAccessible(true);
 				m.invoke(cl, jarFile.toURI().toURL());
 			} catch (Exception e) {
-				e.printStackTrace();
+				throw new IllegalStateException(e);
 			}
-			
 			
 			String destinationFilePath = applicationName + "/" + jarFile.getName();
 			Path provisionedPath = new Path(fs.getHomeDirectory(), destinationFilePath);
-			provisioinResourceToFs(fs, new Path(jarFile.getAbsolutePath()), provisionedPath);
-			provisionedPaths.add(provisionedPath);
-			generated = true;
+			
+			try {
+				provisioinResourceToFs(fs, new Path(jarFile.getAbsolutePath()), provisionedPath);
+				provisionedPaths.add(provisionedPath);
+				generated = true;
+			} catch (Exception e) {
+				logger.warn("Failed to provision " + provisionedPath + "; " + e.getMessage());
+				if (logger.isDebugEnabled()){
+					logger.warn("Failed to provision " + provisionedPath, e);
+				}
+				throw new IllegalStateException(e);
+			}
+			
 		}
 		return generated;
 	}
@@ -258,20 +283,15 @@ public class HadoopUtils {
 	 * @param sourcePath
 	 * @param destPath
 	 */
-	private static synchronized void provisioinResourceToFs(FileSystem fs, Path sourcePath, Path destPath) {
-		try {
-			if (logger.isDebugEnabled()){
-				logger.debug("Provisioning '" + sourcePath + "' to " + destPath);
-			}
-			if (!fs.exists(destPath)){
-				fs.copyFromLocalFile(sourcePath, destPath);
-			}
-			else {
-				logger.debug("Skipping provisioning of " + destPath + " since it already exists.");
-			}
-		} 
-		catch (IOException e) {
-			logger.warn("Failed to copy local resource " + sourcePath + " to " + destPath, e);
+	private static synchronized void provisioinResourceToFs(FileSystem fs, Path sourcePath, Path destPath) throws Exception {
+		if (logger.isDebugEnabled()){
+			logger.debug("Provisioning '" + sourcePath + "' to " + destPath);
+		}
+		if (!fs.exists(destPath)){
+			fs.copyFromLocalFile(sourcePath, destPath);
+		}
+		else {
+			logger.debug("Skipping provisioning of " + destPath + " since it already exists.");
 		}
 	}
 	/**

@@ -12,7 +12,7 @@ import java.util.stream.StreamSupport;
 import org.apache.dstream.tez.OutputStreamsBuilder;
 import org.apache.dstream.tez.io.KeyWritable;
 import org.apache.dstream.tez.io.ValueWritable;
-import org.apache.dstream.utils.Utils;
+import org.apache.dstream.utils.KVUtils;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.SequenceFile;
@@ -77,7 +77,7 @@ public class SequenceFileOutputStreamsBuilder<T> implements OutputStreamsBuilder
 
 					@Override
 					public T next() {
-						return (T) Utils.kv(this.key.getValue(), this.value.getValue());
+						return (T) KVUtils.kv(this.key.getValue(), this.value.getValue());
 					}
 				};
 				Stream<T> targetStream = (Stream<T>) StreamSupport.stream(Spliterators.spliteratorUnknownSize(resultIterator, Spliterator.ORDERED), false);

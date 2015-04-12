@@ -1,6 +1,6 @@
 package demo;
 
-import static org.apache.dstream.utils.Utils.kv;
+import static org.apache.dstream.utils.KVUtils.kv;
 
 import java.io.File;
 import java.net.URI;
@@ -25,11 +25,11 @@ public class WordCountPipe {
 		
 		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/demo/sample.txt").toURI());
 		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
-		Stream<Entry<String, Integer>>[] result = 
-			sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
-				.flatMap(line -> Stream.of(line.split("\\s+")))
-				.map(word -> kv(word, 1))
-			).reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum).executeAs("WordCount");
+//		Stream<Entry<String, Integer>>[] result = 
+//			sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
+//				.flatMap(line -> Stream.of(line.split("\\s+")))
+//				.map(word -> kv(word, 1))
+//			).reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum).executeAs("WordCount");
 		
 //		Stream<Entry<Integer, Integer>>[] result = sourcePipeline.reduce(s -> s.hashCode(), s -> 1, Integer::sum).executeAs("WordCount");
 			
@@ -41,17 +41,14 @@ public class WordCountPipe {
 		
 //		Stream<Entry<String, Integer>>[] result = 
 //				sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
-//					.flatMap(line -> {
-//						System.out.println(line);
-//						
-//						return Stream.of(line.split("\\s+"));}  )
+//					.flatMap(line -> Stream.of(line.split("\\s+")))
 //					.map(word -> kv(word, 1))
-//				).compute(stream -> stream.filter(s -> s.getKey().startsWith("ol"))).executeAs("WordCount");
+//				).compute(stream -> stream.filter(s -> s.getKey().startsWith("we"))).executeAs("WordCount");
 		
-//		Stream<Entry<String, Integer>>[] result = sourcePipeline
-//				.reduce(s -> s.hashCode(), s -> 1, Integer::sum)
-//				.reduce(s -> "VAL", s -> 1, Integer::sum)
-//				.executeAs("WordCount");
+		Stream<Entry<String, Integer>>[] result = sourcePipeline
+				.reduce(s -> s.hashCode(), s -> 1, Integer::sum)
+				.reduce(s -> "VAL", s -> 1, Integer::sum)
+				.executeAs("WordCount");
 			
 //			.reduceByKey(Integer::sum).<String, Integer>computeKeyValues(stream -> stream
 //				.filter(s -> s.getValue() == 2)

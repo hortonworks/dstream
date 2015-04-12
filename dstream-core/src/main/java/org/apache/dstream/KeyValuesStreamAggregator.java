@@ -9,7 +9,7 @@ import java.util.stream.StreamSupport;
 
 import org.apache.dstream.SerializableHelpers.BinaryOperator;
 import org.apache.dstream.SerializableHelpers.Function;
-import org.apache.dstream.utils.Utils;
+import org.apache.dstream.utils.KVUtils;
 
 /**
  * Will aggregate values of a {@link Stream} who's elements are Key/Values pairs 
@@ -38,6 +38,6 @@ public class KeyValuesStreamAggregator<K,V> implements Function<Stream<Entry<K,I
 	private Entry<K, V> mergeValuesForCurrentKey(Entry<K, Iterator<V>> currentEntry){
 		Stream<V> valuesStream = (Stream<V>) StreamSupport.stream(Spliterators.spliteratorUnknownSize(currentEntry.getValue(), Spliterator.ORDERED), false);
 		Object value = valuesStream.reduce(this.aggregationOperator).get();
-		return (Entry<K, V>) Utils.kv(currentEntry.getKey(), value);
+		return (Entry<K, V>) KVUtils.kv(currentEntry.getKey(), value);
 	}
 }

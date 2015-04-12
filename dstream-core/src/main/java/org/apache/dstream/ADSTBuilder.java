@@ -23,6 +23,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.aop.framework.ReflectiveMethodInvocation;
 
+/**
+ * 
+ * @param <T>
+ * @param <R>
+ */
 class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	
 	private static Logger logger = LoggerFactory.getLogger(ADSTBuilder.class);
@@ -39,7 +44,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	
 	private int stageIdCounter;
 	
-	private StageFunctionAssembler stageFunctionAssembler;
+	private ComposableStreamFunctionBuilder stageFunctionAssembler;
 	
 	private MethodInvocation previousInvocation;
 
@@ -59,9 +64,10 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 		ProxyFactory pf = new ProxyFactory();
 		if (DistributablePipeline.class.isAssignableFrom(proxyType)){
 			pf.addInterface(DistributablePipeline.class);
-		} else {
+		} 
+		else {
 			pf.addInterface(DistributableStream.class);
-			this.stageFunctionAssembler = new StageFunctionAssembler();
+			this.stageFunctionAssembler = new ComposableStreamFunctionBuilder();
 		}
 	
 		pf.addAdvice(this);
@@ -103,8 +109,9 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 			if (logger.isInfoEnabled()){
 				logger.info("Pipeline spec: " + pipelineSpec);
 			}
-			return this.trigger(pipelineSpec);
-		} else {
+			return this.releaseADST(pipelineSpec);
+		} 
+		else {
 			if (logger.isDebugEnabled()){
 				List<String> argNames = Stream.of(parameterTypes).map(s -> s.getSimpleName()).collect(Collectors.toList());	
 				logger.debug("Op:" + operationName 
@@ -130,10 +137,11 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	 * 
 	 * @param invocation
 	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void doDistributableStream(ReflectiveMethodInvocation invocation){
 		String operationName = invocation.getMethod().getName();
 		Object[] arguments = invocation.getArguments();
-		if (operationName.equals("flatMap")){
+		if (operationName.equals("flatMap") || operationName.equals("map") || operationName.equals("filter")){
 			this.stageFunctionAssembler.addIntrmediate(operationName, arguments[0]);
 		} 
 		else if (operationName.equals("reduce")){
@@ -143,6 +151,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 			Function finalFunction = (Function) rootFunction.andThen(mappingFunction);
 			this.addStage(stageName, finalFunction);
 			this.previousInvocation = invocation;
+			this.stageFunctionAssembler = new ComposableStreamFunctionBuilder();
 		} 
 		else {
 			throw new UnsupportedOperationException("Operation '" + operationName + "' is not supported");
@@ -160,7 +169,8 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 		}
 		else if (operationName.equals("reduce")){
 			this.doReduce(invocation);
-		} else {
+		} 
+		else {
 			throw new UnsupportedOperationException("Operation '" + operationName + "' is not supported");
 		}
 		this.previousInvocation = invocation;
@@ -286,13 +296,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	 */
 	private PipelineSpecification buildPipelineSpecification(String name){
 
-		Function finalFunction = (Function)this.previousInvocation.getArguments()[0];
-		if (this.previousInvocation.getMethod().getName().equals("reduce")){
-			KeyValuesStreamAggregator<?,?> aggregator = new KeyValuesStreamAggregator<>((BinaryOperator<?>) this.previousInvocation.getArguments()[2]);
-			finalFunction = new KeyValuesAggregatingStreamProcessingFunction(aggregator);
-		}
-		this.addStage(this.previousInvocation.getMethod().getName(), finalFunction);
-
+		this.finishLastStageIfNecessary();
 
 		PipelineSpecification specification = new PipelineSpecification() {		
 			private static final long serialVersionUID = -4119037144503084569L;
@@ -318,11 +322,24 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	
 	/**
 	 * 
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private void finishLastStageIfNecessary(){
+		Function finalFunction = (Function)this.previousInvocation.getArguments()[0];
+		if (this.previousInvocation.getMethod().getName().equals("reduce")){
+			KeyValuesStreamAggregator<?,?> aggregator = new KeyValuesStreamAggregator<>((BinaryOperator<?>) this.previousInvocation.getArguments()[2]);
+			finalFunction = new KeyValuesAggregatingStreamProcessingFunction(aggregator);
+		}
+		this.addStage(this.previousInvocation.getMethod().getName(), finalFunction);
+	}
+	
+	/**
+	 * 
 	 * @param pipelineSpecification
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	private Stream<?>[] trigger(PipelineSpecification pipelineSpecification) {
+	private Stream<?>[] releaseADST(PipelineSpecification pipelineSpecification) {
 		
 		Properties prop = PipelineConfigurationUtils.loadDelegatesConfig();
 
@@ -336,14 +353,15 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 		}
 
 		try {
-			Object pipelineInstance = ReflectionUtils.newDefaultInstance(Class
+			Object pipelineExecutionDelegate = ReflectionUtils.newDefaultInstance(Class
 					.forName(pipelineExecutionDelegateClassName, true, 
 							Thread.currentThread().getContextClassLoader()));
-			Method triggerMethod = ReflectionUtils.findMethod(pipelineInstance.getClass(), Stream[].class, PipelineSpecification.class);
-			triggerMethod.setAccessible(true);
+			Method delegateMethod = ReflectionUtils.findMethod(pipelineExecutionDelegate.getClass(), Stream[].class, PipelineSpecification.class);
+			delegateMethod.setAccessible(true);
 
-			return (Stream<Entry<?, ?>>[]) triggerMethod.invoke(pipelineInstance, pipelineSpecification);
-		} catch (Exception e) {
+			return (Stream<Entry<?, ?>>[]) delegateMethod.invoke(pipelineExecutionDelegate, pipelineSpecification);
+		} 
+		catch (Exception e) {
 			String messageSuffix = "";
 			if (e instanceof NoSuchMethodException) {
 				messageSuffix = "Probable cause: Your specified implementation '"
@@ -360,11 +378,11 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	 * 
 	 *
 	 */
-	private static class StageFunctionAssembler {
-		private final List<StreamFunction> streamOps = new ArrayList<>();
+	private static class ComposableStreamFunctionBuilder {
+		private final List<DistributableStreamToStreamAdapterFunction> streamOps = new ArrayList<>();
 		
 		public void addIntrmediate(String name, Object function) {
-			StreamFunction streamFunction = new StreamFunction(name, function);
+			DistributableStreamToStreamAdapterFunction streamFunction = new DistributableStreamToStreamAdapterFunction(name, function);
 			this.streamOps.add(streamFunction);
 		}
 

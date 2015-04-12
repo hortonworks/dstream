@@ -3,7 +3,7 @@ package org.apache.dstream;
 import java.util.stream.Stream;
 
 import org.apache.dstream.SerializableHelpers.Function;
-import org.apache.dstream.utils.Utils;
+import org.apache.dstream.utils.KVUtils;
 
 @SuppressWarnings("rawtypes")
 class KeyValueExtractor implements Function<Stream<?>, Stream<?>> {
@@ -20,7 +20,7 @@ class KeyValueExtractor implements Function<Stream<?>, Stream<?>> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Stream<?> apply(Stream<?> streamIn) {
-		return streamIn.map(val -> Utils.kv(this.keyExtractor.apply(val), this.valueExtractor.apply(val)));
+		return streamIn.map(val -> KVUtils.kv(this.keyExtractor.apply(val), this.valueExtractor.apply(val)));
 	}
 
 }

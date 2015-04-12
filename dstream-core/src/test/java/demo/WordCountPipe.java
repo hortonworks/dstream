@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 
 import org.apache.dstream.DistributablePipeline;
 import org.apache.dstream.support.UriSourceSupplier;
-import org.apache.dstream.utils.Utils;
+import org.apache.dstream.utils.KVUtils;
 public class WordCountPipe {
 	
 	public static void main(String... args) throws Exception {

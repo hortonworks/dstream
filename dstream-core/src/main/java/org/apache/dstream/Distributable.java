@@ -14,6 +14,4 @@ public interface Distributable<T> {
 	public static String PARTITIONER = DSTR_PREFIX + ".partitioner";
 	
 	Stream<T>[] executeAs(String name);
-	
-	Stream<T>[] execute();
 }

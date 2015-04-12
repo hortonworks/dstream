@@ -6,7 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.apache.dstream.utils.Utils;
+import org.apache.dstream.utils.KVUtils;
 
 class MultiValueMap<K,V> extends HashMap<K, List<V>> {
 	private static final long serialVersionUID = -6738737584525785087L;
@@ -30,7 +30,7 @@ class MultiValueMap<K,V> extends HashMap<K, List<V>> {
 	}
 	
 	public Stream<Entry<K, Iterator<V>>> stream(){
-		return this.entrySet().stream().map(entry -> Utils.kv(entry.getKey(), entry.getValue().iterator()));
+		return this.entrySet().stream().map(entry -> KVUtils.kv(entry.getKey(), entry.getValue().iterator()));
 	}
 	
 	public Stream<Entry<K, List<V>>> streamEntries(){

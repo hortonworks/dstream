@@ -9,7 +9,7 @@ import java.util.stream.StreamSupport;
 
 import org.apache.dstream.tez.io.KeyWritable;
 import org.apache.dstream.tez.io.ValueWritable;
-import org.apache.dstream.utils.Utils;
+import org.apache.dstream.utils.KVUtils;
 import org.apache.tez.runtime.library.api.KeyValueReader;
 import org.apache.tez.runtime.library.api.KeyValuesReader;
 /**
@@ -94,7 +94,7 @@ public class StreamUtils {
 						return ((ValueWritable<V>)currentValues.next()).getValue();
 					}
 				};
-				Entry<K, Iterator<V>> entry =  (Entry<K, Iterator<V>>) Utils.kv(key, values);
+				Entry<K, Iterator<V>> entry =  (Entry<K, Iterator<V>>) KVUtils.kv(key, values);
 				return entry;
 			} catch (Exception e) {
 				throw new IllegalStateException(e);
@@ -125,7 +125,7 @@ public class StreamUtils {
 		@Override
 		public Entry<K, V> next() {
 			try {
-				Entry<K, V> entry = (Entry<K, V>) Utils.kv(this.kvReader.getCurrentKey(), this.kvReader.getCurrentValue());
+				Entry<K, V> entry = (Entry<K, V>) KVUtils.kv(this.kvReader.getCurrentKey(), this.kvReader.getCurrentValue());
 				return entry;
 			} catch (Exception e) {
 				throw new IllegalStateException(e);

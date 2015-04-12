@@ -2,8 +2,6 @@ description = 'Distributed Streams'
 
 def jdkHome = System.getenv("JAVA_HOME")
 
-
-
 allprojects {
 	group = 'org.dstream'
 
@@ -14,7 +12,6 @@ allprojects {
 }
 
 subprojects { subproject ->
-
 	apply plugin: 'java'
 	apply plugin: 'eclipse'
 	apply plugin: 'idea'
@@ -69,7 +66,7 @@ subprojects { subproject ->
 project('dstream-core') {
 	description = 'Core API for DStreams'
 	dependencies {
-		compile ("org.springframework:spring-aop:4.0.3.RELEASE") {
+		compile ("org.springframework:spring-aop:4.1.6.RELEASE") {
 			exclude group: "org.springframework", module: "spring-beans"
 		}
 	}
@@ -101,8 +98,6 @@ project('dstream-core') {
 	}
 }
 
-
 task wrapper(type: Wrapper) {
     description = 'Generates gradlew[.bat] scripts'
 }
-

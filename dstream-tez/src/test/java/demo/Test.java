@@ -3,7 +3,7 @@ package demo;
 import java.util.Map.Entry;
 import java.util.function.Function;
 
-import org.apache.dstream.utils.Utils;
+import org.apache.dstream.utils.KVUtils;
 
 public class Test {
 
@@ -37,7 +37,7 @@ public class Test {
 		}
 		@Override
 		public Object apply(Object t) {
-			Entry e = Utils.kv(key.apply(t), val.apply(t));
+			Entry e = KVUtils.kv(key.apply(t), val.apply(t));
 			return e;
 		}
 		
