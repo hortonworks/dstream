@@ -13,7 +13,7 @@ to evolve naturally and in isolation.
 
 The following code snippets shows two styles of API provided by this project and both depict a quintessential _WordCount_:
 
-_** DistributableStream **_
+_**DistributableStream**_
 ```java
 SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/demo/sample.txt").toURI());
 DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, sourceSupplier);
@@ -28,7 +28,7 @@ result.forEach(stream -> stream.forEach(System.out::println));
 result.close();
 ```
 
-_** DistributablePipeline **_
+_**DistributablePipeline**_
 ```java
 SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/demo/sample.txt").toURI());
 DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
