@@ -1,10 +1,9 @@
 package demo;
 
-import static org.apache.dstream.utils.KVUtils.kv;
-
 import java.io.File;
 import java.net.URI;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.dstream.DistributablePipeline;
@@ -25,9 +24,9 @@ public class WordCountPipe {
 		
 		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/demo/sample.txt").toURI());
 		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
-		Stream<Stream<Entry<String, Integer>>> result = sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
+		Stream<Stream<Entry<String, Integer>>> result = sourcePipeline.compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
-				.map(word -> kv(word, 1))
+				.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)).entrySet().stream()
 			)
 			.reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
 			.executeAs("WordCount");

@@ -11,44 +11,52 @@ unobtrusively adding functionality **only** to address _**data distribution**_ c
 development and testing of data processing applications, it also allows [Streams API](http://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html)
 to evolve naturally and in isolation.
 
-The following code snippet depicts a quintessential _WordCount_ and how it is realized using the API provided by **Distributed Streams**:
+The following code snippets shows two styles of API provided by this project and both depict a quintessential _WordCount_:
 
+_** DistributableStream **_
 ```java
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.net.URI;
-
-import org.apache.dstream.DistributedPipeline;
-import org.apache.dstream.io.TextSource;
-
-public class WordCount {
-
-	public static void main(String... args) throws Exception {
-		FileSystem fs = FileSystems.getFileSystem(new URI("hdfs:///"));
+SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/demo/sample.txt").toURI());
+DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, sourceSupplier);
 		
-		Source<String> source = TextSource.create(fs.getPath("samples.txt"));
+Stream<Stream<?>> result = sourceStream
+			.flatMap(line -> Stream.of(line.split("\\s+")))
+			.reduce(word -> word, word -> 1, Integer::sum)
+			.executeAs("WordCount");
 		
-		Stream<Entry<String, Integer>> result = source.asPipeline("WordCount")
-			.computeMappings(stream -> stream
-				  .flatMap(s -> Stream.of(s.split("\\s+")))
-				  .collect(Collectors.toMap(s -> s, s -> 1, Integer::sum))
-			)
-		    .combine(2, Integer::sum)
-		    .save(fs).toStream();
+result.forEach(stream -> stream.forEach(System.out::println));
 		
-		// print results to console
-		result.forEach(System.out::println);
-	}
-}
+result.close();
 ```
-This is a complete sample that includes _import_ statements to demonstrate one of the core features of the API, which completely decouples your code from the _target execution environment_ 
-(e.g., Tez, Spark, Flink etc.) and its dependencies. In fact, this example was copied from [Apache Tez implementation](https://github.com/hortonworks/dstream-tez/) of the Distributed Streams. 
-Yet you don't see any dependencies on Tez, Hadoop, HDFS etc. That is because the target execution environment is completely externalized and is loaded using standard Java mechanisms for configuring and loading _services_ and _providers_, allowing different _target execution providers_ to be loaded without requiring any changes to the end user code. Custom _FileSystemProviders_ are also supported 
-(HDFS in this case) allowing for a variety of _java.nio.file.FileSystem_ bindings, thus keeping your code clean and concise giving you out most flexibility between _**designing data processing applications**_ vs. _**choosing their target execution environment**_.  
+
+_** DistributablePipeline **_
+```java
+SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/demo/sample.txt").toURI());
+DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
+		
+Stream<Stream<Entry<String, Integer>>> result = sourcePipeline.compute(stream -> stream
+				.flatMap(line -> Stream.of(line.split("\\s+")))
+				.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)).entrySet().stream()
+			)
+			.reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
+			.executeAs("WordCount");
+		
+result.forEach(stream -> stream.forEach(System.out::println));
+		
+result.close();
+```
+
+Producing output similar to this:
+```
+We=4
+cannot=2
+created=3
+our=1
+problems=2
+same=1
+solve=1
+the=4
+...
+```
 
 For more information and details please follow [documentation](https://github.com/hortonworks/dstream/wiki)
 
