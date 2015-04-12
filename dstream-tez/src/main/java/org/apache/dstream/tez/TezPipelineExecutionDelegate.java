@@ -34,8 +34,6 @@ public class TezPipelineExecutionDelegate {
 	
 	private Properties pipelineConfig;
 	
-	private String sources;
-	
 	/*
 	 * NOTE TO SELF:
 	 * While "convention over configuration" exposes a more flexible POJO programming model
@@ -48,28 +46,34 @@ public class TezPipelineExecutionDelegate {
 			logger.info("Executing pipeline: " + pipelineSpecification);
 		}
 		
+		TezConfiguration tezConfiguration = new TezConfiguration(new Configuration());
+		FileSystem fs;
+		try {		
+			fs  = FileSystem.get(tezConfiguration);
+		} 
+		catch (Exception e) {
+			throw new IllegalStateException("Failed to access FileSystem", e);
+		}
+		
 		this.pipelineConfig = PipelineConfigurationUtils.loadPipelineConfig(pipelineSpecification.getName());
 		
-		this.sources = this.pipelineConfig.getProperty("source");
-		
 		if (this.tezClient == null){
-			this.createAndTezClient(pipelineSpecification);
+			this.createAndTezClient(pipelineSpecification, fs, tezConfiguration);
 		}
 		
 		List<Stage> stages = pipelineSpecification.getStages();
 		TezExecutableDAGBuilder executableDagBuilder = new TezExecutableDAGBuilder(pipelineSpecification.getName(), 
-				this.tezClient, this.sources, this.determineInputFormatClass(stages.get(0)));
+				this.tezClient, this.determineInputFormatClass(stages.get(0)));
 	
-		for (Stage stage : stages) {
-			executableDagBuilder.addStage(stage, this.getStageParallelizm(stage.getId()));
-		}
+		stages.stream().forEach(stage -> executableDagBuilder.addStage(stage, this.getStageParallelizm(stage.getId())) );
 		
 		Callable<Stream<Object>[]> executable = executableDagBuilder.build();
 		
 		try {
 			Stream<Object>[] resultStreams = executable.call();
 			return resultStreams;
-		} catch (Exception e) {
+		} 
+		catch (Exception e) {
 			throw new ExecutionException("Failed to execute DAG for " + pipelineSpecification.getName(), e);
 		}
 	}
@@ -78,6 +82,7 @@ public class TezPipelineExecutionDelegate {
 	 * 
 	 * @return
 	 */
+	//TODO needs some integration with extarnal conf to get credentials
 	protected Credentials getCredentials(){
 		return null;
 	}
@@ -86,16 +91,9 @@ public class TezPipelineExecutionDelegate {
 	 * 
 	 * @param pipelineSpecification
 	 */
-	private void createAndTezClient(DistributablePipelineSpecification pipelineSpecification){
-		
-		TezConfiguration tezConfiguration = new TezConfiguration(new Configuration());
-		FileSystem fs;
-		try {		
-			fs  = FileSystem.get(tezConfiguration);
-		} catch (Exception e) {
-			throw new IllegalStateException("Failed to access FileSystem", e);
-		}
-		Map<String, LocalResource> localResources = HadoopUtils.createLocalResources(fs, pipelineSpecification.getName() + "/" + TezConstants.CLASSPATH_PATH);
+	private void createAndTezClient(DistributablePipelineSpecification pipelineSpecification, FileSystem fs, TezConfiguration tezConfiguration){	
+		Map<String, LocalResource> localResources = HadoopUtils.createLocalResources(fs, pipelineSpecification.getName() + 
+												"/" + TezConstants.CLASSPATH_PATH);
 		this.tezClient = new ExecutionContextAwareTezClient(pipelineSpecification.getName(), 
 											   tezConfiguration, 
 											   localResources, 
@@ -103,7 +101,8 @@ public class TezPipelineExecutionDelegate {
 											   fs);
 		try {
 			this.tezClient.start();
-		} catch (Exception e) {
+		} 
+		catch (Exception e) {
 			throw new IllegalStateException("Failed to start TezClient", e);
 		}
 	}
@@ -120,10 +119,12 @@ public class TezPipelineExecutionDelegate {
 			String sourceType = this.pipelineConfig.getProperty("source.type", "TXT");
 			if (sourceType.equals("TXT")){
 				return TextInputFormat.class;
-			} else {
+			} 
+			else {
 				throw new IllegalArgumentException("Failed to determine Input Format class for source type " + sourceType);
 			}
-		} else {
+		} 
+		else {
 			throw new IllegalArgumentException("Non URI sources are not supported yet");
 		}
 	}

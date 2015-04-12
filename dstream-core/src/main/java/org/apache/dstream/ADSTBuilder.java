@@ -103,13 +103,13 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 		Class<?>[] parameterTypes = invocation.getMethod().getParameterTypes();
 		Object[] arguments = invocation.getArguments();
 		
-		if (this.isTriggerOperation(operationName)){
+		if ("executeAs".equals(operationName)){
 			String pipelineName = arguments.length == 1 ? arguments[0].toString() : UUID.randomUUID().toString();
 			DistributablePipelineSpecification pipelineSpec = this.buildPipelineSpecification(pipelineName);
 			if (logger.isInfoEnabled()){
 				logger.info("Pipeline spec: " + pipelineSpec);
 			}
-			return this.releaseADST(pipelineSpec);
+			return this.buildADSTAndDelegate(pipelineSpec);
 		} 
 		else {
 			if (logger.isDebugEnabled()){
@@ -243,7 +243,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	 * @param processingInstructions
 	 * @return
 	 */
-	private void addStage(String operationName, Function<?,?> processingFunction) {	
+	private void addStage(String operationName, Function<Stream<?>, Stream<?>> processingFunction) {	
 		SourceSupplier<?> sources = this.stageIdCounter == 0 ? this.sourcesSupplier : null; 
 		int stageId = this.stageIdCounter++;
 		Stage stage = new Stage() {
@@ -270,7 +270,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 			}
 
 			@Override
-			public Function<?, ?> getProcessingFunction() {
+			public Function<Stream<?>, Stream<?>> getProcessingFunction() {
 				return processingFunction;
 			}
 		};
@@ -278,15 +278,6 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 			logger.debug("Constructed stage: " + stage);
 		}
 		this.stages.add(stage);
-	}
-	
-	/**
-	 * 
-	 * @param operationName
-	 * @return
-	 */
-	private boolean isTriggerOperation(String operationName) {
-		return operationName.startsWith("execute");
 	}
 	
 	/**
@@ -338,7 +329,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	 * @param pipelineSpecification
 	 * @return
 	 */
-	private Stream<Stream<?>> releaseADST(DistributablePipelineSpecification pipelineSpecification) {
+	private Stream<Stream<?>> buildADSTAndDelegate(DistributablePipelineSpecification pipelineSpecification) {
 		
 		Properties prop = PipelineConfigurationUtils.loadDelegatesConfig();
 
@@ -381,12 +372,12 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	private static class ComposableStreamFunctionBuilder {
 		private final List<Function<Stream<?>, Stream<?>>> streamOps = new ArrayList<>();
 		
-		public void addIntrmediate(String name, Object function) {
+		void addIntrmediate(String name, Object function) {
 			Function<Stream<?>, Stream<?>> streamFunction = new DistributableStreamToStreamAdapterFunction(name, function);
 			this.streamOps.add(streamFunction);
 		}
 
-		public Function<Stream<?>, Stream<?>> buildFunction(){
+		Function<Stream<?>, Stream<?>> buildFunction(){
 			return new ComposableStreamFunction(this.streamOps);
 		}
 	}

@@ -2,11 +2,12 @@ package org.apache.dstream;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.apache.dstream.support.DefaultHashPartitioner;
 import org.apache.dstream.support.Partitioner;
-import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
+import org.apache.dstream.support.SourceSupplier;
 
 /**
  * 
@@ -26,7 +27,7 @@ public interface DistributablePipelineSpecification extends Serializable {
 		private static final long serialVersionUID = 4321682502843990767L;
 		public abstract String getName();
 		public abstract int getId();
-		public abstract Function<?, ?> getProcessingFunction();	
+		public abstract Function<Stream<?>, Stream<?>> getProcessingFunction();	
 		public abstract SourceSupplier<?> getSourceSupplier();	
 		public abstract Class<?> getSourceItemType();
 		public Partitioner<? extends Object> getPartitioner(){

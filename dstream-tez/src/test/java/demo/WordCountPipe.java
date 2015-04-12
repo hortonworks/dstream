@@ -25,41 +25,16 @@ public class WordCountPipe {
 		
 		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/demo/sample.txt").toURI());
 		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
-//		Stream<Entry<String, Integer>>[] result = 
-//			sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
-//				.flatMap(line -> Stream.of(line.split("\\s+")))
-//				.map(word -> kv(word, 1))
-//			).reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum).executeAs("WordCount");
+		Stream<Stream<Entry<String, Integer>>> result = sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
+				.flatMap(line -> Stream.of(line.split("\\s+")))
+				.map(word -> kv(word, 1))
+			)
+			.reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
+			.executeAs("WordCount");
 		
-//		Stream<Entry<Integer, Integer>>[] result = sourcePipeline.reduce(s -> s.hashCode(), s -> 1, Integer::sum).executeAs("WordCount");
-			
-//		Stream<Entry<String, Integer>>[] result = 
-//				sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
-//					.flatMap(line -> Stream.of(line.split("\\s+")))
-//					.map(word -> kv(word, 1))
-//				).executeAs("WordCount");
+		result.forEach(stream -> stream.forEach(System.out::println));
 		
-//		Stream<Entry<String, Integer>>[] result = 
-//				sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
-//					.flatMap(line -> Stream.of(line.split("\\s+")))
-//					.map(word -> kv(word, 1))
-//				).compute(stream -> stream.filter(s -> s.getKey().startsWith("we"))).executeAs("WordCount");
-		
-		Stream<Entry<String, Integer>>[] result = sourcePipeline
-				.reduce(s -> s.hashCode(), s -> 1, Integer::sum)
-				.reduce(s -> "VAL", s -> 1, Integer::sum)
-				.executeAs("WordCount");
-			
-//			.reduceByKey(Integer::sum).<String, Integer>computeKeyValues(stream -> stream
-//				.filter(s -> s.getValue() == 2)
-//				.map(s -> kv(s.getKey().toUpperCase(), s.getValue()))
-//			).reduceByKey(Integer::sum)
-//			 .executeAs("WordCount");
-		
-		for (Stream pResult : result) {
-			pResult.limit(100).forEach(System.out::println);
-		}
-		// temporary; implement pipelin.close
+		result.close();
 		System.exit(0);
 	}
 	

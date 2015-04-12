@@ -11,13 +11,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.dstream.DistributablePipelineSpecification.Stage;
-import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
+import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.tez.io.KeyWritable;
 import org.apache.dstream.tez.io.ValueWritable;
 import org.apache.dstream.tez.utils.HdfsSerializerUtils;
 import org.apache.dstream.tez.utils.SequenceFileOutputStreamsBuilder;
-import org.apache.hadoop.fs.FileSystem;
+import org.apache.dstream.utils.Assert;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.JobConf;
@@ -42,8 +42,6 @@ public class TezExecutableDAGBuilder {
 	
 	private final DAG dag;
 	
-	private final FileSystem fs;
-	
 	private final ExecutionContextAwareTezClient tezClient;
 	
 	private final OrderedPartitionedKVEdgeConfig edgeConf;
@@ -53,28 +51,20 @@ public class TezExecutableDAGBuilder {
 	// TEZ Properties
 	private final Class<?> inputFormatClass;
 	
-	private final String externallyConfiguredSources;
-
-	
 	/**
 	 * 
 	 * @param pipelineName
 	 * @param tezConfiguration
 	 */
-	public TezExecutableDAGBuilder(String pipelineName, ExecutionContextAwareTezClient tezClient, String externallyConfiguredSources, Class<?> inputFormatClass) {
+	public TezExecutableDAGBuilder(String pipelineName, ExecutionContextAwareTezClient tezClient, Class<?> inputFormatClass) {
 		this.dag = DAG.create(pipelineName + "_" + System.currentTimeMillis());
 		this.tezClient = tezClient;
-		try {
-			this.fs = FileSystem.get(this.tezClient.getTezConfiguration());
-		} catch (Exception e) {
-			throw new IllegalStateException("Failed to access FileSystem", e);
-		}
 		
+		//TODO need to figure out when and why would the Edge e different and how to configure it
 		this.edgeConf = OrderedPartitionedKVEdgeConfig
 				.newBuilder("org.apache.dstream.tez.io.KeyWritable",
 						"org.apache.dstream.tez.io.ValueWritable",
 						TezDelegatingPartitioner.class.getName(), null).build();
-		this.externallyConfiguredSources = externallyConfiguredSources;
 		this.inputFormatClass = inputFormatClass;
 	}
 	
@@ -85,7 +75,7 @@ public class TezExecutableDAGBuilder {
 	public void addStage(Stage stage, int parallelizm) {	
 		String vertexName = stage.getId() + "_" + stage.getName();
 		
-		UserPayload payload = this.createPayloadFromTaskSerPath(this.modifyProcessingInstructionIfNecessary(stage), this.dag.getName(), vertexName);
+		UserPayload payload = this.createPayloadFromTaskSerPath(this.composeFunctionIfNecessary(stage), this.dag.getName(), vertexName);
 
 		ProcessorDescriptor pd = ProcessorDescriptor.create(TezTaskProcessor.class.getName()).setUserPayload(payload);
 		
@@ -99,16 +89,9 @@ public class TezExecutableDAGBuilder {
 			SourceSupplier<?> sourceSupplier = stage.getSourceSupplier();
 			Object[] sources = sourceSupplier.get();
 			
-			if (sources == null || sources.length == 0){
-				throw new IllegalStateException("External sources configuraration is not currently supported. FIX!");
-//				sources = Stream.of(this.externallyConfiguredSources.split(",")).map(s -> {
-//					try {
-//						return new URI(s);
-//					} catch (Exception e) {
-//						throw new IllegalStateException("Filed to create URI from " + s);
-//					}
-//				}).toArray();
-			}
+			Assert.notEmpty(sources, "'sources' must not be null or empty");
+			
+			//TODO add support for non URI-based sources (e.g., Collections)
 			if (sources != null){
 				if (sources[0] instanceof URI){
 					URI[] uris = Arrays.copyOf(sources, sources.length, URI[].class);
@@ -127,36 +110,41 @@ public class TezExecutableDAGBuilder {
 			Edge edge = Edge.create(this.lastVertex, vertex, this.edgeConf.createDefaultEdgeProperty());
 			this.dag.addEdge(edge);
 		}
+		if (logger.isDebugEnabled()){
+			logger.debug("Created Vertex: " + vertex);
+		}
 		this.lastVertex = vertex;
 	}
 	
 	/**
-	 * This method will modify processing instruction if 
+	 * This method will modify processing instruction to accommodate Tez's KV Reader
+	 * for cases where Stream type is non-Entry (e.g., String). It will compose a new Function
+	 * with value extracting mapper to comply with user defined types including extraction of 
+	 * value from Writable.
+	 * It also supports dealing with Writable directly if Writable is the type of the Stream.
+	 * Function will be composed if
 	 * - first stage
 	 * - source item type is not Entry<K,V> 
-	 * 
-	 * Also, if source item type is NOT Writable, the modified function will have extractors
 	 * 
 	 * @param stage
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	private Function modifyProcessingInstructionIfNecessary(Stage stage) {
-		Function processingFunction = stage.getProcessingFunction();
+	private Function<Stream<?>, Stream<?>> composeFunctionIfNecessary(Stage stage) {
+		Function<Stream<?>, Stream<?>> processingFunction = stage.getProcessingFunction();
 
-		if (stage.getId() == 0 && !Entry.class.isAssignableFrom(stage.getSourceItemType())){
-			Function<Object, Object> func = (Function<Object, Object>) processingFunction;		
+		if (stage.getId() == 0 && !Entry.class.isAssignableFrom(stage.getSourceItemType())){	
 			if (Writable.class.isAssignableFrom(stage.getSourceItemType())){
-				processingFunction = (Function) func.<Stream<Entry<Object, Object>>>compose(stream -> stream.map(s -> s.getValue()));
+				processingFunction = processingFunction.compose((Function<Stream<?>, Stream<?>>)stream -> stream.map(s -> ((Entry<?,?>)s).getValue()));
 			} 
 			else {
-				
 				ParameterizedType parameterizedType = (ParameterizedType) this.inputFormatClass.getGenericSuperclass();
 				Type type = parameterizedType.getActualTypeArguments()[1];
 				if (Text.class.getName().equals(type.getTypeName())){
-					processingFunction = (Function) func.compose((Function<?, ?>)(Stream<Entry<Object, Object>> stream) -> stream.map(s -> s.getValue().toString()));
+					processingFunction = processingFunction.compose((Function<Stream<?>, Stream<?>>)stream -> ((Stream<Entry<?, ?>>)stream).map(s -> s.getValue().toString()));
 				} 
 				else {
+					//TODO need to design some type of extensible converter to support multiple types of Writable
 					throw new IllegalStateException("Can't determine modified function");
 				}
 			}
@@ -168,7 +156,9 @@ public class TezExecutableDAGBuilder {
 	 * 
 	 * @return
 	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Callable<Stream<Object>[]> build(){
+		// TODO add support for externally configurable output location
 		String outputPath = this.tezClient.getClientName() + "/" + this.dag.getName() + "/out";
 		this.createDataSink(this.lastVertex, 
 				this.tezClient.getClientName() + "_OUTPUT", 
@@ -176,7 +166,8 @@ public class TezExecutableDAGBuilder {
 				ValueWritable.class, 
 				SequenceFileOutputFormat.class, outputPath);
 		
-		TezDagExecutor<Object> dagExecutor = new TezDagExecutor(this.tezClient, this.dag, new SequenceFileOutputStreamsBuilder(this.fs, outputPath, this.tezClient.getTezConfiguration()));
+		TezDagExecutor<Object> dagExecutor = new TezDagExecutor(this.tezClient, this.dag, 
+				new SequenceFileOutputStreamsBuilder(this.tezClient.getFileSystem(), outputPath, this.tezClient.getTezConfiguration()));
 		
 		return dagExecutor;
 	}
@@ -203,7 +194,7 @@ public class TezExecutableDAGBuilder {
 	 */
 	private UserPayload createPayloadFromTaskSerPath(Object task, String pipelineName, String vertexName){
 		org.apache.hadoop.fs.Path mapTaskPath = 
-				HdfsSerializerUtils.serialize(task, this.fs, new org.apache.hadoop.fs.Path(pipelineName + "/tasks/" + vertexName + ".ser"));
+				HdfsSerializerUtils.serialize(task, this.tezClient.getFileSystem(), new org.apache.hadoop.fs.Path(pipelineName + "/tasks/" + vertexName + ".ser"));
 		UserPayload payload = UserPayload.create(ByteBuffer.wrap(mapTaskPath.toString().getBytes()));
 		return payload;
 	}
