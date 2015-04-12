@@ -16,6 +16,7 @@ import org.apache.dstream.support.UriSourceSupplier;
 public class WordCountStream {
 
 	public static void main(String[] args) {
+		
 		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/demo/sample.txt").toURI());
 		DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, sourceSupplier);
 		
@@ -25,7 +26,9 @@ public class WordCountStream {
 			.executeAs("WordCount");
 		
 		result.forEach(stream -> stream.forEach(System.out::println));
-		System.exit(0);
+		
+		result.close();
+		System.exit(0);// until 0.6.1 Tez see TEZ-1661
 	}
 
 }

@@ -92,7 +92,7 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 			if (logger.isInfoEnabled()){
 				logger.info("Pipeline spec: " + pipelineSpec);
 			}
-			return this.delegateSpecExecution(pipelineSpec);
+			return this.delegatePipelineSpecExecution(pipelineSpec);
 		} 
 		else {
 			if (logger.isDebugEnabled()){
@@ -270,7 +270,7 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	 */
 	private DistributablePipelineSpecification buildPipelineSpecification(String name){
 
-		this.finishLastStageIfNecessary();
+		this.createLastStageIfNecessary();
 
 		DistributablePipelineSpecification specification = new DistributablePipelineSpecification() {		
 			private static final long serialVersionUID = -4119037144503084569L;
@@ -298,7 +298,7 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	 * 
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private void finishLastStageIfNecessary(){
+	private void createLastStageIfNecessary(){
 		Function finalFunction = (Function)this.previousInvocation.getArguments()[0];
 		if (this.previousInvocation.getMethod().getName().equals("reduce")){
 			KeyValuesStreamAggregator<?,?> aggregator = new KeyValuesStreamAggregator<>((BinaryOperator<?>) this.previousInvocation.getArguments()[2]);
@@ -312,7 +312,8 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	 * @param pipelineSpecification
 	 * @return
 	 */
-	private Stream<Stream<?>> delegateSpecExecution(DistributablePipelineSpecification pipelineSpecification) {
+	@SuppressWarnings("unchecked")
+	private Stream<Stream<?>> delegatePipelineSpecExecution(DistributablePipelineSpecification pipelineSpecification) {
 		
 		Properties prop = PipelineConfigurationUtils.loadDelegatesConfig();
 
@@ -326,14 +327,14 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 		}
 
 		try {
-			Object pipelineExecutionDelegate = ReflectionUtils.newDefaultInstance(Class
+			ExecutionDelegate pipelineExecutionDelegate = (ExecutionDelegate) ReflectionUtils.newDefaultInstance(Class
 					.forName(pipelineExecutionDelegateClassName, true, 
 							Thread.currentThread().getContextClassLoader()));
 			Method delegateMethod = ReflectionUtils.findMethod(pipelineExecutionDelegate.getClass(), Stream[].class, DistributablePipelineSpecification.class);
 			delegateMethod.setAccessible(true);
 
 			Stream<?>[] resultStreams =  (Stream<?>[]) delegateMethod.invoke(pipelineExecutionDelegate, pipelineSpecification);
-			return Stream.of(resultStreams);
+			return (Stream<Stream<?>>) this.generateResultProxy(Stream.of(resultStreams), pipelineExecutionDelegate.getCloseHandler());
 		} 
 		catch (Exception e) {
 			String messageSuffix = "";
@@ -346,6 +347,31 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 			throw new IllegalStateException("Failed to execute pipeline '"
 					+ pipelineSpecification.getName() + "'. " + messageSuffix, e);
 		}
+	}
+	
+	/**
+	 * Creates proxy over the result Stream to ensures that close() call is always delegated to
+	 * the close handler provided by the target ExecutionDelegate.
+	 * 
+	 * @param resultStream
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	private Stream<?> generateResultProxy(Stream<?> resultStream, Runnable closeHandler){
+		resultStream.onClose(closeHandler);
+		ProxyFactory pf = new ProxyFactory(resultStream);
+		pf.addAdvice(new MethodInterceptor() {	
+			@Override
+			public Object invoke(MethodInvocation invocation) throws Throwable {
+				Object result = invocation.proceed();
+				if (Stream.class.isAssignableFrom(invocation.getMethod().getReturnType())){
+					Stream<?> stream = (Stream<?>) result;
+					result = generateResultProxy(stream, closeHandler);
+				}
+				return result;
+			}
+		});
+		return (Stream<Stream<?>>) pf.getProxy();
 	}
 	
 	/**

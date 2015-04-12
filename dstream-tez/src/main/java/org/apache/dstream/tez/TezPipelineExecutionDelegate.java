@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 
 import org.apache.dstream.DistributablePipelineSpecification;
 import org.apache.dstream.DistributablePipelineSpecification.Stage;
+import org.apache.dstream.ExecutionDelegate;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.tez.utils.HadoopUtils;
 import org.apache.dstream.utils.PipelineConfigurationUtils;
@@ -26,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * 
  *
  */
-public class TezPipelineExecutionDelegate {
+public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 
 	private final Logger logger = LoggerFactory.getLogger(TezPipelineExecutionDelegate.class);
 	
@@ -34,14 +35,46 @@ public class TezPipelineExecutionDelegate {
 	
 	private Properties pipelineConfig;
 	
-	/*
-	 * NOTE TO SELF:
-	 * While "convention over configuration" exposes a more flexible POJO programming model
-	 * there may be a need for an abstract class to help with the flow of things. For example
-	 * each delegate must quickly determine if it can process sources provided in pipelineSpecification.
-	 * That could be included as a first call in 'execute' method which will delegate to isSourceSupported and then to doExecute. . .
+	/**
+	 * 
 	 */
-	public Stream<Object>[] execute(DistributablePipelineSpecification pipelineSpecification) throws Exception {
+	@Override
+	public Stream<?>[] execute(DistributablePipelineSpecification pipelineSpecification) {
+		try {
+			return this.doExecute(pipelineSpecification);
+		} 
+		catch (Exception e) {
+			throw new IllegalStateException("Failed to execute pipeline: " + pipelineSpecification, e);
+		}
+	}
+	
+	/**
+	 * 
+	 */
+	@Override
+	public Runnable getCloseHandler() {
+		return new Runnable() {
+			@Override
+			public void run() {
+				try {
+					logger.info("Stopping TezClient");
+					tezClient.clearAppMasterLocalFiles();
+					tezClient.stop();
+				} 
+				catch (Exception e) {
+					logger.warn("Failed to stop TezClient", e);
+				}
+			}
+		};
+	}
+	
+	/**
+	 * 
+	 * @param pipelineSpecification
+	 * @return
+	 * @throws Exception
+	 */
+	private Stream<?>[] doExecute(DistributablePipelineSpecification pipelineSpecification) throws Exception {
 		if (logger.isInfoEnabled()){
 			logger.info("Executing pipeline: " + pipelineSpecification);
 		}
@@ -70,7 +103,7 @@ public class TezPipelineExecutionDelegate {
 		Callable<Stream<Object>[]> executable = executableDagBuilder.build();
 		
 		try {
-			Stream<Object>[] resultStreams = executable.call();
+			Stream<?>[] resultStreams = executable.call();
 			return resultStreams;
 		} 
 		catch (Exception e) {
@@ -121,6 +154,7 @@ public class TezPipelineExecutionDelegate {
 				return TextInputFormat.class;
 			} 
 			else {
+				// TODO design a configurable component to handle other standard and custom input types
 				throw new IllegalArgumentException("Failed to determine Input Format class for source type " + sourceType);
 			}
 		} 
