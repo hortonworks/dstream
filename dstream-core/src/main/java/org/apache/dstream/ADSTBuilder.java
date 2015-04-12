@@ -379,14 +379,14 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	 *
 	 */
 	private static class ComposableStreamFunctionBuilder {
-		private final List<DistributableStreamToStreamAdapterFunction> streamOps = new ArrayList<>();
+		private final List<Function<Stream<?>, Stream<?>>> streamOps = new ArrayList<>();
 		
 		public void addIntrmediate(String name, Object function) {
-			DistributableStreamToStreamAdapterFunction streamFunction = new DistributableStreamToStreamAdapterFunction(name, function);
+			Function<Stream<?>, Stream<?>> streamFunction = new DistributableStreamToStreamAdapterFunction(name, function);
 			this.streamOps.add(streamFunction);
 		}
 
-		public Function<?, ?> buildFunction(){
+		public Function<Stream<?>, Stream<?>> buildFunction(){
 			return new ComposableStreamFunction(this.streamOps);
 		}
 	}

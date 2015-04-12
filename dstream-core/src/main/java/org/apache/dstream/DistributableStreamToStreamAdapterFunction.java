@@ -8,9 +8,12 @@ import org.apache.dstream.SerializableHelpers.Predicate;
 /**
  * An implementation of {@link Function} which will translate Stream-like
  * invocations on {@link DistributableStream} to {@link Stream} operations.
+ * It will be created and collected by the ADSTBuilder for each operation 
+ * on {@link DistributableStream} (see ADSTBuilder$ComposableStreamFunctionBuilder).
+ * Then ADSTBuilder$ComposableStreamFunctionBuilder will construct a single ComposableStreamFunction
+ * representing all invocations on {@link DistributableStream}
  */
-@SuppressWarnings("rawtypes")
-class DistributableStreamToStreamAdapterFunction implements Function<Stream, Stream>{
+class DistributableStreamToStreamAdapterFunction implements Function<Stream<?>, Stream<?>>{
 
 	private static final long serialVersionUID = 6836233233261184905L;
 	
@@ -23,9 +26,9 @@ class DistributableStreamToStreamAdapterFunction implements Function<Stream, Str
 		this.streamOperationName = streamOperationName;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public Stream apply(Stream streamIn) {
+	public Stream<?> apply(Stream<?> streamIn) {
 		if (this.streamOperationName.equals("flatMap")){
 			return streamIn.flatMap((Function)this.sourceFunction);
 		}
