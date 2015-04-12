@@ -19,7 +19,7 @@ public class ComposableStreamFunctionBuilderTests {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Test
 	public void validateComposition() throws Exception {
-		Class<?> clazz = Class.forName("org.apache.dstream.ADSTBuilder$ComposableStreamFunctionBuilder");
+		Class<?> clazz = Class.forName("org.apache.dstream.DistributablePipelineSpecificationBuilder$ComposableStreamFunctionBuilder");
 		
 		Object stageFunctionAssembler = ReflectionUtils.newInstance(clazz, null, null);
 		Method intM = ReflectionUtils.findMethod("addIntrmediate", stageFunctionAssembler.getClass(), void.class, String.class, Object.class);
