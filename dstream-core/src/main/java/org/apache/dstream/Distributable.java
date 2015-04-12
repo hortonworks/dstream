@@ -18,5 +18,5 @@ public interface Distributable<T> {
 	 * @param name
 	 * @return
 	 */
-	Stream<T>[] executeAs(String name);
+	Stream<Stream<T>> executeAs(String name);
 }

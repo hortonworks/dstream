@@ -4,7 +4,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -13,9 +12,9 @@ import java.util.stream.Stream;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.apache.dstream.DistributablePipelineSpecification.Stage;
-import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
+import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.PipelineConfigurationUtils;
 import org.apache.dstream.utils.ReflectionUtils;
@@ -339,8 +338,7 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 	 * @param pipelineSpecification
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
-	private Stream<?>[] releaseADST(DistributablePipelineSpecification pipelineSpecification) {
+	private Stream<Stream<?>> releaseADST(DistributablePipelineSpecification pipelineSpecification) {
 		
 		Properties prop = PipelineConfigurationUtils.loadDelegatesConfig();
 
@@ -360,7 +358,8 @@ class ADSTBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
 			Method delegateMethod = ReflectionUtils.findMethod(pipelineExecutionDelegate.getClass(), Stream[].class, DistributablePipelineSpecification.class);
 			delegateMethod.setAccessible(true);
 
-			return (Stream<Entry<?, ?>>[]) delegateMethod.invoke(pipelineExecutionDelegate, pipelineSpecification);
+			Stream<?>[] resultStreams =  (Stream<?>[]) delegateMethod.invoke(pipelineExecutionDelegate, pipelineSpecification);
+			return Stream.of(resultStreams);
 		} 
 		catch (Exception e) {
 			String messageSuffix = "";
