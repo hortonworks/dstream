@@ -30,7 +30,7 @@ public class KeyValuesStreamAggregatorTests {
 		
 		Stream<Entry<String,Iterator<Integer>>> sourceStream = keyValuesList.stream();
 		// the above stream would be generated from reader provided by the target execution environment (e.g., Tez)
-		KeyValuesStreamAggregator<String, Integer> kvsStream = new KeyValuesStreamAggregator<String, Integer>(Integer::sum);
+		KeyValuesStreamAggregatingFunction<String, Integer> kvsStream = new KeyValuesStreamAggregatingFunction<String, Integer>(Integer::sum);
 		List<Entry<String, Integer>> result = kvsStream.apply(sourceStream).collect(Collectors.toList());
 		Assert.assertEquals(3, result.size());
 		Assert.assertEquals((Integer)7, result.get(0).getValue());
