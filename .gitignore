@@ -27,7 +27,6 @@ nohup.out
 out
 activemq-data
 vf.gf.*
-*.txt
 derby.log
 .springBean
 *.zip
