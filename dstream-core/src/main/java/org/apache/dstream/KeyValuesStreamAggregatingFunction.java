@@ -19,7 +19,7 @@ import org.apache.dstream.utils.KVUtils;
  * @param <K> the key type
  * @param <V> the value type
  */
-public class KeyValuesStreamAggregator<K,V> implements Function<Stream<Entry<K,Iterator<V>>>,Stream<Entry<K,V>>> {
+public class KeyValuesStreamAggregatingFunction<K,V> implements Function<Stream<Entry<K,Iterator<V>>>,Stream<Entry<K,V>>> {
 
 	private static final long serialVersionUID = 1133920289646508908L;
 	
@@ -29,7 +29,7 @@ public class KeyValuesStreamAggregator<K,V> implements Function<Stream<Entry<K,I
 	 * 
 	 * @param aggregationOperator
 	 */
-	public KeyValuesStreamAggregator(BinaryOperator<V> aggregationOperator) {
+	public KeyValuesStreamAggregatingFunction(BinaryOperator<V> aggregationOperator) {
 		this.aggregationOperator = aggregationOperator;
 	}
 

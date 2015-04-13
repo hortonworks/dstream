@@ -132,7 +132,7 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 			String stageName = "compute";
 			Function rootFunction = this.stageFunctionAssembler.buildFunction();
 			Function finalFunction = (Function) rootFunction.andThen(mappingFunction);
-			this.addStage(stageName, finalFunction);
+			this.addStage(stageName, finalFunction, null);
 			this.previousInvocation = invocation;
 			this.stageFunctionAssembler = new ComposableStreamFunctionBuilder();
 		} 
@@ -167,10 +167,7 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	private void doCompute(ReflectiveMethodInvocation invocation){
 		Function finalFunction = (Function) invocation.getArguments()[0];
 		if (this.previousInvocation != null){
-			if (this.previousInvocation.getMethod().getName().equals("reduce")){
-				finalFunction = this.createKVStreamProcessingFunction(finalFunction);
-			}
-			else if (this.previousInvocation.getMethod().getName().equals("compute")){
+			if (this.previousInvocation.getMethod().getName().equals("compute")){
 				finalFunction = (Function) ((Function)this.previousInvocation.getArguments()[0]).andThen(finalFunction);
 			}
 			else {
@@ -188,36 +185,25 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void doReduce(ReflectiveMethodInvocation invocation){
 		Object[] arguments = invocation.getArguments();
-		Function finalFunction = new KeyValueExtractorFunction((Function)arguments[0], (Function)arguments[1]);
 		String stageName = invocation.getMethod().getName();
+		
+		Function finalFunction = new KeyValueExtractorFunction((Function)arguments[0], (Function)arguments[1]);
+		
+		BinaryOperator aggregatorOp = null;
 		if (this.previousInvocation != null) {
-			Function rootFunction;
 			if (this.previousInvocation.getMethod().getName().equals("compute")){
 				stageName = this.previousInvocation.getMethod().getName();
-				rootFunction = (Function) this.previousInvocation.getArguments()[0];
+				finalFunction = finalFunction.compose((Function)this.previousInvocation.getArguments()[0]);
 			} 
 			else if (this.previousInvocation.getMethod().getName().equals("reduce")){	
-				rootFunction = this.createKVStreamProcessingFunction(null);
+				aggregatorOp = (BinaryOperator) this.previousInvocation.getArguments()[2];
 			} 
 			else {
 				throw new UnsupportedOperationException("Transition from '" + invocation.getMethod().getName() + "' to '" + 
 						this.previousInvocation.getMethod().getName() + "' is not supported");
 			}
-			finalFunction = (Function) rootFunction.andThen(finalFunction);
 		} 
-		this.addStage(stageName, finalFunction);
-	}
-	
-	/**
-	 * 
-	 * @param mapperFunction
-	 * @return
-	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private Function createKVStreamProcessingFunction(Function mapperFunction){
-		KeyValuesStreamAggregator<?,?> aggregator = new KeyValuesStreamAggregator<>((BinaryOperator<?>) this.previousInvocation.getArguments()[2]);
-		Function stageFunction = new KeyValuesAggregatingStreamProcessingFunction(mapperFunction, aggregator);
-		return stageFunction;
+		this.addStage(stageName, finalFunction, aggregatorOp);
 	}
 	
 	/**
@@ -226,12 +212,12 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	 * @param processingInstructions
 	 * @return
 	 */
-	private void addStage(String operationName, Function<Stream<?>, Stream<?>> processingFunction) {	
+	private void addStage(String operationName, Function<Stream<?>, Stream<?>> processingFunction, BinaryOperator<?> aggregatorOp) {	
 		SourceSupplier<?> sources = this.stageIdCounter == 0 ? this.sourcesSupplier : null; 
 		int stageId = this.stageIdCounter++;
 		Stage stage = new Stage() {
 			private static final long serialVersionUID = 365339577465067584L;
-
+			
 			@Override
 			public SourceSupplier<?> getSourceSupplier() {
 				return sources;
@@ -252,9 +238,17 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 				return stageId;
 			}
 
+			@SuppressWarnings({ "unchecked", "rawtypes" })
 			@Override
 			public Function<Stream<?>, Stream<?>> getProcessingFunction() {
-				return processingFunction;
+				if (aggregatorOp != null){
+					//TODO get implementation of aggregating function from configuration
+					// the following assumes YARN shuffle semantics of grouping values. Will not be the case for all
+					Function<Stream<?>,Stream<?>> aggregatingFunction = new KeyValuesStreamAggregatingFunction(aggregatorOp);
+					return processingFunction == null ? aggregatingFunction : processingFunction.compose((Function) aggregatingFunction);
+				} else {
+					return processingFunction;
+				}
 			}
 		};
 		if (logger.isDebugEnabled()){
@@ -270,7 +264,7 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	 */
 	private DistributablePipelineSpecification buildPipelineSpecification(String name){
 
-		this.createLastStageIfNecessary();
+		this.createLastStage();
 
 		DistributablePipelineSpecification specification = new DistributablePipelineSpecification() {		
 			private static final long serialVersionUID = -4119037144503084569L;
@@ -298,13 +292,12 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	 * 
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private void createLastStageIfNecessary(){
-		Function finalFunction = (Function)this.previousInvocation.getArguments()[0];
+	private void createLastStage(){
 		if (this.previousInvocation.getMethod().getName().equals("reduce")){
-			KeyValuesStreamAggregator<?,?> aggregator = new KeyValuesStreamAggregator<>((BinaryOperator<?>) this.previousInvocation.getArguments()[2]);
-			finalFunction = new KeyValuesAggregatingStreamProcessingFunction(aggregator);
+			this.addStage(this.previousInvocation.getMethod().getName(), null, (BinaryOperator)this.previousInvocation.getArguments()[2]);
+		} else {
+			this.addStage(this.previousInvocation.getMethod().getName(), (Function)this.previousInvocation.getArguments()[0], null);
 		}
-		this.addStage(this.previousInvocation.getMethod().getName(), finalFunction);
 	}
 	
 	/**
