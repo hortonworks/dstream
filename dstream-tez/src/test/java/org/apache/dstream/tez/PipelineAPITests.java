@@ -69,6 +69,26 @@ public class PipelineAPITests {
 	}
 	
 	@Test
+	public void computeReduceComputeNonEntry() {
+		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/org/apache/dstream/tez/sample.txt").toURI());
+		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
+		
+		Stream<Stream<String>> result = sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
+				.flatMap(line -> Stream.of(line.split("\\s+")))
+				.map(word -> kv(word, 1))
+			).reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
+			 .<String>compute(stream -> stream
+				.map(entry -> kv(entry.getKey(), entry.getValue()))
+				.filter(entry -> entry.getKey().equals("we"))
+				.map(entry -> entry.toString())
+			).executeAs(this.applicationName);
+		
+		result.forEach(stream -> stream.forEach(System.out::println));
+		
+		result.close();
+	}
+	
+	@Test
 	public void reduce() {
 		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/org/apache/dstream/tez/sample.txt").toURI());
 		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);

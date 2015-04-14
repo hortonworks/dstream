@@ -77,7 +77,14 @@ public class SequenceFileOutputStreamsBuilder<T> implements OutputStreamsBuilder
 
 					@Override
 					public T next() {
-						return (T) KVUtils.kv(this.key.getValue(), this.value.getValue());
+						Object key = this.key.getValue();
+						Object value = this.value.getValue();
+						if (key == null){
+							return (T) value;
+						}
+						else {
+							return (T) KVUtils.kv(key, value);
+						}
 					}
 				};
 				Stream<T> targetStream = (Stream<T>) StreamSupport.stream(Spliterators.spliteratorUnknownSize(resultIterator, Spliterator.ORDERED), false);
