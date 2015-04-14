@@ -71,6 +71,7 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 			
 			WritingConsumer<Object, Object> consume = new WritingConsumer<>(kvWriter);
 			streamProcessingFunction.apply(stream).forEach(consume);
+//			streamProcessingFunction.apply(stream).forEach(System.out::print);
 		}
 
 		logger.info("Finished processing task-[" + this.dagName + ":" + this.vertexName + ":" + this.taskIndex + "]");
