@@ -256,6 +256,11 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 			}
 			
 			@Override
+			public BinaryOperator<?> getAggregatorOperator() {
+				return aggregatorOp;
+			}
+			
+			@Override
 			public Class<?> getSourceItemType() {
 				return DistributablePipelineSpecificationBuilder.this.sourceItemType;
 			}
@@ -270,18 +275,9 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 				return stageId;
 			}
 
-			@SuppressWarnings({ "unchecked", "rawtypes" })
 			@Override
 			public Function<Stream<?>, Stream<?>> getProcessingFunction() {
-				if (aggregatorOp != null){
-					//TODO get implementation of aggregating function from configuration
-					// the following assumes YARN shuffle semantics of grouping values. Will not be the case for all
-					Function<Stream<?>,Stream<?>> aggregatingFunction = new KeyValuesStreamAggregatingFunction(aggregatorOp);
-					return processingFunction == null ? aggregatingFunction : processingFunction.compose((Function) aggregatingFunction);
-				} 
-				else {
-					return processingFunction;
-				}
+				return processingFunction;
 			}
 		};
 		if (logger.isDebugEnabled()){

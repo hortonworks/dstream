@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.dstream.DistributablePipelineSpecification.Stage;
+import org.apache.dstream.KeyValuesStreamAggregatingFunction;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.tez.io.KeyWritable;
@@ -129,10 +130,18 @@ public class TezExecutableDAGBuilder {
 	 * @param stage
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private Function<Stream<?>, Stream<?>> composeFunctionIfNecessary(Stage stage) {
 		Function<Stream<?>, Stream<?>> processingFunction = stage.getProcessingFunction();
-
+		if (stage.getAggregatorOperator() != null) {
+			Function<Stream<?>,Stream<?>> aggregatingFunction = new KeyValuesStreamAggregatingFunction(stage.getAggregatorOperator());
+			processingFunction = processingFunction == null ? aggregatingFunction : processingFunction.compose((Function) aggregatingFunction);
+		} 
+		else if (processingFunction == null){
+			throw new IllegalStateException("Both processing function and aggregator op are null. "
+					+ "This condition is invalid as it will result in a stage wiyth no processing instruction and is definitely a bug. Please report!");
+		}
+		
 		if (stage.getId() == 0 && !Entry.class.isAssignableFrom(stage.getSourceItemType())){	
 			if (Writable.class.isAssignableFrom(stage.getSourceItemType())){
 				processingFunction = processingFunction.compose((Function<Stream<?>, Stream<?>>)stream -> stream.map(s -> ((Entry<?,?>)s).getValue()));

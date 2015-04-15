@@ -6,6 +6,7 @@ import java.util.stream.Stream;
 
 import org.apache.dstream.support.DefaultHashPartitioner;
 import org.apache.dstream.support.Partitioner;
+import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SourceSupplier;
 
@@ -25,6 +26,7 @@ public interface DistributablePipelineSpecification extends Serializable {
 	 */
 	public abstract class Stage implements Serializable {
 		private static final long serialVersionUID = 4321682502843990767L;
+		public abstract BinaryOperator<?> getAggregatorOperator();
 		public abstract String getName();
 		public abstract int getId();
 		public abstract Function<Stream<?>, Stream<?>> getProcessingFunction();	

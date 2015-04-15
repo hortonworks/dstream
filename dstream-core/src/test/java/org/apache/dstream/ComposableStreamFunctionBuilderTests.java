@@ -16,18 +16,14 @@ import org.junit.Test;
 
 public class ComposableStreamFunctionBuilderTests {
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({ "unchecked"})
 	@Test
 	public void validateComposition() throws Exception {
-		Class<?> clazz = Class.forName("org.apache.dstream.DistributablePipelineSpecificationBuilder$ComposableStreamFunctionBuilder");
-		
-		Object stageFunctionAssembler = ReflectionUtils.newInstance(clazz, null, null);
-		Method intM = ReflectionUtils.findMethod("addIntrmediate", stageFunctionAssembler.getClass(), void.class, String.class, Object.class);
-		intM.setAccessible(true);
-		
-		intM.invoke(stageFunctionAssembler, "flatMap", flatMap());
-		intM.invoke(stageFunctionAssembler, "filter", filter());
-		intM.invoke(stageFunctionAssembler, "map", map());
+		ComposableStreamFunction composableStreamFunction = new ComposableStreamFunction();
+
+		composableStreamFunction.add(new DistributableStreamToStreamAdapterFunction("flatMap", flatMap()));
+		composableStreamFunction.add(new DistributableStreamToStreamAdapterFunction("filter", filter()));
+		composableStreamFunction.add(new DistributableStreamToStreamAdapterFunction("map", map()));
 		
 		ArrayList<String> list = new ArrayList<String>();
 		list.add("foo bar baz bar baz");
@@ -36,10 +32,7 @@ public class ComposableStreamFunctionBuilderTests {
 					
 		Stream<String> stream = list.stream();
 		
-		Method buildFuncM = ReflectionUtils.findMethod("buildFunction", stageFunctionAssembler.getClass(), Function.class);
-		buildFuncM.setAccessible(true);
-		Function<Stream, Stream> f = (Function) buildFuncM.invoke(stageFunctionAssembler);
-		List<Entry<String, Integer>> result = (List<Entry<String, Integer>>) f.apply(stream).collect(Collectors.toList());
+		List<Entry<String, Integer>> result = (List<Entry<String, Integer>>) composableStreamFunction.apply(stream).collect(Collectors.toList());
 		Assert.assertEquals(4, result.size());
 		for (Entry<String, Integer> entry : result) {
 			Assert.assertEquals("foo", entry.getKey());
