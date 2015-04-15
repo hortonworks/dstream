@@ -1,6 +1,5 @@
 package org.apache.dstream;
 
-import java.util.List;
 import java.util.stream.Stream;
 
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
@@ -15,22 +14,17 @@ import org.apache.dstream.support.SerializableFunctionConverters.Function;
 class ComposableStreamFunction implements Function<Stream<?>, Stream<?>> {
 	private static final long serialVersionUID = -1496510916191600010L;
 	
-	private final List<Function<Stream<?>, Stream<?>>> streamOps;
+	private Function<Stream<?>, Stream<?>> finalFunction;
 	
-	/**
-	 * 
-	 * @param streamOps
-	 */
-	ComposableStreamFunction(List<Function<Stream<?>, Stream<?>>> streamOps){
-		this.streamOps = streamOps;
-	}
-
 	/**
 	 * 
 	 */
 	@Override
 	public Stream<?> apply(Stream<?> streamIn) {
-		Function<Stream<?>, Stream<?>> composedFunction = this.streamOps.stream().reduce((fa, fb) -> fb.compose(fa)).get(); 
-		return composedFunction.apply(streamIn);
+		return this.finalFunction.apply(streamIn);
+	}
+	
+	void add(Function<Stream<?>, Stream<?>> function) {
+		this.finalFunction = this.finalFunction == null ? function : function.compose(this.finalFunction);
 	}
 }

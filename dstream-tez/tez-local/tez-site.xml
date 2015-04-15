@@ -1,0 +1,19 @@
+<configuration>
+	<property>
+		<name>tez.local.mode</name>
+		<value>true</value>
+	</property>
+	<property>
+		<name>tez.runtime.optimize.local.fetch</name>
+		<value>true</value>
+	</property>
+	<property>
+		<name>tez.am.mode.session</name>
+		<value>true</value>
+	</property>
+	<property>
+		<name>tez.ignore.lib.uris</name>
+		<value>true</value>
+		<description>ignore tez libs</description>
+	</property>
+</configuration>

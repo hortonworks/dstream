@@ -34,7 +34,7 @@ public abstract class TypeAwareWritable<T> implements NewWritable<T> {
 	
     protected T value;
 	
-	private byte valueType;
+	private byte valueType = NULL;
 	
 	private final ValueEncoder valueEncoder = new ValueEncoder();
 
@@ -75,7 +75,11 @@ public abstract class TypeAwareWritable<T> implements NewWritable<T> {
 	public void write(DataOutput out) throws IOException {
 		out.writeByte(this.valueType);
 		if (this.valueType != NULL){
-			out.write(this.valueEncoder.valueBytes);
+			try {
+				out.write(this.valueEncoder.valueBytes);
+			} catch (Exception e) {
+				System.out.println();
+			}
 		}
 	}
 

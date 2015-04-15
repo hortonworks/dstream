@@ -14,6 +14,7 @@ import org.apache.dstream.utils.ReflectionUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.tez.mapreduce.processor.SimpleMRProcessor;
 import org.apache.tez.runtime.api.ObjectRegistry;
 import org.apache.tez.runtime.api.ProcessorContext;
@@ -69,8 +70,9 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 			KeyValueWriter kvWriter = (KeyValueWriter) this.getOutputs().values().iterator().next().getWriter();
 			Function<Stream, Stream<Entry<Object,Object>>> streamProcessingFunction = this.extractTaskFunction();
 			
-			WritingConsumer<Object, Object> consume = new WritingConsumer<>(kvWriter);
+			WritingConsumer consume = new WritingConsumer(kvWriter);
 			streamProcessingFunction.apply(stream).forEach(consume);
+//			streamProcessingFunction.apply(stream).forEach(System.out::print);
 		}
 
 		logger.info("Finished processing task-[" + this.dagName + ":" + this.vertexName + ":" + this.taskIndex + "]");
@@ -115,9 +117,10 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 	 * @param <K>
 	 * @param <V>
 	 */
-	private static class WritingConsumer<K,V> implements Consumer<Entry<K,V>> {
+//	private static class WritingConsumer<K,V> implements Consumer<Entry<K,V>> {
+	private static class WritingConsumer implements Consumer<Object> {
 		private final KeyWritable kw = new KeyWritable();
-		private final ValueWritable<V> vw = new ValueWritable<>();
+		private final ValueWritable<Object> vw = new ValueWritable<>();
 		private final KeyValueWriter kvWriter;
 		/**
 		 * 
@@ -129,15 +132,22 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 		/**
 		 * 
 		 */
-		public void accept(Entry<K, V> pair) {
-			this.kw.setValue(pair.getKey());
-			this.vw.setValue(pair.getValue());
+		public void accept(Object input) {
 			try {
-				this.kvWriter.write(this.kw, this.vw);
+				if (input instanceof Entry){
+					this.kw.setValue(((Entry)input).getKey());
+					this.vw.setValue(((Entry)input).getValue());
+					this.kvWriter.write(this.kw, this.vw);
+				}
+				else {
+//					this.kw.setValue(null);
+					this.vw.setValue(input);
+					this.kvWriter.write(this.kw, this.vw);
+				}
 			} 
 			catch (Exception e) {
-				throw new IllegalStateException("Failed to write " + pair + " to KV Writer", e);
-			}	
+				throw new IllegalStateException("Failed to write " + input + " to KV Writer", e);
+			}
 		}
 	}
 }
