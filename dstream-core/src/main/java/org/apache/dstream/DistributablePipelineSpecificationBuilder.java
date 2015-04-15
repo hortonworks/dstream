@@ -45,7 +45,7 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	
 	private int stageIdCounter;
 	
-	private ComposableStreamFunctionBuilder stageFunctionAssembler;
+	private ComposableStreamFunction composableStreamFunction;
 	
 	private ReflectiveMethodInvocation previousInvocation;
 
@@ -130,26 +130,21 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	 * 
 	 * @param invocation
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void doDistributableStream(ReflectiveMethodInvocation invocation){
 		String operationName = invocation.getMethod().getName();
 		Object[] arguments = invocation.getArguments();
 		BinaryOperator<?> aggregatorOp = null;
 		
 		if (operationName.equals("flatMap") || operationName.equals("map") || operationName.equals("filter")){
-			if (this.previousInvocation != null){
-				if (this.previousInvocation.getMethod().getName().equals("reduce")){
-					aggregatorOp = (BinaryOperator) this.previousInvocation.getArguments()[2];
-				}
-			}
-			this.stageFunctionAssembler.addIntrmediate(operationName, arguments[0]);
-			invocation.setArguments(new Object[]{this.stageFunctionAssembler, aggregatorOp});
+			this.composableStreamFunction.add(new DistributableStreamToStreamAdapterFunction(operationName, arguments[0]));
+			invocation.setArguments(new Object[]{this.composableStreamFunction});
+			
+			this.doCompute(invocation);
 		} 
 		else if (operationName.equals("reduce")){
-			Function sourceFunction = this.stageFunctionAssembler.buildFunction();
-			this.stageFunctionAssembler = new ComposableStreamFunctionBuilder();
+			this.previousInvocation.setArguments(new Object[]{this.composableStreamFunction, aggregatorOp});
+			this.composableStreamFunction = new ComposableStreamFunction();
 			
-			this.previousInvocation.setArguments(new Object[]{sourceFunction, aggregatorOp});
 			this.doReduce(invocation);
 		} 
 		else {
@@ -197,11 +192,7 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 				aggregatorOp = (BinaryOperator) this.previousInvocation.getArguments()[1];
 				
 				Function sourceFunction = (Function)this.previousInvocation.getArguments()[0];
-				finalFunction = finalFunction.compose(sourceFunction);
-			}
-			else {
-				throw new UnsupportedOperationException("Transition from '" + invocation.getMethod().getName() + "' to '" + 
-						this.previousInvocation.getMethod().getName() + "' is not supported");
+				finalFunction = ((Function)finalFunction).compose(sourceFunction);
 			}
 		}
 		invocation.setArguments(new Object[]{finalFunction, aggregatorOp});
@@ -287,7 +278,8 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 					// the following assumes YARN shuffle semantics of grouping values. Will not be the case for all
 					Function<Stream<?>,Stream<?>> aggregatingFunction = new KeyValuesStreamAggregatingFunction(aggregatorOp);
 					return processingFunction == null ? aggregatingFunction : processingFunction.compose((Function) aggregatingFunction);
-				} else {
+				} 
+				else {
 					return processingFunction;
 				}
 			}
@@ -339,13 +331,7 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 		} 
 		else {
 			Object[] args = this.previousInvocation.getArguments();
-			Function stageFunction = null;
-			if (args[0] instanceof ComposableStreamFunctionBuilder){
-				stageFunction = ((ComposableStreamFunctionBuilder)args[0]).buildFunction();
-			} 
-			else {
-				stageFunction = (Function) args[0];
-			}
+			Function stageFunction = (Function) args[0];
 			BinaryOperator aggregatorOp = args.length == 2 ? (BinaryOperator<?>)args[1] : null;
 			this.addStage(this.previousInvocation.getMethod().getName(), stageFunction, aggregatorOp);
 		}
@@ -431,7 +417,7 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 		} 
 		else {
 			pf.addInterface(DistributableStream.class);
-			this.stageFunctionAssembler = new ComposableStreamFunctionBuilder();
+			this.composableStreamFunction = new ComposableStreamFunction();
 		}
 	
 		pf.addAdvice(this);
@@ -439,22 +425,5 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 			logger.debug("Constructed builder proxy for " + Stream.of(pf.getProxiedInterfaces()).collect(Collectors.toList()));
 		}
 		return (R) pf.getProxy();
-	}
-	
-	/**
-	 * 
-	 *
-	 */
-	private static class ComposableStreamFunctionBuilder {
-		private final List<Function<Stream<?>, Stream<?>>> streamOps = new ArrayList<>();
-		
-		void addIntrmediate(String name, Object function) {
-			Function<Stream<?>, Stream<?>> streamFunction = new DistributableStreamToStreamAdapterFunction(name, function);
-			this.streamOps.add(streamFunction);
-		}
-
-		Function<Stream<?>, Stream<?>> buildFunction(){
-			return new ComposableStreamFunction(this.streamOps);
-		}
 	}
 }

@@ -17,7 +17,9 @@ public interface ExecutionDelegate {
 	Stream<?>[] execute(DistributablePipelineSpecification pipelineSpecification);
 	
 	/**
-	 * Returns close handler relevant to the execution context represented by this delegate
+	 * Returns {@link Runnable} which contains logic relevant to 
+	 * The returned {@link Runnable} will be executed when resulting {@link Stream#close()} is called.
+	 * 
 	 * @return
 	 */
 	Runnable getCloseHandler();

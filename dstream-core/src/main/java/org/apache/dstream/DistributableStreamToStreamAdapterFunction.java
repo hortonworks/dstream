@@ -44,9 +44,7 @@ class DistributableStreamToStreamAdapterFunction implements Function<Stream<?>, 
 			return streamIn.filter((Predicate)this.sourceFunction);
 		}
 		else if (this.streamOperationName.equals("map")){
-			Stream<?> s = streamIn.map((Function)this.sourceFunction);
-			
-			return s;
+			return streamIn.map((Function)this.sourceFunction);
 		}
 		else {
 			throw new UnsupportedOperationException("Operation '" + this.streamOperationName + "' is not supported.");

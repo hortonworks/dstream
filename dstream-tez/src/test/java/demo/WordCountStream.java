@@ -21,13 +21,14 @@ public class WordCountStream {
 		DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, sourceSupplier);
 		
 		Stream<Stream<Entry<String, Integer>>> result = sourceStream
-			.flatMap(line -> Stream.of(line.split("\\s+")))
-			.reduce(word -> word, word -> 1, Integer::sum)
+				.flatMap(line -> Stream.of(line.split("\\s+")))
+				.reduce(word -> word, word -> 1, Integer::sum)
 			.executeAs("WordCount");
 		
 		result.forEach(stream -> stream.forEach(System.out::println));
 		
 		result.close();
+		
 		System.exit(0);// until 0.6.1 Tez see TEZ-1661
 	}
 

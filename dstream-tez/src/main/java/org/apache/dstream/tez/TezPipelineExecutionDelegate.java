@@ -82,7 +82,7 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 		TezConfiguration tezConfiguration = new TezConfiguration(new Configuration());
 		FileSystem fs;
 		try {		
-			fs  = FileSystem.get(tezConfiguration);
+			fs = FileSystem.get(tezConfiguration);
 		} 
 		catch (Exception e) {
 			throw new IllegalStateException("Failed to access FileSystem", e);
