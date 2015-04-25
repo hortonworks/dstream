@@ -13,11 +13,11 @@ public class Pair<L,R> {
 		this.rightValue = rightValue;
 	}
 	
-	protected L getLeftValue() {
+	public L _1() {
 		return leftValue;
 	}
 
-	protected R getRightValue() {
+	public R _2() {
 		return rightValue;
 	}
 }

@@ -22,9 +22,9 @@ public class TezDagExecutor<T> implements Callable<Stream<T>[]> {
 	
 	private final DAG dag;
 	
-	private final OutputStreamsBuilder outputBuilder;
+	private final OutputStreamsBuilder<T> outputBuilder;
 	
-	public TezDagExecutor(ExecutionContextAwareTezClient tezClient, DAG dag, OutputStreamsBuilder outputBuilder) {
+	public TezDagExecutor(ExecutionContextAwareTezClient tezClient, DAG dag, OutputStreamsBuilder<T> outputBuilder) {
 		this.tezClient = tezClient;
 		this.dag = dag;
 		this.outputBuilder = outputBuilder;

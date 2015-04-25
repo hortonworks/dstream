@@ -145,6 +145,22 @@ public class PipelineAPITests {
 	}
 	
 	@Test
+	public void computeNonKeyValue() {
+		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/org/apache/dstream/tez/sample.txt").toURI());
+		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
+		
+		Stream<Stream<String>> result = 
+				sourcePipeline.<String>compute(stream -> stream
+					.flatMap(line -> Stream.of(line.split("\\s+")))
+					.map(word -> word)
+				).executeAs(this.applicationName);
+	
+		List<Stream<String>> resultStreams = result.collect(Collectors.toList());
+		Assert.assertEquals(1, resultStreams.size());
+		result.close();
+	}
+	
+	@Test
 	public void computeCompute() {  
 		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/org/apache/dstream/tez/sample.txt").toURI());
 		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
