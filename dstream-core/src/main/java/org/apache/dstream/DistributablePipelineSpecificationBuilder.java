@@ -16,6 +16,7 @@ import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.utils.Assert;
+import org.apache.dstream.utils.Pair;
 import org.apache.dstream.utils.PipelineConfigurationUtils;
 import org.apache.dstream.utils.ReflectionUtils;
 import org.slf4j.Logger;
@@ -24,8 +25,8 @@ import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.aop.framework.ReflectiveMethodInvocation;
 
 /**
- * Builds an independent {@link DistributablePipelineSpecification} to be used by 
- * target execution environment.
+ * Builds specification of data processing pipeline which could be executed in 
+ * the distributed environment.
  * 
  * @param <T> the type of the elements in the pipeline
  * @param <R> the type of {@link Distributable}.
@@ -87,10 +88,9 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	public Object invoke(MethodInvocation invocation) throws Throwable {
 		String operationName = invocation.getMethod().getName();
 		Class<?>[] parameterTypes = invocation.getMethod().getParameterTypes();
-		Object[] arguments = invocation.getArguments();
 		
 		if ("executeAs".equals(operationName)){
-			String pipelineName = arguments.length == 1 ? arguments[0].toString() : UUID.randomUUID().toString();
+			String pipelineName = this.determinePipelineName(invocation);
 			DistributablePipelineSpecification pipelineSpec = this.buildPipelineSpecification(pipelineName);
 			if (logger.isInfoEnabled()){
 				logger.info("Pipeline spec: " + pipelineSpec);
@@ -103,8 +103,7 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 				logger.debug("Op:" + operationName 
 						+ "(" + (argNames.isEmpty() ? "" : argNames.toString()) + ")");
 			}
-			
-			
+				
 			if (this.targetDistributable instanceof DistributableStream){
 				this.doDistributableStream((ReflectiveMethodInvocation) invocation);
 			} 
@@ -112,7 +111,7 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 				this.doDistributablePipeline((ReflectiveMethodInvocation) invocation);
 			} 
 			else {
-				// should really never happen, but since we are dealing with a proxy, nice to have as fail all check
+				// should really never happen, but since we are dealing with a proxy, nice to have as fail-all check
 				throw new IllegalStateException("Unrecognized target Distributable: " + this.targetDistributable);
 			}
 			this.previousInvocation = (ReflectiveMethodInvocation) invocation;
@@ -124,46 +123,36 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	 * Processes invocation of operations invoked on the {@link DistributableStream}
 	 * All operations other then 'reduce' will be gathered by the 'stageFunctionAssembler'
 	 * and composed into a single stage Function applied on the {@link Stream}.
-	 * Upon invocation of the 'reduce' operation a {@link KeyValueExtractorFunction} will be created
-	 * from the supplied Key and Value mappers. Final Function will be composed from the results of 
-	 * 'stageFunctionAssembler' composition and {@link KeyValueExtractorFunction};
-	 * 
-	 * @param invocation
+	 * Once composed, stage function is treated as just another pipeline operation hence 
+	 * the delegation to the doDistributablePipeline() method.
 	 */
 	private void doDistributableStream(ReflectiveMethodInvocation invocation){
-		String operationName = invocation.getMethod().getName();
-		Object[] arguments = invocation.getArguments();
-		BinaryOperator<?> aggregatorOp = null;
-		
-		if (operationName.equals("flatMap") || operationName.equals("map") || operationName.equals("filter")){
-			this.composableStreamFunction.add(new DistributableStreamToStreamAdapterFunction(operationName, arguments[0]));
-			invocation.setArguments(new Object[]{this.composableStreamFunction});
-			
-			this.doCompute(invocation);
+		String operationName = invocation.getMethod().getName();		
+		if (this.isInStageOperation(operationName)){
+			this.composableStreamFunction.add(new DistributableStreamToStreamAdapterFunction(operationName, invocation.getArguments()[0]));
+			this.updateInvocationArguments(invocation, this.composableStreamFunction, null, null);
 		} 
-		else if (operationName.equals("reduce")){
-			this.previousInvocation.setArguments(new Object[]{this.composableStreamFunction, aggregatorOp});
+		else if (this.isStageBoundaryOperation(operationName)){
+			this.updateInvocationArguments(this.previousInvocation, this.composableStreamFunction, null, null);
 			this.composableStreamFunction = new ComposableStreamFunction();
-			
-			this.doReduce(invocation);
 		} 
 		else {
 			throw new UnsupportedOperationException("Operation '" + operationName + "' is not supported");
 		}
+		
+		this.doDistributablePipeline(invocation);
 	}
 	
 	/**
 	 * Processes invocation of operations invoked on {@link DistributablePipeline}
-	 * 
-	 * @param invocation
 	 */
 	private void doDistributablePipeline(ReflectiveMethodInvocation invocation){
 		String operationName = invocation.getMethod().getName();
-		if (operationName.equals("compute")){
-			this.doCompute(invocation);
+		if (this.isInStageOperation(operationName)){
+			this.processInStageInvocation(invocation);
 		}
-		else if (operationName.equals("reduce")){
-			this.doReduce(invocation);
+		else if (this.isStageBoundaryOperation(operationName)){
+			this.processStageBoundaryInvocation(invocation);
 		} 
 		else {
 			throw new UnsupportedOperationException("Operation '" + operationName + "' is not supported");
@@ -177,74 +166,60 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	 * 	- All subsequent 'compute' operations are composed into a single one.
 	 * 	- If aggregator BinaryOperator is present it will be added as a second argument to 
 	 *    transformed  invocation so it could be included in the stage later on.
-	 * 
-	 * @param invocation
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private void doCompute(ReflectiveMethodInvocation invocation){
-		Function finalFunction = (Function) invocation.getArguments()[0];
-		BinaryOperator aggregatorOp = null;
-		if (this.previousInvocation != null){
-			if (this.previousInvocation.getMethod().getName().equals("reduce")){
-				aggregatorOp = (BinaryOperator) this.previousInvocation.getArguments()[2];
-			}
-			else if (this.previousInvocation.getMethod().getName().equals("compute")){
-				aggregatorOp = (BinaryOperator) this.previousInvocation.getArguments()[1];
-				
-				Function sourceFunction = (Function)this.previousInvocation.getArguments()[0];
-				finalFunction = ((Function)finalFunction).compose(sourceFunction);
-			}
-		}
-		invocation.setArguments(new Object[]{finalFunction, aggregatorOp});
+	@SuppressWarnings("rawtypes")
+	private void processInStageInvocation(ReflectiveMethodInvocation invocation){
+		Function finalFunction = (Function) invocation.getArguments()[0];	
+		Pair<Function, BinaryOperator> stageOperations = this.gatherStageOperations(finalFunction);
+		
+		this.updateInvocationArguments(invocation, stageOperations._1(), null, stageOperations._2());
 	}
 	
 	/**
 	 * Creates stage by
 	 * 	1. constructing KeyValueExtractorFunction from the KV mapping Functions provided as
 	 *     0 and 1 arguments of the 'reduce' operation.
-	 *  2. composing final Function if previous operation is 'compute' 
-	 *  	- (KeyValueExtractorFunction + previous invocation Function)
+	 *  2. composing final Function if previous operation is an in-stage operation
+	 *  	- (previous Function + KeyValueExtractorFunction)
 	 *     otherwise final Function is KeyValueExtractorFunction.
-	 *  3. determining aggregator BinaryOperation used to create stage
-	 *  
-	 *  NOTE: Aggregator used in stage creation will be converted to a Function
-	 *  and composed with stage's final Function (if present) or used as final stage Function
-	 *  itself if stage function is not present (e.g., classic MapReduce with nothing after reduce)
-	 * 
-	 * @param invocation
+	 *  3. determining the stage's aggregator
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private void doReduce(ReflectiveMethodInvocation invocation){
+	private void processStageBoundaryInvocation(ReflectiveMethodInvocation invocation){
 		Object[] arguments = invocation.getArguments();
-		String stageName = invocation.getMethod().getName();
+		Function stageFunction = new KeyValueExtractorFunction((Function)arguments[0], (Function)arguments[1]);	
+		Pair<Function, BinaryOperator> stageOperations = this.gatherStageOperations(stageFunction);
 		
-		Function stageFunction = new KeyValueExtractorFunction((Function)arguments[0], (Function)arguments[1]);
-		
+		this.addStage(stageOperations._1(), stageOperations._2());
+	}
+	
+	/**
+	 * Will compose provided 'stageFunction' with function from the previous invocation 
+	 * if such invocation exists and represents an intermediate invocation (e.g., 'map', 
+	 * 'flatMap' etc., and not 'reduce'). Otherwise the provided stageFunction remains unchanged.
+	 * 
+	 * Will extract aggregator (BinaryOperator) from the previous invocation.
+	 * 
+	 * Will gather final function and aggregator into a pair
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private Pair<Function, BinaryOperator> gatherStageOperations(Function stageFunction){
 		BinaryOperator aggregatorOp = null;
-		if (this.previousInvocation != null) {
-			if (this.previousInvocation.getMethod().getName().equals("reduce")){	
-				aggregatorOp = (BinaryOperator) this.previousInvocation.getArguments()[2];
-				Assert.notNull(aggregatorOp, "'aggregatorOp' is null. Most definitely a BUG. Please report!");
-			} 
-			else {
-				stageName = "compute";
-				aggregatorOp = (BinaryOperator<?>) this.previousInvocation.getArguments()[1];
-				
-				Function computeFunction = (Function) this.previousInvocation.getArguments()[0];	
-				stageFunction = stageFunction.compose(computeFunction);
+		Function finalFunction = stageFunction;
+		if (this.previousInvocation != null) {	
+			aggregatorOp = (BinaryOperator) this.previousInvocation.getArguments()[2];
+			if (this.isInStageOperation(this.previousInvocation.getMethod().getName())){
+				Function sourceFunction = (Function)this.previousInvocation.getArguments()[0];
+				finalFunction = stageFunction.compose(sourceFunction);
 			}
 		} 
-
-		this.addStage(stageName, stageFunction, aggregatorOp);
+		return new Pair<Function, BinaryOperator>(finalFunction, aggregatorOp);
 	}
 	
 	/**
 	 * 
-	 * @param operationName
-	 * @param processingInstructions
-	 * @return
 	 */
-	private void addStage(String operationName, Function<Stream<?>, Stream<?>> processingFunction, BinaryOperator<?> aggregatorOp) {	
+	private void addStage(Function<Stream<?>, Stream<?>> processingFunction, BinaryOperator<?> aggregatorOp) {	
 		SourceSupplier<?> sources = this.stageIdCounter == 0 ? this.sourcesSupplier : null; 
 		int stageId = this.stageIdCounter++;
 		Stage stage = new Stage() {
@@ -267,7 +242,7 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 			
 			@Override
 			public String getName() {
-				return operationName;
+				return "STAGE_" + this.getId();
 			}
 			
 			@Override
@@ -288,8 +263,6 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	
 	/**
 	 * 
-	 * @param name
-	 * @return
 	 */
 	private DistributablePipelineSpecification buildPipelineSpecification(String name){
 
@@ -318,29 +291,28 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	}
 	
 	/**
-	 * 
+	 * By this point previousInvocation is either current invocation or contains a 
+	 * composition (if using Streams API style). 
+	 * However we are only extracting stage function from it if previous invocation 
+	 * is an in-stage invocation (e.g., map, flatMap, compute etc.), otherwise it is known
+	 * that previous stage was already created (see processStageBoundaryInvocation() method) 
+	 * leaving this last stage to only contain the aggregator.
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void createLastStage(){
-		if (this.previousInvocation.getMethod().getName().equals("reduce")){
-			this.addStage(this.previousInvocation.getMethod().getName(), null, (BinaryOperator)this.previousInvocation.getArguments()[2]);
-		} 
-		else {
-			Object[] args = this.previousInvocation.getArguments();
-			Function stageFunction = (Function) args[0];
-			BinaryOperator aggregatorOp = args.length == 2 ? (BinaryOperator<?>)args[1] : null;
-			this.addStage(this.previousInvocation.getMethod().getName(), stageFunction, aggregatorOp);
+		Function<Stream<?>, Stream<?>> stageFunction = null;
+		BinaryOperator<?> aggregatorOp = (BinaryOperator)this.previousInvocation.getArguments()[2];
+		if (this.isInStageOperation(this.previousInvocation.getMethod().getName())){
+			stageFunction = (Function) this.previousInvocation.getArguments()[0];
 		}
+		this.addStage(stageFunction, aggregatorOp);
 	}
 	
 	/**
 	 * 
-	 * @param pipelineSpecification
-	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	private Stream<Stream<?>> delegatePipelineSpecExecution(DistributablePipelineSpecification pipelineSpecification) {
-		
+	private Stream<Stream<?>> delegatePipelineSpecExecution(DistributablePipelineSpecification pipelineSpecification) {	
 		Properties prop = PipelineConfigurationUtils.loadDelegatesConfig();
 
 		String pipelineExecutionDelegateClassName = prop.getProperty(pipelineSpecification.getName());
@@ -378,9 +350,6 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	/**
 	 * Creates proxy over the result Stream to ensures that close() call is always delegated to
 	 * the close handler provided by the target ExecutionDelegate.
-	 * 
-	 * @param resultStream
-	 * @return
 	 */
 	@SuppressWarnings("unchecked")
 	private Stream<?> generateResultProxy(Stream<?> resultStream, Runnable closeHandler){
@@ -402,8 +371,6 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	
 	/**
 	 * 
-	 * @param proxyType
-	 * @return
 	 */
 	@SuppressWarnings("unchecked")
 	private R generateDistributableProxy(Class<?> proxyType){
@@ -421,5 +388,47 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 			logger.debug("Constructed builder proxy for " + Stream.of(pf.getProxiedInterfaces()).collect(Collectors.toList()));
 		}
 		return (R) pf.getProxy();
+	}
+	
+	/**
+	 * 
+	 */
+	private String determinePipelineName(MethodInvocation invocation){
+		String pipelineName;
+		if (invocation.getArguments().length == 1){
+			pipelineName = invocation.getArguments()[0].toString();
+		}
+		else {
+			pipelineName = UUID.randomUUID().toString();
+			if (logger.isInfoEnabled()){
+				logger.info("Generated pipeline name as: ");
+			}
+		}
+		return pipelineName;
+	}
+	
+	/**
+	 * 
+	 */
+	private boolean isInStageOperation(String operationName){
+		return operationName.equals("flatMap") || 
+			   operationName.equals("map") || 
+			   operationName.equals("filter") ||
+			   operationName.equals("compute");
+	}
+	
+	/**
+	 * 
+	 */
+	private boolean isStageBoundaryOperation(String operationName){
+		return operationName.equals("reduce");
+	}
+	
+	/**
+	 * 
+	 */
+	@SuppressWarnings("rawtypes")
+	private void updateInvocationArguments(ReflectiveMethodInvocation invocation, Function f1, Function f2, BinaryOperator aggregatorOp) {
+		invocation.setArguments(new Object[]{f1, f2, aggregatorOp});
 	}
 }
