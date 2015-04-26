@@ -21,6 +21,26 @@ public class PipelineAPITests {
 	private final String applicationName = "WordCount";
 	
 	@Test
+	public void executeAs() {
+		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/org/apache/dstream/tez/sample.txt").toURI());
+		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
+		
+		Stream<Stream<String>> result = sourcePipeline.executeAs(this.applicationName);
+		
+		List<Stream<String>> resultStreams = result.collect(Collectors.toList());
+		Assert.assertEquals(1, resultStreams.size());
+		Stream<String> firstResultStream = resultStreams.get(0);
+		
+		List<String> firstResult = firstResultStream.collect(Collectors.toList());
+		Assert.assertEquals(3, firstResult.size());
+		Assert.assertEquals("We cannot solve our problems with", firstResult.get(0).trim());
+		Assert.assertEquals("the same thinking we used when", firstResult.get(1).trim());
+		Assert.assertEquals("we created them.", firstResult.get(2).trim());
+		
+		result.close();
+	}
+	
+	@Test
 	public void computeReduce() {
 		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/org/apache/dstream/tez/sample.txt").toURI());
 		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);

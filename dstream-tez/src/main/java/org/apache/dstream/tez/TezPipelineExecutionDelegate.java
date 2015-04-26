@@ -1,5 +1,6 @@
 package org.apache.dstream.tez;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -12,10 +13,13 @@ import org.apache.dstream.DistributablePipelineSpecification;
 import org.apache.dstream.DistributablePipelineSpecification.Stage;
 import org.apache.dstream.ExecutionDelegate;
 import org.apache.dstream.support.SourceSupplier;
+import org.apache.dstream.support.UriSourceSupplier;
 import org.apache.dstream.tez.utils.HadoopUtils;
+import org.apache.dstream.tez.utils.SequenceFileOutputStreamsBuilder;
 import org.apache.dstream.utils.PipelineConfigurationUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.yarn.api.records.LocalResource;

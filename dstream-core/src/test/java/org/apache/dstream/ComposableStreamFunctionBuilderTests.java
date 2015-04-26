@@ -30,7 +30,9 @@ public class ComposableStreamFunctionBuilderTests {
 					
 		Stream<String> stream = list.stream();
 		
-		List<Entry<String, Integer>> result = (List<Entry<String, Integer>>) composableStreamFunction.apply(stream).collect(Collectors.toList());
+		List<?> r = composableStreamFunction.apply(stream).collect(Collectors.toList());
+		List<Entry<String, Integer>> result = (List<Entry<String, Integer>>)r;
+
 		Assert.assertEquals(4, result.size());
 		for (Entry<String, Integer> entry : result) {
 			Assert.assertEquals("foo", entry.getKey());

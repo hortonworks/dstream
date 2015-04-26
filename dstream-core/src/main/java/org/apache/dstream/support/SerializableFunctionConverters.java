@@ -14,8 +14,7 @@ public final class SerializableFunctionConverters {
 	 * @param <R>
 	 */
 	public static interface Function<T,R> extends java.util.function.Function<T, R>, Serializable{
-		@Override
-		default <V> Function<V, R> compose(java.util.function.Function<? super V, ? extends T> before) {
+		default <V> Function<V, R> compose(Function<? super V, ? extends T> before) {
 	        Objects.requireNonNull(before);
 	        return new Function<V, R>() {
 				private static final long serialVersionUID = -8429315342325486066L;
@@ -26,8 +25,7 @@ public final class SerializableFunctionConverters {
 	        };
 	    }
 			
-		@Override
-		default <V> Function<T, V> andThen(java.util.function.Function<? super R, ? extends V> after) {
+		default <V> Function<T, V> andThen(Function<? super R, ? extends V> after) {
 	        Objects.requireNonNull(after);
 	        return new Function<T,V>() {
 				private static final long serialVersionUID = -559880927330709790L;
