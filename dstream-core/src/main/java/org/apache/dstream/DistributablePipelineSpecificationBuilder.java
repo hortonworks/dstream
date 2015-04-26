@@ -1,11 +1,10 @@
 package org.apache.dstream;
 
-import java.lang.reflect.Method;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -25,13 +24,13 @@ import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.aop.framework.ReflectiveMethodInvocation;
 
 /**
- * Builds specification of data processing pipeline which could be executed in 
- * the distributed environment.
+ * Builds data processing pipeline specification by capturing and interpreting 
+ * operations on {@link DistributablePipeline} and {@link DistributableStream}.
  * 
  * @param <T> the type of the elements in the pipeline
- * @param <R> the type of {@link Distributable}.
+ * @param <R> the type of {@link DistributableExecutable}.
  */
-class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> implements MethodInterceptor {
+class DistributablePipelineSpecificationBuilder<T,R extends DistributableExecutable<T>> implements MethodInterceptor {
 	
 	private static Logger logger = LoggerFactory.getLogger(DistributablePipelineSpecificationBuilder.class);
 	
@@ -56,7 +55,7 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	 * @param sourcesSupplier
 	 * @param proxyType
 	 */
-	private DistributablePipelineSpecificationBuilder(Class<?> sourceItemType, SourceSupplier<?> sourcesSupplier, Class<? extends Distributable<?>> proxyType) {	
+	private DistributablePipelineSpecificationBuilder(Class<?> sourceItemType, SourceSupplier<?> sourcesSupplier, Class<? extends DistributableExecutable<?>> proxyType) {	
 		Assert.isTrue(DistributableStream.class.isAssignableFrom(proxyType) 
 				|| DistributablePipeline.class.isAssignableFrom(proxyType), "Unsupported proxy type " + 
 						proxyType + ". Supported types are " + DistributablePipeline.class + " & " + DistributableStream.class);
@@ -68,15 +67,15 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	}
 	
 	/**
-	 * Factory method to create an instance of {@link Distributable} 
+	 * Factory method to create an instance of {@link DistributableExecutable} 
 	 * 
 	 * @param sourceElementType the type of the elements of the stream
 	 * @param sourcesSupplier the {@link SourceSupplier} for the sources of the stream
-	 * @param distributableType a subclass of {@link Distributable}
+	 * @param distributableType a subclass of {@link DistributableExecutable}
 	 * 
-	 * @return an instance of {@link Distributable}
+	 * @return an instance of {@link DistributableExecutable}
 	 */
-	static <T,R extends Distributable<T>> R getAs(Class<T> sourceElementType, SourceSupplier<?> sourcesSupplier, Class<? extends R> distributableType) {
+	static <T,R extends DistributableExecutable<T>> R getAs(Class<T> sourceElementType, SourceSupplier<?> sourcesSupplier, Class<? extends R> distributableType) {
 		DistributablePipelineSpecificationBuilder<T,R> builder = new DistributablePipelineSpecificationBuilder<T,R>(sourceElementType, sourcesSupplier, distributableType);
 		return builder.targetDistributable;
 	}
@@ -90,8 +89,10 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 		Class<?>[] parameterTypes = invocation.getMethod().getParameterTypes();
 		
 		if ("executeAs".equals(operationName)){
-			String pipelineName = this.determinePipelineName(invocation);
-			DistributablePipelineSpecification pipelineSpec = this.buildPipelineSpecification(pipelineName);
+			String pipelineName = invocation.getArguments()[0].toString();
+			Assert.notEmpty(pipelineName, "'pipelineName' must not be null or empty");
+			URI outputPath = invocation.getArguments().length == 2 ? (URI)invocation.getArguments()[1] : null;
+			DistributablePipelineSpecification pipelineSpec = this.buildPipelineSpecification(pipelineName, outputPath);
 			if (logger.isInfoEnabled()){
 				logger.info("Pipeline spec: " + pipelineSpec);
 			}
@@ -128,7 +129,7 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	 */
 	private void doDistributableStream(ReflectiveMethodInvocation invocation){
 		String operationName = invocation.getMethod().getName();		
-		if (this.isInStageOperation(operationName)){
+		if (this.isStageOperation(operationName)){
 			this.composableStreamFunction.add(new DistributableStreamToStreamAdapterFunction(operationName, invocation.getArguments()[0]));
 			this.updateInvocationArguments(invocation, this.composableStreamFunction, null, null);
 		} 
@@ -148,7 +149,7 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	 */
 	private void doDistributablePipeline(ReflectiveMethodInvocation invocation){
 		String operationName = invocation.getMethod().getName();
-		if (this.isInStageOperation(operationName)){
+		if (this.isStageOperation(operationName)){
 			this.processInStageInvocation(invocation);
 		}
 		else if (this.isStageBoundaryOperation(operationName)){
@@ -160,17 +161,21 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	}
 	
 	/**
-	 * Transforms and preserves the actual invocation of 'compute' until stage creation.
+	 * Holds the actual invocation of 'compute' until subsequent invocation of stage boundary operation.
+	 * In the event where the subsequent invocation is another 'compute' the two will be composed 
+	 * into one.
 	 * 
-	 * The following transformation occur:
-	 * 	- All subsequent 'compute' operations are composed into a single one.
-	 * 	- If aggregator BinaryOperator is present it will be added as a second argument to 
-	 *    transformed  invocation so it could be included in the stage later on.
+	 * In the event where stage boundary operation is followed by a another 'compute', 
+	 * (e.g., compute->reduce->compute - a two stage DAG) the aggregator provided by the stage boundary 
+	 * operation will become part of the subsequent 'compute' stage.
 	 */
 	@SuppressWarnings("rawtypes")
 	private void processInStageInvocation(ReflectiveMethodInvocation invocation){
 		Function finalFunction = (Function) invocation.getArguments()[0];	
 		Pair<Function, BinaryOperator> stageOperations = this.gatherStageOperations(finalFunction);
+		if (stageOperations._2() != null){
+			System.out.println();
+		}
 		
 		this.updateInvocationArguments(invocation, stageOperations._1(), null, stageOperations._2());
 	}
@@ -208,7 +213,7 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 		Function finalFunction = stageFunction;
 		if (this.previousInvocation != null) {	
 			aggregatorOp = (BinaryOperator) this.previousInvocation.getArguments()[2];
-			if (this.isInStageOperation(this.previousInvocation.getMethod().getName())){
+			if (this.isStageOperation(this.previousInvocation.getMethod().getName())){
 				Function sourceFunction = (Function)this.previousInvocation.getArguments()[0];
 				finalFunction = stageFunction.compose(sourceFunction);
 			}
@@ -264,7 +269,7 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	/**
 	 * 
 	 */
-	private DistributablePipelineSpecification buildPipelineSpecification(String name){
+	private DistributablePipelineSpecification buildPipelineSpecification(String name, URI outputPath){
 
 		this.createLastStage();
 
@@ -280,11 +285,18 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 			public String getName() {
 				return name;
 			}
-			public String toString(){
+			public String toString() {
+				List<Stage> stages = this.getStages();
 				return "\n" + 
 						"Name: " + name + "\n" +
-						"Source item type: " + getStages().get(0).getSourceItemType().getSimpleName() + "\n" + 
+						"Output path: " + outputPath +"\n" +
+						"Source item type: " + (stages.size() > 0 ? getStages().get(0).getSourceItemType().getSimpleName() : "<>")  + "\n" + 
 						"Stages: " + this.getStages();
+			}
+
+			@Override
+			public URI getOutputUri() {
+				return outputPath;
 			}
 		};
 		return specification;
@@ -301,10 +313,20 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void createLastStage(){
 		Function<Stream<?>, Stream<?>> stageFunction = null;
-		BinaryOperator<?> aggregatorOp = (BinaryOperator)this.previousInvocation.getArguments()[2];
-		if (this.isInStageOperation(this.previousInvocation.getMethod().getName())){
-			stageFunction = (Function) this.previousInvocation.getArguments()[0];
+		BinaryOperator<?> aggregatorOp = null;
+		if (this.previousInvocation != null){
+			aggregatorOp = (BinaryOperator)this.previousInvocation.getArguments()[2];
+			if (this.isStageOperation(this.previousInvocation.getMethod().getName())){
+				stageFunction = (Function) this.previousInvocation.getArguments()[0];
+			}
+		} 
+		else {
+			logger.info("Current pipeine has a single stage with no processing instructions "
+					+ "and will be initialized with default Function (wysiwyg -> wysiwyg) where input "
+					+ "becomes output without any transformation.");
+			stageFunction = wysiwyg -> wysiwyg;
 		}
+		
 		this.addStage(stageFunction, aggregatorOp);
 	}
 	
@@ -328,19 +350,14 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 			ExecutionDelegate pipelineExecutionDelegate = (ExecutionDelegate) ReflectionUtils.newDefaultInstance(Class
 					.forName(pipelineExecutionDelegateClassName, true, 
 							Thread.currentThread().getContextClassLoader()));
-			Method delegateMethod = ReflectionUtils.findMethod(pipelineExecutionDelegate.getClass(), Stream[].class, DistributablePipelineSpecification.class);
-			delegateMethod.setAccessible(true);
-
-			Stream<?>[] resultStreams =  (Stream<?>[]) delegateMethod.invoke(pipelineExecutionDelegate, pipelineSpecification);
+			Stream<?>[] resultStreams =  pipelineExecutionDelegate.execute(pipelineSpecification);
 			return (Stream<Stream<?>>) this.generateResultProxy(Stream.of(resultStreams), pipelineExecutionDelegate.getCloseHandler());
 		} 
 		catch (Exception e) {
 			String messageSuffix = "";
-			if (e instanceof NoSuchMethodException) {
-				messageSuffix = "Probable cause: Your specified implementation '"
-						+ pipelineExecutionDelegateClassName
-						+ "' does not expose a method with the following signature - "
-						+ "<anyModifier> java.util.stream.Stream<?>[] <anyName>(org.apache.dstream.PipelineSpecification pipelineSpecification)";
+			if (e instanceof ClassNotFoundException) {
+				messageSuffix = "Probable cause: Your specified implementation of ExecutionDelegate '"
+						+ pipelineExecutionDelegateClassName + "' can not be found.";
 			}
 			throw new IllegalStateException("Failed to execute pipeline '"
 					+ pipelineSpecification.getName() + "'. " + messageSuffix, e);
@@ -393,24 +410,7 @@ class DistributablePipelineSpecificationBuilder<T,R extends Distributable<T>> im
 	/**
 	 * 
 	 */
-	private String determinePipelineName(MethodInvocation invocation){
-		String pipelineName;
-		if (invocation.getArguments().length == 1){
-			pipelineName = invocation.getArguments()[0].toString();
-		}
-		else {
-			pipelineName = UUID.randomUUID().toString();
-			if (logger.isInfoEnabled()){
-				logger.info("Generated pipeline name as: ");
-			}
-		}
-		return pipelineName;
-	}
-	
-	/**
-	 * 
-	 */
-	private boolean isInStageOperation(String operationName){
+	private boolean isStageOperation(String operationName){
 		return operationName.equals("flatMap") || 
 			   operationName.equals("map") || 
 			   operationName.equals("filter") ||

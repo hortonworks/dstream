@@ -18,7 +18,7 @@ import org.apache.dstream.support.SerializableFunctionConverters.Predicate;
  *
  * @param <T> the type of the stream elements
  */
-public interface DistributableStream<T> extends Distributable<T>{
+public interface DistributableStream<T> extends DistributableExecutable<T>{
 
 	/**
 	 * Factory method which returns a sequential {@code DistributableStream} of 
@@ -137,6 +137,4 @@ public interface DistributableStream<T> extends Distributable<T>{
 	
 	<TT,R> DistributableStream<R> join(DistributableStream<TT> streamR, 
 			BiFunction<Stream<T>, Stream<TT>, Stream<R>> joinFunction);
-	
-	Stream<T> stream();
 }

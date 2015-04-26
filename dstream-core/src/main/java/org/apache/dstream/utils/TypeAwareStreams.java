@@ -43,19 +43,11 @@ public class TypeAwareStreams {
 	 */
 	public static class TypeAwareObjectOutputStream extends ObjectOutputStream {
 		
-//		private Class<?> interpreterCl;
-		
 		/**
 		 * 
 		 */
 		public TypeAwareObjectOutputStream(OutputStream out) throws IOException {
 			super(out);
-//			try {
-//				this.interpreterCl = Class.forName("scala.tools.nsc.interpreter.AbstractFileClassLoader");
-//			} catch (Exception e) {
-//				logger.warn("Failed to load 'scala.tools.nsc.interpreter.AbstractFileClassLoader'. "
-//						+ "REPL-generated classes will not be available with serialized stream");
-//			}
 		}
 		
 		/**
@@ -68,7 +60,7 @@ public class TypeAwareStreams {
 			}
 						
 			ClassLoader classLoader = cl.getClassLoader();
-			boolean shouldSerializeClassDef = classLoader != null && this.isReplClassLoader(cl.getClassLoader());
+			boolean shouldSerializeClassDef = true; // here you can create condition for when to annotate with class info
 			this.writeBoolean(shouldSerializeClassDef);
 				
 			if (shouldSerializeClassDef){
@@ -83,15 +75,6 @@ public class TypeAwareStreams {
 				writeInt(classBytes.length);
 			    write(classBytes);
 			}
-		}
-		
-		/**
-		 * 
-		 */
-		private boolean isReplClassLoader(ClassLoader cl) {
-//			return this.interpreterCl != null && 
-//				   this.interpreterCl.isAssignableFrom(cl.getClass());
-			return false;
 		}
 	}
 	

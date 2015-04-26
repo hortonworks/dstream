@@ -1,6 +1,7 @@
 package org.apache.dstream;
 
 import java.io.Serializable;
+import java.net.URI;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -19,6 +20,8 @@ public interface DistributablePipelineSpecification extends Serializable {
 	public String getName();
 
 	public List<Stage> getStages();
+	
+	public URI getOutputUri();
 	
 	/**
 	 * 

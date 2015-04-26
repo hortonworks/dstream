@@ -135,22 +135,22 @@ public class TezExecutableDAGBuilder {
 		Function<Stream<?>, Stream<?>> processingFunction = stage.getProcessingFunction();
 		if (stage.getAggregatorOperator() != null) {
 			Function<Stream<?>,Stream<?>> aggregatingFunction = new KeyValuesStreamAggregatingFunction(stage.getAggregatorOperator());
-			processingFunction = processingFunction == null ? aggregatingFunction : processingFunction.compose((Function) aggregatingFunction);
+			processingFunction = processingFunction == null ? aggregatingFunction : processingFunction.compose(aggregatingFunction);
 		} 
-		else if (processingFunction == null){
+		else if (processingFunction == null) {
 			throw new IllegalStateException("Both processing function and aggregator op are null. "
-					+ "This condition is invalid as it will result in a stage wiyth no processing instruction and is definitely a bug. Please report!");
+					+ "This condition is invalid as it will result in a stage with no processing instruction and is definitely a bug. Please report!");
 		}
 		
 		if (stage.getId() == 0 && !Entry.class.isAssignableFrom(stage.getSourceItemType())){	
 			if (Writable.class.isAssignableFrom(stage.getSourceItemType())){
-				processingFunction = processingFunction.compose((Function<Stream<?>, Stream<?>>)stream -> stream.map(s -> ((Entry<?,?>)s).getValue()));
+				processingFunction = processingFunction.compose(stream -> stream.map(s -> ((Entry)s).getValue()));
 			} 
 			else {
 				ParameterizedType parameterizedType = (ParameterizedType) this.inputFormatClass.getGenericSuperclass();
 				Type type = parameterizedType.getActualTypeArguments()[1];
 				if (Text.class.getName().equals(type.getTypeName())){
-					processingFunction = processingFunction.compose((Function<Stream<?>, Stream<?>>)stream -> ((Stream<Entry<?, ?>>)stream).map(s -> s.getValue().toString()));
+					processingFunction = processingFunction.compose(stream -> stream.map(s -> ((Entry)s).getValue().toString()));
 				} 
 				else {
 					//TODO need to design some type of extensible converter to support multiple types of Writable

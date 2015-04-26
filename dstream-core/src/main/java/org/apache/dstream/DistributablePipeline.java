@@ -10,7 +10,7 @@ import org.apache.dstream.support.SerializableFunctionConverters.BiFunction;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 
-public interface DistributablePipeline<T> extends Distributable<T> {
+public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 
 	/**
 	 * Factory method which returns a sequential {@code DistributablePipeline} of 
@@ -53,17 +53,6 @@ public interface DistributablePipeline<T> extends Distributable<T> {
 	 */
 	<R> DistributablePipeline<R> compute(Function<? extends Stream<T>, ? extends Stream<R>> computeFunction);
 	
-	
-//	/**
-//	 * Returns a pipeline consisting of the key/value results of applying computation to the 
-//	 * elements of the underlying stream.
-//	 * 
-//	 * @param computeFunction a mapping function to map {@link Stream&lt;T&gt;} to key/value {@link Stream&lt;Entry&lt;K,V&gt;&gt;}.
-//	 * @return the new {@link DistributableKeyValuePipeline} of type K,V
-//	 */
-//	<K,V> DistributableKeyValuePipeline<K,V> computeKeyValues(Function<? extends Stream<T>, ? extends Stream<Entry<K,V>>> computeFunction);
-	
-	
 	/**
 	 * Returns a pipeline consisting of the results of applying reduce functionality on
 	 * the elements of the underlying stream.
@@ -90,7 +79,7 @@ public interface DistributablePipeline<T> extends Distributable<T> {
 	/**
 	 * Will calculate partitions using the entire value of each element of the stream.
 	 * 
-	 * Unless configured via {@link Distributable#PARTITIONER} property, the system will 
+	 * Unless configured via {@link DistributableExecutable#PARTITIONER} property, the system will 
 	 * use default {@link DefaultHashPartitioner}
 	 * 
 	 * @return the new {@link DistributablePipeline} of type T
@@ -101,7 +90,7 @@ public interface DistributablePipeline<T> extends Distributable<T> {
 	 * Will calculate partitions using the resulting value of applying classifier function on each 
 	 * element of the stream.
 	 * 
-	 * Unless configured via {@link Distributable#PARTITIONER} property, the system will 
+	 * Unless configured via {@link DistributableExecutable#PARTITIONER} property, the system will 
 	 * use default {@link DefaultHashPartitioner}
 	 * 
 	 * @return the new {@link DistributablePipeline} of type T
