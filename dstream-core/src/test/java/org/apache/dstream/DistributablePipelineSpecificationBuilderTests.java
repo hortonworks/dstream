@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javafx.animation.Animation.Status;
 import junit.framework.Assert;
 
 import org.apache.dstream.DistributablePipelineSpecification.Stage;
