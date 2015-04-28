@@ -10,6 +10,8 @@ import java.util.stream.StreamSupport;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.utils.KVUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Will aggregate values of a {@link Stream} who's elements are Key/Values pairs 
@@ -22,6 +24,8 @@ import org.apache.dstream.utils.KVUtils;
 public class KeyValuesStreamAggregatingFunction<K,V> implements Function<Stream<Entry<K,Iterator<V>>>,Stream<Entry<K,V>>> {
 
 	private static final long serialVersionUID = 1133920289646508908L;
+	
+	private final Logger logger = LoggerFactory.getLogger(KeyValuesStreamAggregatingFunction.class);
 	
 	private final BinaryOperator<V> aggregationOperator;
 	
@@ -48,8 +52,14 @@ public class KeyValuesStreamAggregatingFunction<K,V> implements Function<Stream<
 	 */
 	@SuppressWarnings("unchecked")
 	private Entry<K, V> mergeValuesForCurrentKey(Entry<K, Iterator<V>> currentEntry){
-		Stream<V> valuesStream = (Stream<V>) StreamSupport.stream(Spliterators.spliteratorUnknownSize(currentEntry.getValue(), Spliterator.ORDERED), false);
-		Object value = valuesStream.reduce(this.aggregationOperator).get();
-		return (Entry<K, V>) KVUtils.kv(currentEntry.getKey(), value);
+		try {
+			Stream<V> valuesStream = (Stream<V>) StreamSupport.stream(Spliterators.spliteratorUnknownSize(currentEntry.getValue(), Spliterator.ORDERED), false);
+			Object value = valuesStream.reduce(this.aggregationOperator).get();
+			return (Entry<K, V>) KVUtils.kv(currentEntry.getKey(), value);
+		} 
+		catch (Exception e) {
+			logger.error("Failed to merge values for key " + currentEntry.getKey(), e);
+			throw new IllegalStateException(e);
+		}
 	}
 }

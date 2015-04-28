@@ -60,7 +60,7 @@ public class TypeAwareStreams {
 			}
 						
 			ClassLoader classLoader = cl.getClassLoader();
-			boolean shouldSerializeClassDef = true; // here you can create condition for when to annotate with class info
+			boolean shouldSerializeClassDef = false; // here you can create condition for when to annotate with class info
 			this.writeBoolean(shouldSerializeClassDef);
 				
 			if (shouldSerializeClassDef){

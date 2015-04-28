@@ -1,32 +1,31 @@
 package org.apache.dstream.tez;
 
-import java.io.File;
-import java.net.URI;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import junit.framework.Assert;
 
 import org.apache.dstream.DistributableStream;
-import org.apache.dstream.support.SourceSupplier;
-import org.apache.dstream.support.UriSourceSupplier;
 import org.junit.Test;
 
 public class StreamAPITests {
 	
+	private final String applicationName = this.getClass().getSimpleName();
 	
 	@Test
-	public void flatMapReduce() {
-		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/demo/sample.txt").toURI());
-		DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, sourceSupplier);
+	public void flatMapReduce() throws Exception {
+		DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, "wc");
 		
-		Stream<Stream<Entry<String, Integer>>> result = sourceStream
+		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.reduce(word -> word, word -> 1, Integer::sum)
-			.executeAs("WordCount");
+			.executeAs(this.applicationName);
 		
+		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
 		List<Stream<Entry<String, Integer>>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
 		Stream<Entry<String, Integer>> firstResultStream = resultStreams.get(0);
@@ -38,17 +37,16 @@ public class StreamAPITests {
 	}
 	
 	@Test
-	public void flatMapReduceMap() {
-		String applicationName = "WordCount";
-		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/demo/sample.txt").toURI());
-		DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, sourceSupplier);
+	public void flatMapReduceMap() throws Exception {
+		DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, "wc");
 		
-		Stream<Stream<String>> result = sourceStream
+		Future<Stream<Stream<String>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.reduce(word -> word, word -> 1, Integer::sum)
 				.map(entry -> entry.toString())
-			.executeAs(applicationName);
+			.executeAs(this.applicationName);
 		
+		Stream<Stream<String>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
 		List<Stream<String>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
 		Stream<String> firstResultStream = resultStreams.get(0);
@@ -61,18 +59,17 @@ public class StreamAPITests {
 	}
 	
 	@Test
-	public void flatMapFilterReduceMap() {
-		String applicationName = "WordCount";
-		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/demo/sample.txt").toURI());
-		DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, sourceSupplier);
+	public void flatMapFilterReduceMap() throws Exception {
+		DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, "wc");
 		
-		Stream<Stream<String>> result = sourceStream
+		Future<Stream<Stream<String>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.filter(word -> word.equals("we"))
 				.reduce(word -> word, word -> 1, Integer::sum)
 				.map(entry -> entry.toString())
-			.executeAs(applicationName);
+			.executeAs(this.applicationName);
 		
+		Stream<Stream<String>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
 		List<Stream<String>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
 		Stream<String> firstResultStream = resultStreams.get(0);
@@ -85,19 +82,18 @@ public class StreamAPITests {
 	}
 	
 	@Test
-	public void flatMapFilterMapReduceMap() {
-		String applicationName = "WordCount";
-		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/demo/sample.txt").toURI());
-		DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, sourceSupplier);
+	public void flatMapFilterMapReduceMap() throws Exception {
+		DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, "wc");
 		
-		Stream<Stream<String>> result = sourceStream
+		Future<Stream<Stream<String>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.filter(word -> word.equals("we"))
 				.map(word -> word.toUpperCase())
 				.reduce(word -> word, word -> 1, Integer::sum)
 				.map(entry -> entry.toString())
-			.executeAs(applicationName);
+			.executeAs(this.applicationName);
 		
+		Stream<Stream<String>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
 		List<Stream<String>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
 		Stream<String> firstResultStream = resultStreams.get(0);

@@ -2,31 +2,29 @@ package org.apache.dstream.tez;
 
 import static org.apache.dstream.utils.KVUtils.kv;
 
-import java.io.File;
-import java.net.URI;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import junit.framework.Assert;
 
 import org.apache.dstream.DistributablePipeline;
-import org.apache.dstream.support.SourceSupplier;
-import org.apache.dstream.support.UriSourceSupplier;
 import org.junit.Test;
 
 public class PipelineAPITests {
 	
-	private final String applicationName = "WordCount";
+	private final String applicationName = this.getClass().getSimpleName();
 	
 	@Test
-	public void executeAs() {
-		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/org/apache/dstream/tez/sample.txt").toURI());
-		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
+	public void executeAs() throws Exception {
+		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, "wc");
 		
-		Stream<Stream<String>> result = sourcePipeline.executeAs(this.applicationName);
+		Future<Stream<Stream<String>>> resultFuture = sourcePipeline.executeAs(this.applicationName);
 		
+		Stream<Stream<String>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
 		List<Stream<String>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
 		Stream<String> firstResultStream = resultStreams.get(0);
@@ -41,16 +39,17 @@ public class PipelineAPITests {
 	}
 	
 	@Test
-	public void computeReduce() {
-		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/org/apache/dstream/tez/sample.txt").toURI());
-		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
+	public void computeReduce() throws Exception {
 		
-		Stream<Stream<Entry<String, Integer>>> result = sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
+		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, "wc");
+		
+		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.map(word -> kv(word, 1))
 			).reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
 			 .executeAs(this.applicationName);
 		
+		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
 		List<Stream<Entry<String, Integer>>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
 		Stream<Entry<String, Integer>> firstResultStream = resultStreams.get(0);
@@ -63,11 +62,10 @@ public class PipelineAPITests {
 	}
 	
 	@Test
-	public void computeReduceCompute() {
-		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/org/apache/dstream/tez/sample.txt").toURI());
-		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
+	public void computeReduceCompute() throws Exception {
+		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, "wc");
 		
-		Stream<Stream<Entry<String, Integer>>> result = sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
+		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.map(word -> kv(word, 1))
 			).reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
@@ -76,6 +74,7 @@ public class PipelineAPITests {
 				.filter(entry -> entry.getKey().equals("we"))
 			).executeAs(this.applicationName);
 		
+		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
 		List<Stream<Entry<String, Integer>>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
 		Stream<Entry<String, Integer>> firstResultStream = resultStreams.get(0);
@@ -89,11 +88,10 @@ public class PipelineAPITests {
 	}
 	
 	@Test
-	public void computeReduceComputeNonEntry() {
-		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/org/apache/dstream/tez/sample.txt").toURI());
-		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
+	public void computeReduceComputeNonEntry() throws Exception {
+		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, "wc");
 		
-		Stream<Stream<String>> result = sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
+		Future<Stream<Stream<String>>> resultFuture = sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.map(word -> kv(word, 1))
 			).reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
@@ -103,20 +101,21 @@ public class PipelineAPITests {
 				.map(entry -> entry.toString())
 			).executeAs(this.applicationName);
 		
+		Stream<Stream<String>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
 		result.forEach(stream -> stream.forEach(System.out::println));
 		
 		result.close();
 	}
 	
 	@Test
-	public void reduce() {
-		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/org/apache/dstream/tez/sample.txt").toURI());
-		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
+	public void reduce() throws Exception {
+		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, "wc");
 		
-		Stream<Stream<Entry<Integer, Integer>>> result = sourcePipeline
+		Future<Stream<Stream<Entry<Integer, Integer>>>> resultFuture = sourcePipeline
 				.reduce(s -> s.length(), s -> 1, Integer::sum)
 				.executeAs(this.applicationName);
 		
+		Stream<Stream<Entry<Integer, Integer>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
 		List<Stream<Entry<Integer, Integer>>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
 		Stream<Entry<Integer, Integer>> firstResultStream = resultStreams.get(0);
@@ -137,17 +136,16 @@ public class PipelineAPITests {
 	}
 	
 	@Test
-	public void compute() {
-		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/org/apache/dstream/tez/sample.txt").toURI());
-		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
+	public void compute() throws Exception {
+		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, "wc");
 		
-		Stream<Stream<Entry<String, Integer>>> result = 
+		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = 
 				sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
 					.flatMap(line -> Stream.of(line.split("\\s+")))
 					.map(word -> kv(word, 1))
 				).executeAs(this.applicationName);
 		
-		
+		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
 		List<Stream<Entry<String, Integer>>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
 		Stream<Entry<String, Integer>> firstResultStream = resultStreams.get(0);
@@ -165,27 +163,26 @@ public class PipelineAPITests {
 	}
 	
 	@Test
-	public void computeNonKeyValue() {
-		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/org/apache/dstream/tez/sample.txt").toURI());
-		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
+	public void computeNonKeyValue() throws Exception {
+		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, "wc");
 		
-		Stream<Stream<String>> result = 
+		Future<Stream<Stream<String>>> resultFuture = 
 				sourcePipeline.<String>compute(stream -> stream
 					.flatMap(line -> Stream.of(line.split("\\s+")))
 					.map(word -> word)
 				).executeAs(this.applicationName);
 	
+		Stream<Stream<String>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
 		List<Stream<String>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
 		result.close();
 	}
 	
 	@Test
-	public void computeCompute() {  
-		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/org/apache/dstream/tez/sample.txt").toURI());
-		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
+	public void computeCompute() throws Exception {  
+		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, "wc");
 		
-		Stream<Stream<Entry<String, Integer>>> result = 
+		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = 
 				sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
 					.flatMap(line -> Stream.of(line.split("\\s+")))
 					.map(word -> kv(word, 1))
@@ -193,6 +190,7 @@ public class PipelineAPITests {
 				.compute(stream -> stream.filter(s -> s.getKey().length() == 2))
 				.executeAs(this.applicationName);
 		
+		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
 		List<Stream<Entry<String, Integer>>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
 		Stream<Entry<String, Integer>> firstResultStream = resultStreams.get(0);
@@ -213,11 +211,10 @@ public class PipelineAPITests {
 	}
 	
 	@Test
-	public void computeComputeComputeReduce() {
-		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/org/apache/dstream/tez/sample.txt").toURI());
-		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
+	public void computeComputeComputeReduce() throws Exception {
+		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, "wc");
 		
-		Stream<Stream<Entry<String, Integer>>> result = 
+		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = 
 				sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
 					.flatMap(line -> Stream.of(line.split("\\s+")))
 					.map(word -> kv(word, 1))
@@ -227,6 +224,7 @@ public class PipelineAPITests {
 				.reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
 				.executeAs(this.applicationName);
 		
+		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
 		List<Stream<Entry<String, Integer>>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
 		Stream<Entry<String, Integer>> firstResultStream = resultStreams.get(0);
@@ -241,11 +239,10 @@ public class PipelineAPITests {
 	}
 	
 	@Test
-	public void computeReduceComputeComputeReduce() {
-		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/org/apache/dstream/tez/sample.txt").toURI());
-		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
+	public void computeReduceComputeComputeReduce() throws Exception {
+		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, "wc");
 		
-		Stream<Stream<Entry<String, Integer>>> result = 
+		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = 
 				sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
 					.flatMap(line -> Stream.of(line.split("\\s+")))
 					.map(word -> kv(word, 1))
@@ -256,6 +253,8 @@ public class PipelineAPITests {
 				.compute(stream -> stream.filter(entry -> entry.getKey().startsWith("W")))
 				 .reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
 				.executeAs(this.applicationName);
+		
+		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
 		
 		List<Stream<Entry<String, Integer>>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
@@ -277,15 +276,15 @@ public class PipelineAPITests {
 	}
 	
 	@Test
-	public void reduceReduce() {
-		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/org/apache/dstream/tez/sample.txt").toURI());
-		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
+	public void reduceReduce() throws Exception {
+		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, "wc");
 		
-		Stream<Stream<Entry<String, Long>>> result = sourcePipeline
+		Future<Stream<Stream<Entry<String, Long>>>> resultFuture = sourcePipeline
 				.reduce(s -> s.toUpperCase(), s -> 1, Integer::sum)
 				.reduce(s -> s.getKey().trim() + "_" + s.hashCode(), s -> 1L, Long::sum)
 				.executeAs(this.applicationName);
 		
+		Stream<Stream<Entry<String, Long>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
 		List<Stream<Entry<String, Long>>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
 		Stream<Entry<String, Long>> firstResultStream = resultStreams.get(0);

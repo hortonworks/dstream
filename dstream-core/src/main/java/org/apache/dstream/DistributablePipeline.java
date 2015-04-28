@@ -12,20 +12,20 @@ import org.apache.dstream.support.SerializableFunctionConverters.Function;
 
 public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 
-	/**
-	 * Factory method which returns a sequential {@code DistributablePipeline} of 
-	 * elements of the provided type. The source for the {@link DistributablePipeline} 
-	 * could be provided at the configuration time by setting {@value #SRC_SUPPLIER} 
-	 * or {@value #SRC_URL_SUPPLIER}. You can also provide the source by using 
-	 * {@link #ofType(Class, Supplier)} factory method. 
-	 * 
-	 * 
-	 * @param sourceItemType
-	 * @return
-	 */
-	public static <T> DistributablePipeline<T> ofType(Class<T> sourceItemType) {	
-		return ofType(sourceItemType, null);
-	}
+//	/**
+//	 * Factory method which returns a sequential {@code DistributablePipeline} of 
+//	 * elements of the provided type. The source for the {@link DistributablePipeline} 
+//	 * could be provided at the configuration time by setting {@value #SRC_SUPPLIER} 
+//	 * or {@value #SRC_URL_SUPPLIER}. You can also provide the source by using 
+//	 * {@link #ofType(Class, Supplier)} factory method. 
+//	 * 
+//	 * 
+//	 * @param sourceItemType
+//	 * @return
+//	 */
+//	public static <T> DistributablePipeline<T> ofType(Class<T> sourceItemType, String pipelineName) {	
+//		return ofType(sourceItemType, pipelineName);
+//	}
 	
 	/**
 	 * Factory method which returns a sequential {@code DistributablePipeline} of 
@@ -40,8 +40,8 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	 * @return the new {@link DistributablePipeline} of type T
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> DistributablePipeline<T> ofType(Class<T> sourceItemType, SourceSupplier<?> sourcesSupplier) {	
-		return DistributablePipelineSpecificationBuilder.getAs(sourceItemType, sourcesSupplier, DistributablePipeline.class);
+	public static <T> DistributablePipeline<T> ofType(Class<T> sourceItemType, String pipelineName) {	
+		return ExecutionContextSpecificationBuilder.getAs(sourceItemType, pipelineName, DistributablePipeline.class);
 	}
 	
 	/**

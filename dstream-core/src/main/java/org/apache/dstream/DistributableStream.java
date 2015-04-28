@@ -6,7 +6,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.support.SerializableFunctionConverters.BiFunction;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
@@ -22,21 +21,6 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 
 	/**
 	 * Factory method which returns a sequential {@code DistributableStream} of 
-	 * elements of the provided type. The source for the {@link DistributableStream} 
-	 * could be provided at the configuration time by setting {@value #SRC_SUPPLIER} 
-	 * or {@value #SRC_URL_SUPPLIER}. You can also provide the source by using 
-	 * {@link #ofType(Class, Supplier)} factory method. 
-	 * 
-	 * 
-	 * @param sourceItemType
-	 * @return
-	 */
-	public static <T> DistributableStream<T> ofType(Class<T> sourceItemType) {	
-		return ofType(sourceItemType, null);
-	}
-	
-	/**
-	 * Factory method which returns a sequential {@code DistributableStream} of 
 	 * elements of the provided type and source of the stream supplied by 
 	 * the {@link Supplier}
 	 * 
@@ -48,8 +32,8 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> DistributableStream<T> ofType(Class<T> sourceItemType, SourceSupplier<?> sourceSuppliers) {	
-		return DistributablePipelineSpecificationBuilder.getAs(sourceItemType, sourceSuppliers, DistributableStream.class);
+	public static <T> DistributableStream<T> ofType(Class<T> sourceItemType, String streamName) {	
+		return ExecutionContextSpecificationBuilder.getAs(sourceItemType, streamName, DistributableStream.class);
 	}
 	
 	/*

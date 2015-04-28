@@ -10,7 +10,7 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.DistributablePipelineSpecification.Stage;
+import org.apache.dstream.ExecutionContextSpecification.Stage;
 import org.apache.dstream.KeyValuesStreamAggregatingFunction;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SourceSupplier;
@@ -150,7 +150,7 @@ public class TezExecutableDAGBuilder {
 				ParameterizedType parameterizedType = (ParameterizedType) this.inputFormatClass.getGenericSuperclass();
 				Type type = parameterizedType.getActualTypeArguments()[1];
 				if (Text.class.getName().equals(type.getTypeName())){
-					processingFunction = processingFunction.compose(stream -> stream.map(s -> ((Entry)s).getValue().toString()));
+					processingFunction = processingFunction.compose(stream -> stream.map( s -> ((Entry)s).getValue().toString()));
 				} 
 				else {
 					//TODO need to design some type of extensible converter to support multiple types of Writable
