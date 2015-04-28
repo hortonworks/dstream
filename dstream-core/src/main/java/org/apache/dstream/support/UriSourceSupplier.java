@@ -13,6 +13,8 @@ public class UriSourceSupplier implements SourceSupplier<URI> {
 	
 	private final URI[] uris;
 	
+	private SourceFilter<URI> sourceFilter;
+
 	/**
 	 * 
 	 * @param uris
@@ -31,6 +33,11 @@ public class UriSourceSupplier implements SourceSupplier<URI> {
 		return new UriSourceSupplier(uris);
 	}
 	
+	public boolean equals(Object obj) {
+        return (obj instanceof UriSourceSupplier && 
+        		Arrays.equals(((UriSourceSupplier)obj).get(), this.get()));
+    }
+	
 	/**
 	 * 
 	 */
@@ -45,5 +52,15 @@ public class UriSourceSupplier implements SourceSupplier<URI> {
 	@Override
 	public String toString(){
 		return Arrays.asList(this.uris).toString();
+	}
+
+	@Override
+	public void setSourceFilter(SourceFilter<URI> sourceFilter) {
+		this.sourceFilter = sourceFilter;
+	}
+
+	@Override
+	public SourceFilter<URI> getSourceFilter() {
+		return this.sourceFilter;
 	}
 }

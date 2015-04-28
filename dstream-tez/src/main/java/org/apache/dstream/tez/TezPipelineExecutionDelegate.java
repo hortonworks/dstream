@@ -1,6 +1,5 @@
 package org.apache.dstream.tez;
 
-import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -9,17 +8,14 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
-import org.apache.dstream.DistributablePipelineSpecification;
-import org.apache.dstream.DistributablePipelineSpecification.Stage;
+import org.apache.dstream.ExecutionContextSpecification;
+import org.apache.dstream.ExecutionContextSpecification.Stage;
 import org.apache.dstream.ExecutionDelegate;
 import org.apache.dstream.support.SourceSupplier;
-import org.apache.dstream.support.UriSourceSupplier;
 import org.apache.dstream.tez.utils.HadoopUtils;
-import org.apache.dstream.tez.utils.SequenceFileOutputStreamsBuilder;
 import org.apache.dstream.utils.PipelineConfigurationUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.yarn.api.records.LocalResource;
@@ -43,7 +39,7 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 	 * 
 	 */
 	@Override
-	public Stream<?>[] execute(DistributablePipelineSpecification pipelineSpecification) {
+	public Stream<?>[] execute(ExecutionContextSpecification pipelineSpecification) {
 		try {
 			return this.doExecute(pipelineSpecification);
 		} 
@@ -78,7 +74,7 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 	 * @return
 	 * @throws Exception
 	 */
-	private Stream<?>[] doExecute(DistributablePipelineSpecification pipelineSpecification) throws Exception {
+	private Stream<?>[] doExecute(ExecutionContextSpecification pipelineSpecification) throws Exception {
 		if (logger.isInfoEnabled()){
 			logger.info("Executing pipeline: " + pipelineSpecification);
 		}
@@ -92,7 +88,7 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 			throw new IllegalStateException("Failed to access FileSystem", e);
 		}
 		
-		this.pipelineConfig = PipelineConfigurationUtils.loadPipelineConfig(pipelineSpecification.getName());
+		this.pipelineConfig = PipelineConfigurationUtils.loadExecutionConfig(pipelineSpecification.getName());
 		
 		if (this.tezClient == null){
 			this.createAndTezClient(pipelineSpecification, fs, tezConfiguration);
@@ -128,7 +124,7 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 	 * 
 	 * @param pipelineSpecification
 	 */
-	private void createAndTezClient(DistributablePipelineSpecification pipelineSpecification, FileSystem fs, TezConfiguration tezConfiguration){	
+	private void createAndTezClient(ExecutionContextSpecification pipelineSpecification, FileSystem fs, TezConfiguration tezConfiguration){	
 		Map<String, LocalResource> localResources = HadoopUtils.createLocalResources(fs, pipelineSpecification.getName() + 
 												"/" + TezConstants.CLASSPATH_PATH);
 		this.tezClient = new ExecutionContextAwareTezClient(pipelineSpecification.getName(), 

@@ -37,6 +37,7 @@ class DistributableStreamToStreamAdapterFunction implements Function<Stream<?>, 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public Stream<?> apply(Stream<?> streamIn) {
+		System.out.println("%%%% OP Name: " + this.streamOperationName);
 		if (this.streamOperationName.equals("flatMap")){
 			return streamIn.flatMap((Function)this.sourceFunction);
 		}

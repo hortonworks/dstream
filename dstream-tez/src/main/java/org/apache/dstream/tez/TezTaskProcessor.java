@@ -106,17 +106,15 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 			String taskPath = new String(payloadBytes);
 			processingFunction = HdfsSerializerUtils.deserialize(new Path(taskPath), fs, Function.class);
 			registry.cacheForDAG(this.vertexName, processingFunction);
-//			TezDelegatingPartitioner.setSparkPartitioner(task.partitioner)
+//			TezDelegatingPartitioner.setDelegator(task.partitioner);
 		}
 		return processingFunction;
 	}
 	
 	
 	/**
-	 * @param <K>
-	 * @param <V>
+	 * 
 	 */
-//	private static class WritingConsumer<K,V> implements Consumer<Entry<K,V>> {
 	private static class WritingConsumer implements Consumer<Object> {
 		private final KeyWritable kw = new KeyWritable();
 		private final ValueWritable<Object> vw = new ValueWritable<>();
@@ -134,12 +132,11 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 		public void accept(Object input) {
 			try {
 				if (input instanceof Entry){
-					this.kw.setValue(((Entry)input).getKey());
-					this.vw.setValue(((Entry)input).getValue());
+					this.kw.setValue(((Entry<?,?>)input).getKey());
+					this.vw.setValue(((Entry<?,?>)input).getValue());
 					this.kvWriter.write(this.kw, this.vw);
 				}
 				else {
-//					this.kw.setValue(null);
 					this.vw.setValue(input);
 					this.kvWriter.write(this.kw, this.vw);
 				}

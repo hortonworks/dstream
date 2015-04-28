@@ -3,13 +3,13 @@ package demo;
 import java.io.File;
 import java.net.URI;
 import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.dstream.DistributablePipeline;
-import org.apache.dstream.support.SourceSupplier;
-import org.apache.dstream.support.UriSourceSupplier;
 import org.apache.dstream.tez.TezConstants;
 /**
  * 
@@ -22,27 +22,20 @@ public class WordCountPipe {
 	 * @throws Exception
 	 */
 	public static void main(String... args) throws Exception {
-		File file = new File("src/test/java/demo/monte-cristo.txt");
-//		URI source = prepare(file);
-		System.setProperty(TezConstants.UPDATE_CLASSPATH, "false");
-		System.setProperty(TezConstants.GENERATE_JAR, "true");
-		
-		URI source = new URI("hdfs://cn041-10.l42scl.hortonworks.com:8020/user/hive/external/tpch-1000/lineitem");
-		
-		SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(source);
-		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
-		Stream<Stream<Entry<String, Integer>>> result = sourcePipeline.compute(stream -> stream
-				.flatMap(line -> Stream.of(line.split(",")))
+
+		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, "wc");
+		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourcePipeline.compute(stream -> stream
+				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)).entrySet().stream()
 			)
 			.reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
 			.executeAs("WordCount");
 		
 		AtomicInteger i = new AtomicInteger();
-		
+		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
 		result.forEach(stream -> {
 			System.out.println("Partition: " + i.getAndIncrement());
-			stream.limit(10).forEach(System.out::println);
+//			stream.forEach(System.out::println);
 			});
 		
 		result.close();
