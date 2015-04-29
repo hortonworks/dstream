@@ -3,7 +3,6 @@ package org.apache.dstream.utils;
 import java.util.Map.Entry;
 /**
  * 
- *
  */
 public class KVUtils {
 
@@ -13,6 +12,9 @@ public class KVUtils {
 	 * @param key
 	 * @param val
 	 * @return
+	 * 
+	 * @param <K> key type
+	 * @param <V> value type
 	 */
 	public static <K,V> Entry<K,V> kv(final K key, final V val) {
 		return new Entry<K, V>() {

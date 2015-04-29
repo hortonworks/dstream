@@ -35,6 +35,13 @@ public class HdfsSerializerUtils {
 		return resultPath;
 	}
 	
+	/**
+	 * 
+	 * @param sourcePath
+	 * @param fs
+	 * @param resultType
+	 * @return
+	 */
 	public static  <T> T deserialize(Path sourcePath, FileSystem fs, Class<T> resultType) {
 		Assert.notNull(sourcePath, "'sourcePath' must not be null");
 		Assert.notNull(fs, "'fs' must not be null");
@@ -45,9 +52,9 @@ public class HdfsSerializerUtils {
 			sourceInputStream = fs.open(sourcePath);
 			T result = SerializationUtils.deserialize(sourceInputStream, resultType);
 			return result;
-		} catch (Exception e) {
+		} 
+		catch (Exception e) {
 			throw new IllegalStateException("Failed to de-serialize from " + sourcePath + " object type " + resultType, e);
 		}
 	}
-
 }

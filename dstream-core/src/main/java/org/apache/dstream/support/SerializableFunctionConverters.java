@@ -9,9 +9,6 @@ public final class SerializableFunctionConverters {
 	
 	/**
 	 * {@link Serializable} version of {@link java.util.function.Function}
-	 * 
-	 * @param <T>
-	 * @param <R>
 	 */
 	public static interface Function<T,R> extends java.util.function.Function<T, R>, Serializable{
 		default <V> Function<V, R> compose(Function<? super V, ? extends T> before) {
@@ -39,31 +36,21 @@ public final class SerializableFunctionConverters {
 	
 	/**
 	 * {@link Serializable} version of {@link java.util.function.BinaryOperator}
-	 * 
-	 * @param <T>
 	 */
 	public static interface BinaryOperator<T> extends java.util.function.BinaryOperator<T>, Serializable {}
 	
 	/**
 	 * {@link Serializable} version of {@link java.util.function.Supplier}
-	 * 
-	 * @param <T>
 	 */
 	public static interface Supplier<T> extends java.util.function.Supplier<T>, Serializable{}
 	
 	/**
 	 * {@link Serializable} version of {@link java.util.function.BiFunction}
-	 * 
-	 * @param <T>
-	 * @param <U>
-	 * @param <R>
 	 */
 	public static interface BiFunction<T, U, R> extends java.util.function.BiFunction<T, U, R>, Serializable{}
 	
 	/**
 	 * {@link Serializable} version of {@link java.util.function.Predicate}
-	 * 
-	 * @param <T>
 	 */
 	public static interface Predicate<T> extends java.util.function.Predicate<T>, Serializable{}
 }

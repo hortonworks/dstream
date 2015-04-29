@@ -8,6 +8,9 @@ import org.apache.hadoop.yarn.api.records.LocalResource;
 import org.apache.tez.client.TezClient;
 import org.apache.tez.dag.api.TezConfiguration;
 
+/**
+ * 
+ */
 public class ExecutionContextAwareTezClient extends TezClient {
 	private final  Map<String, LocalResource> localResources;
 
@@ -35,14 +38,26 @@ public class ExecutionContextAwareTezClient extends TezClient {
 		this.fileSystem = fileSystem;
 	}
 	
+	/**
+	 * 
+	 * @return
+	 */
 	public Map<String, LocalResource> getLocalResources() {
 		return localResources;
 	}
 
+	/**
+	 * current Tez configuration as {@link TezConfiguration}
+	 * @return current Tez configuration
+	 */
 	public TezConfiguration getTezConfiguration() {
 		return tezConfiguration;
 	}
 	
+	/**
+	 * 
+	 * @return
+	 */
 	public FileSystem getFileSystem() {
 		return fileSystem;
 	}

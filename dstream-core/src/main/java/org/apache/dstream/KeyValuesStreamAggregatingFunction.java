@@ -18,8 +18,8 @@ import org.slf4j.LoggerFactory;
  * as in [K, Iterator[V]] using provided 'aggregationOperator' producing a new {@link Stream}
  * with [K,V] semantics.
  *
- * @param <K> the key type
- * @param <V> the value type
+ * @param <K> key type
+ * @param <V> value type
  */
 public class KeyValuesStreamAggregatingFunction<K,V> implements Function<Stream<Entry<K,Iterator<V>>>,Stream<Entry<K,V>>> {
 
@@ -47,8 +47,6 @@ public class KeyValuesStreamAggregatingFunction<K,V> implements Function<Stream<
 
 	/**
 	 * 
-	 * @param currentEntry
-	 * @return
 	 */
 	@SuppressWarnings("unchecked")
 	private Entry<K, V> mergeValuesForCurrentKey(Entry<K, Iterator<V>> currentEntry){

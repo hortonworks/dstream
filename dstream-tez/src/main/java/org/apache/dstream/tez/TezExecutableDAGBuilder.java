@@ -37,6 +37,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
+/**
+ * 
+ */
 public class TezExecutableDAGBuilder {
 	
 	private final Logger logger = LoggerFactory.getLogger(TezExecutableDAGBuilder.class);
@@ -73,6 +76,7 @@ public class TezExecutableDAGBuilder {
 	/**
 	 * 
 	 * @param stage
+	 * @param parallelizm
 	 */
 	public void addStage(Stage stage, int parallelizm) {	
 		String vertexName = stage.getId() + "_" + stage.getName();
@@ -184,8 +188,6 @@ public class TezExecutableDAGBuilder {
 	
 	/**
 	 * 
-	 * @param sources
-	 * @return
 	 */
 	private DataSourceDescriptor buildDataSourceDescriptorFromUris(URI[] sources) {
 		String inputPath = 
@@ -196,29 +198,20 @@ public class TezExecutableDAGBuilder {
 	
 	/**
 	 * 
-	 * @param task
-	 * @param pipelineName
-	 * @param stageName
-	 * @param stageId
-	 * @return
 	 */
 	private UserPayload createPayloadFromTaskSerPath(Object task, String pipelineName, String vertexName){
 		org.apache.hadoop.fs.Path mapTaskPath = 
-				HdfsSerializerUtils.serialize(task, this.tezClient.getFileSystem(), new org.apache.hadoop.fs.Path(pipelineName + "/tasks/" + vertexName + ".ser"));
+				HdfsSerializerUtils.serialize(task, this.tezClient.getFileSystem(), 
+						new org.apache.hadoop.fs.Path(pipelineName + "/tasks/" + vertexName + ".ser"));
 		UserPayload payload = UserPayload.create(ByteBuffer.wrap(mapTaskPath.toString().getBytes()));
 		return payload;
 	}
 	
 	/**
 	 * 
-	 * @param vertex
-	 * @param name
-	 * @param keyClass
-	 * @param valueClass
-	 * @param outputFormatClass
-	 * @param outputPath
 	 */
-	private void createDataSink(Vertex vertex, String name, Class<? extends Writable> keyClass, Class<? extends Writable> valueClass, Class<?> outputFormatClass, String outputPath){
+	private void createDataSink(Vertex vertex, String name, Class<? extends Writable> keyClass, Class<? extends Writable> valueClass, 
+				Class<?> outputFormatClass, String outputPath){
 		JobConf dsConfig = this.buildJobConf(keyClass, valueClass);
 		DataSinkDescriptor dataSink = MROutput.createConfigBuilder(dsConfig, outputFormatClass, outputPath).build();
 		vertex.addDataSink(name, dataSink);
@@ -226,9 +219,6 @@ public class TezExecutableDAGBuilder {
 	
 	/**
 	 * 
-	 * @param keyClass
-	 * @param valueClass
-	 * @return
 	 */
 	private JobConf buildJobConf(Class<? extends Writable> keyClass, Class<? extends Writable> valueClass){
 		JobConf jobConf = new JobConf(this.tezClient.getTezConfiguration());
