@@ -15,14 +15,15 @@ The following code snippets shows two styles of API provided by this project and
 
 _**DistributableStream**_
 ```java
-SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/demo/sample.txt").toURI());
-DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, sourceSupplier);
+DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, "wc");
 		
-Stream<Stream<?>> result = sourceStream
+Future<Stream<Stream<?>>> resultFuture = sourceStream
 			.flatMap(line -> Stream.of(line.split("\\s+")))
 			.reduce(word -> word, word -> 1, Integer::sum)
 			.executeAs("WordCount");
-		
+
+Stream<Stream<Entry<String, Integer>>> result = resultFuture.get();
+
 result.forEach(stream -> stream.forEach(System.out::println));
 		
 result.close();
@@ -30,15 +31,16 @@ result.close();
 
 _**DistributablePipeline**_
 ```java
-SourceSupplier<URI> sourceSupplier = UriSourceSupplier.from(new File("src/test/java/demo/sample.txt").toURI());
-DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, sourceSupplier);
+DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, "wc");
 		
-Stream<Stream<Entry<String, Integer>>> result = sourcePipeline.compute(stream -> stream
+Future<Stream<Stream<Entry<String, Integer>>>> result = sourcePipeline.compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)).entrySet().stream()
 			)
 			.reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
 			.executeAs("WordCount");
+
+Stream<Stream<Entry<String, Integer>>> result = resultFuture.get();
 		
 result.forEach(stream -> stream.forEach(System.out::println));
 		
