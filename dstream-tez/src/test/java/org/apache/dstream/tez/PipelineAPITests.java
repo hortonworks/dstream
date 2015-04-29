@@ -12,11 +12,17 @@ import java.util.stream.Stream;
 import junit.framework.Assert;
 
 import org.apache.dstream.DistributablePipeline;
+import org.junit.After;
 import org.junit.Test;
 
-public class PipelineAPITests {
+public class PipelineAPITests extends BaseTezTests {
 	
 	private final String applicationName = this.getClass().getSimpleName();
+	
+	@After
+	public void after(){
+		clean(applicationName);
+	}
 	
 	@Test
 	public void executeAs() throws Exception {

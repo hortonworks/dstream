@@ -10,11 +10,17 @@ import java.util.stream.Stream;
 import junit.framework.Assert;
 
 import org.apache.dstream.DistributableStream;
+import org.junit.After;
 import org.junit.Test;
 
-public class StreamAPITests {
+public class StreamAPITests extends BaseTezTests {
 	
 	private final String applicationName = this.getClass().getSimpleName();
+	
+	@After
+	public void after(){
+		clean(applicationName);
+	}
 	
 	@Test
 	public void flatMapReduce() throws Exception {

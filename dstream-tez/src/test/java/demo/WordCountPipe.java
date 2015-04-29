@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.dstream.DistributablePipeline;
+import org.apache.dstream.tez.BaseTezTests;
 import org.apache.dstream.tez.TezConstants;
 /**
  * 
@@ -39,6 +40,7 @@ public class WordCountPipe {
 			});
 		
 		result.close();
+		BaseTezTests.clean("WordCount");
 		System.exit(0);
 	}
 	

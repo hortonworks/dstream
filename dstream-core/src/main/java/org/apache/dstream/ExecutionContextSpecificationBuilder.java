@@ -46,15 +46,11 @@ class ExecutionContextSpecificationBuilder<T,R extends DistributableExecutable<T
 	
 	
 	private int stageIdCounter;
-	
-	private ComposableStreamFunction composableStreamFunction;
-	
-	private ReflectiveMethodInvocation previousInvocation;
 
 	/**
 	 * 
 	 * @param sourceItemType
-	 * @param sourcesSupplier
+	 * @param pipelineName
 	 * @param proxyType
 	 */
 	private ExecutionContextSpecificationBuilder(Class<?> sourceItemType, String pipelineName, Class<? extends DistributableExecutable<?>> proxyType) {	
@@ -88,7 +84,6 @@ class ExecutionContextSpecificationBuilder<T,R extends DistributableExecutable<T
 	@Override
 	public Object invoke(MethodInvocation invocation) throws Throwable {
 		String operationName = invocation.getMethod().getName();
-		Class<?>[] parameterTypes = invocation.getMethod().getParameterTypes();
 		Object[] arguments = invocation.getArguments();
 		Object returnValue;
 		if ("executeAs".equals(operationName)){
@@ -98,7 +93,7 @@ class ExecutionContextSpecificationBuilder<T,R extends DistributableExecutable<T
 			List<Stage> stages = (List<Stage>)this.targetDistributable;
 			/*
 			 * This will create a default stage with wysiwyg function
-			 * for condition where executeAs was invoked on the pipeline that had no other invocations
+			 * for condition where executeAs(..) was invoked on the pipeline that had no other invocations
 			 * essentially returning source data
 			 */
 			if (stages.size() == 0){
@@ -122,30 +117,22 @@ class ExecutionContextSpecificationBuilder<T,R extends DistributableExecutable<T
 							executionContextSpec.getName() + ".cfg configuration file.");
 			
 			SourceSupplier sourceSupplier = SourceSupplier.create(sourceProperty, arguments.length == 2 ? (SourceFilter<?>)arguments[1] : null);
-
-			stages.get(0).setSourceSupplier(sourceSupplier);
-			
+			stages.get(0).setSourceSupplier(sourceSupplier);			
 			returnValue = this.delegatePipelineSpecExecution(executionContextSpec);
 		} 
 		else if (this.isStageBoundaryOperation(operationName) || this.isStageOperation(operationName)) {
 			if (logger.isDebugEnabled()){
-				List<String> argNames = Stream.of(parameterTypes).map(s -> s.getSimpleName()).collect(Collectors.toList());	
-				logger.debug("Op:" + operationName 
-						+ "(" + (argNames.isEmpty() ? "" : argNames.toString()) + ")");
+				List<String> argNames = Stream.of(invocation.getMethod().getParameterTypes()).map(s -> s.getSimpleName()).collect(Collectors.toList());	
+				logger.debug("Op:" + operationName + "(" + (argNames.isEmpty() ? "" : argNames.toString()) + ")");
 			}
 				
-			if (this.targetDistributable instanceof DistributableStream){
-				this.doDistributableStream((ReflectiveMethodInvocation) invocation);
-			} 
-			else if (this.targetDistributable instanceof DistributablePipeline){
-				this.doDistributablePipeline((ReflectiveMethodInvocation) invocation);
+			if (this.targetDistributable instanceof DistributableStream || this.targetDistributable instanceof DistributablePipeline){
+				this.doProcess((ReflectiveMethodInvocation) invocation);
 			} 
 			else {
 				// should really never happen, but since we are dealing with a proxy, nice to have as fail-all check
-				throw new IllegalStateException("Unrecognized target Distributable: " + this.targetDistributable);
+				throw new IllegalStateException("Unsupported DistributableExecutable: " + this.targetDistributable);
 			}
-			this.previousInvocation = (ReflectiveMethodInvocation) invocation;
-			
 			returnValue = this.targetDistributable;
 		}
 		else {
@@ -155,50 +142,29 @@ class ExecutionContextSpecificationBuilder<T,R extends DistributableExecutable<T
 	}
 	
 	/**
-	 * Processes invocation of operations invoked on the {@link DistributableStream}
-	 * All operations other then 'reduce' will be gathered by the 'stageFunctionAssembler'
-	 * and composed into a single stage Function applied on the {@link Stream}.
-	 * Once composed, stage function is treated as just another pipeline operation hence 
-	 * the delegation to the doDistributablePipeline() method.
+	 * Processes invocation of operations invoked on {@link DistributablePipeline} 
+	 * and {@link DistributableStream}
 	 */
-	private void doDistributableStream(ReflectiveMethodInvocation invocation){
-		String operationName = invocation.getMethod().getName();		
-		if (this.isStageOperation(operationName)){
-			this.composableStreamFunction.add(new DistributableStreamToStreamAdapterFunction(operationName, invocation.getArguments()[0]));
-			this.updateInvocationArguments(invocation, this.composableStreamFunction, null, null);
-		} 
-		else if (this.isStageBoundaryOperation(operationName)){
-			this.updateInvocationArguments(this.previousInvocation, this.composableStreamFunction, null, null);
-			this.composableStreamFunction = new ComposableStreamFunction();
-		} 
-		else {
-			throw new UnsupportedOperationException("Operation '" + operationName + "' is not supported");
+	@SuppressWarnings("unchecked")
+	private void doProcess(ReflectiveMethodInvocation invocation){
+		String operationName = invocation.getMethod().getName();	
+		if (((List<Stage>)this.targetDistributable).size() == 0){
+			this.addStage(null, null);
 		}
 		
-		this.doDistributablePipeline(invocation);
-	}
-	
-	/**
-	 * Processes invocation of operations invoked on {@link DistributablePipeline}
-	 */
-	private void doDistributablePipeline(ReflectiveMethodInvocation invocation){
-		String operationName = invocation.getMethod().getName();
 		if (this.isStageOperation(operationName)){
-			this.processInStageInvocation(invocation);
+			this.processStageInvocation(invocation);
 		}
 		else if (this.isStageBoundaryOperation(operationName)){
 			this.processStageBoundaryInvocation(invocation);
 		} 
-		else if (operationName.equals("join")){
-			System.out.println("Join");
-//			invocation.getArguments()[0]
-		}
 		else {
 			throw new UnsupportedOperationException("Operation '" + operationName + "' is not supported");
 		}
 	}
 	
 	/**
+	 * For the case of {@link DistributablePipeline}:
 	 * Holds the actual invocation of 'compute' until subsequent invocation of stage boundary operation.
 	 * In the event where the subsequent invocation is another 'compute' the two will be composed 
 	 * into one.
@@ -206,16 +172,25 @@ class ExecutionContextSpecificationBuilder<T,R extends DistributableExecutable<T
 	 * In the event where stage boundary operation is followed by a another 'compute', 
 	 * (e.g., compute->reduce->compute - a two stage DAG) the aggregator provided by the stage boundary 
 	 * operation will become part of the subsequent 'compute' stage.
+	 * 
+	 * For the case of {@link DistributableStream}:
+	 * Will extract {@link ComposableStreamFunction} from the Stage or will create a new one.
+	 * Will compose current stream function into ComposableStreamFunction to form a final Stage function.
 	 */
 	@SuppressWarnings("unchecked")
-	private void processInStageInvocation(ReflectiveMethodInvocation invocation){
-		Function<Stream<?>, Stream<?>> stageFunction = (Function<Stream<?>, Stream<?>>) invocation.getArguments()[0];	
-
-		if (((List<Stage>)this.targetDistributable).size() == 0){
-			this.addStage(stageFunction, null);
+	private void processStageInvocation(ReflectiveMethodInvocation invocation){
+		List<Stage> stages = (List<Stage>)this.targetDistributable;
+		Stage stage = stages.get(stages.size()-1);
+		if (this.isStreamStageOperation(invocation.getMethod().getName())){
+			ComposableStreamFunction cf = (ComposableStreamFunction) stage.getProcessingFunction();
+			if (cf == null){
+				cf = new ComposableStreamFunction();
+				stage.setProcessingFunction(cf);
+			}
+			cf.add(new DistributableStreamToStreamAdapterFunction(invocation.getMethod().getName(), invocation.getArguments()[0]));
 		}
 		else {
-			this.composeWithLastStageFunction(stageFunction);
+			this.composeWithLastStageFunction((Function<Stream<?>, Stream<?>>) invocation.getArguments()[0]);
 		}
 	}
 	
@@ -233,12 +208,8 @@ class ExecutionContextSpecificationBuilder<T,R extends DistributableExecutable<T
 		Function<Stream<?>, Stream<?>> kvExtractorFunction = 
 				new KeyValueExtractorFunction((Function<?,?>)arguments[0], (Function<?,?>)arguments[1]);	
 
-		if (((List<Stage>)this.targetDistributable).size() > 0){
-			this.composeWithLastStageFunction(kvExtractorFunction);
-		}
-		else {
-			this.addStage(kvExtractorFunction, null);
-		}
+		this.composeWithLastStageFunction(kvExtractorFunction);
+
 		this.addStage(null, (BinaryOperator<Object>)arguments[2]);
 	}
 	
@@ -249,17 +220,12 @@ class ExecutionContextSpecificationBuilder<T,R extends DistributableExecutable<T
 	private void composeWithLastStageFunction(Function<Stream<?>, Stream<?>> composeFunction){
 		List<Stage> stages = (List<Stage>)this.targetDistributable;
 		Stage stage = stages.get(stages.size()-1);
-		if (!(composeFunction instanceof ComposableStreamFunction)){
-			Function<Stream<?>, Stream<?>> newFunction = composeFunction;
-			Function<Stream<?>, Stream<?>> currentFunction = stage.getProcessingFunction();
-			if (currentFunction != null){
-				newFunction = composeFunction.compose(currentFunction);
-			}
-			stage.setProcessingFunction(newFunction);
+		Function<Stream<?>, Stream<?>> newFunction = composeFunction;
+		Function<Stream<?>, Stream<?>> currentFunction = stage.getProcessingFunction();
+		if (currentFunction != null){
+			newFunction = composeFunction.compose(currentFunction);
 		}
-		else if (stage.getProcessingFunction() == null){
-			stage.setProcessingFunction(composeFunction);
-		}
+		stage.setProcessingFunction(newFunction);
 	}
 
 	/**
@@ -298,7 +264,6 @@ class ExecutionContextSpecificationBuilder<T,R extends DistributableExecutable<T
 		if (logger.isDebugEnabled()){
 			logger.debug("Constructed stage: " + stage);
 		}
-		
 		((List<Stage>)this.targetDistributable).add(stage);
 	}
 	
@@ -319,6 +284,7 @@ class ExecutionContextSpecificationBuilder<T,R extends DistributableExecutable<T
 			public String getName() {
 				return name;
 			}
+			
 			public String toString() {
 				List<Stage> stages = this.getStages();
 				return "\n" + 
@@ -372,14 +338,13 @@ class ExecutionContextSpecificationBuilder<T,R extends DistributableExecutable<T
 								logger.error("Failed during execution of close handler", e);
 							}
 							finally {
-								logger.debug("Shutting down executor");
+								logger.debug("Terminating down executor");
 								executor.shutdownNow();
 							}
 						}
 					});
 				}
-			});
-			
+			});		
 			return this.generateResultProxyFuture(resultFuture, pipelineSpecification);
 		} 
 		catch (Exception e) {
@@ -450,7 +415,6 @@ class ExecutionContextSpecificationBuilder<T,R extends DistributableExecutable<T
 		} 
 		else {
 			pf.addInterface(DistributableStream.class);
-			this.composableStreamFunction = new ComposableStreamFunction();
 		}
 	
 		pf.addAdvice(this);
@@ -470,8 +434,6 @@ class ExecutionContextSpecificationBuilder<T,R extends DistributableExecutable<T
 	
 	/**
 	 * 
-	 * @param operationName
-	 * @return
 	 */
 	private boolean isStreamStageOperation(String operationName){
 		return operationName.equals("flatMap") || 
@@ -485,12 +447,4 @@ class ExecutionContextSpecificationBuilder<T,R extends DistributableExecutable<T
 	private boolean isStageBoundaryOperation(String operationName){
 		return operationName.equals("reduce");
 	}
-	
-	/**
-	 * 
-	 */
-	@SuppressWarnings("rawtypes")
-	private void updateInvocationArguments(ReflectiveMethodInvocation invocation, Function f1, Function f2, BinaryOperator aggregatorOp) {
-		invocation.setArguments(new Object[]{f1, f2, aggregatorOp});
-	}	
 }

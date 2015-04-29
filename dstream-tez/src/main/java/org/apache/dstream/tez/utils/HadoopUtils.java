@@ -49,7 +49,7 @@ public class HadoopUtils {
 	 * Creates {@link LocalResource}s based on the current user's classpath
 	 * 
 	 * @param fs
-	 * @param appName
+	 * @param classPathDir
 	 * @return
 	 */
 	public static Map<String, LocalResource> createLocalResources(FileSystem fs, String classPathDir) {

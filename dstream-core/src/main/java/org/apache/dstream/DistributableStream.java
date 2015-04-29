@@ -28,7 +28,7 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	 * predicate logic to determine sources dynamically.
 	 * 
 	 * @param sourceItemType
-	 * @param sourceSuppliers
+	 * @param streamName
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
