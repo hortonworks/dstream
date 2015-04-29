@@ -2,7 +2,7 @@ package org.apache.dstream;
 
 import java.util.stream.Stream;
 
-import org.apache.dstream.utils.PipelineConfigurationUtils;
+import org.apache.dstream.support.PipelineConfigurationHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
@@ -15,7 +15,7 @@ public class DistributablePipelineSpecificationValidationDelegate implements Exe
 
 	@Override
 	public Stream<?>[] execute(ExecutionContextSpecification pipelineSpecification) {
-		PipelineConfigurationUtils.loadExecutionConfig(pipelineSpecification.getName());
+		PipelineConfigurationHelper.loadExecutionConfig(pipelineSpecification.getName());
 		return new Stream[]{Stream.of(new Object())};
 	}
 

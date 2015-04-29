@@ -17,10 +17,10 @@ import org.aopalliance.intercept.MethodInvocation;
 import org.apache.dstream.ExecutionContextSpecification.Stage;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
+import org.apache.dstream.support.PipelineConfigurationHelper;
 import org.apache.dstream.support.SourceFilter;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.utils.Assert;
-import org.apache.dstream.utils.PipelineConfigurationUtils;
 import org.apache.dstream.utils.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,7 +100,7 @@ class ExecutionContextSpecificationBuilder<T,R extends DistributableExecutable<T
 				this.addStage(wysiwyg -> wysiwyg, null);
 			}
 			
-			Properties executionProperties = PipelineConfigurationUtils.loadExecutionConfig(executionName);
+			Properties executionProperties = PipelineConfigurationHelper.loadExecutionConfig(executionName);
 			String output = executionProperties.getProperty(DistributableConstants.OUTPUT);
 			if (output != null){
 				Assert.isTrue(SourceSupplier.isURI(output), "URI '" + output + "' must have scheme defined (e.g., file:" + output + ")");
@@ -306,7 +306,7 @@ class ExecutionContextSpecificationBuilder<T,R extends DistributableExecutable<T
 	 * 
 	 */
 	private Future<Stream<Stream<?>>> delegatePipelineSpecExecution(ExecutionContextSpecification pipelineSpecification) {	
-		Properties prop = PipelineConfigurationUtils.loadDelegatesConfig();
+		Properties prop = PipelineConfigurationHelper.loadDelegatesConfig();
 
 		String pipelineExecutionDelegateClassName = prop.getProperty(pipelineSpecification.getName());
 		Assert.notEmpty(pipelineExecutionDelegateClassName,

@@ -1,11 +1,11 @@
-package org.apache.dstream.utils;
+package org.apache.dstream.support;
 
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-public class PipelineConfigurationUtils {
+public class PipelineConfigurationHelper {
 
 	/**
 	 * 
