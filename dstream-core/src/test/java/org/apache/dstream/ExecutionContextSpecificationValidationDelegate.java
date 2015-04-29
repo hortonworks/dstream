@@ -9,9 +9,9 @@ import org.slf4j.LoggerFactory;
  * Implementation of {@link ExecutionDelegate} which returns {@link ExecutionContextSpecification}.
  * Primary use is testing.
  */
-public class DistributablePipelineSpecificationValidationDelegate implements ExecutionDelegate {
+public class ExecutionContextSpecificationValidationDelegate implements ExecutionDelegate {
 	
-	private final Logger logger = LoggerFactory.getLogger(DistributablePipelineSpecificationValidationDelegate.class);
+	private final Logger logger = LoggerFactory.getLogger(ExecutionContextSpecificationValidationDelegate.class);
 
 	@Override
 	public Stream<?>[] execute(ExecutionContextSpecification pipelineSpecification) {

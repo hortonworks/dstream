@@ -12,13 +12,11 @@ import org.apache.dstream.utils.KVUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class KeyValuesStreamAggregatorTests {
+public class KeyValuesStreamAggregatingFunctionTests {
 
 	/**
 	 * This tests resembles certain shuffle behaviors where shuffle groups values essentially 
 	 * resulting in the following Key/Value semantics <K,V[]>
-	 * So KeyValuesAggregatableStream allows user to apply similar lazy semantics as they would on the 
-	 * Stream while adding additional operation 'aggregate'.
 	 */
 	@Test
 	public void validateKeyValuesAggregation(){

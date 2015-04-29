@@ -12,7 +12,7 @@ import org.apache.dstream.utils.KVUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class ComposableStreamFunctionBuilderTests {
+public class ComposableStreamFunctionTests {
 
 	@SuppressWarnings({ "unchecked"})
 	@Test
