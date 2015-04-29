@@ -12,20 +12,20 @@ import org.junit.Test;
  */
 public class JoinSpecificationBuilderTests {
 
-//	@Test
-//	public void join() throws Exception {
-//		DistributablePipeline<String> pipelineA = DistributablePipeline.ofType(String.class, "foo");
-//		DistributablePipeline<String> pipelineB = DistributablePipeline.ofType(String.class, "bar");
-//		
-//		DistributablePipeline<Entry<String, Integer>> aFlow = pipelineA.<String>compute(stream -> stream
-//				.flatMap(line -> Stream.of(line.split(" ")))
-//				.map(word -> word)
-//		).reduce(s -> s, s -> 1, Integer::sum);
-//		
-//		DistributablePipeline<Entry<String, Integer>> bFlow =  pipelineB.compute(stream -> stream
-//				.flatMap(line -> Stream.of(line.split(" ")))
-//		).reduce(s -> (String)s, s -> 1, Integer::sum);
-//		
-//		aFlow.join(bFlow, HashJoiner::join);
-//	}
+	@Test
+	public void join() throws Exception {
+		DistributablePipeline<String> pipelineA = DistributablePipeline.ofType(String.class, "foo");
+		DistributablePipeline<String> pipelineB = DistributablePipeline.ofType(String.class, "bar");
+		
+		DistributablePipeline<Entry<String, Integer>> aFlow = pipelineA.<String>compute(stream -> stream
+				.flatMap(line -> Stream.of(line.split(" ")))
+				.map(word -> word)
+		).reduce(s -> s, s -> 1, Integer::sum);
+		
+		DistributablePipeline<Entry<String, Integer>> bFlow =  pipelineB.compute(stream -> stream
+				.flatMap(line -> Stream.of(line.split(" ")))
+		).reduce(s -> (String)s, s -> 1, Integer::sum);
+		
+		aFlow.join(bFlow, HashJoiner::join);
+	}
 }

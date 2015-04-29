@@ -22,6 +22,7 @@ import org.apache.dstream.support.PipelineConfigurationHelper;
 import org.apache.dstream.support.SourceFilter;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.utils.Assert;
+import org.apache.dstream.utils.Pair;
 import org.apache.dstream.utils.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +48,8 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 	
 	
 	private int stageIdCounter;
+	
+	private Properties executionProperties;
 
 	/**
 	 * 
@@ -100,8 +103,8 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 			if (stages.size() == 0){
 				this.addStage(wysiwyg -> wysiwyg, null);
 			}
-			
-			Properties executionProperties = PipelineConfigurationHelper.loadExecutionConfig(executionName);
+
+			this.executionProperties = PipelineConfigurationHelper.loadExecutionConfig(executionName);
 			String output = executionProperties.getProperty(DistributableConstants.OUTPUT);
 			if (output != null){
 				Assert.isTrue(SourceSupplier.isURI(output), "URI '" + output + "' must have scheme defined (e.g., file:" + output + ")");
@@ -117,8 +120,21 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 							executionContextSpec.getName() + ".cfg configuration file.");
 			
 			SourceSupplier sourceSupplier = SourceSupplier.create(sourceProperty, arguments.length == 2 ? (SourceFilter<?>)arguments[1] : null);
-			stages.get(0).setSourceSupplier(sourceSupplier);			
+			this.getInitialStage().setSourceSupplier(sourceSupplier);			
 			returnValue = this.delegatePipelineSpecExecution(executionContextSpec);
+			
+			for (Stage stage : stages) {
+				if (stage.getDependentExecutionContextSpec() != null){
+					ExecutionContextSpecification dependentStageSpec = stage.getDependentExecutionContextSpec()._1();
+					Stage initialStage = dependentStageSpec.getStages().get(0);
+					String depSourceProperty = executionProperties.getProperty(DistributableConstants.SOURCE + "." + dependentStageSpec.getName());
+					//TODO see #37 Move SourceFilter to pipeline/stream factory method.
+					SourceSupplier depStageSourceSupplier = SourceSupplier.create(depSourceProperty, null);
+					initialStage.setSourceSupplier(depStageSourceSupplier);
+					break;
+				}
+			}
+			
 		} 
 		else if (this.isStageOrBoundaryOperation(operationName)) {
 			if (logger.isDebugEnabled()){
@@ -480,5 +496,11 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 	private Stage getCurrentStage(){
 		List<Stage> stages = (List<Stage>)this.targetDistributable;
 		return stages.get(stages.size()-1);
+	}
+	
+	@SuppressWarnings("unchecked")
+	private Stage getInitialStage(){
+		List<Stage> stages = (List<Stage>)this.targetDistributable;
+		return stages.get(0);
 	}
 }

@@ -5,13 +5,16 @@ import java.lang.reflect.Type;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.dstream.ExecutionContextSpecification;
 import org.apache.dstream.ExecutionContextSpecification.Stage;
 import org.apache.dstream.KeyValuesStreamAggregatingFunction;
+import org.apache.dstream.support.SerializableFunctionConverters.BiFunction;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.tez.io.KeyWritable;
@@ -19,6 +22,7 @@ import org.apache.dstream.tez.io.ValueWritable;
 import org.apache.dstream.tez.utils.HdfsSerializerUtils;
 import org.apache.dstream.tez.utils.SequenceFileOutputStreamsBuilder;
 import org.apache.dstream.utils.Assert;
+import org.apache.dstream.utils.Pair;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.JobConf;
@@ -81,6 +85,14 @@ public class TezExecutableDAGBuilder {
 	public void addStage(Stage stage, int parallelizm) {	
 		String vertexName = stage.getId() + "_" + stage.getName();
 		
+		if (stage.getDependentExecutionContextSpec() != null){
+			Pair<ExecutionContextSpecification, BiFunction<Stream<?>, Stream<?>, Stream<?>>> specPair = stage.getDependentExecutionContextSpec();
+			List<Stage> dependentStages = specPair._1().getStages();
+			int stageParallelizm = 1;
+			dependentStages.forEach(dependentStage -> this.addStage(dependentStage, stageParallelizm));
+			System.out.println();
+		}
+		
 		UserPayload payload = this.createPayloadFromTaskSerPath(this.composeFunctionIfNecessary(stage), this.dag.getName(), vertexName);
 
 		ProcessorDescriptor pd = ProcessorDescriptor.create(TezTaskProcessor.class.getName()).setUserPayload(payload);
@@ -112,10 +124,23 @@ public class TezExecutableDAGBuilder {
 		
 		this.dag.addVertex(vertex);
 		
-		if (this.lastVertex != null){
+		if (stage.getDependentExecutionContextSpec() != null){
+			ExecutionContextSpecification depSpec = stage.getDependentExecutionContextSpec()._1();
+			List<Stage> dependentStages = depSpec.getStages();
+			Stage lastStage = dependentStages.get(dependentStages.size()-1);
+			String stageName = lastStage.getName();
+			Vertex depVertex = this.dag.getVertex(stageName);
+			Edge edge = Edge.create(vertex, this.lastVertex, this.edgeConf.createDefaultEdgeProperty());
+			this.dag.addEdge(edge);
+		}
+		else if (this.lastVertex != null){
 			Edge edge = Edge.create(this.lastVertex, vertex, this.edgeConf.createDefaultEdgeProperty());
 			this.dag.addEdge(edge);
 		}
+		
+		
+		
+		
 		if (logger.isDebugEnabled()){
 			logger.debug("Created Vertex: " + vertex);
 		}

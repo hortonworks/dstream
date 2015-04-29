@@ -75,7 +75,10 @@ public interface ExecutionContextSpecification extends Serializable {
 		}
 		
 		public Pair<ExecutionContextSpecification, BiFunction<Stream<?>, Stream<?>, Stream<?>>> getDependentExecutionContextSpec() {
-			return Pair.of(this.dependentexecutionContextSpec, this.mergeFunction);
+			if (this.dependentexecutionContextSpec != null && this.mergeFunction != null){
+				return Pair.of(this.dependentexecutionContextSpec, this.mergeFunction);
+			}
+			return null;
 		}
 
 		public void setDependentExecutionContextSpec(ExecutionContextSpecification dependentexecutionContextSpec,

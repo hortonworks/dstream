@@ -75,6 +75,9 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 			streamProcessingFunction.apply(stream).forEach(consume);
 //			streamProcessingFunction.apply(stream).forEach(System.out::print);
 		}
+		else {
+			System.out.println();
+		}
 
 		logger.info("Finished processing task-[" + this.dagName + ":" + this.vertexName + ":" + this.taskIndex + "]");
 	}
