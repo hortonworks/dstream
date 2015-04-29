@@ -4,11 +4,13 @@ import java.util.Map.Entry;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import org.apache.dstream.support.DefaultHashPartitioner;
 import org.apache.dstream.support.SerializableFunctionConverters.BiFunction;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
-
+/**
+ * 
+ * @param <T> the type of the pipeline elements
+ */
 public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	/**
 	 * Factory method which returns a sequential {@code DistributablePipeline} of 
@@ -21,6 +23,8 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	 * @param sourceItemType
 	 * @param pipelineName
 	 * @return the new {@link DistributablePipeline} of type T
+	 * 
+	 * @param <T> the type of the stream elements
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> DistributablePipeline<T> ofType(Class<T> sourceItemType, String pipelineName) {	
@@ -33,6 +37,8 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	 * 
 	 * @param computeFunction a mapping function to map {@link Stream}[T] to {@link Stream}[R].
 	 * @return the new {@link DistributablePipeline} of type R
+	 * 
+	 * @param <R> the type of the elements of the new pipeline
 	 */
 	<R> DistributablePipeline<R> compute(Function<? extends Stream<T>, ? extends Stream<R>> computeFunction);
 	
@@ -47,6 +53,9 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	 * @param valueMerger a merge function, used to resolve collisions between
      *                      values associated with the same key
 	 * @return the new {@link DistributablePipeline} of type {@link Entry}[K,V]
+	 * 
+	 * @param <K> key type
+	 * @param <V> value type
 	 */
 	<K,V> DistributablePipeline<Entry<K, V>> reduce(Function<? super T, ? extends K> classifier, 
 			Function<? super T, ? extends V> valueMapper, 
@@ -56,6 +65,9 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	 * 
 	 * @param classifier the classifier function mapping input elements to keys
 	 * @return
+	 * 
+	 * @param <K> key type
+	 * @param <V> value type
 	 */
 	<K,V> DistributablePipeline<Entry<K, V[]>> group(Function<? super T, ? extends K> classifier);
 
@@ -72,6 +84,8 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	 * element of the stream.
 	 * 
 	 * @return the new {@link DistributablePipeline} of type T
+	 * 
+	 * @param <V>
 	 */
 	<V> DistributablePipeline<T> partition(Function<? super T, ? extends V> classifier);
 	
@@ -84,6 +98,9 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	 * @param joinFunction a {@link BiFunction} where the actual join between {@link Stream}s will be performed.
 	 * 
 	 * @return the new {@link DistributablePipeline} of type R
+	 * 
+	 * @param <TT>
+	 * @param <R>
 	 */
 	<TT,R> DistributablePipeline<R> join(DistributablePipeline<TT> pipelineR, 
 			BiFunction<Stream<T>, Stream<TT>, Stream<R>> joinFunction);

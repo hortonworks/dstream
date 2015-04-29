@@ -15,10 +15,7 @@ public interface ExecutionDelegate  {
 	 * @return
 	 */
 	Stream<?>[] execute(ExecutionContextSpecification pipelineSpecification);
-	
-	
-	
-	
+
 	/**
 	 * Returns {@link Runnable} which contains logic relevant to 
 	 * The returned {@link Runnable} will be executed when resulting {@link Stream#close()} is called.

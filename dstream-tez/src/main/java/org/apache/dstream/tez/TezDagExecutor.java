@@ -24,12 +24,21 @@ public class TezDagExecutor<T> implements Callable<Stream<T>[]> {
 	
 	private final OutputStreamsBuilder<T> outputBuilder;
 	
+	/**
+	 * 
+	 * @param tezClient
+	 * @param dag
+	 * @param outputBuilder
+	 */
 	public TezDagExecutor(ExecutionContextAwareTezClient tezClient, DAG dag, OutputStreamsBuilder<T> outputBuilder) {
 		this.tezClient = tezClient;
 		this.dag = dag;
 		this.outputBuilder = outputBuilder;
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public Stream<T>[] call() throws Exception {
 		if (logger.isInfoEnabled()){

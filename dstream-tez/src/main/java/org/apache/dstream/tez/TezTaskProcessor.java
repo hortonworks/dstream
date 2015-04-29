@@ -23,7 +23,9 @@ import org.apache.tez.runtime.library.api.KeyValueWriter;
 import org.apache.tez.runtime.library.api.KeyValuesReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+/**
+ * 
+ */
 public class TezTaskProcessor extends SimpleMRProcessor {
 	
 	private final Logger logger = LoggerFactory.getLogger(TezTaskProcessor.class);
@@ -77,12 +79,16 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 		logger.info("Finished processing task-[" + this.dagName + ":" + this.vertexName + ":" + this.taskIndex + "]");
 	}
 	
-	
-	
+	/**
+	 * 
+	 */
 	private boolean isSingleSource(){
 		return this.getInputs().size() == 1;
 	}
 	
+	/**
+	 * 
+	 */
 	private Reader getReader() {
 		try {
 			return this.getInputs().entrySet().iterator().next().getValue().getReader();
@@ -92,7 +98,9 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 		}
 	}
 
-	
+	/**
+	 * 
+	 */
 	@SuppressWarnings("rawtypes")
 	private Function extractTaskFunction() throws Exception {
 		ObjectRegistry registry = this.getContext().getObjectRegistry();
@@ -111,7 +119,6 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 		return processingFunction;
 	}
 	
-	
 	/**
 	 * 
 	 */
@@ -119,9 +126,9 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 		private final KeyWritable kw = new KeyWritable();
 		private final ValueWritable<Object> vw = new ValueWritable<>();
 		private final KeyValueWriter kvWriter;
+		
 		/**
 		 * 
-		 * @param kvWriter
 		 */
 		public WritingConsumer(KeyValueWriter kvWriter){
 			this.kvWriter = kvWriter;

@@ -6,7 +6,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.support.SerializableFunctionConverters.BiFunction;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SerializableFunctionConverters.Predicate;
@@ -48,6 +47,8 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
      * 
 	 * @param mapper
 	 * @return
+	 * 
+	 * @param <R> the type of the elements of the new stream
 	 */
 	<R> DistributableStream<R> flatMap(Function<? super T, ? extends Stream<? extends R>> mapper);
 	
@@ -59,6 +60,8 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	 * 
 	 * @param mapper
 	 * @return
+	 * 
+	 * @param <R> the type of the elements of the new stream
 	 */
 	<R> DistributableStream<R> map(Function<? super T, ? extends R> mapper);
 	
@@ -113,12 +116,15 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	 * @param valueMapper
 	 * @param op
 	 * @return
+	 * 
+	 * @param <K> key type 
+	 * @param <V> value type 
 	 */
-	// Should we rename it to combine? Nothing is being reduced here. Possible reduction is a sideffect?
+	// Should we rename it to combine? Nothing is being reduced here. Possible reduction is a side-effect?
 	<K,V> DistributableStream<Entry<K,V>> reduce(Function<? super T, ? extends K> keyMapper, 
 			Function<? super T, ? extends V> valueMapper, 
 			BinaryOperator<V> op);
 	
-	<TT,R> DistributableStream<R> join(DistributableStream<TT> streamR, 
-			BiFunction<Stream<T>, Stream<TT>, Stream<R>> joinFunction);
+//	<TT,R> DistributableStream<R> join(DistributableStream<TT> streamR, 
+//			BiFunction<Stream<T>, Stream<TT>, Stream<R>> joinFunction);
 }

@@ -45,6 +45,8 @@ public class TypeAwareStreams {
 		
 		/**
 		 * 
+		 * @param out
+		 * @throws IOException
 		 */
 		public TypeAwareObjectOutputStream(OutputStream out) throws IOException {
 			super(out);

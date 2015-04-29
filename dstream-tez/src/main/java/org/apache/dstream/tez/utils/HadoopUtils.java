@@ -17,7 +17,6 @@
 package org.apache.dstream.tez.utils;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -99,8 +98,6 @@ public class HadoopUtils {
 	 * {@link Path}s representing provisioned resources
 	 * If 'generate-jar' system property is set it will also generate the JAR for the current 
 	 * working directory (mainly used when executing from IDE)
-	 * 
-	 * @return
 	 */
 	private static Path[] provisionClassPath(FileSystem fs, String applicationName, String[] classPathExclusions){
 		String genJarProperty = System.getProperty(TezConstants.GENERATE_JAR);
@@ -165,10 +162,6 @@ public class HadoopUtils {
 	
 	/**
 	 * 
-	 * @param f
-	 * @param jarFileName
-	 * @param generatedJars
-	 * @return
 	 */
 	private static File doGenerateJar(File f, String jarFileName, List<File> generatedJars, String subMessage) {
 		if (logger.isDebugEnabled()){
@@ -241,9 +234,6 @@ public class HadoopUtils {
 	
 	/**
 	 * 
-	 * @param path
-	 * @param classPathExclusions
-	 * @return
 	 */
 	private static boolean shouldProvision(String path, String[] classPathExclusions){
 		if (classPathExclusions != null){
@@ -261,12 +251,6 @@ public class HadoopUtils {
 
 	/**
 	 * 
-	 * @param fs
-	 * @param sourcePath
-	 * @param destPath
-	 * @param appId
-	 * @param applicationName
-	 * @return
 	 */
 	private static Map<String, LocalResource> createLocalResources(FileSystem fs, Path[] provisionedResourcesPaths) {
 		Map<String, LocalResource> localResources = new LinkedHashMap<String, LocalResource>();
@@ -279,9 +263,6 @@ public class HadoopUtils {
 
 	/**
 	 * 
-	 * @param fs
-	 * @param sourcePath
-	 * @param destPath
 	 */
 	private static synchronized void provisioinResourceToFs(FileSystem fs, Path sourcePath, Path destPath) throws Exception {
 		if (logger.isDebugEnabled()){
@@ -294,6 +275,7 @@ public class HadoopUtils {
 			logger.debug("Skipping provisioning of " + destPath + " since it already exists.");
 		}
 	}
+	
 	/**
 	 * 
 	 */

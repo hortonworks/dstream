@@ -21,6 +21,9 @@ public class StreamUtils {
 	 * 
 	 * @param kvReader
 	 * @return
+	 * 
+	 * @param <K> key type
+	 * @param <V> value type
 	 */
 	public static <K,V> Stream<Entry<K,V>> toStream(KeyValueReader kvReader) {
 		KeyValueReaderIterator<K,V> kvIterator = new KeyValueReaderIterator<K, V>(kvReader);
@@ -32,6 +35,9 @@ public class StreamUtils {
 	 * 
 	 * @param kvsReader
 	 * @return
+	 * 
+	 * @param <K> key type
+	 * @param <V> value type
 	 */
 	public static <K,V> Stream<Entry<K,Iterator<V>>> toStream(KeyValuesReader kvsReader) {
 		KeyValuesReaderIterator<K,V> kvsIterator = new KeyValuesReaderIterator<K, V>(kvsReader);
@@ -41,8 +47,6 @@ public class StreamUtils {
 	
 	/**
 	 * 
-	 * @param <K>
-	 * @param <V>
 	 */
 	private static class KeyValuesReaderIterator<K,V> implements Iterator<Entry<K,Iterator<V>>> {
 		private final KeyValuesReader kvsReader;
@@ -53,6 +57,7 @@ public class StreamUtils {
 			this.kvsReader = kvsReader;
 		}
 		
+		@SuppressWarnings("unchecked")
 		@Override
 		public boolean hasNext() {
 			try {
@@ -104,7 +109,6 @@ public class StreamUtils {
 	
 	/**
 	 * 
-	 * @param <T>
 	 */
 	private static class KeyValueReaderIterator<K,V> implements Iterator<Entry<K,V>> {
 		private final KeyValueReader kvReader;

@@ -70,9 +70,15 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 	
 	/**
 	 * 
-	 * @param pipelineSpecification
 	 * @return
-	 * @throws Exception
+	 */
+	//TODO needs some integration with extarnal conf to get credentials
+	protected Credentials getCredentials(){
+		return null;
+	}
+	
+	/**
+	 * 
 	 */
 	private Stream<?>[] doExecute(ExecutionContextSpecification pipelineSpecification) throws Exception {
 		if (logger.isInfoEnabled()){
@@ -113,15 +119,6 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 	
 	/**
 	 * 
-	 * @return
-	 */
-	//TODO needs some integration with extarnal conf to get credentials
-	protected Credentials getCredentials(){
-		return null;
-	}
-	
-	/**
-	 * 
 	 * @param pipelineSpecification
 	 */
 	private void createAndTezClient(ExecutionContextSpecification pipelineSpecification, FileSystem fs, TezConfiguration tezConfiguration){	
@@ -142,8 +139,6 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 	
 	/**
 	 * 
-	 * @param firstStage
-	 * @return
 	 */
 	private Class<?> determineInputFormatClass(Stage firstStage){
 		SourceSupplier<?> sourceSupplier = firstStage.getSourceSupplier();
@@ -165,8 +160,6 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 	
 	/**
 	 * 
-	 * @param stageId
-	 * @return
 	 */
 	private int getStageParallelizm(int stageId){
 		if (this.pipelineConfig.containsKey("stage.parallelizm." + stageId)){
