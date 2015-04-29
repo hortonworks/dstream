@@ -42,4 +42,6 @@ public interface DistributableExecutable<T> {
 	 * @return {@link Future} of {@link Stream} of partitions where each partition represented as {@link Stream}
 	 */
 	Future<Stream<Stream<T>>> executeAs(String executionName, SourceFilter<?> sourceFilter);
+	
+	String getName();
 }
