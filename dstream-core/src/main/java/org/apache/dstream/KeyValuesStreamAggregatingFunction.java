@@ -15,8 +15,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Will aggregate values of a {@link Stream} who's elements are Key/Values pairs 
- * as in <K, Iterator<V>> using provided 'aggregationOperator' producing a new {@link Stream}
- * with <K,V> semantics.
+ * as in [K, Iterator[V]] using provided 'aggregationOperator' producing a new {@link Stream}
+ * with [K,V] semantics.
  *
  * @param <K> the key type
  * @param <V> the value type

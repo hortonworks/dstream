@@ -19,7 +19,6 @@ public class ExecutionContextAwareTezClient extends TezClient {
 	 * 
 	 * @param name
 	 * @param tezConf
-	 * @param isSession
 	 * @param localResources
 	 * @param credentials
 	 * @param fileSystem

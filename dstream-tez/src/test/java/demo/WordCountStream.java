@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.apache.dstream.DistributableStream;
+import org.apache.dstream.tez.BaseTezTests;
 
 /**
  * A rudimentary WordCount
@@ -27,6 +28,7 @@ public class WordCountStream {
 //		result.forEach(stream -> stream.forEach(System.out::println));
 		result.close();
 		
+		BaseTezTests.clean("WordCount");
 		System.exit(0);// until 0.6.1 Tez see TEZ-1661
 	}
 

@@ -68,7 +68,7 @@ public class ClassPathUtils {
 	/**
 	 * Will create a JAR file from base dir
 	 *
-	 * @param source
+	 * @param sourceDir
 	 * @param jarName
 	 * @return
 	 */

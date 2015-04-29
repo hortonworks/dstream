@@ -55,7 +55,8 @@ public class TezExecutableDAGBuilder {
 	/**
 	 * 
 	 * @param pipelineName
-	 * @param tezConfiguration
+	 * @param tezClient
+	 * @param inputFormatClass
 	 */
 	public TezExecutableDAGBuilder(String pipelineName, ExecutionContextAwareTezClient tezClient, Class<?> inputFormatClass) {
 		this.dag = DAG.create(pipelineName + "_" + System.currentTimeMillis());
