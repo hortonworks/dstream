@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.dstream.support.SerializableFunctionConverters.Supplier;
+import org.apache.dstream.utils.Assert;
 
 
 /**
@@ -48,6 +49,7 @@ public interface SourceSupplier<T> extends Supplier<T[]> {
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static <T> SourceSupplier<T> create(String sourceProperty, SourceFilter<?> sourceFilter){
+		Assert.notEmpty(sourceProperty, "'sourceProperty' must not be null or empty");
 		try {
 			SourceSupplier sourceSupplier;
 			if (isURI(sourceProperty)){

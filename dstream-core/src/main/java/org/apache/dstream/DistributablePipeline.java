@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import org.apache.dstream.support.SerializableFunctionConverters.BiFunction;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
+import org.apache.dstream.utils.Pair;
 /**
  * 
  * @param <T> the type of the pipeline elements
@@ -61,33 +62,49 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 			Function<? super T, ? extends V> valueMapper, 
 			BinaryOperator<V> valueMerger);
 	
-	/**
-	 * 
-	 * @param classifier the classifier function mapping input elements to keys
-	 * @return
-	 * 
-	 * @param <K> key type
-	 * @param <V> value type
-	 */
-	<K,V> DistributablePipeline<Entry<K, V[]>> group(Function<? super T, ? extends K> classifier);
+//	/**
+//	 * 
+//	 * @param classifier the classifier function mapping input elements to keys
+//	 * @return
+//	 * 
+//	 * @param <K> key type
+//	 * @param <V> value type
+//	 */
+//	<K,V> DistributablePipeline<Entry<K, V[]>> group(Function<? super T, ? extends K> classifier);
 
-	/**
-	 * Will calculate partitions using the entire value of each element of the stream.
-	 * 
-	 * 
-	 * @return the new {@link DistributablePipeline} of type T
-	 */
-	DistributablePipeline<T> partition();
+//	/**
+//	 * Will calculate partitions using the entire value of each element of the stream.
+//	 * 
+//	 * 
+//	 * @return the new {@link DistributablePipeline} of type T
+//	 */
+//	DistributablePipeline<T> partition();
+//	
+//	/**
+//	 * Will calculate partitions using the resulting value of applying classifier function on each 
+//	 * element of the stream.
+//	 * 
+//	 * @return the new {@link DistributablePipeline} of type T
+//	 * 
+//	 * @param <V>
+//	 */
+//	<V> DistributablePipeline<T> partition(Function<? super T, ? extends V> classifier);
 	
 	/**
-	 * Will calculate partitions using the resulting value of applying classifier function on each 
-	 * element of the stream.
+	 * Join based on common predicate
 	 * 
-	 * @return the new {@link DistributablePipeline} of type T
-	 * 
-	 * @param <V>
+	 * @param lKeyMapper
+	 * @param lValueMapper
+	 * @param pipelineR
+	 * @param rKeyMapper
+	 * @param rValueMapper
+	 * @return
 	 */
-	<V> DistributablePipeline<T> partition(Function<? super T, ? extends V> classifier);
+	<TT, K, VL, VR> DistributablePipeline<Entry<K, Pair<VL,VR>>> join(DistributablePipeline<TT> pipelineR,
+																	  Function<? super T, ? extends K> lKeyClassifier,
+																	  Function<? super T, ? extends VL> lValueExtractor,
+																	  Function<? super TT, ? extends K> RKeyClassifier,
+																	  Function<? super TT, ? extends VR> rValueExtractor);
 	
 	/**
 	 * Will join two {@link DistributablePipeline}s together producing new {@link DistributablePipeline} of type R
@@ -102,6 +119,6 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	 * @param <TT>
 	 * @param <R>
 	 */
-	<TT,R> DistributablePipeline<R> join(DistributablePipeline<TT> pipelineR, 
-			BiFunction<Stream<T>, Stream<TT>, Stream<R>> joinFunction);
+	<TT> DistributablePipeline<Entry<?, Pair<?,?>>> join(DistributablePipeline<TT> pipelineR, 
+			BiFunction<Stream<T>, Stream<TT>, Stream<?>> joinFunction);
 }

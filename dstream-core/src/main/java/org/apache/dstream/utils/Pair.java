@@ -1,6 +1,10 @@
 package org.apache.dstream.utils;
 
-public class Pair<L,R> {
+import java.io.Serializable;
+
+public class Pair<L,R> implements Serializable {
+	private static final long serialVersionUID = -2141290889431783473L;
+
 	private final L leftValue;
 
 	private final R rightValue;
@@ -19,5 +23,10 @@ public class Pair<L,R> {
 
 	public R _2() {
 		return rightValue;
+	}
+	
+	@Override
+	public String toString(){
+		return "(" + leftValue + ", " + rightValue + ")";
 	}
 }

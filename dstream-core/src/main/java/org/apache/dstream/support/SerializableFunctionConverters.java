@@ -2,6 +2,9 @@ package org.apache.dstream.support;
 
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.stream.Stream;
+
+import org.apache.dstream.utils.Pair;
 /**
  * Defines {@link Serializable} equivalents strategies defined in java.util.function package.
  */
@@ -47,7 +50,21 @@ public final class SerializableFunctionConverters {
 	/**
 	 * {@link Serializable} version of {@link java.util.function.BiFunction}
 	 */
-	public static interface BiFunction<T, U, R> extends java.util.function.BiFunction<T, U, R>, Serializable{}
+	public static interface BiFunction<T, U, R> extends java.util.function.BiFunction<T, U, R>, Serializable{
+		default Function<Stream<?>, R> toFunction(){
+			return new Function<Stream<?>, R>() {
+				private static final long serialVersionUID = -6508771627909794562L;
+				@SuppressWarnings("unchecked")
+				@Override
+				public R apply(Stream<?> t) {
+					Object[] streams = t.toArray();
+					T str1 = (T) streams[0];
+					U str2 = (U) streams[1];
+					return BiFunction.this.apply(str1, str2);
+				}					
+	        };
+		}
+	}
 	
 	/**
 	 * {@link Serializable} version of {@link java.util.function.Predicate}

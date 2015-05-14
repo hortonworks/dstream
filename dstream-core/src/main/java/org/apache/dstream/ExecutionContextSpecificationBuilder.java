@@ -15,14 +15,13 @@ import java.util.stream.Stream;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.apache.dstream.ExecutionContextSpecification.Stage;
+import org.apache.dstream.support.PipelineConfigurationHelper;
 import org.apache.dstream.support.SerializableFunctionConverters.BiFunction;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
-import org.apache.dstream.support.PipelineConfigurationHelper;
 import org.apache.dstream.support.SourceFilter;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.utils.Assert;
-import org.apache.dstream.utils.Pair;
 import org.apache.dstream.utils.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,7 +100,7 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 			 * essentially returning source data
 			 */
 			if (stages.size() == 0){
-				this.addStage(wysiwyg -> wysiwyg, null);
+				this.addStage((Stream<?> wysiwyg) -> wysiwyg, null);
 			}
 
 			this.executionProperties = PipelineConfigurationHelper.loadExecutionConfig(executionName);
@@ -112,9 +111,7 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 			
 			ExecutionContextSpecification executionContextSpec = this.buildExecutionContextSpec(executionName, output == null ? null : new URI(output), 
 							ExecutionContextSpecificationBuilder.this.targetDistributable);
-			if (logger.isInfoEnabled()){
-				logger.info("Execution context spec: " + executionContextSpec);
-			}
+			
 			String sourceProperty = executionProperties.getProperty(DistributableConstants.SOURCE + "." + this.pipelineName);
 			Assert.notEmpty(sourceProperty, "'source." + this.pipelineName +  "' property can not be found in " + 
 							executionContextSpec.getName() + ".cfg configuration file.");
@@ -125,8 +122,9 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 			
 			for (Stage stage : stages) {
 				if (stage.getDependentExecutionContextSpec() != null){
-					ExecutionContextSpecification dependentStageSpec = stage.getDependentExecutionContextSpec()._1();
+					ExecutionContextSpecification dependentStageSpec = stage.getDependentExecutionContextSpec();
 					Stage initialStage = dependentStageSpec.getStages().get(0);
+					String name = DistributableConstants.SOURCE + "." + dependentStageSpec.getName();
 					String depSourceProperty = executionProperties.getProperty(DistributableConstants.SOURCE + "." + dependentStageSpec.getName());
 					//TODO see #37 Move SourceFilter to pipeline/stream factory method.
 					SourceSupplier depStageSourceSupplier = SourceSupplier.create(depSourceProperty, null);
@@ -134,7 +132,9 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 					break;
 				}
 			}
-			
+			if (logger.isInfoEnabled()){
+				logger.info("Execution context spec: " + executionContextSpec);
+			}
 		} 
 		else if (this.isStageOrBoundaryOperation(operationName)) {
 			if (logger.isDebugEnabled()){
@@ -146,8 +146,7 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 			returnValue = this.targetDistributable;
 		}
 		else if (operationName.equals("toString")){
-			returnValue = this.targetDistributable instanceof DistributableStream ? 
-					"DistributableStream:" : "DistributablePipeline:" + invocation.proceed();
+			returnValue =  invocation.proceed();
 		}
 		else if (operationName.equals("getName")){
 			returnValue = this.pipelineName;
@@ -224,11 +223,18 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 		
 		if (invocation.getMethod().getName().equals("join")) {
 			Assert.notEmpty(arguments, "Both arguments of a join operation are required and can not be null");
-			Stage stage = this.getCurrentStage();
+			
 			DistributableExecutable<?> dependentDistributable = (DistributableExecutable<?>) arguments[0];
 			ExecutionContextSpecification dependentExecutionContextSpec = 
-					this.buildExecutionContextSpec("probe", null, dependentDistributable);
-			stage.setDependentExecutionContextSpec(dependentExecutionContextSpec, (BiFunction<Stream<?>, Stream<?>, Stream<?>>) arguments[1]);
+					this.buildExecutionContextSpec(dependentDistributable.getName(), null, dependentDistributable);
+			
+			if (arguments.length == 5){
+				throw new UnsupportedOperationException("boo");
+			}
+			else {
+				this.addStage(((BiFunction<Stream<?>, Stream<?>, Stream<?>>) arguments[1]).toFunction(), null);
+			}
+			this.getCurrentStage().setDependentExecutionContextSpec(dependentExecutionContextSpec);
 		}
 		else {
 			Function<Stream<?>, Stream<?>> kvExtractorFunction = 
@@ -241,10 +247,11 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 	/**
 	 * 
 	 */
+	@SuppressWarnings("unchecked")
 	private void composeWithLastStageFunction(Function<Stream<?>, Stream<?>> composeFunction){
 		Stage stage = this.getCurrentStage();
 		Function<Stream<?>, Stream<?>> newFunction = composeFunction;
-		Function<Stream<?>, Stream<?>> currentFunction = stage.getProcessingFunction();
+		Function<Stream<?>, Stream<?>> currentFunction = (Function<Stream<?>, Stream<?>>) stage.getProcessingFunction();
 		if (currentFunction != null){
 			newFunction = composeFunction.compose(currentFunction);
 		}
@@ -272,7 +279,7 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 			
 			@Override
 			public String getName() {
-				return pipelineName + "$STAGE_" + this.getId();
+				return this.getId() + "_" + pipelineName;
 			}
 			
 			@Override

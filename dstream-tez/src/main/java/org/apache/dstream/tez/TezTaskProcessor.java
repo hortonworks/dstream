@@ -1,8 +1,13 @@
 package org.apache.dstream.tez;
 
 import java.nio.ByteBuffer;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
@@ -10,11 +15,14 @@ import org.apache.dstream.tez.io.KeyWritable;
 import org.apache.dstream.tez.io.ValueWritable;
 import org.apache.dstream.tez.utils.HdfsSerializerUtils;
 import org.apache.dstream.tez.utils.StreamUtils;
+import org.apache.dstream.utils.Assert;
+import org.apache.dstream.utils.Pair;
 import org.apache.dstream.utils.ReflectionUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.tez.mapreduce.processor.SimpleMRProcessor;
+import org.apache.tez.runtime.api.LogicalInput;
 import org.apache.tez.runtime.api.ObjectRegistry;
 import org.apache.tez.runtime.api.ProcessorContext;
 import org.apache.tez.runtime.api.Reader;
@@ -61,23 +69,29 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 					+ this.dagName + "; Vertex " + this.vertexName);
 		}
 		
-		if (this.isSingleSource()){
-			Reader reader = this.getReader();
-			
-			Stream stream = (reader instanceof KeyValueReader) 
+		List<LogicalInput> inputs = this.getOrderedInputs();
+		Assert.isTrue(inputs.size() <= 2, "More then two inputs are not supported");
+		
+		Reader reader = inputs.get(0).getReader();
+		Stream stream = (reader instanceof KeyValueReader) 
+				? StreamUtils.toStream((KeyValueReader) reader) 
+				: StreamUtils.toStream((KeyValuesReader) reader);
+		KeyValueWriter kvWriter = (KeyValueWriter) this.getOutputs().values().iterator().next().getWriter();
+		
+		Function<Object, Stream<?>> streamProcessingFunction = this.extractTaskFunction();
+		Object functionArgument = stream;
+		
+		if (inputs.size() == 2){
+			reader = inputs.get(1).getReader();
+			Stream streamB = (reader instanceof KeyValueReader) 
 					? StreamUtils.toStream((KeyValueReader) reader) 
 					: StreamUtils.toStream((KeyValuesReader) reader);
 			
-			KeyValueWriter kvWriter = (KeyValueWriter) this.getOutputs().values().iterator().next().getWriter();
-			Function<Stream, Stream<Entry<Object,Object>>> streamProcessingFunction = this.extractTaskFunction();
-			
-			WritingConsumer consume = new WritingConsumer(kvWriter);
-			streamProcessingFunction.apply(stream).forEach(consume);
-//			streamProcessingFunction.apply(stream).forEach(System.out::print);
+			functionArgument = Stream.of(stream, streamB);
 		}
-		else {
-			System.out.println();
-		}
+		
+		WritingConsumer consume = new WritingConsumer(kvWriter);
+		streamProcessingFunction.apply(functionArgument).forEach(consume);
 
 		logger.info("Finished processing task-[" + this.dagName + ":" + this.vertexName + ":" + this.taskIndex + "]");
 	}
@@ -85,20 +99,25 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 	/**
 	 * 
 	 */
-	private boolean isSingleSource(){
-		return this.getInputs().size() == 1;
-	}
-	
-	/**
-	 * 
-	 */
-	private Reader getReader() {
-		try {
-			return this.getInputs().entrySet().iterator().next().getValue().getReader();
-		} 
-		catch (Exception e) {
-			throw new IllegalStateException("Failed to get Reader", e);
-		}
+	private List<LogicalInput> getOrderedInputs(){
+		Map<String, LogicalInput> orderedInputMap = new TreeMap<String, LogicalInput>(new Comparator<String>() {
+
+			@Override
+			public int compare(String o1, String o2) {
+				int a = Integer.parseInt(o1.split(":")[0]);
+				int b = Integer.parseInt(o2.split(":")[0]);
+				if (a == b){
+					return 0;
+				}
+				else if (a > b){
+					return 1;
+				}
+				return -1;
+			}
+		});
+		
+		orderedInputMap.putAll(this.inputs);
+		return orderedInputMap.entrySet().stream().map(s -> s.getValue()).collect(Collectors.toList());
 	}
 
 	/**
@@ -141,7 +160,8 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 		 */
 		public void accept(Object input) {
 			try {
-				if (input instanceof Entry){
+				System.out.println("CONSUMING: " + input);
+				if (input instanceof Entry){		
 					this.kw.setValue(((Entry<?,?>)input).getKey());
 					this.vw.setValue(((Entry<?,?>)input).getValue());
 					this.kvWriter.write(this.kw, this.vw);

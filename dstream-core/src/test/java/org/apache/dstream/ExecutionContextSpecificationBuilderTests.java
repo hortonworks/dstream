@@ -65,7 +65,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals(1, funcResult.length);
 		assertEquals("foo bar", funcResult[0]);
 		
-		assertEquals("foo$STAGE_0", stage.getName());
+		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
@@ -91,7 +91,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals(1, funcResult.length);
 		assertEquals("foo bar", funcResult[0]);
 		
-		assertEquals("foo$STAGE_0", stage.getName());
+		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
@@ -120,7 +120,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals("foo", funcResult[0]);
 		assertEquals("bar", funcResult[1]);
 		
-		assertEquals("foo$STAGE_0", stage.getName());
+		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
@@ -151,7 +151,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals("foo", funcResult[0]);
 		assertEquals("bar", funcResult[1]);
 		
-		assertEquals("foo$STAGE_0", stage.getName());
+		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
@@ -182,7 +182,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals(KVUtils.kv("foo", 1), funcResult[0]);
 		assertEquals(KVUtils.kv("bar", 1), funcResult[1]);
 		
-		assertEquals("foo$STAGE_0", stage.getName());
+		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
@@ -196,7 +196,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals(6, aggrResult);
 		
 		assertNull(stage.getProcessingFunction());	
-		assertEquals("foo$STAGE_1", stage.getName());
+		assertEquals("1_foo", stage.getName());
 		assertNull(stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));
@@ -227,7 +227,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals(KVUtils.kv("foo", 1), funcResult[0]);
 		assertEquals(KVUtils.kv("bar", 1), funcResult[1]);
 		
-		assertEquals("foo$STAGE_0", stage.getName());
+		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
@@ -241,7 +241,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals(6, aggrResult);
 		
 		assertNull(stage.getProcessingFunction());
-		assertEquals("foo$STAGE_1", stage.getName());
+		assertEquals("1_foo", stage.getName());
 		assertNull(stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));
@@ -270,7 +270,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals(KVUtils.kv("foo", 1), funcResult[0]);
 		assertEquals(KVUtils.kv("bar", 1), funcResult[1]);
 		
-		assertEquals("foo$STAGE_0", stage.getName());
+		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
@@ -289,7 +289,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals(1, funcResult.length);
 		assertEquals(KVUtils.kv("FOO", 1L), funcResult[0]);
 		
-		assertEquals("foo$STAGE_1", stage.getName());
+		assertEquals("1_foo", stage.getName());
 		assertNull(stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));
@@ -315,7 +315,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals("foo", funcResult[0]);
 		assertEquals("bar", funcResult[1]);
 		
-		assertEquals("foo$STAGE_0", stage.getName());
+		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
@@ -344,7 +344,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals(KVUtils.kv("foo", 1), funcResult[0]);
 		assertEquals(KVUtils.kv("bar", 1), funcResult[1]);
 		
-		assertEquals("foo$STAGE_0", stage.getName());
+		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
@@ -358,7 +358,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals(6, aggrResult);
 		
 		assertNull(stage.getProcessingFunction());
-		assertEquals("foo$STAGE_1", stage.getName());
+		assertEquals("1_foo", stage.getName());
 		assertNull(stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));

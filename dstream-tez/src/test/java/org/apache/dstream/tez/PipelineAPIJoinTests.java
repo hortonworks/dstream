@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 
 import org.apache.dstream.DistributablePipeline;
 import org.apache.dstream.support.HashJoiner;
+import org.apache.dstream.utils.Pair;
 import org.junit.Test;
 
 public class PipelineAPIJoinTests {
@@ -34,8 +35,10 @@ public class PipelineAPIJoinTests {
 				})
 		).reduce(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
 	
-		Future<Stream<Stream<Object>>> resultFuture = hash.join(probe, HashJoiner::join).executeAs(this.applicationName);
+//		Future<?> resultFuture = hash.join(probe, l -> l.getKey(), l -> l.getValue(), r -> r.getKey(), r -> r.getValue()).executeAs(this.applicationName);
+		Future<Stream<Stream<Entry<?, Pair<?, ?>>>>> resultFuture =  hash.join(probe, HashJoiner::join).executeAs(this.applicationName);
+		Stream<Stream<Entry<?, Pair<?, ?>>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
 		
-		resultFuture.get(1000000, TimeUnit.MILLISECONDS);
+		result.forEach(s -> s.forEach(System.out::println));
 	}
 }

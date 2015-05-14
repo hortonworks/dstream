@@ -2,6 +2,7 @@ package org.apache.dstream.tez.utils;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 
 import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.SerializationUtils;
@@ -22,6 +23,8 @@ public class HdfsSerializerUtils {
 		Assert.notNull(targetPath, "'targetPath' must not be null");
 		Assert.notNull(fs, "'fs' must not be null");
 		Assert.notNull(source, "'source' must not be null");
+		
+		System.out.println(source instanceof Serializable);
 
 		Path resultPath = targetPath.makeQualified(fs.getUri(), fs.getWorkingDirectory());
 		OutputStream targetOutputStream = null;

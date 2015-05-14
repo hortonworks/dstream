@@ -7,12 +7,10 @@ import java.util.stream.Stream;
 
 import org.apache.dstream.support.DefaultHashPartitioner;
 import org.apache.dstream.support.Partitioner;
-import org.apache.dstream.support.SerializableFunctionConverters.BiFunction;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.utils.Assert;
-import org.apache.dstream.utils.Pair;
 
 /**
  * 
@@ -37,9 +35,6 @@ public interface ExecutionContextSpecification extends Serializable {
 		private SourceSupplier<?> sourceSupplier;
 		
 		private ExecutionContextSpecification dependentexecutionContextSpec;
-		
-		private BiFunction<Stream<?>, Stream<?>, Stream<?>> mergeFunction;
-		
 
 		public abstract BinaryOperator<Object> getAggregatorOperator();
 		
@@ -62,7 +57,8 @@ public interface ExecutionContextSpecification extends Serializable {
 		}
 		
 		public String toString() {
-			return this.getId() + ":" + this.getName() + (getSourceSupplier() != null ? getSourceSupplier() : "");
+			return this.getName() + 
+					(this.getDependentExecutionContextSpec() == null ? "" : this.getDependentExecutionContextSpec().getStages());
 		}
 		
 		protected void setProcessingFunction(Function<Stream<?>, Stream<?>> processingFunction){
@@ -74,17 +70,12 @@ public interface ExecutionContextSpecification extends Serializable {
 			this.sourceSupplier = sourceSupplier;
 		}
 		
-		public Pair<ExecutionContextSpecification, BiFunction<Stream<?>, Stream<?>, Stream<?>>> getDependentExecutionContextSpec() {
-			if (this.dependentexecutionContextSpec != null && this.mergeFunction != null){
-				return Pair.of(this.dependentexecutionContextSpec, this.mergeFunction);
-			}
-			return null;
+		public ExecutionContextSpecification getDependentExecutionContextSpec() {
+			return this.dependentexecutionContextSpec;
 		}
 
-		public void setDependentExecutionContextSpec(ExecutionContextSpecification dependentexecutionContextSpec,
-				BiFunction<Stream<?>, Stream<?>, Stream<?>> mergeFunction) {
+		public void setDependentExecutionContextSpec(ExecutionContextSpecification dependentexecutionContextSpec) {
 			this.dependentexecutionContextSpec = dependentexecutionContextSpec;
-			this.mergeFunction = mergeFunction;
 		}
 	}
 }
