@@ -6,9 +6,11 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.dstream.support.SerializableFunctionConverters.BiFunction;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SerializableFunctionConverters.Predicate;
+import org.apache.dstream.utils.Pair;
 
 /**
  * A sequence of elements supporting sequential and distributable aggregate 
@@ -125,6 +127,35 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 			Function<? super T, ? extends V> valueMapper, 
 			BinaryOperator<V> op);
 	
-//	<TT,R> DistributableStream<R> join(DistributableStream<TT> streamR, 
-//			BiFunction<Stream<T>, Stream<TT>, Stream<R>> joinFunction);
+	/**
+	 * Join based on common predicate
+	 * 
+	 * @param lKeyMapper
+	 * @param lValueMapper
+	 * @param pipelineR
+	 * @param rKeyMapper
+	 * @param rValueMapper
+	 * @return
+	 */
+	<TT, K, VL, VR> DistributableStream<Entry<K, Pair<VL,VR>>> join(DistributableStream<TT> pipelineR,
+																	  Function<? super T, ? extends K> lKeyMapper,
+																	  Function<? super T, ? extends VL> lValueMapper,
+																	  Function<? super TT, ? extends K> rKeyMapper,
+																	  Function<? super TT, ? extends VR> rValueMapper);
+	
+	/**
+	 * Will join two {@link DistributablePipeline}s together producing new {@link DistributablePipeline} of type R
+	 * 
+	 * The 'joinFunction' 
+	 * 
+	 * @param pipelineR producer of target {@link Stream} this {@link Stream} will be joined with.
+	 * @param joinFunction a {@link BiFunction} where the actual join between {@link Stream}s will be performed.
+	 * 
+	 * @return the new {@link DistributablePipeline} of type R
+	 * 
+	 * @param <TT>
+	 * @param <R>
+	 */
+	<TT,R> DistributableStream<R> join(DistributableStream<TT> pipelineR, 
+			BiFunction<Stream<T>, Stream<TT>, Stream<R>> joinFunction);
 }

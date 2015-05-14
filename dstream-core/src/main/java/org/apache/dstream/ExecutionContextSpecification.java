@@ -26,7 +26,6 @@ public interface ExecutionContextSpecification extends Serializable {
 	
 	/**
 	 * 
-	 *
 	 */
 	public abstract class Stage implements Serializable {
 		private static final long serialVersionUID = 4321682502843990767L;
@@ -35,6 +34,8 @@ public interface ExecutionContextSpecification extends Serializable {
 		
 		private SourceSupplier<?> sourceSupplier;
 		
+		private ExecutionContextSpecification dependentexecutionContextSpec;
+
 		public abstract BinaryOperator<Object> getAggregatorOperator();
 		
 		public abstract String getName();
@@ -44,6 +45,7 @@ public interface ExecutionContextSpecification extends Serializable {
 		public Function<Stream<?>, Stream<?>> getProcessingFunction(){
 			return this.processingFunction;
 		}
+		
 		public SourceSupplier<?> getSourceSupplier(){
 			return this.sourceSupplier;
 		}
@@ -55,7 +57,8 @@ public interface ExecutionContextSpecification extends Serializable {
 		}
 		
 		public String toString() {
-			return this.getId() + ":" + this.getName() + (getSourceSupplier() != null ? getSourceSupplier() : "");
+			return this.getName() + 
+					(this.getDependentExecutionContextSpec() == null ? "" : this.getDependentExecutionContextSpec().getStages());
 		}
 		
 		protected void setProcessingFunction(Function<Stream<?>, Stream<?>> processingFunction){
@@ -65,6 +68,14 @@ public interface ExecutionContextSpecification extends Serializable {
 		
 		protected void setSourceSupplier(SourceSupplier<?> sourceSupplier){
 			this.sourceSupplier = sourceSupplier;
+		}
+		
+		public ExecutionContextSpecification getDependentExecutionContextSpec() {
+			return this.dependentexecutionContextSpec;
+		}
+
+		public void setDependentExecutionContextSpec(ExecutionContextSpecification dependentexecutionContextSpec) {
+			this.dependentexecutionContextSpec = dependentexecutionContextSpec;
 		}
 	}
 }

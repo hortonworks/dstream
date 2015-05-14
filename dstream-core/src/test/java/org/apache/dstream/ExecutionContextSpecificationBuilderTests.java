@@ -65,7 +65,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals(1, funcResult.length);
 		assertEquals("foo bar", funcResult[0]);
 		
-		assertEquals("foo$STAGE_0", stage.getName());
+		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
@@ -91,7 +91,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals(1, funcResult.length);
 		assertEquals("foo bar", funcResult[0]);
 		
-		assertEquals("foo$STAGE_0", stage.getName());
+		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
@@ -120,7 +120,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals("foo", funcResult[0]);
 		assertEquals("bar", funcResult[1]);
 		
-		assertEquals("foo$STAGE_0", stage.getName());
+		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
@@ -151,7 +151,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals("foo", funcResult[0]);
 		assertEquals("bar", funcResult[1]);
 		
-		assertEquals("foo$STAGE_0", stage.getName());
+		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
@@ -182,7 +182,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals(KVUtils.kv("foo", 1), funcResult[0]);
 		assertEquals(KVUtils.kv("bar", 1), funcResult[1]);
 		
-		assertEquals("foo$STAGE_0", stage.getName());
+		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
@@ -196,7 +196,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals(6, aggrResult);
 		
 		assertNull(stage.getProcessingFunction());	
-		assertEquals("foo$STAGE_1", stage.getName());
+		assertEquals("1_foo", stage.getName());
 		assertNull(stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));
@@ -227,7 +227,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals(KVUtils.kv("foo", 1), funcResult[0]);
 		assertEquals(KVUtils.kv("bar", 1), funcResult[1]);
 		
-		assertEquals("foo$STAGE_0", stage.getName());
+		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
@@ -241,7 +241,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals(6, aggrResult);
 		
 		assertNull(stage.getProcessingFunction());
-		assertEquals("foo$STAGE_1", stage.getName());
+		assertEquals("1_foo", stage.getName());
 		assertNull(stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));
@@ -270,7 +270,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals(KVUtils.kv("foo", 1), funcResult[0]);
 		assertEquals(KVUtils.kv("bar", 1), funcResult[1]);
 		
-		assertEquals("foo$STAGE_0", stage.getName());
+		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
@@ -289,7 +289,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals(1, funcResult.length);
 		assertEquals(KVUtils.kv("FOO", 1L), funcResult[0]);
 		
-		assertEquals("foo$STAGE_1", stage.getName());
+		assertEquals("1_foo", stage.getName());
 		assertNull(stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));
@@ -315,7 +315,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals("foo", funcResult[0]);
 		assertEquals("bar", funcResult[1]);
 		
-		assertEquals("foo$STAGE_0", stage.getName());
+		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
@@ -344,7 +344,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals(KVUtils.kv("foo", 1), funcResult[0]);
 		assertEquals(KVUtils.kv("bar", 1), funcResult[1]);
 		
-		assertEquals("foo$STAGE_0", stage.getName());
+		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
@@ -358,48 +358,9 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals(6, aggrResult);
 		
 		assertNull(stage.getProcessingFunction());
-		assertEquals("foo$STAGE_1", stage.getName());
+		assertEquals("1_foo", stage.getName());
 		assertNull(stage.getSourceSupplier());
 		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));
 	}
-
-	@Test
-	public void join() throws Exception {
-//		DistributablePipeline<String> pipelineA = DistributablePipeline.ofType(String.class, "foo");
-//		DistributablePipeline<Entry<String, Integer>> pipelineB = DistributablePipeline.ofType(String.class, "bar").<String>compute(stream -> stream
-//				.flatMap(line -> Stream.of(line.split(" ")))
-//				.map(word -> word)
-//		).reduce(s -> s, s -> 1, Integer::sum);
-//		
-//		Future<Stream<Stream<Entry<String, Pair<Integer, Integer>>>>> resultFuture = pipelineA.<String>compute(stream -> stream
-//				.flatMap(line -> Stream.of(line.split(" ")))
-//				.map(word -> word)
-//		).reduce(s -> s, s -> 1, Integer::sum).<Entry<String, Integer>, Entry<String, Pair<Integer, Integer>>>join(pipelineB, (a,b) -> new Pair(1, 2))
-//		 .executeAs("pipeline-spec-validation");
-		
-//		DistributablePipelineSpecification pipelineSpec = DstreamTestUtils.extractPipelineSpecification(resultFuture);
-//		
-//		Stage stage = pipelineSpec.getStages().get(0);
-//		assertNotNull(stage);
-//		assertNull(stage.getAggregatorOperator());
-//		assertNotNull(stage.getProcessingFunction());
-//		assertEquals("STAGE_0", stage.getName());
-//		assertNull(stage.getSourceSupplier());
-//		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
-//		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));
-//		
-//		stage = pipelineSpec.getStages().get(1);
-//		assertNotNull(stage);
-//		assertNotNull(stage.getAggregatorOperator());
-//		assertNull(stage.getProcessingFunction());
-//		assertEquals("STAGE_1", stage.getName());
-//		assertNull(stage.getSourceSupplier());
-//		assertTrue(stage.getPartitioner().getClass().isAssignableFrom(DefaultHashPartitioner.class));
-//		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));
-//		
-//		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(1000, TimeUnit.MILLISECONDS);
-//		result.close();
-	}
-	
 }

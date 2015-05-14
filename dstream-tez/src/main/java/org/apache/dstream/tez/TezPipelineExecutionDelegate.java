@@ -11,9 +11,9 @@ import java.util.stream.Stream;
 import org.apache.dstream.ExecutionContextSpecification;
 import org.apache.dstream.ExecutionContextSpecification.Stage;
 import org.apache.dstream.ExecutionDelegate;
+import org.apache.dstream.support.PipelineConfigurationHelper;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.tez.utils.HadoopUtils;
-import org.apache.dstream.utils.PipelineConfigurationUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
@@ -94,7 +94,7 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 			throw new IllegalStateException("Failed to access FileSystem", e);
 		}
 		
-		this.pipelineConfig = PipelineConfigurationUtils.loadExecutionConfig(pipelineSpecification.getName());
+		this.pipelineConfig = PipelineConfigurationHelper.loadExecutionConfig(pipelineSpecification.getName());
 		
 		if (this.tezClient == null){
 			this.createAndTezClient(pipelineSpecification, fs, tezConfiguration);

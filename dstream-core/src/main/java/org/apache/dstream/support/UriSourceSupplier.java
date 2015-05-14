@@ -51,7 +51,7 @@ public class UriSourceSupplier implements SourceSupplier<URI> {
 	 */
 	@Override
 	public String toString(){
-		return Arrays.asList(this.uris).toString();
+		return ":src" + Arrays.asList(this.uris).toString();
 	}
 
 	@Override

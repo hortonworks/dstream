@@ -2,20 +2,20 @@ package org.apache.dstream;
 
 import java.util.stream.Stream;
 
-import org.apache.dstream.utils.PipelineConfigurationUtils;
+import org.apache.dstream.support.PipelineConfigurationHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
  * Implementation of {@link ExecutionDelegate} which returns {@link ExecutionContextSpecification}.
  * Primary use is testing.
  */
-public class DistributablePipelineSpecificationValidationDelegate implements ExecutionDelegate {
+public class ExecutionContextSpecificationValidationDelegate implements ExecutionDelegate {
 	
-	private final Logger logger = LoggerFactory.getLogger(DistributablePipelineSpecificationValidationDelegate.class);
+	private final Logger logger = LoggerFactory.getLogger(ExecutionContextSpecificationValidationDelegate.class);
 
 	@Override
 	public Stream<?>[] execute(ExecutionContextSpecification pipelineSpecification) {
-		PipelineConfigurationUtils.loadExecutionConfig(pipelineSpecification.getName());
+		PipelineConfigurationHelper.loadExecutionConfig(pipelineSpecification.getName());
 		return new Stream[]{Stream.of(new Object())};
 	}
 

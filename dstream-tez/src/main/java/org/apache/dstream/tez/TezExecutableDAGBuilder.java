@@ -5,13 +5,16 @@ import java.lang.reflect.Type;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.dstream.ExecutionContextSpecification;
 import org.apache.dstream.ExecutionContextSpecification.Stage;
 import org.apache.dstream.KeyValuesStreamAggregatingFunction;
+import org.apache.dstream.support.SerializableFunctionConverters.BiFunction;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.tez.io.KeyWritable;
@@ -19,6 +22,7 @@ import org.apache.dstream.tez.io.ValueWritable;
 import org.apache.dstream.tez.utils.HdfsSerializerUtils;
 import org.apache.dstream.tez.utils.SequenceFileOutputStreamsBuilder;
 import org.apache.dstream.utils.Assert;
+import org.apache.dstream.utils.Pair;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.JobConf;
@@ -55,6 +59,8 @@ public class TezExecutableDAGBuilder {
 	// TEZ Properties
 	private final Class<?> inputFormatClass;
 	
+	private int inputOrderCounter;
+	
 	/**
 	 * 
 	 * @param pipelineName
@@ -79,17 +85,16 @@ public class TezExecutableDAGBuilder {
 	 * @param parallelizm
 	 */
 	public void addStage(Stage stage, int parallelizm) {	
-		String vertexName = stage.getId() + "_" + stage.getName();
+		String vertexName = stage.getName();
 		
 		UserPayload payload = this.createPayloadFromTaskSerPath(this.composeFunctionIfNecessary(stage), this.dag.getName(), vertexName);
-
-		ProcessorDescriptor pd = ProcessorDescriptor.create(TezTaskProcessor.class.getName()).setUserPayload(payload);
-		
-		Vertex vertex = this.lastVertex == null 
-				? Vertex.create(vertexName, pd) 
-						: Vertex.create(vertexName, pd, parallelizm);
+		ProcessorDescriptor pd = ProcessorDescriptor.create(TezTaskProcessor.class.getName()).setUserPayload(payload);	
+		Vertex vertex = stage.getId() == 0 
+				? Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd) 
+						: Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd, parallelizm);
 		
 		vertex.addTaskLocalFiles(this.tezClient.getLocalResources());
+		this.dag.addVertex(vertex);
 		
 		if (stage.getId() == 0){	
 			SourceSupplier<?> sourceSupplier = stage.getSourceSupplier();
@@ -102,20 +107,28 @@ public class TezExecutableDAGBuilder {
 				if (sources[0] instanceof URI){
 					URI[] uris = Arrays.copyOf(sources, sources.length, URI[].class);
 					DataSourceDescriptor dataSource = this.buildDataSourceDescriptorFromUris(uris);
-					vertex.addDataSource(vertexName + "_INPUT", dataSource);
+					vertex.addDataSource(this.inputOrderCounter++ + ":" + vertexName + "_INPUT", dataSource);
 				} 
 				else {
 					throw new IllegalArgumentException("Unsupported sources: " + Arrays.asList(stage.getSourceSupplier()));
 				}
 			}
-		}
-		
-		this.dag.addVertex(vertex);
-		
-		if (this.lastVertex != null){
+		} 
+		else {
 			Edge edge = Edge.create(this.lastVertex, vertex, this.edgeConf.createDefaultEdgeProperty());
 			this.dag.addEdge(edge);
 		}
+		
+		if (stage.getDependentExecutionContextSpec() != null){
+			ExecutionContextSpecification execSpec = stage.getDependentExecutionContextSpec();
+			List<Stage> dependentStages = execSpec.getStages();
+			//TODO determine correct paralelizm
+			int stageParallelizm = 1;
+			dependentStages.forEach(dependentStage -> this.addStage(dependentStage, stageParallelizm));
+			Edge edge = Edge.create(this.lastVertex, vertex, this.edgeConf.createDefaultEdgeProperty());
+			this.dag.addEdge(edge);
+		}
+		
 		if (logger.isDebugEnabled()){
 			logger.debug("Created Vertex: " + vertex);
 		}
@@ -137,7 +150,7 @@ public class TezExecutableDAGBuilder {
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private Function<Stream<?>, Stream<?>> composeFunctionIfNecessary(Stage stage) {
-		Function<Stream<?>, Stream<?>> processingFunction = stage.getProcessingFunction();
+		Function<Stream<?>, Stream<?>> processingFunction = (Function<Stream<?>, Stream<?>>) stage.getProcessingFunction();
 		if (stage.getAggregatorOperator() != null) {
 			Function<Stream<?>,Stream<?>> aggregatingFunction = new KeyValuesStreamAggregatingFunction(stage.getAggregatorOperator());
 			processingFunction = processingFunction == null ? aggregatingFunction : processingFunction.compose(aggregatingFunction);
