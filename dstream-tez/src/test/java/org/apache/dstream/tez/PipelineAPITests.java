@@ -297,7 +297,6 @@ public class PipelineAPITests extends BaseTezTests {
 		
 		List<Entry<String, Long>> firstResult = firstResultStream.collect(Collectors.toList());
 		Assert.assertEquals(3, firstResult.size());
-		System.out.println(firstResult);
 		
 		Assert.assertEquals("THE SAME THINKING WE USED WHEN", firstResult.get(0).getKey().trim().split("_")[0]);
 		Assert.assertEquals((Long)1L, firstResult.get(0).getValue());

@@ -26,7 +26,17 @@ public class Pair<L,R> implements Serializable {
 	}
 	
 	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Pair){
+			return ((Pair<?,?>)obj)._1().equals(this._1()) && ((Pair<?,?>)obj)._2().equals(this._2()); 
+		} 
+		else {
+			return false;
+		}
+    }
+	
+	@Override
 	public String toString(){
-		return "(" + leftValue + ", " + rightValue + ")";
+		return "([" + leftValue + "], [" + rightValue + "])";
 	}
 }

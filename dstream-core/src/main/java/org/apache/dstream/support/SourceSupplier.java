@@ -23,8 +23,7 @@ public interface SourceSupplier<T> extends Supplier<T[]> {
 	 */
 	public static boolean isURI(String source){
 		Pattern pattern = Pattern.compile("^[a-zA-Z0-9\\-_]+:");
-		long count = Stream.of(source.split(";")).filter(src -> !pattern.matcher(src).find()).count();
-		return count == 0;
+		return pattern.matcher(source).find();
 	}
 	
 	/**
@@ -34,7 +33,7 @@ public interface SourceSupplier<T> extends Supplier<T[]> {
 	 */
 	public static URI toURI(String strURI){
 		try {
-			return new URI(strURI);
+			return new URI(strURI.trim());
 		} 
 		catch (Exception e) {
 			throw new IllegalArgumentException(e);

@@ -16,7 +16,6 @@ import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.apache.dstream.ExecutionContextSpecification.Stage;
 import org.apache.dstream.support.PipelineConfigurationHelper;
-import org.apache.dstream.support.SerializableFunctionConverters.BiFunction;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SourceFilter;
@@ -124,7 +123,6 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 				if (stage.getDependentExecutionContextSpec() != null){
 					ExecutionContextSpecification dependentStageSpec = stage.getDependentExecutionContextSpec();
 					Stage initialStage = dependentStageSpec.getStages().get(0);
-					String name = DistributableConstants.SOURCE + "." + dependentStageSpec.getName();
 					String depSourceProperty = executionProperties.getProperty(DistributableConstants.SOURCE + "." + dependentStageSpec.getName());
 					//TODO see #37 Move SourceFilter to pipeline/stream factory method.
 					SourceSupplier depStageSourceSupplier = SourceSupplier.create(depSourceProperty, null);
@@ -217,23 +215,28 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 	 *    there are subsequent 'compute' operations, their functions will be merged and 
 	 *    injected into this new Stage.
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void processStageBoundaryInvocation(ReflectiveMethodInvocation invocation){
 		Object[] arguments = invocation.getArguments();
 		
 		if (invocation.getMethod().getName().equals("join")) {
-			Assert.notEmpty(arguments, "Both arguments of a join operation are required and can not be null");
+			Assert.notEmpty(arguments, "All arguments of a join operation are required and can not be null");
 			
 			DistributableExecutable<?> dependentDistributable = (DistributableExecutable<?>) arguments[0];
 			ExecutionContextSpecification dependentExecutionContextSpec = 
 					this.buildExecutionContextSpec(dependentDistributable.getName(), null, dependentDistributable);
 			
-			if (arguments.length == 5){
-				throw new UnsupportedOperationException("boo");
-			}
-			else {
-				this.addStage(((BiFunction<Stream<?>, Stream<?>, Stream<?>>) arguments[1]).toFunction(), null);
-			}
+		
+			KeyValueExtractorFunction hashKVFunction = 
+					new KeyValueExtractorFunction((Function<?,?>)arguments[1], (Function<?,?>)arguments[2]);
+			
+			KeyValueExtractorFunction probeKVFunction = 
+					new KeyValueExtractorFunction((Function<?,?>)arguments[3], (Function<?,?>)arguments[4]);
+			
+			Function pjf = new PredicateJoinFunction(hashKVFunction, probeKVFunction);
+
+			Stage depStage = dependentExecutionContextSpec.getStages().get(dependentExecutionContextSpec.getStages().size()-1);
+			this.addStage(pjf, depStage.getAggregatorOperator());
 			this.getCurrentStage().setDependentExecutionContextSpec(dependentExecutionContextSpec);
 		}
 		else {
@@ -247,7 +250,6 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 	/**
 	 * 
 	 */
-	@SuppressWarnings("unchecked")
 	private void composeWithLastStageFunction(Function<Stream<?>, Stream<?>> composeFunction){
 		Stage stage = this.getCurrentStage();
 		Function<Stream<?>, Stream<?>> newFunction = composeFunction;

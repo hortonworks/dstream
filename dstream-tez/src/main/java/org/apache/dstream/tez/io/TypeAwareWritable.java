@@ -77,8 +77,9 @@ public abstract class TypeAwareWritable<T> implements NewWritable<T> {
 		if (this.valueType != NULL){
 			try {
 				out.write(this.valueEncoder.valueBytes);
-			} catch (Exception e) {
-				System.out.println();
+			} 
+			catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
 	}

@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 import org.apache.dstream.ExecutionContextSpecification;
 import org.apache.dstream.ExecutionContextSpecification.Stage;
 import org.apache.dstream.KeyValuesStreamAggregatingFunction;
-import org.apache.dstream.support.SerializableFunctionConverters.BiFunction;
+import org.apache.dstream.PredicateJoinFunction;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.tez.io.KeyWritable;
@@ -22,7 +22,6 @@ import org.apache.dstream.tez.io.ValueWritable;
 import org.apache.dstream.tez.utils.HdfsSerializerUtils;
 import org.apache.dstream.tez.utils.SequenceFileOutputStreamsBuilder;
 import org.apache.dstream.utils.Assert;
-import org.apache.dstream.utils.Pair;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.JobConf;
@@ -89,11 +88,13 @@ public class TezExecutableDAGBuilder {
 		
 		UserPayload payload = this.createPayloadFromTaskSerPath(this.composeFunctionIfNecessary(stage), this.dag.getName(), vertexName);
 		ProcessorDescriptor pd = ProcessorDescriptor.create(TezTaskProcessor.class.getName()).setUserPayload(payload);	
+		
 		Vertex vertex = stage.getId() == 0 
 				? Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd) 
 						: Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd, parallelizm);
-		
+				
 		vertex.addTaskLocalFiles(this.tezClient.getLocalResources());
+		
 		this.dag.addVertex(vertex);
 		
 		if (stage.getId() == 0){	
@@ -153,7 +154,12 @@ public class TezExecutableDAGBuilder {
 		Function<Stream<?>, Stream<?>> processingFunction = (Function<Stream<?>, Stream<?>>) stage.getProcessingFunction();
 		if (stage.getAggregatorOperator() != null) {
 			Function<Stream<?>,Stream<?>> aggregatingFunction = new KeyValuesStreamAggregatingFunction(stage.getAggregatorOperator());
-			processingFunction = processingFunction == null ? aggregatingFunction : processingFunction.compose(aggregatingFunction);
+			if (processingFunction instanceof PredicateJoinFunction){
+				((PredicateJoinFunction)processingFunction).setProbeAggregator(aggregatingFunction);
+			}
+			else {
+				processingFunction = processingFunction == null ? aggregatingFunction : processingFunction.compose(aggregatingFunction);
+			}
 		} 
 		else if (processingFunction == null) {
 			throw new IllegalStateException("Both processing function and aggregator op are null. "
@@ -205,7 +211,7 @@ public class TezExecutableDAGBuilder {
 	private DataSourceDescriptor buildDataSourceDescriptorFromUris(URI[] sources) {
 		String inputPath = 
 				StringUtils.collectionToCommaDelimitedString(Stream.of(sources).map(uri -> uri.getPath()).collect(Collectors.toList()));
-		DataSourceDescriptor dataSource = MRInput.createConfigBuilder(this.tezClient.getTezConfiguration(), this.inputFormatClass, inputPath).build();
+		DataSourceDescriptor dataSource = MRInput.createConfigBuilder(this.tezClient.getTezConfiguration(), this.inputFormatClass, inputPath).groupSplits(false).build();
 		return dataSource;
 	}
 	

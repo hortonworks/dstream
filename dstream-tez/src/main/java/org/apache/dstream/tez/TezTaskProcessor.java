@@ -16,7 +16,6 @@ import org.apache.dstream.tez.io.ValueWritable;
 import org.apache.dstream.tez.utils.HdfsSerializerUtils;
 import org.apache.dstream.tez.utils.StreamUtils;
 import org.apache.dstream.utils.Assert;
-import org.apache.dstream.utils.Pair;
 import org.apache.dstream.utils.ReflectionUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -160,7 +159,6 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 		 */
 		public void accept(Object input) {
 			try {
-				System.out.println("CONSUMING: " + input);
 				if (input instanceof Entry){		
 					this.kw.setValue(((Entry<?,?>)input).getKey());
 					this.vw.setValue(((Entry<?,?>)input).getValue());

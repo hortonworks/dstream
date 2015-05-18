@@ -4,7 +4,6 @@ import java.util.Map.Entry;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import org.apache.dstream.support.SerializableFunctionConverters.BiFunction;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.utils.Pair;
@@ -100,25 +99,10 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	 * @param rValueMapper
 	 * @return
 	 */
-	<TT, K, VL, VR> DistributablePipeline<Entry<K, Pair<VL,VR>>> join(DistributablePipeline<TT> pipelineR,
-																	  Function<? super T, ? extends K> lKeyClassifier,
-																	  Function<? super T, ? extends VL> lValueExtractor,
-																	  Function<? super TT, ? extends K> RKeyClassifier,
-																	  Function<? super TT, ? extends VR> rValueExtractor);
+	<TT, K, VL, VR> DistributablePipeline<Entry<K, Pair<VL,VR>>> join(DistributablePipeline<TT> pipelineP,
+																	  Function<? super T, ? extends K> hashKeyClassifier,
+																	  Function<? super T, ? extends VL> hashValueMapper,
+																	  Function<? super TT, ? extends K> probeKeyClassifier,
+																	  Function<? super TT, ? extends VR> probeValueMapper);
 	
-	/**
-	 * Will join two {@link DistributablePipeline}s together producing new {@link DistributablePipeline} of type R
-	 * 
-	 * The 'joinFunction' 
-	 * 
-	 * @param pipelineR producer of target {@link Stream} this {@link Stream} will be joined with.
-	 * @param joinFunction a {@link BiFunction} where the actual join between {@link Stream}s will be performed.
-	 * 
-	 * @return the new {@link DistributablePipeline} of type R
-	 * 
-	 * @param <TT>
-	 * @param <R>
-	 */
-	<TT> DistributablePipeline<Entry<?, Pair<?,?>>> join(DistributablePipeline<TT> pipelineR, 
-			BiFunction<Stream<T>, Stream<TT>, Stream<?>> joinFunction);
 }
