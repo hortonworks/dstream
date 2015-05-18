@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
  * @param <K> key type
  * @param <V> value type
  */
-public class KeyValuesStreamAggregatingFunction<K,V> implements Function<Stream<Entry<K,Iterator<V>>>,Stream<Entry<K,V>>> {
+public class KeyValuesStreamAggregatingFunction<K,V,T> implements Function<Stream<Entry<K,Iterator<V>>>,Stream<T>> {
 
 	private static final long serialVersionUID = 1133920289646508908L;
 	
@@ -41,7 +41,7 @@ public class KeyValuesStreamAggregatingFunction<K,V> implements Function<Stream<
 	 * 
 	 */
 	@Override
-	public Stream<Entry<K, V>> apply(Stream<Entry<K, Iterator<V>>> sourceStream) {
+	public Stream<T> apply(Stream<Entry<K, Iterator<V>>> sourceStream) {
 		return sourceStream.map(entry -> this.mergeValuesForCurrentKey(entry));
 	}
 
@@ -49,11 +49,11 @@ public class KeyValuesStreamAggregatingFunction<K,V> implements Function<Stream<
 	 * 
 	 */
 	@SuppressWarnings("unchecked")
-	private Entry<K, V> mergeValuesForCurrentKey(Entry<K, Iterator<V>> currentEntry){
+	private T mergeValuesForCurrentKey(Entry<K, Iterator<V>> currentEntry){
 		try {
 			Stream<V> valuesStream = (Stream<V>) StreamSupport.stream(Spliterators.spliteratorUnknownSize(currentEntry.getValue(), Spliterator.ORDERED), false);
-			Object value = valuesStream.reduce(this.aggregationOperator).get();
-			return (Entry<K, V>) KVUtils.kv(currentEntry.getKey(), value);
+			Object value = this.aggregationOperator == null ? valuesStream.findFirst().get() : KVUtils.kv(currentEntry.getKey(), valuesStream.reduce(this.aggregationOperator).get());
+			return (T) value;
 		} 
 		catch (Exception e) {
 			logger.error("Failed to merge values for key " + currentEntry.getKey(), e);

@@ -24,8 +24,6 @@ public class HdfsSerializerUtils {
 		Assert.notNull(fs, "'fs' must not be null");
 		Assert.notNull(source, "'source' must not be null");
 		
-		System.out.println(source instanceof Serializable);
-
 		Path resultPath = targetPath.makeQualified(fs.getUri(), fs.getWorkingDirectory());
 		OutputStream targetOutputStream = null;
 		try {

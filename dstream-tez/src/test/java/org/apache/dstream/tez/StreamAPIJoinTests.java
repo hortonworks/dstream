@@ -12,30 +12,26 @@ import java.util.stream.Stream;
 
 import junit.framework.Assert;
 
-import org.apache.dstream.DistributablePipeline;
+import org.apache.dstream.DistributableStream;
 import org.apache.dstream.utils.KVUtils;
 import org.apache.dstream.utils.Pair;
 import org.junit.Test;
 
-public class PipelineAPIJoinTests {
+public class StreamAPIJoinTests {
 	
 	private final String applicationName = this.getClass().getSimpleName();
 
 	@Test
 	public void join() throws Exception {
-		DistributablePipeline<String> hashPipeline = DistributablePipeline.ofType(String.class, "hash");
-		DistributablePipeline<String> probePipeline = DistributablePipeline.ofType(String.class, "probe");
+		DistributableStream<String> hashStream = DistributableStream.ofType(String.class, "hash");
+		DistributableStream<String> probeStream = DistributableStream.ofType(String.class, "probe");
 		
-		DistributablePipeline<String> hash = hashPipeline.compute(stream -> stream
-				.map(line -> line.toUpperCase())
-		);
+		DistributableStream<String> hash = hashStream.map(line -> line.toUpperCase());
 		
-		DistributablePipeline<Entry<Integer, String>> probe = probePipeline.<Entry<Integer, String>>compute(stream -> stream
-				.map(line -> {
+		DistributableStream<Entry<Integer, String>> probe = probeStream.map(line -> {
 					String[] split = line.trim().split("\\s+");
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
-				})
-		).reduce(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
+	    }).reduce(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
 	
 		
 		Future<Stream<Stream<Entry<Integer, Pair<String, String>>>>> resultFuture = hash.join(probe, 
