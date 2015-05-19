@@ -19,7 +19,6 @@ import org.apache.dstream.support.ConfigurationGenerator;
 import org.apache.dstream.support.PipelineConfigurationHelper;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
-import org.apache.dstream.support.SourceFilter;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.JvmUtils;
@@ -86,7 +85,7 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 	/**
 	 * 
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings("unchecked")
 	@Override
 	public Object invoke(MethodInvocation invocation) throws Throwable {
 		String operationName = invocation.getMethod().getName();
@@ -129,28 +128,13 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 				ExecutionContextSpecification executionContextSpec = this.buildExecutionContextSpec(executionName, output == null ? null : new URI(output), 
 								ExecutionContextSpecificationBuilder.this.targetDistributable);
 				
-				String sourceProperty = executionProperties.getProperty(DistributableConstants.SOURCE + "." + this.pipelineName);
-				Assert.notEmpty(sourceProperty, "'source." + this.pipelineName +  "' property can not be found in " + 
-								executionContextSpec.getName() + ".cfg configuration file.");
-				
-				SourceSupplier sourceSupplier = SourceSupplier.create(sourceProperty, arguments.length == 2 ? (SourceFilter<?>)arguments[1] : null);
-				this.getInitialStage().setSourceSupplier(sourceSupplier);			
-				returnValue = this.delegatePipelineSpecExecution(executionContextSpec);
-				
-				for (Stage stage : stages) {
-					if (stage.getDependentExecutionContextSpec() != null){
-						ExecutionContextSpecification dependentStageSpec = stage.getDependentExecutionContextSpec();
-						Stage initialStage = dependentStageSpec.getStages().get(0);
-						String depSourceProperty = executionProperties.getProperty(DistributableConstants.SOURCE + "." + dependentStageSpec.getName());
-						//TODO see #37 Move SourceFilter to pipeline/stream factory method.
-						SourceSupplier depStageSourceSupplier = SourceSupplier.create(depSourceProperty, null);
-						initialStage.setSourceSupplier(depStageSourceSupplier);
-						break;
-					}
-				}
+				this.setSourceSuppliers(stages, this.pipelineName, executionName);
+
 				if (logger.isInfoEnabled()){
 					logger.info("Execution context spec: " + executionContextSpec);
 				}
+				
+				returnValue = this.delegatePipelineSpecExecution(executionContextSpec);
 			}
 		} 
 		else if (this.isStageOrBoundaryOperation(operationName)) {
@@ -509,9 +493,23 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 		return stages.get(stages.size()-1);
 	}
 	
-	@SuppressWarnings("unchecked")
-	private Stage getInitialStage(){
-		List<Stage> stages = (List<Stage>)this.targetDistributable;
-		return stages.get(0);
+	/**
+	 * 
+	 */
+	@SuppressWarnings("rawtypes")
+	private void setSourceSuppliers(List<Stage> stages, String pname, String ename){
+		stages.forEach(stage -> {
+			if (stage.getId() == 0){
+				String sourceProperty = this.executionProperties.getProperty(DistributableConstants.SOURCE + "." + pname);
+				Assert.notEmpty(sourceProperty, "'source." + this.pipelineName +  "' property can not be found in " + 
+						ename + ".cfg configuration file.");
+				SourceSupplier sourceSupplier = SourceSupplier.create(sourceProperty, null);
+				stage.setSourceSupplier(sourceSupplier);
+			}
+			if (stage.getDependentExecutionContextSpec() != null){
+				ExecutionContextSpecification dependentStageSpec = stage.getDependentExecutionContextSpec();
+				this.setSourceSuppliers(dependentStageSpec.getStages(), dependentStageSpec.getName(), ename);
+			}
+		});
 	}
 }
