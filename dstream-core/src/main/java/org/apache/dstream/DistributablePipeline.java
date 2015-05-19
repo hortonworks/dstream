@@ -43,23 +43,23 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	<R> DistributablePipeline<R> compute(Function<? extends Stream<T>, ? extends Stream<R>> computeFunction);
 	
 	/**
-	 * Returns a pipeline consisting of the results of applying reduce functionality on
-	 * the elements of the underlying stream.
+	 * Will reduce all values for a given key to a single value using provided 
+	 * {@link BinaryOperator} 
 	 * 
 	 * This is an intermediate operation
 	 * 
-	 * @param classifier the classifier function mapping input elements to keys
+	 * @param keyClassifier the classifier function mapping input elements to keys
 	 * @param valueMapper a mapping function to produce values
-	 * @param valueMerger a merge function, used to resolve collisions between
+	 * @param reducer a merge function, used to resolve collisions between
      *                      values associated with the same key
 	 * @return the new {@link DistributablePipeline} of type {@link Entry}[K,V]
 	 * 
 	 * @param <K> key type
 	 * @param <V> value type
 	 */
-	<K,V> DistributablePipeline<Entry<K, V>> reduce(Function<? super T, ? extends K> classifier, 
+	<K,V> DistributablePipeline<Entry<K, V>> reduce(Function<? super T, ? extends K> keyClassifier, 
 			Function<? super T, ? extends V> valueMapper, 
-			BinaryOperator<V> valueMerger);
+			BinaryOperator<V> reducer);
 	
 //	/**
 //	 * 

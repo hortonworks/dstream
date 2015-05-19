@@ -3,10 +3,8 @@ package org.apache.dstream;
 
 import java.util.Map.Entry;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.support.SerializableFunctionConverters.BiFunction;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SerializableFunctionConverters.Predicate;
@@ -103,43 +101,44 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 //	 */
 //	DistributableStream<T> sorted();
 	
-	/*
-	 * Additional elements specific to distributable nature of this stream
-	 */
 	
 	/**
-	 * This operation maintains the similar semantics as {@link Collectors#toMap(java.util.function.Function, 
-	 * java.util.function.Function, java.util.function.BinaryOperator)} while returning 
-	 * {@link DistributableStream}
+	 * Will reduce all values for a given key to a single value using provided 
+	 * {@link BinaryOperator} 
 	 * 
 	 * This is an intermediate operation
 	 * 
-	 * @param keyMapper
-	 * @param valueMapper
-	 * @param op
-	 * @return
+	 * @param keyClassifier the classifier function mapping input elements to keys
+	 * @param valueMapper a mapping function to produce values
+	 * @param reducer a merge function, used to resolve collisions between
+     *                      values associated with the same key
+	 * @return the new {@link DistributableStream} of type {@link Entry}[K,V]
 	 * 
 	 * @param <K> key type 
 	 * @param <V> value type 
 	 */
-	// Should we rename it to combine? Nothing is being reduced here. Possible reduction is a side-effect?
-	<K,V> DistributableStream<Entry<K,V>> reduce(Function<? super T, ? extends K> keyMapper, 
+	<K,V> DistributableStream<Entry<K,V>> reduce(Function<? super T, ? extends K> keyClassifier, 
 			Function<? super T, ? extends V> valueMapper, 
-			BinaryOperator<V> op);
+			BinaryOperator<V> reducer);
 	
 	/**
-	 * Join based on common predicate
+	 * Will join two {@link DistributableStream}s based on common predicate
 	 * 
-	 * @param lKeyMapper
-	 * @param lValueMapper
-	 * @param pipelineR
-	 * @param rKeyMapper
-	 * @param rValueMapper
+	 * @param streamP joining stream
+	 * @param hashKeyClassifier hash side key mapper
+	 * @param hashValueMapper hash side value mapper
+	 * @param probeKeyClassifier probe side key mapper
+	 * @param probeValueMapper probe side value mapper
 	 * @return
+	 * 
+	 * @param <TT> the type of the joining stream
+	 * @param <K> common key type
+	 * @param <VH> hash side value type
+	 * @param <VP> probe side value type
 	 */
-	<TT, K, VL, VR> DistributableStream<Entry<K, Pair<VL,VR>>> join(DistributableStream<TT> streamP,
+	<TT, K, VH, VP> DistributableStream<Entry<K, Pair<VH,VP>>> join(DistributableStream<TT> streamP,
 																	  Function<? super T, ? extends K> hashKeyClassifier,
-																	  Function<? super T, ? extends VL> hashValueMapper,
+																	  Function<? super T, ? extends VH> hashValueMapper,
 																	  Function<? super TT, ? extends K> probeKeyClassifier,
-																	  Function<? super TT, ? extends VR> probeValueMapper);
+																	  Function<? super TT, ? extends VP> probeValueMapper);
 }
