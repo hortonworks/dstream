@@ -36,7 +36,7 @@ public class WordCountPipe {
 		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
 		result.forEach(stream -> {
 			System.out.println("Partition: " + i.getAndIncrement());
-//			stream.forEach(System.out::println);
+			stream.forEach(System.out::println);
 			});
 		
 		result.close();
