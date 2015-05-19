@@ -9,4 +9,10 @@ public interface DistributableConstants {
 	public static String OUTPUT = DSTR_PREFIX + ".output";
 	
 	public static String PARTITIONER = DSTR_PREFIX + ".partitioner";
+	
+	public static String PARALLELISM = DSTR_PREFIX + ".stage.parallelizm.";
+	
+	public static String GENERATE_CONF = "generateConfig:";
+	
+	
 }

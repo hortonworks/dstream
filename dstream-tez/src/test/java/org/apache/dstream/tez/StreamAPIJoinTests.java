@@ -26,16 +26,17 @@ public class StreamAPIJoinTests {
 		DistributableStream<String> hashStream = DistributableStream.ofType(String.class, "hash");
 		DistributableStream<String> probeStream = DistributableStream.ofType(String.class, "probe");
 		
-		DistributableStream<String> hash = hashStream.map(line -> line.toUpperCase());
+		DistributableStream<String> hash = hashStream.map(line -> line.toUpperCase()).filter(s -> true);
 		
 		DistributableStream<Entry<Integer, String>> probe = probeStream.map(line -> {
 					String[] split = line.trim().split("\\s+");
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
-	    }).reduce(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
+	    }).filter(s -> true).reduce(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
 	
 		
 		Future<Stream<Stream<Entry<Integer, Pair<String, String>>>>> resultFuture = hash.join(probe, 
-				l -> Integer.parseInt(l.substring(0, l.indexOf(" ")).trim()), l -> l.substring(l.indexOf(" ")).trim(), r -> r.getKey(), r -> r.getValue()).executeAs(this.applicationName);
+				l -> Integer.parseInt(l.substring(0, l.indexOf(" ")).trim()), l -> l.substring(l.indexOf(" ")).trim(), r -> r.getKey(), r -> r.getValue()
+				).executeAs(this.applicationName);
 
 		Stream<Stream<Entry<Integer, Pair<String, String>>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
 		

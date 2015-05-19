@@ -2,6 +2,7 @@ package org.apache.dstream;
 
 import java.io.Serializable;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -30,6 +31,8 @@ public interface ExecutionContextSpecification extends Serializable {
 	public abstract class Stage implements Serializable {
 		private static final long serialVersionUID = 4321682502843990767L;
 		
+		private final List<String> operations = new ArrayList<String>();
+		
 		private Function<Stream<?>, Stream<?>> processingFunction;
 		
 		private SourceSupplier<?> sourceSupplier;
@@ -44,6 +47,14 @@ public interface ExecutionContextSpecification extends Serializable {
 		
 		public Function<Stream<?>, Stream<?>> getProcessingFunction(){
 			return this.processingFunction;
+		}
+		
+		public void addOperationName(String operationName){
+			this.operations.add(operationName);
+		}
+		
+		public String getOperationNames(){
+			return this.operations.toString();
 		}
 		
 		public SourceSupplier<?> getSourceSupplier(){

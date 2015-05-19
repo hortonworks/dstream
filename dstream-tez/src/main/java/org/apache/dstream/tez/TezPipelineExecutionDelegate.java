@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
+import org.apache.dstream.DistributableConstants;
 import org.apache.dstream.ExecutionContextSpecification;
 import org.apache.dstream.ExecutionContextSpecification.Stage;
 import org.apache.dstream.ExecutionDelegate;
@@ -102,7 +103,7 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 		
 		List<Stage> stages = pipelineSpecification.getStages();
 		TezExecutableDAGBuilder executableDagBuilder = new TezExecutableDAGBuilder(pipelineSpecification.getName(), 
-				this.tezClient, this.determineInputFormatClass(stages.get(0)));
+				this.tezClient, this.determineInputFormatClass(stages.get(0)), this.pipelineConfig);
 	
 		stages.stream().forEach(stage -> executableDagBuilder.addStage(stage, this.getStageParallelizm(stage)) );
 		
@@ -144,13 +145,12 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 		SourceSupplier<?> sourceSupplier = firstStage.getSourceSupplier();
 		
 		if (sourceSupplier.get()[0] instanceof URI){
-			String sourceType = this.pipelineConfig.getProperty("source.type", "TXT");
-			if (sourceType.equals("TXT")){
+			if (firstStage.getSourceItemType().isAssignableFrom(String.class)){
 				return TextInputFormat.class;
 			} 
 			else {
 				// TODO design a configurable component to handle other standard and custom input types
-				throw new IllegalArgumentException("Failed to determine Input Format class for source type " + sourceType);
+				throw new IllegalArgumentException("Failed to determine Input Format class for source item type " + firstStage.getSourceItemType());
 			}
 		} 
 		else {
@@ -162,10 +162,8 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 	 * 
 	 */
 	private int getStageParallelizm(Stage stage){
-		System.out.println(stage.getName());
-		if (this.pipelineConfig.containsKey("stage.parallelizm." + stage.getId())){
-			return Integer.parseInt(this.pipelineConfig.getProperty("stage.parallelizm." + stage.getId()));
-		}
-		return -1;
+		return this.pipelineConfig.containsKey(DistributableConstants.PARALLELISM + stage.getName()) 
+				? Integer.parseInt(this.pipelineConfig.getProperty(DistributableConstants.PARALLELISM + stage.getName())) 
+						: 1;
 	}
 }

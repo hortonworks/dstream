@@ -23,9 +23,9 @@ public class WordCountStream {
 				.reduce(word -> word, word -> 1, Integer::sum)
 			.executeAs("WordCount");
 		
-		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(5000, TimeUnit.MILLISECONDS);
+		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(20000, TimeUnit.MILLISECONDS);
 		
-//		result.forEach(stream -> stream.forEach(System.out::println));
+		result.forEach(stream -> stream.forEach(System.out::println));
 		result.close();
 		
 		BaseTezTests.clean("WordCount");

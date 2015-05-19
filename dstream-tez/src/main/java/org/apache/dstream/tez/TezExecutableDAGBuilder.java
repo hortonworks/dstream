@@ -7,12 +7,14 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.dstream.ExecutionContextSpecification;
 import org.apache.dstream.ExecutionContextSpecification.Stage;
+import org.apache.dstream.DistributableConstants;
 import org.apache.dstream.KeyValuesStreamAggregatingFunction;
 import org.apache.dstream.PredicateJoinFunction;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
@@ -53,6 +55,8 @@ public class TezExecutableDAGBuilder {
 	
 	private final OrderedPartitionedKVEdgeConfig edgeConf;
 	
+	private final Properties pipelineConfig;
+	
 	private Vertex lastVertex;
 	
 	// TEZ Properties
@@ -66,9 +70,10 @@ public class TezExecutableDAGBuilder {
 	 * @param tezClient
 	 * @param inputFormatClass
 	 */
-	public TezExecutableDAGBuilder(String pipelineName, ExecutionContextAwareTezClient tezClient, Class<?> inputFormatClass) {
+	public TezExecutableDAGBuilder(String pipelineName, ExecutionContextAwareTezClient tezClient, Class<?> inputFormatClass, Properties pipelineConfig) {
 		this.dag = DAG.create(pipelineName + "_" + System.currentTimeMillis());
 		this.tezClient = tezClient;
+		this.pipelineConfig = pipelineConfig;
 		
 		//TODO need to figure out when and why would the Edge e different and how to configure it
 		this.edgeConf = OrderedPartitionedKVEdgeConfig
@@ -123,8 +128,11 @@ public class TezExecutableDAGBuilder {
 		if (stage.getDependentExecutionContextSpec() != null){
 			ExecutionContextSpecification execSpec = stage.getDependentExecutionContextSpec();
 			List<Stage> dependentStages = execSpec.getStages();
-			//TODO determine correct paralelizm
-			int stageParallelizm = 1;
+			
+			int stageParallelizm = this.pipelineConfig.containsKey(DistributableConstants.PARALLELISM + stage.getName()) 
+					? Integer.parseInt(this.pipelineConfig.getProperty(DistributableConstants.PARALLELISM + stage.getName())) 
+							: 1;
+			
 			dependentStages.forEach(dependentStage -> this.addStage(dependentStage, stageParallelizm));
 			Edge edge = Edge.create(this.lastVertex, vertex, this.edgeConf.createDefaultEdgeProperty());
 			this.dag.addEdge(edge);

@@ -36,12 +36,15 @@ public class PipelineAPIJoinTests {
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
 				})
 		).reduce(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
-	
 		
 		Future<Stream<Stream<Entry<Integer, Pair<String, String>>>>> resultFuture = hash.join(probe, 
-				l -> Integer.parseInt(l.substring(0, l.indexOf(" ")).trim()), l -> l.substring(l.indexOf(" ")).trim(), r -> r.getKey(), r -> r.getValue()).executeAs(this.applicationName);
+				hashElement -> Integer.parseInt(hashElement.substring(0, hashElement.indexOf(" ")).trim()), 
+				hashElement -> hashElement.substring(hashElement.indexOf(" ")).trim(), 
+				probeElement -> probeElement.getKey(), 
+				probeElement -> probeElement.getValue()
+			).executeAs(this.applicationName);
 
-		Stream<Stream<Entry<Integer, Pair<String, String>>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
+		Stream<Stream<Entry<Integer, Pair<String, String>>>> result = resultFuture.get(100000, TimeUnit.MILLISECONDS);
 		
 		List<Stream<Entry<Integer, Pair<String, String>>>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
