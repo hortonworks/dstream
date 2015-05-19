@@ -61,6 +61,7 @@ public class PipelineAPITests extends BaseTezTests {
 		Stream<Entry<String, Integer>> firstResultStream = resultStreams.get(0);
 		
 		List<Entry<String, Integer>> firstResult = firstResultStream.collect(Collectors.toList());
+		System.out.println(firstResult);
 		Assert.assertEquals(14, firstResult.size());
 		Assert.assertEquals((Integer)2, firstResult.get(11).getValue());
 		
