@@ -104,7 +104,7 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 		TezExecutableDAGBuilder executableDagBuilder = new TezExecutableDAGBuilder(pipelineSpecification.getName(), 
 				this.tezClient, this.determineInputFormatClass(stages.get(0)));
 	
-		stages.stream().forEach(stage -> executableDagBuilder.addStage(stage, this.getStageParallelizm(stage.getId())) );
+		stages.stream().forEach(stage -> executableDagBuilder.addStage(stage, this.getStageParallelizm(stage)) );
 		
 		Callable<Stream<Object>[]> executable = executableDagBuilder.build();
 		
@@ -161,9 +161,10 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 	/**
 	 * 
 	 */
-	private int getStageParallelizm(int stageId){
-		if (this.pipelineConfig.containsKey("stage.parallelizm." + stageId)){
-			return Integer.parseInt(this.pipelineConfig.getProperty("stage.parallelizm." + stageId));
+	private int getStageParallelizm(Stage stage){
+		System.out.println(stage.getName());
+		if (this.pipelineConfig.containsKey("stage.parallelizm." + stage.getId())){
+			return Integer.parseInt(this.pipelineConfig.getProperty("stage.parallelizm." + stage.getId()));
 		}
 		return -1;
 	}

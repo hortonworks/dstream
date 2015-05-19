@@ -3,8 +3,6 @@ package org.apache.dstream.support;
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.stream.Stream;
-
-import org.apache.dstream.utils.Pair;
 /**
  * Defines {@link Serializable} equivalents strategies defined in java.util.function package.
  */

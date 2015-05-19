@@ -143,9 +143,6 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 			this.doProcess((ReflectiveMethodInvocation) invocation);
 			returnValue = this.targetDistributable;
 		}
-		else if (operationName.equals("toString")){
-			returnValue =  invocation.proceed();
-		}
 		else if (operationName.equals("getName")){
 			returnValue = this.pipelineName;
 		}
@@ -178,16 +175,10 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 	}
 	
 	/**
-	 * For the case of {@link DistributablePipeline}:
-	 * Holds the actual invocation of 'compute' until subsequent invocation of stage boundary operation.
-	 * In the event where the subsequent invocation is another 'compute' the two will be composed 
-	 * into one.
+	 * For {@link DistributablePipeline}:
+	 * Will compose incoming function into the existing stage's function
 	 * 
-	 * In the event where stage boundary operation is followed by a another 'compute', 
-	 * (e.g., compute->reduce->compute - a two stage DAG) the aggregator provided by the stage boundary 
-	 * operation will become part of the subsequent 'compute' stage.
-	 * 
-	 * For the case of {@link DistributableStream}:
+	 * For {@link DistributableStream}:
 	 * Will extract {@link ComposableStreamFunction} from the Stage or will create a new one.
 	 * Will compose current stream function into ComposableStreamFunction to form a final Stage function.
 	 */
@@ -208,12 +199,7 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 	}
 	
 	/**
-	 * 1. Constructs KeyValueExtractorFunction from the KV mapping Functions provided as
-	 *     0 and 1 arguments of the 'reduce' operation.
-	 * 2. Composes KeyValueExtractorFunction into the last stage function
-	 * 3. Creates a new Stage with null function and aggregator. In cases where 
-	 *    there are subsequent 'compute' operations, their functions will be merged and 
-	 *    injected into this new Stage.
+	 * 
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void processStageBoundaryInvocation(ReflectiveMethodInvocation invocation){
@@ -227,11 +213,11 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 					this.buildExecutionContextSpec(dependentDistributable.getName(), null, dependentDistributable);
 			
 		
-			KeyValueExtractorFunction hashKVFunction = 
-					new KeyValueExtractorFunction((Function<?,?>)arguments[1], (Function<?,?>)arguments[2]);
+			KeyValueMappingFunction hashKVFunction = 
+					new KeyValueMappingFunction((Function<?,?>)arguments[1], (Function<?,?>)arguments[2]);
 			
-			KeyValueExtractorFunction probeKVFunction = 
-					new KeyValueExtractorFunction((Function<?,?>)arguments[3], (Function<?,?>)arguments[4]);
+			KeyValueMappingFunction probeKVFunction = 
+					new KeyValueMappingFunction((Function<?,?>)arguments[3], (Function<?,?>)arguments[4]);
 			
 			Function pjf = new PredicateJoinFunction(hashKVFunction, probeKVFunction);
 
@@ -241,7 +227,7 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 		}
 		else {
 			Function<Stream<?>, Stream<?>> kvExtractorFunction = 
-					new KeyValueExtractorFunction((Function<?,?>)arguments[0], (Function<?,?>)arguments[1]);	
+					new KeyValueMappingFunction((Function<?,?>)arguments[0], (Function<?,?>)arguments[1]);	
 			this.composeWithLastStageFunction(kvExtractorFunction);
 			this.addStage(null, (BinaryOperator<Object>)arguments[2]);
 		}
