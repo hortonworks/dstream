@@ -175,23 +175,18 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 	}
 	
 	/**
-	 * For {@link DistributablePipeline}:
 	 * Will compose incoming function into the existing stage's function
-	 * 
-	 * For {@link DistributableStream}:
-	 * Will extract {@link ComposableStreamFunction} from the Stage or will create a new one.
-	 * Will compose current stream function into ComposableStreamFunction to form a final Stage function.
 	 */
 	@SuppressWarnings("unchecked")
 	private void processStageInvocation(ReflectiveMethodInvocation invocation){
 		Stage stage = this.getCurrentStage();
 		if (this.isStreamStageOperation(invocation.getMethod().getName())){
-			ComposableStreamFunction cf = (ComposableStreamFunction) stage.getProcessingFunction();
-			if (cf == null){
-				cf = new ComposableStreamFunction();
-				stage.setProcessingFunction(cf);
+			if (stage.getProcessingFunction() == null){
+				stage.setProcessingFunction(new DistributableStreamToStreamAdapterFunction(invocation.getMethod().getName(), invocation.getArguments()[0]));
 			}
-			cf.add(new DistributableStreamToStreamAdapterFunction(invocation.getMethod().getName(), invocation.getArguments()[0]));
+			else {
+				this.composeWithLastStageFunction(new DistributableStreamToStreamAdapterFunction(invocation.getMethod().getName(), invocation.getArguments()[0]));
+			}
 		}
 		else {
 			this.composeWithLastStageFunction((Function<Stream<?>, Stream<?>>) invocation.getArguments()[0]);
@@ -211,24 +206,17 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 			DistributableExecutable<?> dependentDistributable = (DistributableExecutable<?>) arguments[0];
 			ExecutionContextSpecification dependentExecutionContextSpec = 
 					this.buildExecutionContextSpec(dependentDistributable.getName(), null, dependentDistributable);
-			
-		
-			KeyValueMappingFunction hashKVFunction = 
-					new KeyValueMappingFunction((Function<?,?>)arguments[1], (Function<?,?>)arguments[2]);
-			
-			KeyValueMappingFunction probeKVFunction = 
-					new KeyValueMappingFunction((Function<?,?>)arguments[3], (Function<?,?>)arguments[4]);
-			
-			Function pjf = new PredicateJoinFunction(hashKVFunction, probeKVFunction);
+				
+			Function pjFunc = new PredicateJoinFunction(
+					new KeyValueMappingFunction((Function<?,?>)arguments[1], (Function<?,?>)arguments[2]),
+					new KeyValueMappingFunction((Function<?,?>)arguments[3], (Function<?,?>)arguments[4]));
 
 			Stage depStage = dependentExecutionContextSpec.getStages().get(dependentExecutionContextSpec.getStages().size()-1);
-			this.addStage(pjf, depStage.getAggregatorOperator());
+			this.addStage(pjFunc, depStage.getAggregatorOperator());
 			this.getCurrentStage().setDependentExecutionContextSpec(dependentExecutionContextSpec);
 		}
 		else {
-			Function<Stream<?>, Stream<?>> kvExtractorFunction = 
-					new KeyValueMappingFunction((Function<?,?>)arguments[0], (Function<?,?>)arguments[1]);	
-			this.composeWithLastStageFunction(kvExtractorFunction);
+			this.composeWithLastStageFunction(new KeyValueMappingFunction((Function<?,?>)arguments[0], (Function<?,?>)arguments[1]));
 			this.addStage(null, (BinaryOperator<Object>)arguments[2]);
 		}
 	}
