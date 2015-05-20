@@ -15,6 +15,7 @@ public class ConfigurationGenerator {
 	
 	private final List<String> stageParalellism = new ArrayList<String>();
 	
+	private final List<String> msCombine = new ArrayList<String>();
 	
 	private final DistributableExecutable<?> distributable;
 	
@@ -48,6 +49,8 @@ public class ConfigurationGenerator {
 		buffer.append("#dstream.output=\n");
 		buffer.append("\n");
 		this.stageParalellism.forEach(buffer::append);
+		buffer.append("\n");
+		this.msCombine.forEach(buffer::append);
 		
 		return buffer.toString();
 	}
@@ -57,6 +60,7 @@ public class ConfigurationGenerator {
 		stages.forEach(stage -> {
 			this.addStage(stage);
 			this.addStageParallelizm(stage);
+			this.addStageMsCombine(stage);
 			if (stage.getDependentExecutionContextSpec() != null){
 				this.processDistributable(stage.getDependentExecutionContextSpec().getStages(), stage.getDependentExecutionContextSpec().getName());
 			}
@@ -74,5 +78,9 @@ public class ConfigurationGenerator {
 	
 	private void addStageParallelizm(Stage stage){
 		this.stageParalellism.add("#" + DistributableConstants.PARALLELISM  + stage.getName() + "=" + "\n");
+	}
+	
+	private void addStageMsCombine(Stage stage){
+		this.msCombine.add("#" + DistributableConstants.MAP_SIDE_COMBINE + stage.getName() + "=" + "\n");
 	}
 }
