@@ -15,11 +15,17 @@ import junit.framework.Assert;
 import org.apache.dstream.DistributablePipeline;
 import org.apache.dstream.utils.KVUtils;
 import org.apache.dstream.utils.Pair;
+import org.junit.After;
 import org.junit.Test;
 
-public class PipelineAPIJoinTests {
+public class PipelineAPIJoinTests extends BaseTezTests {
 	
 	private final String applicationName = this.getClass().getSimpleName();
+	
+	@After
+	public void after(){
+		clean(applicationName);
+	}
 
 	@Test
 	public void join() throws Exception {

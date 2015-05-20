@@ -81,7 +81,7 @@ public class PipelineAPITests extends BaseTezTests {
 				.filter(entry -> entry.getKey().equals("we"))
 			).executeAs(this.applicationName);
 		
-		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
+		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
 		List<Stream<Entry<String, Integer>>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
 		Stream<Entry<String, Integer>> firstResultStream = resultStreams.get(0);

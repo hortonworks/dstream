@@ -1,3 +1,0 @@
-1 Oracle
-2 Amazon
-3 Hortonworks
