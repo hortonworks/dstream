@@ -9,6 +9,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -45,12 +46,16 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 	
 	private final String pipelineName;
 	
+	private final List<Consumer<Properties>> postConfigInitCallbacks = new ArrayList<Consumer<Properties>>();
+	
 	
 	private int stageIdCounter;
 	
-	private Properties executionProperties;
+	//private Properties executionProperties;
 	
 	private boolean generateConfigOnly;
+	
+	
 
 	/**
 	 * 
@@ -119,7 +124,10 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 				logger.warn("\n###########################################################");
 			}
 			else {
-				this.executionProperties = PipelineConfigurationHelper.loadExecutionConfig(executionName);
+				Properties executionProperties = PipelineConfigurationHelper.loadExecutionConfig(executionName);
+	
+				this.postConfigInitCallbacks.forEach(s -> s.accept(executionProperties));
+				
 				String output = executionProperties.getProperty(DistributableConstants.OUTPUT);
 				if (output != null){
 					Assert.isTrue(SourceSupplier.isURI(output), "URI '" + output + "' must have scheme defined (e.g., file:" + output + ")");
@@ -128,7 +136,7 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 				ExecutionContextSpecification executionContextSpec = this.buildExecutionContextSpec(executionName, output == null ? null : new URI(output), 
 								ExecutionContextSpecificationBuilder.this.targetDistributable);
 				
-				this.setSourceSuppliers(stages, this.pipelineName, executionName);
+				this.setSourceSuppliers(executionProperties, stages, this.pipelineName, executionName);
 
 				if (logger.isInfoEnabled()){
 					logger.info("Execution context spec: " + executionContextSpec);
@@ -189,12 +197,12 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 				stage.setProcessingFunction(new DistributableStreamToStreamAdapterFunction(invocation.getMethod().getName(), invocation.getArguments()[0]));
 			}
 			else {
-				this.composeWithLastStageFunction(new DistributableStreamToStreamAdapterFunction(invocation.getMethod().getName(), invocation.getArguments()[0]),
+				this.composeWithStageFunction(this.getCurrentStage(), new DistributableStreamToStreamAdapterFunction(invocation.getMethod().getName(), invocation.getArguments()[0]),
 						invocation.getMethod().getName());
 			}
 		}
 		else {
-			this.composeWithLastStageFunction((Function<Stream<?>, Stream<?>>) invocation.getArguments()[0],
+			this.composeWithStageFunction(this.getCurrentStage(), (Function<Stream<?>, Stream<?>>) invocation.getArguments()[0],
 					invocation.getMethod().getName());
 		}
 	}
@@ -222,16 +230,32 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 			this.getCurrentStage().setDependentExecutionContextSpec(dependentExecutionContextSpec);
 		}
 		else {
-			this.composeWithLastStageFunction(new KeyValueMappingFunction((Function<?,?>)arguments[0], (Function<?,?>)arguments[1]), invocation.getMethod().getName());
-			this.addStage(null, (BinaryOperator<Object>)arguments[2], invocation.getMethod().getName());
+			//dstream.stage.ms_combine.0_foo=true
+			String propertyName = DistributableConstants.MAP_SIDE_COMBINE + this.getCurrentStage().getName();
+			Stage currentStage = this.getCurrentStage();
+			
+			Consumer<Properties> msCombineCallback = new Consumer<Properties>() {
+				@Override
+				public void accept(Properties executionProperties) {
+					boolean mapSideCombine = executionProperties.containsKey(propertyName) 
+							? Boolean.parseBoolean(executionProperties.getProperty(propertyName)) : false;
+							
+					BinaryOperator combiner = mapSideCombine ? (BinaryOperator)arguments[2] : null;
+					composeWithStageFunction(currentStage, 
+							new KeyValueMappingFunction((Function)arguments[0], (Function)arguments[1], combiner), invocation.getMethod().getName());
+				}
+			};
+			
+			this.postConfigInitCallbacks.add(msCombineCallback);
+					
+			this.addStage(null, (BinaryOperator)arguments[2], invocation.getMethod().getName());
 		}
 	}
 	
 	/**
 	 * 
 	 */
-	private void composeWithLastStageFunction(Function<Stream<?>, Stream<?>> composeFunction, String operationName){
-		Stage stage = this.getCurrentStage();
+	private void composeWithStageFunction(Stage stage, Function<Stream<?>, Stream<?>> composeFunction, String operationName){
 		if (operationName != null){
 			stage.addOperationName(operationName);
 		}
@@ -497,10 +521,10 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 	 * 
 	 */
 	@SuppressWarnings("rawtypes")
-	private void setSourceSuppliers(List<Stage> stages, String pname, String ename){
+	private void setSourceSuppliers(Properties executionProperties, List<Stage> stages, String pname, String ename){
 		stages.forEach(stage -> {
 			if (stage.getId() == 0){
-				String sourceProperty = this.executionProperties.getProperty(DistributableConstants.SOURCE + "." + pname);
+				String sourceProperty = executionProperties.getProperty(DistributableConstants.SOURCE + "." + pname);
 				Assert.notEmpty(sourceProperty, "'source." + this.pipelineName +  "' property can not be found in " + 
 						ename + ".cfg configuration file.");
 				SourceSupplier sourceSupplier = SourceSupplier.create(sourceProperty, null);
@@ -508,7 +532,7 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 			}
 			if (stage.getDependentExecutionContextSpec() != null){
 				ExecutionContextSpecification dependentStageSpec = stage.getDependentExecutionContextSpec();
-				this.setSourceSuppliers(dependentStageSpec.getStages(), dependentStageSpec.getName(), ename);
+				this.setSourceSuppliers(executionProperties, dependentStageSpec.getStages(), dependentStageSpec.getName(), ename);
 			}
 		});
 	}

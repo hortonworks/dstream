@@ -1,6 +1,8 @@
 package org.apache.dstream;
 
 import java.util.Map.Entry;
+import java.util.function.BinaryOperator;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
@@ -24,17 +26,30 @@ class KeyValueMappingFunction<T,K,V> implements Function<Stream<T>, Stream<Entry
 	
 	private final Function<T, V> valueExtractor;
 	
+	private final BinaryOperator<V> combiner;
+	
 	/**
 	 * 
 	 * @param keyExtractor
 	 * @param valueExtractor
 	 */
 	KeyValueMappingFunction(Function<T, K> keyExtractor, Function<T, V> valueExtractor) {
+		this(keyExtractor, valueExtractor, null);
+	}
+	
+	/**
+	 * 
+	 * @param keyExtractor
+	 * @param valueExtractor
+	 * @param combiner
+	 */
+	KeyValueMappingFunction(Function<T, K> keyExtractor, Function<T, V> valueExtractor, BinaryOperator<V> combiner) {
 		Assert.notNull(keyExtractor, "'keyExtractor' must not be null");
 		Assert.notNull(valueExtractor, "'valueExtractor' must not be null");
 		
 		this.keyExtractor = keyExtractor;
 		this.valueExtractor = valueExtractor;
+		this.combiner = combiner;
 	}
 
 	/**
@@ -43,7 +58,11 @@ class KeyValueMappingFunction<T,K,V> implements Function<Stream<T>, Stream<Entry
 	@Override
 	public Stream<Entry<K, V>> apply(Stream<T> streamIn) {
 		Assert.notNull(streamIn, "'streamIn' must not be null");
-		
-		return streamIn.map(val -> KVUtils.kv(this.keyExtractor.apply(val), this.valueExtractor.apply(val)));
+		if (this.combiner != null){
+			return streamIn.collect(Collectors.toMap(this.keyExtractor, this.valueExtractor, this.combiner)).entrySet().stream();
+		}
+		else {
+			return streamIn.map(val -> KVUtils.kv(this.keyExtractor.apply(val), this.valueExtractor.apply(val)));
+		}
 	}
 }
