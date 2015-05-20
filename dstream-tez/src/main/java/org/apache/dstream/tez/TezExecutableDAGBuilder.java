@@ -75,7 +75,7 @@ public class TezExecutableDAGBuilder {
 		this.tezClient = tezClient;
 		this.pipelineConfig = pipelineConfig;
 		
-		//TODO need to figure out when and why would the Edge e different and how to configure it
+		//TODO need to figure out when and why would the Edge be different and how to configure it
 		this.edgeConf = OrderedPartitionedKVEdgeConfig
 				.newBuilder("org.apache.dstream.tez.io.KeyWritable",
 						"org.apache.dstream.tez.io.ValueWritable",
@@ -108,7 +108,6 @@ public class TezExecutableDAGBuilder {
 			
 			Assert.notEmpty(sources, "'sources' must not be null or empty");
 			
-			//TODO add support for non URI-based sources (e.g., Collections)
 			if (sources != null){
 				if (sources[0] instanceof URI){
 					URI[] uris = Arrays.copyOf(sources, sources.length, URI[].class);
@@ -199,8 +198,10 @@ public class TezExecutableDAGBuilder {
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Callable<Stream<Object>[]> build(){
-		// TODO add support for externally configurable output location
-		String outputPath = this.tezClient.getClientName() + "/" + this.dag.getName() + "/out";
+		String outputPath = this.pipelineConfig.getProperty(DistributableConstants.OUTPUT);
+		if (outputPath == null){
+			outputPath = this.tezClient.getClientName() + "/" + this.dag.getName() + "/out";
+		}
 		this.createDataSink(this.lastVertex, 
 				this.tezClient.getClientName() + "_OUTPUT", 
 				KeyWritable.class, 
