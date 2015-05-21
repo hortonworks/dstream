@@ -1,6 +1,7 @@
 package org.apache.dstream;
 
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.apache.dstream.support.HashJoiner;
@@ -28,8 +29,7 @@ public class JoinSpecificationBuilderTests {
 //		
 ////		aFlow.join(bFlow, HashJoiner::join);
 //		
-//		aFlow.join(bFlow, l -> l.getKey(), l -> l.getValue(), r -> r.getKey(), r -> r.getValue()).executeAs("foo");
-//		
-//		System.in.read();
+//		aFlow.join(bFlow, l -> l.getKey(), l -> l.getValue(), r -> r.getKey(), r -> r.getValue()).executeAs("foo").get(10000, TimeUnit.MILLISECONDS);
+		
 	}
 }

@@ -22,7 +22,6 @@ import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.utils.Assert;
-import org.apache.dstream.utils.JvmUtils;
 import org.apache.dstream.utils.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,11 +49,6 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 	
 	
 	private int stageIdCounter;
-	
-	//private Properties executionProperties;
-	
-	private boolean generateConfigOnly;
-	
 	
 
 	/**
@@ -100,9 +94,10 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 			String executionName = arguments[0].toString();
 			Assert.notEmpty(executionName, "'executionName' must not be null or empty");
 			
+			boolean generateConfig = false;
 			if (executionName.startsWith(DistributableConstants.GENERATE_CONF)){
 				executionName = executionName.split(":")[1];
-				this.generateConfigOnly = true;
+				generateConfig = true;
 			}
 			
 			List<Stage> stages = (List<Stage>)this.targetDistributable;
@@ -115,35 +110,32 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 				this.addStage((Stream<?> wysiwyg) -> wysiwyg, null, operationName);
 			}
 			
-			if (this.generateConfigOnly){
+			if (generateConfig){
 				ConfigurationGenerator confGener = new ConfigurationGenerator(this.targetDistributable);
 				logger.warn("\n\n############ GENERATING PIPELINE CONFIGURATION ############");
-				System.out.println();
-				System.out.println(confGener);
-				returnValue = JvmUtils.createDummyInstance(Future.class);
+				logger.info("\n" + confGener.toString());
 				logger.warn("\n###########################################################");
 			}
-			else {
-				Properties executionProperties = PipelineConfigurationHelper.loadExecutionConfig(executionName);
-	
-				this.postConfigInitCallbacks.forEach(s -> s.accept(executionProperties));
-				
-				String output = executionProperties.getProperty(DistributableConstants.OUTPUT);
-				if (output != null){
-					Assert.isTrue(SourceSupplier.isURI(output), "URI '" + output + "' must have scheme defined (e.g., file:" + output + ")");
-				}
-				
-				ExecutionContextSpecification executionContextSpec = this.buildExecutionContextSpec(executionName, output == null ? null : new URI(output), 
-								ExecutionContextSpecificationBuilder.this.targetDistributable);
-				
-				this.setSourceSuppliers(executionProperties, stages, this.pipelineName, executionName);
 
-				if (logger.isInfoEnabled()){
-					logger.info("Execution context spec: " + executionContextSpec);
-				}
-				
-				returnValue = this.delegatePipelineSpecExecution(executionContextSpec);
+			Properties executionProperties = PipelineConfigurationHelper.loadExecutionConfig(executionName);
+
+			this.postConfigInitCallbacks.forEach(s -> s.accept(executionProperties));
+			
+			String output = executionProperties.getProperty(DistributableConstants.OUTPUT);
+			if (output != null){
+				Assert.isTrue(SourceSupplier.isURI(output), "URI '" + output + "' must have scheme defined (e.g., file:" + output + ")");
 			}
+			
+			ExecutionContextSpecification executionContextSpec = this.buildExecutionContextSpec(executionName, output == null ? null : new URI(output), 
+							ExecutionContextSpecificationBuilder.this.targetDistributable);
+			
+			this.setSourceSuppliers(executionProperties, stages, this.pipelineName, executionName);
+
+			if (logger.isInfoEnabled()){
+				logger.info("Execution context spec: " + executionContextSpec);
+			}
+			
+			returnValue = this.delegatePipelineSpecExecution(executionContextSpec);
 		} 
 		else if (this.isStageOrBoundaryOperation(operationName)) {
 			if (logger.isDebugEnabled()){
@@ -524,8 +516,8 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 	private void setSourceSuppliers(Properties executionProperties, List<Stage> stages, String pname, String ename){
 		stages.forEach(stage -> {
 			if (stage.getId() == 0){
-				String sourceProperty = executionProperties.getProperty(DistributableConstants.SOURCE + "." + pname);
-				Assert.notEmpty(sourceProperty, "'source." + this.pipelineName +  "' property can not be found in " + 
+				String sourceProperty = executionProperties.getProperty(DistributableConstants.SOURCE + pname);
+				Assert.notEmpty(sourceProperty, DistributableConstants.SOURCE + this.pipelineName +  "' property can not be found in " + 
 						ename + ".cfg configuration file.");
 				SourceSupplier sourceSupplier = SourceSupplier.create(sourceProperty, null);
 				stage.setSourceSupplier(sourceSupplier);
