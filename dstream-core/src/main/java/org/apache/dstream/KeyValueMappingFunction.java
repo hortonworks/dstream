@@ -57,6 +57,7 @@ class KeyValueMappingFunction<T,K,V> implements Function<Stream<T>, Stream<Entry
 	 */
 	@Override
 	public Stream<Entry<K, V>> apply(Stream<T> streamIn) {
+		
 		Assert.notNull(streamIn, "'streamIn' must not be null");
 		if (this.combiner != null){
 			return streamIn.collect(Collectors.toMap(this.keyExtractor, this.valueExtractor, this.combiner)).entrySet().stream();

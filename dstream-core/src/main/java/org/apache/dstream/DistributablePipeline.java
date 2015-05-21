@@ -92,11 +92,11 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	/**
 	 * Join based on common predicate
 	 * 
-	 * @param lKeyMapper
-	 * @param lValueMapper
-	 * @param pipelineR
-	 * @param rKeyMapper
-	 * @param rValueMapper
+	 * @param pipelineP
+	 * @param hashKeyClassifier
+	 * @param hashValueMapper
+	 * @param probeKeyClassifier
+	 * @param probeValueMapper
 	 * @return
 	 */
 	<TT, K, VL, VR> DistributablePipeline<Entry<K, Pair<VL,VR>>> join(DistributablePipeline<TT> pipelineP,

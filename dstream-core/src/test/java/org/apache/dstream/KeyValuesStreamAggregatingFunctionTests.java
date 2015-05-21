@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.utils.KVUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,7 +29,8 @@ public class KeyValuesStreamAggregatingFunctionTests {
 		
 		Stream<Entry<String,Iterator<Integer>>> sourceStream = keyValuesList.stream();
 		// the above stream would be generated from reader provided by the target execution environment (e.g., Tez)
-		KeyValuesStreamAggregatingFunction<String, Integer, Entry<String, Integer>> kvsStream = new KeyValuesStreamAggregatingFunction<String, Integer, Entry<String, Integer>>(Integer::sum);
+		KeyValuesStreamAggregatingFunction<String, Integer, Entry<String, Integer>> kvsStream = 
+				new KeyValuesStreamAggregatingFunction<String, Integer, Entry<String, Integer>>((BinaryOperator<Integer>)Integer::sum);
 		List<Entry<String, Integer>> result = kvsStream.apply(sourceStream).collect(Collectors.toList());
 		Assert.assertEquals(3, result.size());
 		Assert.assertEquals((Integer)7, result.get(0).getValue());

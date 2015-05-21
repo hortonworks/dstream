@@ -162,6 +162,7 @@ public class TezExecutableDAGBuilder {
 		if (stage.getAggregatorOperator() != null) {
 			Function<Stream<?>,Stream<?>> aggregatingFunction = new KeyValuesStreamAggregatingFunction(stage.getAggregatorOperator());
 			if (processingFunction instanceof PredicateJoinFunction){
+				((PredicateJoinFunction)processingFunction).composeIntoHash(new KeyValuesStreamAggregatingFunction(null));
 				((PredicateJoinFunction)processingFunction).composeIntoProbe(aggregatingFunction);
 			}
 			else {
