@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.apache.dstream.DistributableConstants;
 import org.apache.dstream.DistributableExecutable;
-import org.apache.dstream.ExecutionContextSpecification.Stage;
+import org.apache.dstream.PipelineExecutionChain.Stage;
 
 public class ConfigurationGenerator {
 

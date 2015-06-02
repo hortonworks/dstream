@@ -6,7 +6,7 @@ import org.apache.dstream.support.PipelineConfigurationHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
- * Implementation of {@link ExecutionDelegate} which returns {@link ExecutionContextSpecification}.
+ * Implementation of {@link ExecutionDelegate} which returns {@link PipelineExecutionChain}.
  * Primary use is testing.
  */
 public class ExecutionContextSpecificationValidationDelegate implements ExecutionDelegate {
@@ -14,8 +14,8 @@ public class ExecutionContextSpecificationValidationDelegate implements Executio
 	private final Logger logger = LoggerFactory.getLogger(ExecutionContextSpecificationValidationDelegate.class);
 
 	@Override
-	public Stream<?>[] execute(ExecutionContextSpecification pipelineSpecification) {
-		PipelineConfigurationHelper.loadExecutionConfig(pipelineSpecification.getName());
+	public Stream<Stream<?>>[] execute(PipelineExecutionChain... pipelineSpecification) {
+		PipelineConfigurationHelper.loadExecutionConfig(pipelineSpecification[0].getName());
 		return new Stream[]{Stream.of(new Object())};
 	}
 

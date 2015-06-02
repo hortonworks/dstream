@@ -9,8 +9,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 import org.apache.dstream.DistributableConstants;
-import org.apache.dstream.ExecutionContextSpecification;
-import org.apache.dstream.ExecutionContextSpecification.Stage;
+import org.apache.dstream.PipelineExecutionChain;
+import org.apache.dstream.PipelineExecutionChain.Stage;
 import org.apache.dstream.ExecutionDelegate;
 import org.apache.dstream.support.PipelineConfigurationHelper;
 import org.apache.dstream.support.SourceSupplier;
@@ -40,9 +40,9 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 	 * 
 	 */
 	@Override
-	public Stream<?>[] execute(ExecutionContextSpecification pipelineSpecification) {
+	public Stream<Stream<?>>[] execute(PipelineExecutionChain... pipelineSpecification) {
 		try {
-			return this.doExecute(pipelineSpecification);
+			return this.doExecute(pipelineSpecification[0]);
 		} 
 		catch (Exception e) {
 			throw new IllegalStateException("Failed to execute pipeline: " + pipelineSpecification, e);
@@ -81,7 +81,7 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 	/**
 	 * 
 	 */
-	private Stream<?>[] doExecute(ExecutionContextSpecification pipelineSpecification) throws Exception {
+	private Stream<Stream<?>>[] doExecute(PipelineExecutionChain... pipelineSpecification) throws Exception {
 		if (logger.isInfoEnabled()){
 			logger.info("Executing pipeline: " + pipelineSpecification);
 		}
@@ -95,14 +95,14 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 			throw new IllegalStateException("Failed to access FileSystem", e);
 		}
 		
-		this.pipelineConfig = PipelineConfigurationHelper.loadExecutionConfig(pipelineSpecification.getName());
+		this.pipelineConfig = PipelineConfigurationHelper.loadExecutionConfig(pipelineSpecification[0].getName());
 		
 		if (this.tezClient == null){
-			this.createAndTezClient(pipelineSpecification, fs, tezConfiguration);
+			this.createAndTezClient(pipelineSpecification[0], fs, tezConfiguration);
 		}
 		
-		List<Stage> stages = pipelineSpecification.getStages();
-		TezExecutableDAGBuilder executableDagBuilder = new TezExecutableDAGBuilder(pipelineSpecification.getName(), 
+		List<Stage> stages = pipelineSpecification[0].getStages();
+		TezExecutableDAGBuilder executableDagBuilder = new TezExecutableDAGBuilder(pipelineSpecification[0].getName(), 
 				this.tezClient, this.determineInputFormatClass(stages.get(0)), this.pipelineConfig);
 	
 		stages.stream().forEach(stage -> executableDagBuilder.addStage(stage, this.getStageParallelizm(stage)) );
@@ -111,10 +111,12 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 		
 		try {
 			Stream<?>[] resultStreams = executable.call();
-			return resultStreams;
+			return new Stream[]{Stream.of(resultStreams)};
+			//return null;
+			//return resultStreams;
 		} 
 		catch (Exception e) {
-			throw new ExecutionException("Failed to execute DAG for " + pipelineSpecification.getName(), e);
+			throw new ExecutionException("Failed to execute DAG for " + pipelineSpecification[0].getName(), e);
 		}
 	}
 	
@@ -122,7 +124,7 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 	 * 
 	 * @param pipelineSpecification
 	 */
-	private void createAndTezClient(ExecutionContextSpecification pipelineSpecification, FileSystem fs, TezConfiguration tezConfiguration){	
+	private void createAndTezClient(PipelineExecutionChain pipelineSpecification, FileSystem fs, TezConfiguration tezConfiguration){	
 		Map<String, LocalResource> localResources = HadoopUtils.createLocalResources(fs, pipelineSpecification.getName() + 
 												"/" + TezConstants.CLASSPATH_PATH);
 		this.tezClient = new ExecutionContextAwareTezClient(pipelineSpecification.getName(), 

@@ -12,8 +12,8 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.ExecutionContextSpecification;
-import org.apache.dstream.ExecutionContextSpecification.Stage;
+import org.apache.dstream.PipelineExecutionChain;
+import org.apache.dstream.PipelineExecutionChain.Stage;
 import org.apache.dstream.DistributableConstants;
 import org.apache.dstream.KeyValuesStreamAggregatingFunction;
 import org.apache.dstream.PredicateJoinFunction;
@@ -125,7 +125,7 @@ public class TezExecutableDAGBuilder {
 		}
 		
 		if (stage.getDependentExecutionContextSpec() != null){
-			ExecutionContextSpecification execSpec = stage.getDependentExecutionContextSpec();
+			PipelineExecutionChain execSpec = stage.getDependentExecutionContextSpec();
 			List<Stage> dependentStages = execSpec.getStages();
 			
 			int stageParallelizm = this.pipelineConfig.containsKey(DistributableConstants.PARALLELISM + stage.getName()) 
