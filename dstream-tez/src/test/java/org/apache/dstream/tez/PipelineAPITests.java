@@ -72,69 +72,6 @@ public class PipelineAPITests extends BaseTezTests {
 		result.close();
 	}
 	
-	private static class TestCombiner implements BinaryOperator<Integer> {
-		private static final long serialVersionUID = 8366519776101104961L;
-		private final long pointer;
-		
-		private boolean invoked;
-		
-		public TestCombiner(long pointer) {
-			this.pointer = pointer;
-			
-		}
-
-		@Override
-		public Integer apply(Integer t, Integer u) {
-			if (!invoked){
-				JvmUtils.getUnsafe().putInt(pointer, JvmUtils.getUnsafe().getInt(this.pointer)+1);
-				invoked = true;
-			}
-			return t + u;
-		}
-	}
-	
-	@Test
-	public void computeWithMapSideCombineAndReduce() throws Exception {
-		
-		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, "msc");
-		
-		Unsafe unsafe = JvmUtils.getUnsafe();
-		long pointer = unsafe.allocateMemory(4);
-		TestCombiner bo = new TestCombiner(pointer);
-
-		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
-				.flatMap(line -> Stream.of(line.split("\\s+")))
-				.map(word -> kv(word, 1))
-			).reduce(s -> s.getKey(), s -> s.getValue(), bo)
-			 .executeAs(this.applicationName);
-		
-		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
-		result.close();
-		
-		assertEquals(3, JvmUtils.getUnsafe().getInt(pointer));
-	}
-	
-	@Test
-	public void computeWithOnlyReduce() throws Exception {
-		
-		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, "red");
-		
-		Unsafe unsafe = JvmUtils.getUnsafe();
-		long pointer = unsafe.allocateMemory(4);
-		TestCombiner bo = new TestCombiner(pointer);
-
-		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
-				.flatMap(line -> Stream.of(line.split("\\s+")))
-				.map(word -> kv(word, 1))
-			).reduce(s -> s.getKey(), s -> s.getValue(), bo)
-			 .executeAs(this.applicationName);
-		
-		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
-		
-		result.close();
-		
-		assertEquals(1, JvmUtils.getUnsafe().getInt(pointer));
-	}
 	
 	@Test
 	public void computeReduceCompute() throws Exception {
