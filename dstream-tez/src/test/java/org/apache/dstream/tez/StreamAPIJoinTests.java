@@ -44,7 +44,7 @@ public class StreamAPIJoinTests extends BaseTezTests {
 				l -> Integer.parseInt(l.substring(0, l.indexOf(" ")).trim()), l -> l.substring(l.indexOf(" ")).trim(), r -> r.getKey(), r -> r.getValue()
 				).executeAs(this.applicationName);
 
-		Stream<Stream<Entry<Integer, Pair<String, String>>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
+		Stream<Stream<Entry<Integer, Pair<String, String>>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
 		
 		List<Stream<Entry<Integer, Pair<String, String>>>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());

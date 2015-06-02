@@ -23,6 +23,10 @@ public class JvmUtils {
 			throw new IllegalStateException("Failed to create Unsafe", e);
 		}
 	}
+	
+	public static Unsafe getUnsafe(){
+		return unsafe;
+	}
 
 	@SuppressWarnings("unchecked")
 	public static <T> T createDummyInstance(Class<T> clazz) {	

@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
-import org.apache.dstream.ExecutionContextSpecification.Stage;
+import org.apache.dstream.PipelineExecutionChain.Stage;
 import org.apache.dstream.support.ConfigurationGenerator;
 import org.apache.dstream.support.PipelineConfigurationHelper;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
@@ -45,6 +45,12 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 	
 	private final String pipelineName;
 	
+	/*
+	 * Since configuration is based on the job name most of the properties are inaccessible until "executeAs"
+	 * is invoked (e.g., reducers, map-side combine) when the job name is actually known, so 
+	 * the callbacks will be created as Consumers and executed when "executeAs" is invoked when those
+	 * config properties are known. 
+	 */
 	private final List<Consumer<Properties>> postConfigInitCallbacks = new ArrayList<Consumer<Properties>>();
 	
 	
@@ -59,7 +65,8 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 	 */
 	private ExecutionContextSpecificationBuilder(Class<?> sourceItemType, String pipelineName, Class<? extends DistributableExecutable<?>> proxyType) {	
 		Assert.isTrue(DistributableStream.class.isAssignableFrom(proxyType) 
-				|| DistributablePipeline.class.isAssignableFrom(proxyType), "Unsupported proxy type " + 
+				|| DistributablePipeline.class.isAssignableFrom(proxyType)
+				|| JobGroup.class.isAssignableFrom(proxyType), "Unsupported proxy type " + 
 						proxyType + ". Supported types are " + DistributablePipeline.class + " & " + DistributableStream.class);
 
 		this.targetDistributable =  this.generateDistributableProxy(proxyType);
@@ -80,62 +87,40 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 		ExecutionContextSpecificationBuilder<T,R> builder = new ExecutionContextSpecificationBuilder<T,R>(sourceElementType, pipelineName, distributableType);
 		return builder.targetDistributable;
 	}
+	
+	/**
+	 * 
+	 * @param groupName
+	 * @param distributableType
+	 * @param distributables
+	 * @return
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	static <T,R extends DistributableExecutable<T>> R asGroupExecutable(String groupName, Class<? extends R> distributableType, DistributableExecutable[] distributables) {
+		ExecutionContextSpecificationBuilder<T,R> builder = new ExecutionContextSpecificationBuilder<T,R>(Object.class, groupName, distributableType);
+		Stream.of(distributables).forEach(((List)builder.targetDistributable)::add);	
+		return builder.targetDistributable;
+	}
 
 	/**
 	 * 
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public Object invoke(MethodInvocation invocation) throws Throwable {
 		String operationName = invocation.getMethod().getName();
-		Object[] arguments = invocation.getArguments();
 		Object returnValue;
 		if ("executeAs".equals(operationName)){
-			String executionName = arguments[0].toString();
-			Assert.notEmpty(executionName, "'executionName' must not be null or empty");
-			
-			boolean generateConfig = false;
-			if (executionName.startsWith(DistributableConstants.GENERATE_CONF)){
-				executionName = executionName.split(":")[1];
-				generateConfig = true;
+			List<PipelineExecutionChain> pipelineEecutuionChains;
+			if (this.targetDistributable instanceof JobGroup){
+				pipelineEecutuionChains = (List<PipelineExecutionChain>) ((List)this.targetDistributable).stream()
+						.map(r -> this.finalizeExecutionChain(invocation, (R)r)).collect(Collectors.toList());
 			}
-			
-			List<Stage> stages = (List<Stage>)this.targetDistributable;
-			/*
-			 * This will create a default stage with wysiwyg function
-			 * for condition where executeAs(..) was invoked on the pipeline that had no other invocations
-			 * essentially returning source data
-			 */
-			if (stages.size() == 0){
-				this.addStage((Stream<?> wysiwyg) -> wysiwyg, null, operationName);
+			else {
+				pipelineEecutuionChains = Stream.of(this.finalizeExecutionChain(invocation, this.targetDistributable)).collect(Collectors.toList());
+				
 			}
-			
-			if (generateConfig){
-				ConfigurationGenerator confGener = new ConfigurationGenerator(this.targetDistributable);
-				logger.warn("\n\n############ GENERATING PIPELINE CONFIGURATION ############");
-				logger.info("\n" + confGener.toString());
-				logger.warn("\n###########################################################");
-			}
-
-			Properties executionProperties = PipelineConfigurationHelper.loadExecutionConfig(executionName);
-
-			this.postConfigInitCallbacks.forEach(s -> s.accept(executionProperties));
-			
-			String output = executionProperties.getProperty(DistributableConstants.OUTPUT);
-			if (output != null){
-				Assert.isTrue(SourceSupplier.isURI(output), "URI '" + output + "' must have scheme defined (e.g., file:" + output + ")");
-			}
-			
-			ExecutionContextSpecification executionContextSpec = this.buildExecutionContextSpec(executionName, output == null ? null : new URI(output), 
-							ExecutionContextSpecificationBuilder.this.targetDistributable);
-			
-			this.setSourceSuppliers(executionProperties, stages, this.pipelineName, executionName);
-
-			if (logger.isInfoEnabled()){
-				logger.info("Execution context spec: " + executionContextSpec);
-			}
-			
-			returnValue = this.delegatePipelineSpecExecution(executionContextSpec);
+			returnValue = this.delegatePipelineSpecExecution(this.targetDistributable instanceof JobGroup, pipelineEecutuionChains.toArray(new PipelineExecutionChain[]{}));
 		} 
 		else if (this.isStageOrBoundaryOperation(operationName)) {
 			if (logger.isDebugEnabled()){
@@ -153,6 +138,68 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 			returnValue = invocation.proceed();
 		}
 		return returnValue;
+	}
+	
+	/**
+	 * 
+	 */
+	@SuppressWarnings("unchecked")
+	private PipelineExecutionChain finalizeExecutionChain(MethodInvocation invocation, R currentDistributable){
+		String operationName = invocation.getMethod().getName();
+		String executionName = invocation.getArguments()[0].toString();
+		Assert.notEmpty(executionName, "'executionName' must not be null or empty");
+		
+		boolean generateConfig = false;
+		if (executionName.startsWith(DistributableConstants.GENERATE_CONF)){
+			executionName = executionName.split(":")[1];
+			generateConfig = true;
+		}
+		List<Stage> stages = (List<Stage>)currentDistributable;
+		/*
+		 * This will create a default stage with wysiwyg function
+		 * for condition where executeAs(..) was invoked on the pipeline that had no other invocations
+		 * essentially returning source data
+		 */
+		if (stages.size() == 0){
+			this.addStage((Stream<?> wysiwyg) -> wysiwyg, null, operationName);
+		}
+		
+		if (generateConfig){
+			ConfigurationGenerator confGener = new ConfigurationGenerator(currentDistributable);
+			logger.warn("\n\n############ GENERATING PIPELINE CONFIGURATION ############");
+			logger.info("\n" + confGener.toString());
+			logger.warn("\n###########################################################");
+		}
+
+		Properties executionProperties = PipelineConfigurationHelper.loadExecutionConfig(executionName);
+
+		this.postConfigInitCallbacks.forEach(s -> s.accept(executionProperties));
+		
+		String output = executionProperties.getProperty(DistributableConstants.OUTPUT);
+		if (output != null){
+			Assert.isTrue(SourceSupplier.isURI(output), "URI '" + output + "' must have scheme defined (e.g., file:" + output + ")");
+		}
+		
+		URI uri = null;
+		if (output != null){
+			try {
+				uri = new URI(output);
+			} 
+			catch (Exception e) {
+				throw new IllegalStateException("Failed to create URI", e);
+			}
+		}	
+		
+		PipelineExecutionChain executionChain = this.buildExecutionChain(executionName, uri, currentDistributable);
+//		System.out.println(currentDistributable.getName());
+		this.setSourceSuppliers(executionProperties, stages, currentDistributable.getName(), executionName);
+
+		if (logger.isInfoEnabled()){
+			logger.info("Execution chain: " + executionChain);
+		}
+		
+		return executionChain;
+		//return this.delegatePipelineSpecExecution(executionContextSpec);
 	}
 	
 	/**
@@ -210,8 +257,8 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 			Assert.notEmpty(arguments, "All arguments of a join operation are required and can not be null");
 			
 			DistributableExecutable<?> dependentDistributable = (DistributableExecutable<?>) arguments[0];
-			ExecutionContextSpecification dependentExecutionContextSpec = 
-					this.buildExecutionContextSpec(dependentDistributable.getName(), null, dependentDistributable);
+			PipelineExecutionChain dependentExecutionContextSpec = 
+					this.buildExecutionChain(dependentDistributable.getName(), null, dependentDistributable);
 				
 			Function pjFunc = new PredicateJoinFunction(
 					new KeyValueMappingFunction((Function<?,?>)arguments[1], (Function<?,?>)arguments[2]),
@@ -233,6 +280,9 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 							? Boolean.parseBoolean(executionProperties.getProperty(propertyName)) : false;
 							
 					BinaryOperator combiner = mapSideCombine ? (BinaryOperator)arguments[2] : null;
+					if (mapSideCombine){
+						System.out.println();
+					}
 					composeWithStageFunction(currentStage, 
 							new KeyValueMappingFunction((Function)arguments[0], (Function)arguments[1], combiner), invocation.getMethod().getName());
 				}
@@ -304,8 +354,8 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 	/**
 	 * 
 	 */
-	private ExecutionContextSpecification buildExecutionContextSpec(String executionName, URI outputPath, DistributableExecutable<?> targetExecutable){
-		ExecutionContextSpecification specification = new ExecutionContextSpecification() {		
+	private PipelineExecutionChain buildExecutionChain(String executionName, URI outputPath, DistributableExecutable<?> targetExecutable){
+		PipelineExecutionChain specification = new PipelineExecutionChain() {		
 			private static final long serialVersionUID = -4119037144503084569L;
 			
 			@SuppressWarnings("unchecked")
@@ -339,14 +389,14 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 	/**
 	 * 
 	 */
-	private Future<Stream<Stream<?>>> delegatePipelineSpecExecution(ExecutionContextSpecification pipelineSpecification) {	
+	private Future<Stream<?>> delegatePipelineSpecExecution(boolean group, PipelineExecutionChain... executionChains) {	
 		Properties prop = PipelineConfigurationHelper.loadDelegatesConfig();
-
-		String pipelineExecutionDelegateClassName = prop.getProperty(pipelineSpecification.getName());
+		
+		String pipelineExecutionDelegateClassName = prop.getProperty(executionChains[0].getName());
 		Assert.notEmpty(pipelineExecutionDelegateClassName,
-				"Pipeline execution delegate for pipeline '" + pipelineSpecification.getName() + "' "
+				"Pipeline execution delegate for pipeline '" + executionChains[0].getName() + "' "
 						+ "is not provided in 'pipeline-delegates.cfg' (e.g., "
-						+ pipelineSpecification.getName() + "=foo.bar.SomePipelineDelegate)");
+						+ executionChains[0].getName() + "=foo.bar.SomePipelineDelegate)");
 		if (logger.isInfoEnabled()) {
 			logger.info("Pipeline execution delegate: " + pipelineExecutionDelegateClassName);
 		}
@@ -361,8 +411,10 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 				@SuppressWarnings("unchecked")
 				@Override
 				public Stream<Stream<?>> call() throws Exception {
-					Stream<?>[] resultStreams =  pipelineExecutionDelegate.execute(pipelineSpecification);
-					return (Stream<Stream<?>>) generateResultProxy(Stream.of(resultStreams), new Runnable() {
+					Stream<?> resultStreams = !group ? pipelineExecutionDelegate.execute(executionChains)[0]
+								: Stream.of(pipelineExecutionDelegate.execute(executionChains));
+					
+					return (Stream<Stream<?>>) generateResultProxy(resultStreams, new Runnable() {
 						@Override
 						public void run() {
 							try {
@@ -379,7 +431,7 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 					});
 				}
 			});		
-			return this.generateResultProxyFuture(resultFuture, pipelineSpecification);
+			return this.generateResultProxyFuture(resultFuture, executionChains);
 		} 
 		catch (Exception e) {
 			executor.shutdownNow();
@@ -389,16 +441,18 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 						+ pipelineExecutionDelegateClassName + "' can not be found.";
 			}
 			throw new IllegalStateException("Failed to execute pipeline '"
-					+ pipelineSpecification.getName() + "'. " + messageSuffix, e);
+					+ executionChains[0].getName() + "'. " + messageSuffix, e);
 		}
 	}
+	
+	
 	
 	/**
 	 * Will generate proxy over the result future which contains DistributablePipelineSpecificationExtractor 
 	 * interface to allow access to DistributablePipelineSpecification
 	 */
 	@SuppressWarnings("unchecked")
-	private Future<Stream<Stream<?>>> generateResultProxyFuture(Future<Stream<Stream<?>>> resultFuture, ExecutionContextSpecification pipelineSpecification){
+	private Future<Stream<?>> generateResultProxyFuture(Future<Stream<Stream<?>>> resultFuture, PipelineExecutionChain... pipelineSpecification){
 		ProxyFactory pf = new ProxyFactory(resultFuture);
 		pf.addInterface(ExecutionContextSpecificationExtractor.class);
 		pf.addAdvice(new MethodInterceptor() {
@@ -412,7 +466,7 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 				}
 			}
 		});
-		return (Future<Stream<Stream<?>>>) pf.getProxy();
+		return (Future<Stream<?>>) pf.getProxy();
 	}
 	
 	/**
@@ -440,15 +494,21 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 	/**
 	 * 
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private R generateDistributableProxy(Class<?> proxyType){
-		ProxyFactory pf = new ProxyFactory(new ArrayList<Stage>());
+		ProxyFactory pf = new ProxyFactory(new ArrayList());
 		
 		if (DistributablePipeline.class.isAssignableFrom(proxyType)){
 			pf.addInterface(DistributablePipeline.class);
 		} 
-		else {
+		else if (DistributableStream.class.isAssignableFrom(proxyType)){
 			pf.addInterface(DistributableStream.class);
+		}
+		else if (JobGroup.class.isAssignableFrom(proxyType)){
+			pf.addInterface(JobGroup.class);
+		}
+		else {
+			throw new IllegalArgumentException("Unsupported proxy type: " +  proxyType);
 		}
 	
 		pf.addAdvice(this);
@@ -517,13 +577,13 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 		stages.forEach(stage -> {
 			if (stage.getId() == 0){
 				String sourceProperty = executionProperties.getProperty(DistributableConstants.SOURCE + pname);
-				Assert.notEmpty(sourceProperty, DistributableConstants.SOURCE + this.pipelineName +  "' property can not be found in " + 
+				Assert.notEmpty(sourceProperty, DistributableConstants.SOURCE + pname +  "' property can not be found in " + 
 						ename + ".cfg configuration file.");
 				SourceSupplier sourceSupplier = SourceSupplier.create(sourceProperty, null);
 				stage.setSourceSupplier(sourceSupplier);
 			}
 			if (stage.getDependentExecutionContextSpec() != null){
-				ExecutionContextSpecification dependentStageSpec = stage.getDependentExecutionContextSpec();
+				PipelineExecutionChain dependentStageSpec = stage.getDependentExecutionContextSpec();
 				this.setSourceSuppliers(executionProperties, dependentStageSpec.getStages(), dependentStageSpec.getName(), ename);
 			}
 		});

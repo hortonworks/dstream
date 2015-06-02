@@ -8,13 +8,13 @@ import java.util.stream.Stream;
 public interface ExecutionDelegate  {
 
 	/**
-	 * Main delegation method between {@link ExecutionContextSpecification} and its realization in the 
+	 * Main delegation method between {@link PipelineExecutionChain} and its realization in the 
 	 * target execution environment.
 	 * 
 	 * @param pipelineSpecification
 	 * @return
 	 */
-	Stream<?>[] execute(ExecutionContextSpecification pipelineSpecification);
+	Stream<Stream<?>>[] execute(PipelineExecutionChain... pipelineSpecification);
 
 	/**
 	 * Returns {@link Runnable} which contains logic relevant to 

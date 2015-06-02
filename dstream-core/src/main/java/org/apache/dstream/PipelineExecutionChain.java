@@ -17,7 +17,7 @@ import org.apache.dstream.utils.Assert;
  * 
  *
  */
-public interface ExecutionContextSpecification extends Serializable {
+public interface PipelineExecutionChain extends Serializable {
 	
 	public String getName();
 
@@ -37,7 +37,7 @@ public interface ExecutionContextSpecification extends Serializable {
 		
 		private SourceSupplier<?> sourceSupplier;
 		
-		private ExecutionContextSpecification dependentexecutionContextSpec;
+		private PipelineExecutionChain dependentexecutionContextSpec;
 
 		public abstract BinaryOperator<Object> getAggregatorOperator();
 		
@@ -81,11 +81,11 @@ public interface ExecutionContextSpecification extends Serializable {
 			this.sourceSupplier = sourceSupplier;
 		}
 		
-		public ExecutionContextSpecification getDependentExecutionContextSpec() {
+		public PipelineExecutionChain getDependentExecutionContextSpec() {
 			return this.dependentexecutionContextSpec;
 		}
 
-		public void setDependentExecutionContextSpec(ExecutionContextSpecification dependentexecutionContextSpec) {
+		public void setDependentExecutionContextSpec(PipelineExecutionChain dependentexecutionContextSpec) {
 			this.dependentexecutionContextSpec = dependentexecutionContextSpec;
 		}
 	}

@@ -23,7 +23,8 @@ public class WordCountStream {
 				.reduce(word -> word, word -> 1, Integer::sum)
 			.executeAs("WordCount");
 		
-		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(20000, TimeUnit.MILLISECONDS);
+		// each stream within a stream represents a partition essentially giving you access to each result partition
+		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
 		
 		result.forEach(stream -> stream.forEach(System.out::println));
 		result.close();
