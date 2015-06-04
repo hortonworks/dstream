@@ -178,8 +178,8 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 		Properties executionProperties = PipelineConfigurationHelper.loadExecutionConfig(executionName);
 
 		this.postConfigInitCallbacks.forEach(s -> s.accept(executionProperties));
-		
-		PipelineExecutionChain executionChain = this.buildExecutionChain(executionName, this.getOutputUri(executionProperties), currentDistributable);
+		System.out.println(this.pipelineName);
+		PipelineExecutionChain executionChain = this.buildExecutionChain(executionName, this.getOutputUri(this.pipelineName, executionProperties), currentDistributable);
 		this.setSourceSuppliers(executionProperties, stages, currentDistributable.getName(), executionName);
 
 		if (logger.isInfoEnabled()){
@@ -581,10 +581,13 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 	}
 	
 	/**
-	 * 
+	 * There may be several pipelines in a job represented as {@link DistributableExecutable}, but 
+	 * there can only be *one* executable.
+	 * The executable pipeline is the one on which 'executeAs' operation is invoked and the
+	 * name of such pipeline is what's passed as 'executablePipelineName'.
 	 */
-	private URI getOutputUri(Properties executionProperties){
-		String output = executionProperties.getProperty(DistributableConstants.OUTPUT);
+	private URI getOutputUri(String executablePipelineName, Properties executionProperties){
+		String output = executionProperties.getProperty(DistributableConstants.OUTPUT + "." + executablePipelineName);
 		if (output != null){
 			Assert.isTrue(SourceSupplier.isURI(output), "URI '" + output + "' must have scheme defined (e.g., file:" + output + ")");
 		}

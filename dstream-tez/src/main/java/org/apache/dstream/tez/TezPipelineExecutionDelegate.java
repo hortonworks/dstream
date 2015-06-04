@@ -1,10 +1,10 @@
 package org.apache.dstream.tez;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -81,39 +81,36 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 	 * 
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private Stream<Stream<?>>[] doExecute(PipelineExecutionChain... pipelineSpecification) throws Exception {
+	private Stream<Stream<?>>[] doExecute(PipelineExecutionChain... pipelineExecutionChains) throws Exception {
 		if (logger.isInfoEnabled()){
-			logger.info("Executing: " + pipelineSpecification);
+			logger.info("Executing: " + pipelineExecutionChains);
 		}
+		
+		String executionName = pipelineExecutionChains[0].getJobName();
 		
 		TezConfiguration tezConfiguration = new TezConfiguration(new Configuration());
-		FileSystem fs;
-		try {		
-			fs = FileSystem.get(tezConfiguration);
-		} 
-		catch (Exception e) {
-			throw new IllegalStateException("Failed to access FileSystem", e);
-		}
+		FileSystem fs = HadoopUtils.getFileSystem(tezConfiguration);
 		
-		this.pipelineConfig = PipelineConfigurationHelper.loadExecutionConfig(pipelineSpecification[0].getJobName());
+		this.pipelineConfig = PipelineConfigurationHelper.loadExecutionConfig(executionName);
 		
 		if (this.tezClient == null){
-			this.createAndTezClient(pipelineSpecification[0], fs, tezConfiguration);
+			this.createAndTezClient(pipelineExecutionChains[0], fs, tezConfiguration);
 		}
 		
-		TezExecutableDAGBuilder executableDagBuilder = new TezExecutableDAGBuilder(pipelineSpecification[0].getJobName(), 
+		TezExecutableDAGBuilder executableDagBuilder = new TezExecutableDAGBuilder(executionName, 
 				this.tezClient, this.pipelineConfig);
 		
-		AtomicInteger counter = new AtomicInteger();
-		List<String> outputURIs = Stream.of(pipelineSpecification)
-			.map(pipeline -> {
-				pipeline.getStages().forEach(stage -> executableDagBuilder.addStage(stage, this.getStageParallelizm(stage)) );
-				String output = pipeline.getOutputUri() == null 
-						? this.tezClient.getClientName() + "/out/" + counter.getAndIncrement()
-								: pipeline.getOutputUri().toString();
-				executableDagBuilder.addDataSink(output);
-				return output;
-			}).collect(Collectors.toList());
+		List<String> outputURIs  = new ArrayList<String>();
+		for (int i = 0; i < pipelineExecutionChains.length; i++) {
+			PipelineExecutionChain pipelineExecutionChain = pipelineExecutionChains[i];
+			pipelineExecutionChain.getStages().forEach(stage -> executableDagBuilder.addStage(stage, this.getStageParallelizm(stage)) );
+			String output = pipelineExecutionChain.getOutputUri() == null 
+					? this.tezClient.getClientName() + "/out/"
+							: pipelineExecutionChain.getOutputUri().toString();
+			output += (pipelineExecutionChains.length > 1 ? "/" + i : "");
+			executableDagBuilder.addDataSink(output);
+			outputURIs.add(output);
+		}
 		
 		Runnable executable = executableDagBuilder.build();
 		
@@ -125,7 +122,7 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 			}).collect(Collectors.toList()).toArray(new Stream[]{});
 		} 
 		catch (Exception e) {
-			throw new ExecutionException("Failed to execute DAG for " + pipelineSpecification[0].getJobName(), e);
+			throw new ExecutionException("Failed to execute DAG for " + executionName, e);
 		}
 	}
 	

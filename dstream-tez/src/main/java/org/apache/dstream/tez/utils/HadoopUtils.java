@@ -28,6 +28,7 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.dstream.tez.TezConstants;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -43,6 +44,20 @@ import org.apache.tez.dag.api.TezConfiguration;
  */
 public class HadoopUtils {
 	private static final Log logger = LogFactory.getLog(HadoopUtils.class);
+	
+	/**
+	 * 
+	 * @param configuration
+	 * @return
+	 */
+	public static FileSystem getFileSystem(Configuration configuration){
+		try {		
+			return FileSystem.get(configuration);
+		} 
+		catch (Exception e) {
+			throw new IllegalStateException("Failed to access FileSystem", e);
+		}
+	}
 
 	/**
 	 * Creates {@link LocalResource}s based on the current user's classpath
