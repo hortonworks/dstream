@@ -17,9 +17,30 @@ import org.apache.dstream.utils.Pair;
 import org.junit.Test;
 
 public class JobGroupTests {
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void validateEmptyPipelineArrayFailure(){
+		JobGroup.create("MyJobGroup");
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void validateEmptyNameFailure(){
+		JobGroup.create(null);
+	}
+	
+	@Test
+	public void validateDuplicatPipelineDiscard(){
+		DistributableStream<String> ds1 = DistributableStream.ofType(String.class, "ds1")
+				.flatMap(line -> Stream.of(line.split(" ")));
+		JobGroup jg = JobGroup.create("MyJobGroup", ds1, ds1, ds1);
+		
+		PipelineExecutionChain[] pipelineSpecs = DstreamTestUtils.extractPipelineSpecifications(jg.executeAs("MyJobGroup"));
+		
+		assertEquals(1, pipelineSpecs.length);
+	}
 
 	@Test
-	public void testJobGroup() throws Exception {
+	public void validateJobGroupStructure() throws Exception {
 		DistributableStream<Entry<String, Integer>> ds1 = DistributableStream.ofType(String.class, "ds1")
 				.flatMap(line -> Stream.of(line.split(" ")))
 				.filter(word -> word.length() == 4)

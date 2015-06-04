@@ -128,13 +128,8 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 				logger.debug("Op:" + operationName + "(" + (argNames.isEmpty() ? "" : argNames.toString()) + ")");
 			}
 			
-			// cloning so each instance of a flow is distinct and addressable
-			ExecutionContextSpecificationBuilder clonedDistributable = new  ExecutionContextSpecificationBuilder(this.sourceItemType, this.pipelineName, 
-					this.targetDistributable instanceof DistributablePipeline ? DistributablePipeline.class : DistributableStream.class);
-			((List)clonedDistributable.targetDistributable).addAll(Collections.unmodifiableList(((List)this.targetDistributable)));
-			clonedDistributable.stageIdCounter = this.stageIdCounter;
-			clonedDistributable.postConfigInitCallbacks.addAll(Collections.unmodifiableList(this.postConfigInitCallbacks));
-			
+			// cloning, so each instance of a flow is distinctly (instance) addressable
+			ExecutionContextSpecificationBuilder clonedDistributable = this.cloneTargetDistributable();
 			// process on the clone
 			clonedDistributable.doProcess((ReflectiveMethodInvocation)invocation);
 			
@@ -175,9 +170,9 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 		
 		if (generateConfig){
 			ConfigurationGenerator confGener = new ConfigurationGenerator(currentDistributable);
-			logger.warn("\n\n############ GENERATING PIPELINE CONFIGURATION ############");
+			logger.info("\n\n############ GENERATING PIPELINE CONFIGURATION ############");
 			logger.info("\n" + confGener.toString());
-			logger.warn("\n###########################################################");
+			logger.info("\n###########################################################");
 		}
 
 		Properties executionProperties = PipelineConfigurationHelper.loadExecutionConfig(executionName);
@@ -604,5 +599,18 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 			}
 		}	
 		return uri;
+	}
+	
+	/**
+	 * 
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private ExecutionContextSpecificationBuilder cloneTargetDistributable(){
+		ExecutionContextSpecificationBuilder clonedDistributable = new  ExecutionContextSpecificationBuilder(this.sourceItemType, this.pipelineName, 
+				this.targetDistributable instanceof DistributablePipeline ? DistributablePipeline.class : DistributableStream.class);
+		((List)clonedDistributable.targetDistributable).addAll(Collections.unmodifiableList(((List)this.targetDistributable)));
+		clonedDistributable.stageIdCounter = this.stageIdCounter;
+		clonedDistributable.postConfigInitCallbacks.addAll(Collections.unmodifiableList(this.postConfigInitCallbacks));
+		return clonedDistributable;
 	}
 }
