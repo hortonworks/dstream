@@ -10,7 +10,6 @@ public class BaseTezTests {
 		try {
 			File workDir = new File(System.getProperty("user.dir"));
 			if (workDir.isDirectory()){
-				System.out.println(workDir.getAbsolutePath());
 				for (String sub : workDir.list()) {
 					if (sub.startsWith(applicationName)){
 						File file = new File(workDir, sub);
