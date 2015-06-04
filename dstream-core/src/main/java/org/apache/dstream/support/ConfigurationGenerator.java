@@ -62,7 +62,7 @@ public class ConfigurationGenerator {
 			this.addStageParallelizm(stage);
 			this.addStageMsCombine(stage);
 			if (stage.getDependentExecutionContextSpec() != null){
-				this.processDistributable(stage.getDependentExecutionContextSpec().getStages(), stage.getDependentExecutionContextSpec().getName());
+				this.processDistributable(stage.getDependentExecutionContextSpec().getStages(), stage.getDependentExecutionContextSpec().getJobName());
 			}
 		});
 	}

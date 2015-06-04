@@ -8,25 +8,24 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.PipelineExecutionChain;
-import org.apache.dstream.PipelineExecutionChain.Stage;
 import org.apache.dstream.DistributableConstants;
 import org.apache.dstream.KeyValuesStreamAggregatingFunction;
+import org.apache.dstream.PipelineExecutionChain;
+import org.apache.dstream.PipelineExecutionChain.Stage;
 import org.apache.dstream.PredicateJoinFunction;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.tez.io.KeyWritable;
 import org.apache.dstream.tez.io.ValueWritable;
 import org.apache.dstream.tez.utils.HdfsSerializerUtils;
-import org.apache.dstream.tez.utils.SequenceFileOutputStreamsBuilder;
 import org.apache.dstream.utils.Assert;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.tez.dag.api.DAG;
 import org.apache.tez.dag.api.DataSinkDescriptor;
@@ -57,10 +56,9 @@ public class TezExecutableDAGBuilder {
 	
 	private final Properties pipelineConfig;
 	
-	private Vertex lastVertex;
+	private final TezDagExecutor dagExecutor;
 	
-	// TEZ Properties
-	private final Class<?> inputFormatClass;
+	private Vertex lastVertex;
 	
 	private int inputOrderCounter;
 	
@@ -70,7 +68,7 @@ public class TezExecutableDAGBuilder {
 	 * @param tezClient
 	 * @param inputFormatClass
 	 */
-	public TezExecutableDAGBuilder(String pipelineName, ExecutionContextAwareTezClient tezClient, Class<?> inputFormatClass, Properties pipelineConfig) {
+	public TezExecutableDAGBuilder(String pipelineName, ExecutionContextAwareTezClient tezClient, Properties pipelineConfig) {
 		this.dag = DAG.create(pipelineName + "_" + System.currentTimeMillis());
 		this.tezClient = tezClient;
 		this.pipelineConfig = pipelineConfig;
@@ -80,7 +78,7 @@ public class TezExecutableDAGBuilder {
 				.newBuilder("org.apache.dstream.tez.io.KeyWritable",
 						"org.apache.dstream.tez.io.ValueWritable",
 						TezDelegatingPartitioner.class.getName(), null).build();
-		this.inputFormatClass = inputFormatClass;
+		this.dagExecutor = new TezDagExecutor(this.tezClient, this.dag);
 	}
 	
 	/**
@@ -90,10 +88,11 @@ public class TezExecutableDAGBuilder {
 	 */
 	public void addStage(Stage stage, int parallelizm) {	
 		String vertexName = stage.getName();
-		
-		UserPayload payload = this.createPayloadFromTaskSerPath(this.composeFunctionIfNecessary(stage), this.dag.getName(), vertexName);
+		Class<?> inputFormatClass = stage.getId() == 0 ? this.determineInputFormatClass(stage) : null;
+		UserPayload payload = this.createPayloadFromTaskSerPath(this.composeFunctionIfNecessary(stage, inputFormatClass), this.dag.getName(), vertexName);
 		ProcessorDescriptor pd = ProcessorDescriptor.create(TezTaskProcessor.class.getName()).setUserPayload(payload);	
 		
+		// inputOrderCounter needed to maintain the order of inputs for joins
 		Vertex vertex = stage.getId() == 0 
 				? Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd) 
 						: Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd, parallelizm);
@@ -111,7 +110,7 @@ public class TezExecutableDAGBuilder {
 			if (sources != null){
 				if (sources[0] instanceof URI){
 					URI[] uris = Arrays.copyOf(sources, sources.length, URI[].class);
-					DataSourceDescriptor dataSource = this.buildDataSourceDescriptorFromUris(uris);
+					DataSourceDescriptor dataSource = this.buildDataSourceDescriptorFromUris(inputFormatClass, uris);
 					vertex.addDataSource(this.inputOrderCounter++ + ":" + vertexName + "_INPUT", dataSource);
 				} 
 				else {
@@ -157,7 +156,7 @@ public class TezExecutableDAGBuilder {
 	 * @return
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private Function<Stream<?>, Stream<?>> composeFunctionIfNecessary(Stage stage) {
+	private Function<Stream<?>, Stream<?>> composeFunctionIfNecessary(Stage stage, Class<?> inputFormatClass) {
 		Function<Stream<?>, Stream<?>> processingFunction = (Function<Stream<?>, Stream<?>>) stage.getProcessingFunction();
 		if (stage.getAggregatorOperator() != null) {
 			Function<Stream<?>,Stream<?>> aggregatingFunction = new KeyValuesStreamAggregatingFunction(stage.getAggregatorOperator());
@@ -179,7 +178,7 @@ public class TezExecutableDAGBuilder {
 				processingFunction = processingFunction.compose(stream -> stream.map(s -> ((Entry)s).getValue()));
 			} 
 			else {
-				ParameterizedType parameterizedType = (ParameterizedType) this.inputFormatClass.getGenericSuperclass();
+				ParameterizedType parameterizedType = (ParameterizedType) inputFormatClass.getGenericSuperclass();
 				Type type = parameterizedType.getActualTypeArguments()[1];
 				if (Text.class.getName().equals(type.getTypeName())){
 					processingFunction = processingFunction.compose(stream -> stream.map( s -> ((Entry)s).getValue().toString()));
@@ -195,33 +194,32 @@ public class TezExecutableDAGBuilder {
 	
 	/**
 	 * 
-	 * @return
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public Callable<Stream<Object>[]> build(){
-		String outputPath = this.pipelineConfig.getProperty(DistributableConstants.OUTPUT);
-		if (outputPath == null){
-			outputPath = this.tezClient.getClientName() + "/" + this.dag.getName() + "/out";
-		}
+	public void addDataSink(String outputPath){
 		this.createDataSink(this.lastVertex, 
 				this.tezClient.getClientName() + "_OUTPUT", 
 				KeyWritable.class, 
 				ValueWritable.class, 
 				SequenceFileOutputFormat.class, outputPath);
 		
-		TezDagExecutor<Object> dagExecutor = new TezDagExecutor(this.tezClient, this.dag, 
-				new SequenceFileOutputStreamsBuilder(this.tezClient.getFileSystem(), outputPath, this.tezClient.getTezConfiguration()));
-		
-		return dagExecutor;
+		this.lastVertex = null;
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public Runnable build(){
+		return this.dagExecutor;
 	}
 	
 	/**
 	 * 
 	 */
-	private DataSourceDescriptor buildDataSourceDescriptorFromUris(URI[] sources) {
+	private DataSourceDescriptor buildDataSourceDescriptorFromUris(Class<?> inputFormatClass, URI[] sources) {
 		String inputPath = 
 				StringUtils.collectionToCommaDelimitedString(Stream.of(sources).map(uri -> uri.getPath()).collect(Collectors.toList()));
-		DataSourceDescriptor dataSource = MRInput.createConfigBuilder(this.tezClient.getTezConfiguration(), this.inputFormatClass, inputPath).groupSplits(false).build();
+		DataSourceDescriptor dataSource = MRInput.createConfigBuilder(this.tezClient.getTezConfiguration(), inputFormatClass, inputPath).groupSplits(false).build();
 		return dataSource;
 	}
 	
@@ -254,5 +252,25 @@ public class TezExecutableDAGBuilder {
 		jobConf.setOutputKeyClass(keyClass);
 		jobConf.setOutputValueClass(valueClass);
 		return jobConf;
+	}
+	
+	/**
+	 * 
+	 */
+	private Class<?> determineInputFormatClass(Stage firstStage){
+		SourceSupplier<?> sourceSupplier = firstStage.getSourceSupplier();
+		
+		if (sourceSupplier.get()[0] instanceof URI){
+			if (firstStage.getSourceItemType().isAssignableFrom(String.class)){
+				return TextInputFormat.class;
+			} 
+			else {
+				// TODO design a configurable component to handle other standard and custom input types
+				throw new IllegalArgumentException("Failed to determine Input Format class for source item type " + firstStage.getSourceItemType());
+			}
+		} 
+		else {
+			throw new IllegalArgumentException("Non URI sources are not supported yet");
+		}
 	}
 }

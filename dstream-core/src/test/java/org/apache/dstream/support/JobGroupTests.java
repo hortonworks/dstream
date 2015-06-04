@@ -1,20 +1,25 @@
 package org.apache.dstream.support;
 
+import static org.apache.dstream.utils.KVUtils.kv;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.apache.dstream.DistributableStream;
+import org.apache.dstream.DstreamTestUtils;
 import org.apache.dstream.JobGroup;
+import org.apache.dstream.PipelineExecutionChain;
 import org.apache.dstream.utils.Pair;
-
-import static org.apache.dstream.utils.KVUtils.kv;
-
 import org.junit.Test;
 
 public class JobGroupTests {
 
 	@Test
-	public void testJobGroup(){
+	public void testJobGroup() throws Exception {
 		DistributableStream<Entry<String, Integer>> ds1 = DistributableStream.ofType(String.class, "ds1")
 				.flatMap(line -> Stream.of(line.split(" ")))
 				.filter(word -> word.length() == 4)
@@ -30,7 +35,29 @@ public class JobGroupTests {
 		
 		JobGroup jg = JobGroup.create("MyJobGroup", ds1, ds2, ds3);
 		
-		jg.executeAs("MyJobGroup");
+		Future<Stream<Stream<Stream<?>>>> resultFuture = jg.executeAs("MyJobGroup");
+		
+		PipelineExecutionChain[] pipelineSpecs = DstreamTestUtils.extractPipelineSpecifications(resultFuture);
+		
+		assertEquals(3, pipelineSpecs.length);
+		
+		assertEquals("ds1", pipelineSpecs[0].getPipelineName());
+		assertEquals("ds2", pipelineSpecs[1].getPipelineName());
+		assertEquals("ds3", pipelineSpecs[2].getPipelineName());
+		
+		assertEquals("MyJobGroup", pipelineSpecs[0].getJobName());
+		assertEquals("MyJobGroup", pipelineSpecs[1].getJobName());
+		assertEquals("MyJobGroup", pipelineSpecs[2].getJobName());
 
+		assertNull(pipelineSpecs[0].getOutputUri());
+		assertNull(pipelineSpecs[1].getOutputUri());
+		assertNull(pipelineSpecs[2].getOutputUri());
+		
+		assertEquals(2, pipelineSpecs[0].getStages().size());
+		assertEquals(1, pipelineSpecs[1].getStages().size());
+		assertEquals(2, pipelineSpecs[2].getStages().size());
+		
+		Stream<Stream<Stream<?>>> result = resultFuture.get(1000, TimeUnit.MILLISECONDS);
+		assertEquals(3, result.count());
 	}
 }

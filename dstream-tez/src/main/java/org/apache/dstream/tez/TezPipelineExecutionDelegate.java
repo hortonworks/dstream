@@ -1,23 +1,22 @@
 package org.apache.dstream.tez;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.dstream.DistributableConstants;
+import org.apache.dstream.ExecutionDelegate;
 import org.apache.dstream.PipelineExecutionChain;
 import org.apache.dstream.PipelineExecutionChain.Stage;
-import org.apache.dstream.ExecutionDelegate;
 import org.apache.dstream.support.PipelineConfigurationHelper;
-import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.tez.utils.HadoopUtils;
+import org.apache.dstream.tez.utils.SequenceFileOutputStreamsBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.yarn.api.records.LocalResource;
 import org.apache.tez.dag.api.TezConfiguration;
@@ -42,7 +41,7 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 	@Override
 	public Stream<Stream<?>>[] execute(PipelineExecutionChain... pipelineSpecification) {
 		try {
-			return this.doExecute(pipelineSpecification[0]);
+			return this.doExecute(pipelineSpecification);
 		} 
 		catch (Exception e) {
 			throw new IllegalStateException("Failed to execute pipeline: " + pipelineSpecification, e);
@@ -81,9 +80,10 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 	/**
 	 * 
 	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private Stream<Stream<?>>[] doExecute(PipelineExecutionChain... pipelineSpecification) throws Exception {
 		if (logger.isInfoEnabled()){
-			logger.info("Executing pipeline: " + pipelineSpecification);
+			logger.info("Executing: " + pipelineSpecification);
 		}
 		
 		TezConfiguration tezConfiguration = new TezConfiguration(new Configuration());
@@ -95,28 +95,37 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 			throw new IllegalStateException("Failed to access FileSystem", e);
 		}
 		
-		this.pipelineConfig = PipelineConfigurationHelper.loadExecutionConfig(pipelineSpecification[0].getName());
+		this.pipelineConfig = PipelineConfigurationHelper.loadExecutionConfig(pipelineSpecification[0].getJobName());
 		
 		if (this.tezClient == null){
 			this.createAndTezClient(pipelineSpecification[0], fs, tezConfiguration);
 		}
 		
-		List<Stage> stages = pipelineSpecification[0].getStages();
-		TezExecutableDAGBuilder executableDagBuilder = new TezExecutableDAGBuilder(pipelineSpecification[0].getName(), 
-				this.tezClient, this.determineInputFormatClass(stages.get(0)), this.pipelineConfig);
-	
-		stages.stream().forEach(stage -> executableDagBuilder.addStage(stage, this.getStageParallelizm(stage)) );
+		TezExecutableDAGBuilder executableDagBuilder = new TezExecutableDAGBuilder(pipelineSpecification[0].getJobName(), 
+				this.tezClient, this.pipelineConfig);
 		
-		Callable<Stream<Object>[]> executable = executableDagBuilder.build();
+		AtomicInteger counter = new AtomicInteger();
+		List<String> outputURIs = Stream.of(pipelineSpecification)
+			.map(pipeline -> {
+				pipeline.getStages().forEach(stage -> executableDagBuilder.addStage(stage, this.getStageParallelizm(stage)) );
+				String output = pipeline.getOutputUri() == null 
+						? this.tezClient.getClientName() + "/out/" + counter.getAndIncrement()
+								: pipeline.getOutputUri().toString();
+				executableDagBuilder.addDataSink(output);
+				return output;
+			}).collect(Collectors.toList());
+		
+		Runnable executable = executableDagBuilder.build();
 		
 		try {
-			Stream<?>[] resultStreams = executable.call();
-			return new Stream[]{Stream.of(resultStreams)};
-			//return null;
-			//return resultStreams;
+			executable.run();
+			return outputURIs.stream().map(uri -> {
+				SequenceFileOutputStreamsBuilder ob = new SequenceFileOutputStreamsBuilder(this.tezClient.getFileSystem(), uri, this.tezClient.getTezConfiguration());
+				return Stream.of(ob.build());
+			}).collect(Collectors.toList()).toArray(new Stream[]{});
 		} 
 		catch (Exception e) {
-			throw new ExecutionException("Failed to execute DAG for " + pipelineSpecification[0].getName(), e);
+			throw new ExecutionException("Failed to execute DAG for " + pipelineSpecification[0].getJobName(), e);
 		}
 	}
 	
@@ -125,9 +134,9 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 	 * @param pipelineSpecification
 	 */
 	private void createAndTezClient(PipelineExecutionChain pipelineSpecification, FileSystem fs, TezConfiguration tezConfiguration){	
-		Map<String, LocalResource> localResources = HadoopUtils.createLocalResources(fs, pipelineSpecification.getName() + 
+		Map<String, LocalResource> localResources = HadoopUtils.createLocalResources(fs, pipelineSpecification.getJobName() + 
 												"/" + TezConstants.CLASSPATH_PATH);
-		this.tezClient = new ExecutionContextAwareTezClient(pipelineSpecification.getName(), 
+		this.tezClient = new ExecutionContextAwareTezClient(pipelineSpecification.getJobName(), 
 											   tezConfiguration, 
 											   localResources, 
 											   this.getCredentials(),
@@ -137,26 +146,6 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 		} 
 		catch (Exception e) {
 			throw new IllegalStateException("Failed to start TezClient", e);
-		}
-	}
-	
-	/**
-	 * 
-	 */
-	private Class<?> determineInputFormatClass(Stage firstStage){
-		SourceSupplier<?> sourceSupplier = firstStage.getSourceSupplier();
-		
-		if (sourceSupplier.get()[0] instanceof URI){
-			if (firstStage.getSourceItemType().isAssignableFrom(String.class)){
-				return TextInputFormat.class;
-			} 
-			else {
-				// TODO design a configurable component to handle other standard and custom input types
-				throw new IllegalArgumentException("Failed to determine Input Format class for source item type " + firstStage.getSourceItemType());
-			}
-		} 
-		else {
-			throw new IllegalArgumentException("Non URI sources are not supported yet");
 		}
 	}
 	

@@ -90,12 +90,13 @@ public class PredicateJoinFunction<K,H,P> implements Function<Stream<Stream<? ex
 		Assert.notNull(streamsToJoin, "'streamsToJoin' must not be null");	
 		List<Stream<? extends Entry<K,? extends Object>>> streamsList = streamsToJoin.collect(Collectors.toList());
 		Assert.isTrue(streamsList.size() == 2, "'streamsToJoin' must contain 2 streams");
-		//TODO plug in implementation of the spillable map
-		Map joined = ((Stream<Entry<K,H>>)this.hshKvMapper.apply(streamsList.get(0))).collect(Collectors.toMap(he -> he.getKey(), he -> he.getValue()));
-
-		((Function<Stream<?>, Stream<Entry<K,P>>>)this.probeKvMapper).apply(streamsList.get(1))
-			.forEach(pe -> joined.merge(pe.getKey(), pe.getValue(), Pair::of));
 		
+		//TODO plug in implementation of the spillable map		
+		Map joined = ((Stream<Entry<K,H>>)this.hshKvMapper.apply(streamsList.get(0))).collect(Collectors.toMap(he -> he.getKey(), he -> he.getValue()));
+		
+		((Function<Stream<?>, Stream<Entry<K,P>>>)this.probeKvMapper).apply(streamsList.get(1))
+				.forEach(pe -> joined.merge(pe.getKey(), pe.getValue(), Pair::of));
+	
 		return joined.entrySet().stream();
 	}
 }
