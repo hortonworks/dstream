@@ -52,7 +52,7 @@ public class JobGroupTests extends BaseTezTests {
 		JobGroup jg = JobGroup.create("MyJobGroup", hash, joined, probe);
 		
 		Future<Stream<Stream<Stream<? extends Object>>>> resultFuture = jg.executeAs(this.applicationName);
-		List<Stream<Stream<? extends Object>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS).collect(Collectors.toList());
+		List<Stream<Stream<? extends Object>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS).collect(Collectors.toList());
 		assertEquals(3, result.size());
 		
 		//0
