@@ -1,7 +1,6 @@
 package org.apache.dstream.tez;
 
 import static org.apache.dstream.utils.KVUtils.kv;
-import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 import java.util.Map.Entry;
@@ -13,12 +12,8 @@ import java.util.stream.Stream;
 import junit.framework.Assert;
 
 import org.apache.dstream.DistributablePipeline;
-import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
-import org.apache.dstream.utils.JvmUtils;
 import org.junit.After;
 import org.junit.Test;
-
-import sun.misc.Unsafe;
 
 public class PipelineAPITests extends BaseTezTests {
 	

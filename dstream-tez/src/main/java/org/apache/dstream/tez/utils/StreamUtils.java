@@ -78,7 +78,8 @@ public class StreamUtils {
 					}
 				}
 				return hasNext;
-			} catch (Exception e) {
+			} 
+			catch (Exception e) {
 				throw new IllegalStateException(e);
 			}
 		}
@@ -101,7 +102,8 @@ public class StreamUtils {
 				};
 				Entry<K, Iterator<V>> entry =  (Entry<K, Iterator<V>>) KVUtils.kv(key, values);
 				return entry;
-			} catch (Exception e) {
+			} 
+			catch (Exception e) {
 				throw new IllegalStateException(e);
 			}
 		}
@@ -120,7 +122,8 @@ public class StreamUtils {
 		public boolean hasNext() {
 			try {
 				return this.kvReader.next();
-			} catch (Exception e) {
+			} 
+			catch (Exception e) {
 				throw new IllegalStateException(e);
 			}
 		}
@@ -131,7 +134,8 @@ public class StreamUtils {
 			try {
 				Entry<K, V> entry = (Entry<K, V>) KVUtils.kv(this.kvReader.getCurrentKey(), this.kvReader.getCurrentValue());
 				return entry;
-			} catch (Exception e) {
+			} 
+			catch (Exception e) {
 				throw new IllegalStateException(e);
 			}
 		}

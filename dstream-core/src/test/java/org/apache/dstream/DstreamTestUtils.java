@@ -5,7 +5,7 @@ import java.util.stream.Stream;
 
 public class DstreamTestUtils {
 
-	public static <T> PipelineExecutionChain[] extractPipelineSpecification(Future<Stream<T>> resultFuture){
+	public static <T> PipelineExecutionChain[] extractPipelineSpecifications(Future<Stream<T>> resultFuture){
 		return ((ExecutionContextSpecificationExtractor)resultFuture).getSpecification();
 	}
 	

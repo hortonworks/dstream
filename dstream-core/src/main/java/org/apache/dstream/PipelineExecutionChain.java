@@ -19,7 +19,9 @@ import org.apache.dstream.utils.Assert;
  */
 public interface PipelineExecutionChain extends Serializable {
 	
-	public String getName();
+	public String getJobName();
+	
+	public String getPipelineName();
 
 	public List<Stage> getStages();
 	

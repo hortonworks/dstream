@@ -127,9 +127,18 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 				List<String> argNames = Stream.of(invocation.getMethod().getParameterTypes()).map(s -> s.getSimpleName()).collect(Collectors.toList());	
 				logger.debug("Op:" + operationName + "(" + (argNames.isEmpty() ? "" : argNames.toString()) + ")");
 			}
-				
-			this.doProcess((ReflectiveMethodInvocation) invocation);
-			returnValue = this.targetDistributable;
+			
+			// cloning so each instance of a flow is distinct and addressable
+			ExecutionContextSpecificationBuilder clonedDistributable = new  ExecutionContextSpecificationBuilder(this.sourceItemType, this.pipelineName, 
+					this.targetDistributable instanceof DistributablePipeline ? DistributablePipeline.class : DistributableStream.class);
+			((List)clonedDistributable.targetDistributable).addAll(Collections.unmodifiableList(((List)this.targetDistributable)));
+			clonedDistributable.stageIdCounter = this.stageIdCounter;
+			clonedDistributable.postConfigInitCallbacks.addAll(Collections.unmodifiableList(this.postConfigInitCallbacks));
+			
+			// process on the clone
+			clonedDistributable.doProcess((ReflectiveMethodInvocation)invocation);
+			
+			returnValue = clonedDistributable.targetDistributable;
 		}
 		else if (operationName.equals("getName")){
 			returnValue = this.pipelineName;
@@ -175,23 +184,7 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 
 		this.postConfigInitCallbacks.forEach(s -> s.accept(executionProperties));
 		
-		String output = executionProperties.getProperty(DistributableConstants.OUTPUT);
-		if (output != null){
-			Assert.isTrue(SourceSupplier.isURI(output), "URI '" + output + "' must have scheme defined (e.g., file:" + output + ")");
-		}
-		
-		URI uri = null;
-		if (output != null){
-			try {
-				uri = new URI(output);
-			} 
-			catch (Exception e) {
-				throw new IllegalStateException("Failed to create URI", e);
-			}
-		}	
-		
-		PipelineExecutionChain executionChain = this.buildExecutionChain(executionName, uri, currentDistributable);
-//		System.out.println(currentDistributable.getName());
+		PipelineExecutionChain executionChain = this.buildExecutionChain(executionName, this.getOutputUri(executionProperties), currentDistributable);
 		this.setSourceSuppliers(executionProperties, stages, currentDistributable.getName(), executionName);
 
 		if (logger.isInfoEnabled()){
@@ -199,7 +192,6 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 		}
 		
 		return executionChain;
-		//return this.delegatePipelineSpecExecution(executionContextSpec);
 	}
 	
 	/**
@@ -257,6 +249,8 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 			Assert.notEmpty(arguments, "All arguments of a join operation are required and can not be null");
 			
 			DistributableExecutable<?> dependentDistributable = (DistributableExecutable<?>) arguments[0];
+			// the output URI here is always null since joined execution chain is essentially an inner chain of
+			// another execution chain with common output.
 			PipelineExecutionChain dependentExecutionContextSpec = 
 					this.buildExecutionChain(dependentDistributable.getName(), null, dependentDistributable);
 				
@@ -280,9 +274,6 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 							? Boolean.parseBoolean(executionProperties.getProperty(propertyName)) : false;
 							
 					BinaryOperator combiner = mapSideCombine ? (BinaryOperator)arguments[2] : null;
-					if (mapSideCombine){
-						System.out.println();
-					}
 					composeWithStageFunction(currentStage, 
 							new KeyValueMappingFunction((Function)arguments[0], (Function)arguments[1], combiner), invocation.getMethod().getName());
 				}
@@ -365,8 +356,13 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 			}
 			
 			@Override
-			public String getName() {
+			public String getJobName() {
 				return executionName;
+			}
+			
+			@Override
+			public String getPipelineName() {
+				return targetExecutable.getName();
 			}
 			
 			public String toString() {
@@ -392,11 +388,11 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 	private Future<Stream<?>> delegatePipelineSpecExecution(boolean group, PipelineExecutionChain... executionChains) {	
 		Properties prop = PipelineConfigurationHelper.loadDelegatesConfig();
 		
-		String pipelineExecutionDelegateClassName = prop.getProperty(executionChains[0].getName());
+		String pipelineExecutionDelegateClassName = prop.getProperty(executionChains[0].getJobName());
 		Assert.notEmpty(pipelineExecutionDelegateClassName,
-				"Pipeline execution delegate for pipeline '" + executionChains[0].getName() + "' "
+				"Pipeline execution delegate for pipeline '" + executionChains[0].getJobName() + "' "
 						+ "is not provided in 'pipeline-delegates.cfg' (e.g., "
-						+ executionChains[0].getName() + "=foo.bar.SomePipelineDelegate)");
+						+ executionChains[0].getJobName() + "=foo.bar.SomePipelineDelegate)");
 		if (logger.isInfoEnabled()) {
 			logger.info("Pipeline execution delegate: " + pipelineExecutionDelegateClassName);
 		}
@@ -441,7 +437,7 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 						+ pipelineExecutionDelegateClassName + "' can not be found.";
 			}
 			throw new IllegalStateException("Failed to execute pipeline '"
-					+ executionChains[0].getName() + "'. " + messageSuffix, e);
+					+ executionChains[0].getJobName() + "'. " + messageSuffix, e);
 		}
 	}
 	
@@ -584,8 +580,29 @@ final class ExecutionContextSpecificationBuilder<T,R extends DistributableExecut
 			}
 			if (stage.getDependentExecutionContextSpec() != null){
 				PipelineExecutionChain dependentStageSpec = stage.getDependentExecutionContextSpec();
-				this.setSourceSuppliers(executionProperties, dependentStageSpec.getStages(), dependentStageSpec.getName(), ename);
+				this.setSourceSuppliers(executionProperties, dependentStageSpec.getStages(), dependentStageSpec.getJobName(), ename);
 			}
 		});
+	}
+	
+	/**
+	 * 
+	 */
+	private URI getOutputUri(Properties executionProperties){
+		String output = executionProperties.getProperty(DistributableConstants.OUTPUT);
+		if (output != null){
+			Assert.isTrue(SourceSupplier.isURI(output), "URI '" + output + "' must have scheme defined (e.g., file:" + output + ")");
+		}
+		
+		URI uri = null;
+		if (output != null){
+			try {
+				uri = new URI(output);
+			} 
+			catch (Exception e) {
+				throw new IllegalStateException("Failed to create URI", e);
+			}
+		}	
+		return uri;
 	}
 }

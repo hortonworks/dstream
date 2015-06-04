@@ -1,8 +1,8 @@
 package org.apache.dstream;
 
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.support.PipelineConfigurationHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
@@ -13,10 +13,12 @@ public class ExecutionContextSpecificationValidationDelegate implements Executio
 	
 	private final Logger logger = LoggerFactory.getLogger(ExecutionContextSpecificationValidationDelegate.class);
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Stream<Stream<?>>[] execute(PipelineExecutionChain... pipelineSpecification) {
-		PipelineConfigurationHelper.loadExecutionConfig(pipelineSpecification[0].getName());
-		return new Stream[]{Stream.of(new Object())};
+		return Stream.of(pipelineSpecification)
+				.map(v -> Stream.of(Stream.of(new Object())))
+				.collect(Collectors.toList()).toArray(new Stream[]{});
 	}
 
 	@Override

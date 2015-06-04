@@ -8,13 +8,15 @@ import java.util.stream.Stream;
 public interface ExecutionDelegate  {
 
 	/**
-	 * Main delegation method between {@link PipelineExecutionChain} and its realization in the 
+	 * Main delegation operation to pass an array of {@link PipelineExecutionChain}s to 
 	 * target execution environment.
 	 * 
-	 * @param pipelineSpecification
-	 * @return
+	 * @param pipelineSpecifications
+	 * @return an array of Stream&lt;Stream&lt;?&gt;&gt; where each outer Stream represents 
+	 * the result of execution of individual {@link PipelineExecutionChain}.<br>
+	 * The result itself consists of {@link Stream}s representing each result partition. 
 	 */
-	Stream<Stream<?>>[] execute(PipelineExecutionChain... pipelineSpecification);
+	Stream<Stream<?>>[] execute(PipelineExecutionChain... pipelineSpecifications);
 
 	/**
 	 * Returns {@link Runnable} which contains logic relevant to 
