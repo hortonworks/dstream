@@ -24,12 +24,10 @@ public class WordCountPipe {
 	 */
 	public static void main(String... args) throws Exception {
 
-		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, "wc");
-		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourcePipeline.compute(stream -> stream
+		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DistributablePipeline.ofType(String.class, "wc").compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)).entrySet().stream()
-			)
-			.reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
+			).reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
 			.executeAs("WordCount");
 		
 		AtomicInteger i = new AtomicInteger();

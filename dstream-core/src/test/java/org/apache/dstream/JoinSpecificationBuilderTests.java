@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
-import org.apache.dstream.PipelineExecutionChain.Stage;
+import org.apache.dstream.ExecutionSpec.Stage;
 import org.apache.dstream.utils.Pair;
 import org.junit.Test;
 
@@ -36,10 +36,10 @@ public class JoinSpecificationBuilderTests {
 				hash.join(probe, l -> l.getKey(), l -> l.getValue(), r -> r.getKey(), r -> r.getValue());
 		
 		Stage stage1 = ((List<Stage>)joinedPipeline).get(0);
-		assertNull(stage1.getDependentExecutionContextSpec());
+		assertNull(stage1.getDependentExecutionSpec());
 		Stage stage2 = ((List<Stage>)joinedPipeline).get(1);
-		assertNull(stage2.getDependentExecutionContextSpec());
+		assertNull(stage2.getDependentExecutionSpec());
 		Stage stage3 = ((List<Stage>)joinedPipeline).get(2);
-		assertNotNull(stage3.getDependentExecutionContextSpec());
+		assertNotNull(stage3.getDependentExecutionSpec());
 	}
 }

@@ -1,63 +1,74 @@
 package org.apache.dstream;
 
 import java.util.Map.Entry;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.utils.Pair;
 /**
- * 
+ * Pipeline-style specialization strategy of {@link DistributableExecutable} which 
+ * defines data operations to provide Functions that operate on standard java {@link Stream}.<br>
+ * Also see {@link DistributableStream}.<br>
+ * Below is the example of rudimentary <i>Word Count</i> written in this style:<br>
+ * <pre>
+ * DistributablePipeline.ofType(String.class, "wc")
+ *   .compute(stream -> stream
+ *      .flatMap(line -> Stream.of(line.split("\\s+")))
+ *      .collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)).entrySet().stream())
+ *   .reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
+ *   .executeAs("WordCount"); 
+ * </pre>
+ *  
  * @param <T> the type of the pipeline elements
  */
 public interface DistributablePipeline<T> extends DistributableExecutable<T> {
+	
 	/**
-	 * Factory method which returns a sequential {@code DistributablePipeline} of 
-	 * elements of the provided type and source of the stream supplied by 
-	 * the {@link Supplier}
+	 * Factory method which creates an instance of the {@code DistributablePipeline} of type T.
 	 * 
-	 * Custom suppliers could be provided allowing program arguments to be used in
-	 * predicate logic to determine sources dynamically.
-	 * 
-	 * @param sourceItemType
-	 * @param pipelineName
+	 * @param sourceItemType the type of the elements of this pipeline
+	 * @param pipelineName the name of this pipeline
 	 * @return the new {@link DistributablePipeline} of type T
 	 * 
-	 * @param <T> the type of the stream elements
+	 * @param <T> the type of pipeline elements
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> DistributablePipeline<T> ofType(Class<T> sourceItemType, String pipelineName) {	
-		return ExecutionContextSpecificationBuilder.getAs(sourceItemType, pipelineName, DistributablePipeline.class);
+		return ExecutionSpecBuilder.getAs(sourceItemType, pipelineName, DistributablePipeline.class);
 	}
 	
 	/**
-	 * Returns a pipeline consisting of the results of applying computation to the 
-	 * elements of the underlying stream.
+	 * Operation to provide a computation {@link Function} to be applied on each input partition of the 
+	 * distributable data set.<br>
+	 * Each partition as well as result are both represented as {@link Stream} - 
+	 * {@link Function&lt;Stream, Stream&gt;}.<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
 	 * 
-	 * @param computeFunction a mapping function to map {@link Stream}[T] to {@link Stream}[R].
-	 * @return the new {@link DistributablePipeline} of type R
+	 * @param computeFunction a mapping function to map {@link Stream}&lt;T&gt; to {@link Stream}&lt;R&gt;.
+	 * @return {@link DistributablePipeline} of type R
 	 * 
 	 * @param <R> the type of the elements of the new pipeline
 	 */
 	<R> DistributablePipeline<R> compute(Function<? extends Stream<T>, ? extends Stream<R>> computeFunction);
 	
 	/**
-	 * Will reduce all values for a given key to a single value using provided 
-	 * {@link BinaryOperator} 
+	 * Operation to provide a set of functions to group and reduce data across distributable 
+	 * data set into Key/Value pairs based on the common <i>classifier</i> (e.g., key).<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation. 
 	 * 
-	 * This is an intermediate operation
-	 * 
-	 * @param keyClassifier the classifier function mapping input elements to keys
-	 * @param valueMapper a mapping function to produce values
-	 * @param reducer a merge function, used to resolve collisions between
+	 * @param classifier function to extract classifier
+	 * @param valueMapper function to extract values
+	 * @param reducer a merge function, to resolve collisions between
      *                      values associated with the same key
-	 * @return the new {@link DistributablePipeline} of type {@link Entry}[K,V]
+	 * @return {@link DistributablePipeline} of type {@link Entry}&lt;K,V&gt;
 	 * 
-	 * @param <K> key type
+	 * @param <K> classifier type (key)
 	 * @param <V> value type
 	 */
-	<K,V> DistributablePipeline<Entry<K, V>> reduce(Function<? super T, ? extends K> keyClassifier, 
+	<K,V> DistributablePipeline<Entry<K, V>> reduce(Function<? super T, ? extends K> classifier, 
 			Function<? super T, ? extends V> valueMapper, 
 			BinaryOperator<V> reducer);
 	
@@ -90,19 +101,24 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 //	<V> DistributablePipeline<T> partition(Function<? super T, ? extends V> classifier);
 	
 	/**
-	 * Join based on common predicate
+	 * Operation to provide a set of functions to join data set represented by this {@link DistributablePipeline} 
+	 * with another {@link DistributablePipeline} based on the common predicate (hash join).<br>
 	 * 
-	 * @param pipelineP
-	 * @param hashKeyClassifier
-	 * @param hashValueMapper
-	 * @param probeKeyClassifier
-	 * @param probeValueMapper
-	 * @return
+	 * @param pipelineP instance of {@link DistributablePipeline} to join with - (probe)
+	 * @param hashKeyClassifier function to extract Key from this instance of the {@link DistributablePipeline} - (hash)
+	 * @param hashValueMapper function to extract value from this instance of the {@link DistributablePipeline} - (hash)
+	 * @param probeKeyClassifier function to extract Key from the joined instance of the {@link DistributablePipeline} - (probe)
+	 * @param probeValueMapper function to extract value from the joined instance of the {@link DistributablePipeline} - (probe)
+	 * @return {@link DistributablePipeline} of type {@link Entry}&lt;K, {@link Pair}&lt;VL,VR&gt;&gt;
+	 * 
+	 * @param <TT> the type of elements of the {@link DistributablePipeline} to join with - (probe)
+	 * @param <K>  the type of common classifier (key)
+	 * @param <VH> the type of values of the elements extracted from this instance of the {@link DistributablePipeline} - hash
+	 * @param <VP> the type of values of the elements extracted from the joined instance of the {@link DistributablePipeline} - probe
 	 */
 	<TT, K, VL, VR> DistributablePipeline<Entry<K, Pair<VL,VR>>> join(DistributablePipeline<TT> pipelineP,
 																	  Function<? super T, ? extends K> hashKeyClassifier,
 																	  Function<? super T, ? extends VL> hashValueMapper,
 																	  Function<? super TT, ? extends K> probeKeyClassifier,
 																	  Function<? super TT, ? extends VR> probeValueMapper);
-	
 }

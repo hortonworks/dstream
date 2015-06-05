@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.apache.dstream.DistributableConstants;
 import org.apache.dstream.DistributableExecutable;
-import org.apache.dstream.PipelineExecutionChain.Stage;
+import org.apache.dstream.ExecutionSpec.Stage;
 
 public class ConfigurationGenerator {
 
@@ -61,8 +61,8 @@ public class ConfigurationGenerator {
 			this.addStage(stage);
 			this.addStageParallelizm(stage);
 			this.addStageMsCombine(stage);
-			if (stage.getDependentExecutionContextSpec() != null){
-				this.processDistributable(stage.getDependentExecutionContextSpec().getStages(), stage.getDependentExecutionContextSpec().getJobName());
+			if (stage.getDependentExecutionSpec() != null){
+				this.processDistributable(stage.getDependentExecutionSpec().getStages(), stage.getDependentExecutionSpec().getName());
 			}
 		});
 	}

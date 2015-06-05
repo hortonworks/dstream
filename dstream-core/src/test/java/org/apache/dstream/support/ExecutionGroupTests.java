@@ -11,30 +11,30 @@ import java.util.stream.Stream;
 
 import org.apache.dstream.DistributableStream;
 import org.apache.dstream.DstreamTestUtils;
-import org.apache.dstream.JobGroup;
-import org.apache.dstream.PipelineExecutionChain;
+import org.apache.dstream.ExecutionGroup;
+import org.apache.dstream.ExecutionSpec;
 import org.apache.dstream.utils.Pair;
 import org.junit.Test;
 
-public class JobGroupTests {
+public class ExecutionGroupTests {
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void validateEmptyPipelineArrayFailure(){
-		JobGroup.create("MyJobGroup");
+		ExecutionGroup.create("MyJobGroup");
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void validateEmptyNameFailure(){
-		JobGroup.create(null);
+		ExecutionGroup.create(null);
 	}
 	
 	@Test
 	public void validateDuplicatPipelineDiscard(){
 		DistributableStream<String> ds1 = DistributableStream.ofType(String.class, "ds1")
 				.flatMap(line -> Stream.of(line.split(" ")));
-		JobGroup jg = JobGroup.create("MyJobGroup", ds1, ds1, ds1);
+		ExecutionGroup jg = ExecutionGroup.create("MyJobGroup", ds1, ds1, ds1);
 		
-		PipelineExecutionChain[] pipelineSpecs = DstreamTestUtils.extractPipelineSpecifications(jg.executeAs("MyJobGroup"));
+		ExecutionSpec[] pipelineSpecs = DstreamTestUtils.extractPipelineExecutionSpecs(jg.executeAs("MyJobGroup"));
 		
 		assertEquals(1, pipelineSpecs.length);
 	}
@@ -54,22 +54,18 @@ public class JobGroupTests {
 				.map(word -> kv(word, 1))
 				.join(ds1, hash -> hash.getKey(), hash -> hash.getValue(), probe -> probe.getKey(), probe -> probe.getValue());
 		
-		JobGroup jg = JobGroup.create("MyJobGroup", ds1, ds2, ds3);
+		ExecutionGroup jg = ExecutionGroup.create("MyJobGroup", ds1, ds2, ds3);
 		
 		Future<Stream<Stream<Stream<?>>>> resultFuture = jg.executeAs("MyJobGroup");
 		
-		PipelineExecutionChain[] pipelineSpecs = DstreamTestUtils.extractPipelineSpecifications(resultFuture);
+		ExecutionSpec[] pipelineSpecs = DstreamTestUtils.extractPipelineExecutionSpecs(resultFuture);
 		
 		assertEquals(3, pipelineSpecs.length);
 		
-		assertEquals("ds1", pipelineSpecs[0].getPipelineName());
-		assertEquals("ds2", pipelineSpecs[1].getPipelineName());
-		assertEquals("ds3", pipelineSpecs[2].getPipelineName());
+		assertEquals("ds1", pipelineSpecs[0].getName());
+		assertEquals("ds2", pipelineSpecs[1].getName());
+		assertEquals("ds3", pipelineSpecs[2].getName());
 		
-		assertEquals("MyJobGroup", pipelineSpecs[0].getJobName());
-		assertEquals("MyJobGroup", pipelineSpecs[1].getJobName());
-		assertEquals("MyJobGroup", pipelineSpecs[2].getJobName());
-
 		assertNull(pipelineSpecs[0].getOutputUri());
 		assertNull(pipelineSpecs[1].getOutputUri());
 		assertNull(pipelineSpecs[2].getOutputUri());

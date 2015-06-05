@@ -5,6 +5,7 @@ import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.dstream.support.SerializableFunctionConverters;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.KVUtils;
@@ -19,7 +20,7 @@ import org.apache.dstream.utils.KVUtils;
  * @param <K> the key type
  * @param <V> the value type
  */
-class KeyValueMappingFunction<T,K,V> implements Function<Stream<T>, Stream<Entry<K, V>>> {
+public class KeyValueMappingFunction<T,K,V> implements Function<Stream<T>, Stream<Entry<K, V>>> {
 	private static final long serialVersionUID = -4257572937412682381L;
 	
 	private final Function<T, K> keyExtractor;

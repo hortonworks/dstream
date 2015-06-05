@@ -11,9 +11,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Strategy for grouping multiple pipelines into a single execution
  */
-public interface JobGroup extends DistributableExecutable<Stream<? extends Object>> {
+public interface ExecutionGroup extends DistributableExecutable<Stream<? extends Object>> {
 	
-	static final Logger logger = LoggerFactory.getLogger(JobGroup.class);
+	static final Logger logger = LoggerFactory.getLogger(ExecutionGroup.class);
 	
 	/**
 	 * Will group multiple instances of {@link DistributableExecutable} (<i>execution pipelines</i>)
@@ -21,12 +21,12 @@ public interface JobGroup extends DistributableExecutable<Stream<? extends Objec
 	 * Duplicate instances of {@link DistributableExecutable} where <i>DistributableExecutable-A.equals(DistributableExecutable-B)</i> 
 	 * will be discarded. 
 	 * 
-	 * @param jobGroupName the name of the execution
+	 * @param executionGroupName the name of the execution
 	 * @param distributables and array of pipelines to be grouped. Must have at least one element.
-	 * @return
+	 * @return and instance of {@link DistributableExecutable} as {@link ExecutionGroup}.
 	 */
-	public static JobGroup create(String jobGroupName, DistributableExecutable<?>... distributables){
-		Assert.notEmpty(jobGroupName, "'jobGroupName' must not be null or empty");
+	public static ExecutionGroup create(String executionGroupName, DistributableExecutable<?>... distributables){
+		Assert.notEmpty(executionGroupName, "'executionGroupName' must not be null or empty");
 		Assert.notEmpty(distributables, "'distributables' must not be null and must contain at least one element");
 		
 		Set<DistributableExecutable<?>> s = new LinkedHashSet<DistributableExecutable<?>>();
@@ -39,6 +39,6 @@ public interface JobGroup extends DistributableExecutable<Stream<? extends Objec
 				s.add(distributableExecutable);
 			}
 		}
-		return ExecutionContextSpecificationBuilder.asGroupExecutable(jobGroupName, JobGroup.class, s.toArray(new DistributableExecutable[]{}));
+		return ExecutionSpecBuilder.asGroupExecutable(executionGroupName, ExecutionGroup.class, s.toArray(new DistributableExecutable[]{}));
 	}
 }
