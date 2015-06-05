@@ -10,8 +10,8 @@ import java.util.stream.Stream;
 
 import org.apache.dstream.DistributableConstants;
 import org.apache.dstream.ExecutionDelegate;
-import org.apache.dstream.PipelineExecutionChain;
-import org.apache.dstream.PipelineExecutionChain.Stage;
+import org.apache.dstream.ExecutionSpec;
+import org.apache.dstream.ExecutionSpec.Stage;
 import org.apache.dstream.support.PipelineConfigurationHelper;
 import org.apache.dstream.tez.utils.HadoopUtils;
 import org.apache.dstream.tez.utils.SequenceFileOutputStreamsBuilder;
@@ -39,9 +39,9 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 	 * 
 	 */
 	@Override
-	public Stream<Stream<?>>[] execute(PipelineExecutionChain... pipelineSpecification) {
+	public Stream<Stream<?>>[] execute(String executionName, ExecutionSpec... pipelineSpecification) {
 		try {
-			return this.doExecute(pipelineSpecification);
+			return this.doExecute(executionName, pipelineSpecification);
 		} 
 		catch (Exception e) {
 			throw new IllegalStateException("Failed to execute pipeline: " + pipelineSpecification, e);
@@ -81,12 +81,10 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 	 * 
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private Stream<Stream<?>>[] doExecute(PipelineExecutionChain... pipelineExecutionChains) throws Exception {
+	private Stream<Stream<?>>[] doExecute(String executionName, ExecutionSpec... pipelineExecutionChains) throws Exception {
 		if (logger.isInfoEnabled()){
 			logger.info("Executing: " + pipelineExecutionChains);
 		}
-		
-		String executionName = pipelineExecutionChains[0].getJobName();
 		
 		TezConfiguration tezConfiguration = new TezConfiguration(new Configuration());
 		FileSystem fs = HadoopUtils.getFileSystem(tezConfiguration);
@@ -94,7 +92,7 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 		this.pipelineConfig = PipelineConfigurationHelper.loadExecutionConfig(executionName);
 		
 		if (this.tezClient == null){
-			this.createAndTezClient(pipelineExecutionChains[0], fs, tezConfiguration);
+			this.createAndTezClient(executionName, fs, tezConfiguration);
 		}
 		
 		TezExecutableDAGBuilder executableDagBuilder = new TezExecutableDAGBuilder(executionName, 
@@ -102,7 +100,7 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 		
 		List<String> outputURIs  = new ArrayList<String>();
 		for (int i = 0; i < pipelineExecutionChains.length; i++) {
-			PipelineExecutionChain pipelineExecutionChain = pipelineExecutionChains[i];
+			ExecutionSpec pipelineExecutionChain = pipelineExecutionChains[i];
 			pipelineExecutionChain.getStages().forEach(stage -> executableDagBuilder.addStage(stage, this.getStageParallelizm(stage)) );
 			String output = pipelineExecutionChain.getOutputUri() == null 
 					? this.tezClient.getClientName() + "/out/"
@@ -130,10 +128,10 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 	 * 
 	 * @param pipelineSpecification
 	 */
-	private void createAndTezClient(PipelineExecutionChain pipelineSpecification, FileSystem fs, TezConfiguration tezConfiguration){	
-		Map<String, LocalResource> localResources = HadoopUtils.createLocalResources(fs, pipelineSpecification.getJobName() + 
+	private void createAndTezClient(String executionName, FileSystem fs, TezConfiguration tezConfiguration){	
+		Map<String, LocalResource> localResources = HadoopUtils.createLocalResources(fs, executionName + 
 												"/" + TezConstants.CLASSPATH_PATH);
-		this.tezClient = new ExecutionContextAwareTezClient(pipelineSpecification.getJobName(), 
+		this.tezClient = new ExecutionContextAwareTezClient(executionName, 
 											   tezConfiguration, 
 											   localResources, 
 											   this.getCredentials(),

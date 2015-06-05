@@ -2,7 +2,6 @@ package org.apache.dstream;
 
 
 import java.util.Map.Entry;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
@@ -11,28 +10,34 @@ import org.apache.dstream.support.SerializableFunctionConverters.Predicate;
 import org.apache.dstream.utils.Pair;
 
 /**
- * A sequence of elements supporting sequential and distributable aggregate 
- * operations
+ * Java {@link Stream}-style specialization strategy of {@link DistributableExecutable} 
+ * which provides a view into distributable data set as sequence of elements of type T 
+ * that support sequential and parallel aggregate operations.<br>
+ * Also see {@link DistributablePipeline}.<br>
+ * Below is the example of rudimentary <i>Word Count</i> written in this style:<br>
+ * <pre>
+ * DistributableStream.ofType(String.class, "wc")
+ *     .flatMap(line -> Stream.of(line.split("\\s+")))
+ *     .reduce(word -> word, word -> 1, Integer::sum)
+ *  .executeAs("WordCount");
+ * </pre>
  *
  * @param <T> the type of the stream elements
  */
 public interface DistributableStream<T> extends DistributableExecutable<T>{
 
 	/**
-	 * Factory method which returns a sequential {@code DistributableStream} of 
-	 * elements of the provided type and source of the stream supplied by 
-	 * the {@link Supplier}
+	 * Factory method which creates an instance of the {@code DistributableStream} of type T.
 	 * 
-	 * Custom suppliers could be provided allowing program arguments to be used in
-	 * predicate logic to determine sources dynamically.
+	 * @param sourceItemType the type of the elements of this pipeline
+	 * @param streamName the name of this stream
+	 * @return the new {@link DistributableStream} of type T
 	 * 
-	 * @param sourceItemType
-	 * @param streamName
-	 * @return
+	 * @param <T> the type of pipeline elements
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> DistributableStream<T> ofType(Class<T> sourceItemType, String streamName) {	
-		return ExecutionContextSpecificationBuilder.getAs(sourceItemType, streamName, DistributableStream.class);
+		return ExecutionSpecBuilder.getAs(sourceItemType, streamName, DistributableStream.class);
 	}
 	
 	/*
@@ -41,12 +46,13 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	
 	/**
 	 * This operation maintains the same semantics as {@link Stream#flatMap(java.util.function.Function)} 
-	 * with the exception of returning {@link DistributableStream} instead of the {@link Stream}.
-	 * 
-	 * This is an intermediate operation
+	 * with the exception of returning {@link DistributableStream} instead of the {@link Stream}.<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
      * 
-	 * @param mapper
-	 * @return
+	 * @param mapper function to apply to each element which produces a stream
+     *               of new values
+	 * @return {@link DistributableStream} of type R
 	 * 
 	 * @param <R> the type of the elements of the new stream
 	 */
@@ -54,12 +60,12 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	
 	/**
 	 * This operation maintains the same semantics as {@link Stream#map(java.util.function.Function)} 
-	 * with the exception of returning {@link DistributableStream} instead of the {@link Stream}.
+	 * with the exception of returning {@link DistributableStream} instead of the {@link Stream}.<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
 	 * 
-	 * This is an intermediate operation
-	 * 
-	 * @param mapper
-	 * @return
+	 * @param mapper function to apply to each element
+	 * @return {@link DistributableStream} of type R
 	 * 
 	 * @param <R> the type of the elements of the new stream
 	 */
@@ -67,12 +73,13 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	
 	/**
 	 * This operation maintains the same semantics as {@link Stream#filter(java.util.function.Predicate)} 
-	 * with the exception of returning {@link DistributableStream} instead of the {@link Stream}.
+	 * with the exception of returning {@link DistributableStream} instead of the {@link Stream}.<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
 	 * 
-	 * This is an intermediate operation
-	 * 
-	 * @param predicate
-	 * @return
+	 * @param predicate predicate to apply to each element to determine if it
+     *                  should be included
+	 * @return {@link DistributableStream} of type T
 	 */
 	DistributableStream<T> filter(Predicate<? super T> predicate);
 	
@@ -103,38 +110,39 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	
 	
 	/**
-	 * Will reduce all values for a given key to a single value using provided 
-	 * {@link BinaryOperator} 
+	 * Operation to provide a set of functions to group and reduce data across distributable 
+	 * data set into Key/Value pairs based on the common <i>classifier</i> (e.g., key).<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation. 
 	 * 
-	 * This is an intermediate operation
-	 * 
-	 * @param keyClassifier the classifier function mapping input elements to keys
-	 * @param valueMapper a mapping function to produce values
-	 * @param reducer a merge function, used to resolve collisions between
+	 * @param classifier function to extract classifier
+	 * @param valueMapper function to extract values
+	 * @param reducer a merge function, to resolve collisions between
      *                      values associated with the same key
-	 * @return the new {@link DistributableStream} of type {@link Entry}[K,V]
+	 * @return {@link DistributableStream} of type {@link Entry}&lt;K,V&gt;
 	 * 
-	 * @param <K> key type 
-	 * @param <V> value type 
+	 * @param <K> classifier type (key)
+	 * @param <V> value type
 	 */
-	<K,V> DistributableStream<Entry<K,V>> reduce(Function<? super T, ? extends K> keyClassifier, 
+	<K,V> DistributableStream<Entry<K,V>> reduce(Function<? super T, ? extends K> classifier, 
 			Function<? super T, ? extends V> valueMapper, 
 			BinaryOperator<V> reducer);
 	
 	/**
-	 * Will join two {@link DistributableStream}s based on common predicate
+	 * Operation to provide a set of functions to join data set represented by this {@link DistributableStream} 
+	 * with another {@link DistributableStream} based on the common predicate (hash join).<br>
 	 * 
-	 * @param streamP joining stream
-	 * @param hashKeyClassifier hash side key mapper
-	 * @param hashValueMapper hash side value mapper
-	 * @param probeKeyClassifier probe side key mapper
-	 * @param probeValueMapper probe side value mapper
-	 * @return
+	 * @param streamP instance of {@link DistributableStream} to join with - (probe)
+	 * @param hashKeyClassifier function to extract Key from this instance of the {@link DistributablePipeline} - (hash)
+	 * @param hashValueMapper function to extract value from this instance of the {@link DistributablePipeline} - (hash)
+	 * @param probeKeyClassifier function to extract Key from the joined instance of the {@link DistributablePipeline} - (probe)
+	 * @param probeValueMapper function to extract value from the joined instance of the {@link DistributablePipeline} - (probe)
+	 * @return {@link DistributableStream} of type {@link Entry}&lt;K, {@link Pair}&lt;VL,VR&gt;&gt;
 	 * 
-	 * @param <TT> the type of the joining stream
-	 * @param <K> common key type
-	 * @param <VH> hash side value type
-	 * @param <VP> probe side value type
+	 * @param <TT> the type of elements of the {@link DistributableStream} to join with - (probe)
+	 * @param <K>  the type of common classifier (key)
+	 * @param <VH> the type of values of the elements extracted from this instance of the {@link DistributableStream} - hash
+	 * @param <VP> the type of values of the elements extracted from the joined instance of the {@link DistributableStream} - probe
 	 */
 	<TT, K, VH, VP> DistributableStream<Entry<K, Pair<VH,VP>>> join(DistributableStream<TT> streamP,
 																	  Function<? super T, ? extends K> hashKeyClassifier,

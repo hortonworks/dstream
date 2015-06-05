@@ -16,9 +16,7 @@ public class WordCountStream {
 
 	public static void main(String[] args) throws Exception {
 		
-		DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, "wc");
-		
-		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourceStream
+		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DistributableStream.ofType(String.class, "wc")
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.reduce(word -> word, word -> 1, Integer::sum)
 			.executeAs("WordCount");

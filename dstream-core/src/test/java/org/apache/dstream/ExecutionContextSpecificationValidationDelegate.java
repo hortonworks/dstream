@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
- * Implementation of {@link ExecutionDelegate} which returns {@link PipelineExecutionChain}.
+ * Implementation of {@link ExecutionDelegate} which returns {@link ExecutionSpec}.
  * Primary use is testing.
  */
 public class ExecutionContextSpecificationValidationDelegate implements ExecutionDelegate {
@@ -15,7 +15,7 @@ public class ExecutionContextSpecificationValidationDelegate implements Executio
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public Stream<Stream<?>>[] execute(PipelineExecutionChain... pipelineSpecification) {
+	public Stream<Stream<?>>[] execute(String executionName, ExecutionSpec... pipelineSpecification) {
 		return Stream.of(pipelineSpecification)
 				.map(v -> Stream.of(Stream.of(new Object())))
 				.collect(Collectors.toList()).toArray(new Stream[]{});

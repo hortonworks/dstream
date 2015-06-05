@@ -7,11 +7,9 @@ import org.apache.dstream.support.SerializableFunctionConverters.Predicate;
 
 /**
  * An implementation of {@link Function} which will translate Stream-like
- * invocations on {@link DistributableStream} to {@link Stream} operations.
- * It will be created and collected by the ADSTBuilder for each operation 
- * on {@link DistributableStream} (see ADSTBuilder$ComposableStreamFunctionBuilder).
- * Then ADSTBuilder$ComposableStreamFunctionBuilder will construct a single ComposableStreamFunction
- * representing all invocations on {@link DistributableStream}
+ * invocations on the {@link DistributableStream} to {@link Stream} operations.
+ * It will be created and collected by the {@link ExecutionSpecBuilder} for each operation 
+ * on the {@link DistributableStream}.
  */
 class DistributableStreamToStreamAdapterFunction implements Function<Stream<?>, Stream<?>>{
 

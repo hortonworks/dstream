@@ -16,14 +16,14 @@ import java.util.stream.Stream;
 
 import org.apache.dstream.DistributableConstants;
 import org.apache.dstream.DistributablePipeline;
-import org.apache.dstream.JobGroup;
+import org.apache.dstream.ExecutionGroup;
 import org.apache.dstream.tez.BaseTezTests;
 import org.apache.dstream.utils.Pair;
 import org.apache.dstream.utils.TypeUtils;
 import org.junit.After;
 import org.junit.Test;
 
-public class JobGroupTests extends BaseTezTests {
+public class ExecutionGroupTests extends BaseTezTests {
 	
 	private final String applicationName = this.getClass().getSimpleName();
 	
@@ -54,7 +54,7 @@ public class JobGroupTests extends BaseTezTests {
 				probeElement -> probeElement.getValue()
 			);
 		
-		JobGroup jg = JobGroup.create("group_defaultOut", hash, joined, probe);
+		ExecutionGroup jg = ExecutionGroup.create("group_defaultOut", hash, joined, probe);
 		
 		Future<Stream<Stream<Stream<? extends Object>>>> resultFuture = jg.executeAs(this.applicationName);
 		List<Stream<Stream<? extends Object>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS).collect(Collectors.toList());
@@ -104,7 +104,7 @@ public class JobGroupTests extends BaseTezTests {
 				probeElement -> probeElement.getValue()
 			);
 		
-		JobGroup jg = JobGroup.create(executionPipelineName, hash, joined, probe);
+		ExecutionGroup jg = ExecutionGroup.create(executionPipelineName, hash, joined, probe);
 		
 		Future<Stream<Stream<Stream<? extends Object>>>> resultFuture = jg.executeAs(this.applicationName);
 		List<Stream<Stream<? extends Object>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS).collect(Collectors.toList());

@@ -5,11 +5,11 @@ import java.util.stream.Stream;
 
 public class DstreamTestUtils {
 
-	public static <T> PipelineExecutionChain[] extractPipelineSpecifications(Future<Stream<T>> resultFuture){
-		return ((ExecutionContextSpecificationExtractor)resultFuture).getSpecification();
+	public static <T> ExecutionSpec[] extractPipelineExecutionSpecs(Future<Stream<T>> resultFuture){
+		return ((ExecutionSpecExtractor)resultFuture).getExecutionSpec();
 	}
 	
-	public static <T> PipelineExecutionChain extractFirstPipelineSpecification(Future<Stream<T>> resultFuture){
-		return ((ExecutionContextSpecificationExtractor)resultFuture).getSpecification()[0];
+	public static <T> ExecutionSpec extractFirstPipelineExecutionSpec(Future<Stream<T>> resultFuture){
+		return ((ExecutionSpecExtractor)resultFuture).getExecutionSpec()[0];
 	}
 }

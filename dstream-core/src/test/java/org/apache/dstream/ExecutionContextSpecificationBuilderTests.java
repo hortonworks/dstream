@@ -11,7 +11,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import org.apache.dstream.PipelineExecutionChain.Stage;
+import org.apache.dstream.ExecutionSpec.Stage;
 import org.apache.dstream.support.DefaultHashPartitioner;
 import org.apache.dstream.support.UriSourceSupplier;
 import org.apache.dstream.utils.KVUtils;
@@ -52,7 +52,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		DistributablePipeline<Object> pipeline = DistributablePipeline.ofType(Object.class, "foo");
 		Future<Stream<Stream<Object>>> resultFuture = pipeline.executeAs(this.pipelineName);
 		
-		PipelineExecutionChain pipelineSpec = DstreamTestUtils.extractFirstPipelineSpecification(resultFuture);
+		ExecutionSpec pipelineSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
 		
 		assertEquals(new URI("file:out"), pipelineSpec.getOutputUri());
 		
@@ -80,7 +80,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		DistributableStream<Object> pipeline = DistributableStream.ofType(Object.class, "foo");
 		Future<Stream<Stream<Object>>> resultFuture = pipeline.executeAs(this.pipelineName);
 		
-		PipelineExecutionChain pipelineSpec = DstreamTestUtils.extractFirstPipelineSpecification(resultFuture);
+		ExecutionSpec pipelineSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
 		
 		Stage stage = pipelineSpec.getStages().get(0);
 		assertNotNull(stage);
@@ -108,7 +108,7 @@ public class ExecutionContextSpecificationBuilderTests {
 				.flatMap(line -> Stream.of(line.split(" ")))
 		).executeAs("pipeline-spec-validation");
 		
-		PipelineExecutionChain pipelineSpec = DstreamTestUtils.extractFirstPipelineSpecification(resultFuture);
+		ExecutionSpec pipelineSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
 		
 		Stage stage = pipelineSpec.getStages().get(0);
 		assertNotNull(stage);
@@ -139,7 +139,7 @@ public class ExecutionContextSpecificationBuilderTests {
 				.map(word -> word)
 				.executeAs("pipeline-spec-validation");
 		
-		PipelineExecutionChain pipelineSpec = DstreamTestUtils.extractFirstPipelineSpecification(resultFuture);
+		ExecutionSpec pipelineSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
 		
 		Stage stage = pipelineSpec.getStages().get(0);
 		assertNotNull(stage);
@@ -170,7 +170,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		).reduce(s -> s, s -> 1, Integer::sum)
 		 .executeAs("pipeline-spec-validation");
 		
-		PipelineExecutionChain pipelineSpec = DstreamTestUtils.extractFirstPipelineSpecification(resultFuture);
+		ExecutionSpec pipelineSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
 		
 		Stage stage = pipelineSpec.getStages().get(0);
 		assertNotNull(stage);
@@ -215,7 +215,7 @@ public class ExecutionContextSpecificationBuilderTests {
 				.reduce(word -> word, word -> 1, Integer::sum)
 				.executeAs("pipeline-spec-validation");
 		
-		PipelineExecutionChain pipelineSpec = DstreamTestUtils.extractFirstPipelineSpecification(resultFuture);
+		ExecutionSpec pipelineSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
 		
 		Stage stage = pipelineSpec.getStages().get(0);
 		assertNotNull(stage);
@@ -258,7 +258,7 @@ public class ExecutionContextSpecificationBuilderTests {
 			    .map(entry -> KVUtils.kv(entry.getKey().toUpperCase(), new Long(entry.getValue())))
 		).executeAs("pipeline-spec-validation");
 		
-		PipelineExecutionChain pipelineSpec = DstreamTestUtils.extractFirstPipelineSpecification(resultFuture);
+		ExecutionSpec pipelineSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
 		
 		Stage stage = pipelineSpec.getStages().get(0);
 		assertNotNull(stage);
@@ -303,7 +303,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		).compute(stream -> stream)
 		.executeAs("pipeline-spec-validation");
 		
-		PipelineExecutionChain pipelineSpec = DstreamTestUtils.extractFirstPipelineSpecification(resultFuture);
+		ExecutionSpec pipelineSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
 		
 		Stage stage = pipelineSpec.getStages().get(0);
 		assertNotNull(stage);
@@ -332,7 +332,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		 .reduce(s -> s, s -> 1, Integer::sum)
 		 .executeAs("pipeline-spec-validation");
 		
-		PipelineExecutionChain pipelineSpec = DstreamTestUtils.extractFirstPipelineSpecification(resultFuture);
+		ExecutionSpec pipelineSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
 		
 		Stage stage = pipelineSpec.getStages().get(0);
 		assertNotNull(stage);

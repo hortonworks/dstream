@@ -14,32 +14,30 @@ import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.utils.Assert;
 
 /**
- * 
+ * Strategy to represent execution specification of an <i>execution pipeline</i>.<br>
+ * The <i>execution pipeline</i> is an instance of any {@link DistributableExecutable} 
+ * on which {@link DistributableExecutable#executeAs(String)} operation has been invoked.
  *
  */
-public interface PipelineExecutionChain extends Serializable {
+public interface ExecutionSpec {
 	
-	public String getJobName();
-	
-	public String getPipelineName();
+	public String getName();
 
 	public List<Stage> getStages();
 	
 	public URI getOutputUri();
 	
 	/**
-	 * 
+	 * Contains attributes related to individual execution stages of <i>execution pipeline</i>.
 	 */
-	public abstract class Stage implements Serializable {
-		private static final long serialVersionUID = 4321682502843990767L;
-		
+	public abstract class Stage {
 		private final List<String> operations = new ArrayList<String>();
 		
 		private Function<Stream<?>, Stream<?>> processingFunction;
 		
 		private SourceSupplier<?> sourceSupplier;
 		
-		private PipelineExecutionChain dependentexecutionContextSpec;
+		private ExecutionSpec dependentExecutionSpec;
 
 		public abstract BinaryOperator<Object> getAggregatorOperator();
 		
@@ -71,7 +69,7 @@ public interface PipelineExecutionChain extends Serializable {
 		
 		public String toString() {
 			return this.getName() + 
-					(this.getDependentExecutionContextSpec() == null ? "" : this.getDependentExecutionContextSpec().getStages());
+					(this.getDependentExecutionSpec() == null ? "" : this.getDependentExecutionSpec().getStages());
 		}
 		
 		protected void setProcessingFunction(Function<Stream<?>, Stream<?>> processingFunction){
@@ -83,12 +81,12 @@ public interface PipelineExecutionChain extends Serializable {
 			this.sourceSupplier = sourceSupplier;
 		}
 		
-		public PipelineExecutionChain getDependentExecutionContextSpec() {
-			return this.dependentexecutionContextSpec;
+		public ExecutionSpec getDependentExecutionSpec() {
+			return this.dependentExecutionSpec;
 		}
 
-		public void setDependentExecutionContextSpec(PipelineExecutionChain dependentexecutionContextSpec) {
-			this.dependentexecutionContextSpec = dependentexecutionContextSpec;
+		public void setDependentExecutionSpec(ExecutionSpec dependentExecutionSpec) {
+			this.dependentExecutionSpec = dependentExecutionSpec;
 		}
 	}
 }
