@@ -1,4 +1,4 @@
-package org.apache.dstream;
+package org.apache.dstream.support;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -19,7 +19,7 @@ import org.apache.dstream.utils.KVUtils;
  * @param <K> key type
  * @param <V> value type
  */
-public class KeyValuesStreamAggregatingFunction<K,V,T> implements Function<Stream<Entry<K,Iterator<V>>>,Stream<T>> {
+public class KeyValuesStreamAggregatorFunction<K,V,T> implements Function<Stream<Entry<K,Iterator<V>>>,Stream<T>> {
 
 	private static final long serialVersionUID = 1133920289646508908L;
 	
@@ -34,7 +34,7 @@ public class KeyValuesStreamAggregatingFunction<K,V,T> implements Function<Strea
 	 * BinaryOperator is type-less to accommodate BiFunctions (e.g. Aggregators::aggregate)
 	 */
 	@SuppressWarnings("rawtypes")
-	public KeyValuesStreamAggregatingFunction(BinaryOperator aggregationOperator) {
+	public KeyValuesStreamAggregatorFunction(BinaryOperator aggregationOperator) {
 		this.aggregationOperator = aggregationOperator;
 	}
 
