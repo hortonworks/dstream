@@ -48,7 +48,7 @@ public class Assert {
 	}
 	
 	public static boolean isFalse(boolean _false, String message){
-		if (!_false){
+		if (_false){
 			throw new IllegalStateException(message);
 		}
 		return true;

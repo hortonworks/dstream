@@ -22,11 +22,10 @@ import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.utils.Assert;
+import org.apache.dstream.utils.JvmUtils;
 import org.apache.dstream.utils.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.aop.framework.ProxyFactory;
-import org.springframework.aop.framework.ReflectiveMethodInvocation;
 
 /**
  * Builds data processing pipeline specification by capturing and interpreting 
@@ -54,7 +53,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 	 * the callbacks will be created as Consumers and executed when "executeAs" is invoked when those
 	 * config properties are known. 
 	 */
-	private final List<Consumer<Properties>> postConfigInitCallbacks = new ArrayList<Consumer<Properties>>();
+	private final List<Consumer<Properties>> postConfigInitCallbacks;
 	
 	
 	private int stageIdCounter;
@@ -64,17 +63,18 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 	 * 
 	 * @param sourceItemType
 	 * @param pipelineName
-	 * @param proxyType
+	 * @param distributableType
 	 */
-	private ExecutionSpecBuilder(Class<?> sourceItemType, String pipelineName, Class<? extends DistributableExecutable<?>> proxyType) {	
-		Assert.isTrue(DistributableStream.class.isAssignableFrom(proxyType) 
-				|| DistributablePipeline.class.isAssignableFrom(proxyType)
-				|| ExecutionGroup.class.isAssignableFrom(proxyType), "Unsupported proxy type " + 
-						proxyType + ". Supported types are " + DistributablePipeline.class + " & " + DistributableStream.class);
+	private ExecutionSpecBuilder(Class<?> sourceItemType, String pipelineName, Class<? extends DistributableExecutable<?>> distributableType) {	
+		Assert.isTrue(DistributableStream.class.isAssignableFrom(distributableType) 
+				|| DistributablePipeline.class.isAssignableFrom(distributableType)
+				|| ExecutionGroup.class.isAssignableFrom(distributableType), "Unsupported 'DistributableExecutable' type " + 
+						distributableType + ". Supported types are " + DistributablePipeline.class + " & " + DistributableStream.class);
 
-		this.targetDistributable =  this.generateDistributableProxy(proxyType);
+		this.targetDistributable =  this.generateDistributable(distributableType);
 		this.sourceItemType = sourceItemType;
 		this.pipelineName = pipelineName;
+		this.postConfigInitCallbacks = new ArrayList<Consumer<Properties>>();
 	}
 	
 	/**
@@ -135,7 +135,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 			// cloning, so each instance of a flow is distinctly (instance) addressable
 			ExecutionSpecBuilder clonedDistributable = this.cloneTargetDistributable();
 			// process on the clone
-			clonedDistributable.doProcess((ReflectiveMethodInvocation)invocation);
+			clonedDistributable.doProcess(invocation);
 			
 			returnValue = clonedDistributable.targetDistributable;
 		}
@@ -191,7 +191,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 	 * and {@link DistributableStream}
 	 */
 	@SuppressWarnings("unchecked")
-	private void doProcess(ReflectiveMethodInvocation invocation){
+	private void doProcess(MethodInvocation invocation){
 		String operationName = invocation.getMethod().getName();	
 		if (((List<Stage>)this.targetDistributable).size() == 0){
 			this.addStage(null, null, null);
@@ -212,7 +212,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 	 * Will compose incoming function into the existing stage's function
 	 */
 	@SuppressWarnings("unchecked")
-	private void processStageInvocation(ReflectiveMethodInvocation invocation){
+	private void processStageInvocation(MethodInvocation invocation){
 		Stage stage = this.getCurrentStage();
 		if (this.isStreamStageOperation(invocation.getMethod().getName())){
 			if (stage.getProcessingFunction() == null){
@@ -234,7 +234,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 	 * 
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private void processStageBoundaryInvocation(ReflectiveMethodInvocation invocation){
+	private void processStageBoundaryInvocation(MethodInvocation invocation){
 		Object[] arguments = invocation.getArguments();
 		
 		if (invocation.getMethod().getName().equals("join")) {
@@ -369,10 +369,10 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 	/**
 	 * 
 	 */
-	private Future<Stream<?>> delegatePipelineSpecExecution(String executionName, boolean group, ExecutionSpec... pipelineExecutionSpecs) {	
-		Properties prop = PipelineConfigurationHelper.loadDelegatesConfig();
+	private Future<Stream<Stream<?>>> delegatePipelineSpecExecution(String executionName, boolean group, ExecutionSpec... pipelineExecutionSpecs) {	
+		Properties config = PipelineConfigurationHelper.loadDelegatesConfig();
 		
-		String pipelineExecutionDelegateClassName = prop.getProperty(executionName);
+		String pipelineExecutionDelegateClassName = config.getProperty(executionName);
 		Assert.notEmpty(pipelineExecutionDelegateClassName,
 				"Pipeline execution delegate for pipeline '" + executionName + "' "
 						+ "is not provided in 'pipeline-delegates.cfg' (e.g., "
@@ -384,17 +384,17 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 		try {
 			ExecutionDelegate pipelineExecutionDelegate = (ExecutionDelegate) ReflectionUtils.newDefaultInstance(Class
-					.forName(pipelineExecutionDelegateClassName, true, 
-							Thread.currentThread().getContextClassLoader()));
+					.forName(pipelineExecutionDelegateClassName, true, Thread.currentThread().getContextClassLoader()));
 			
 			Future<Stream<Stream<?>>> resultFuture = executor.submit(new Callable<Stream<Stream<?>>>() {
 				@SuppressWarnings("unchecked")
 				@Override
 				public Stream<Stream<?>> call() throws Exception {
-					Stream<?> resultStreams = !group ? pipelineExecutionDelegate.execute(executionName, pipelineExecutionSpecs)[0]
-								: Stream.of(pipelineExecutionDelegate.execute(executionName, pipelineExecutionSpecs));
+					Stream<?> resultStreams = group 
+							? Stream.of(pipelineExecutionDelegate.execute(executionName, pipelineExecutionSpecs))
+								: pipelineExecutionDelegate.execute(executionName, pipelineExecutionSpecs)[0];
 
-					return (Stream<Stream<?>>) generateResultProxy(resultStreams, new Runnable() {
+					return (Stream<Stream<?>>) mixinWithCloseHandler(resultStreams, new Runnable() {
 						@Override
 						public void run() {
 							try {
@@ -404,14 +404,18 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 								logger.error("Failed during execution of close handler", e);
 							}
 							finally {
-								logger.debug("Terminating down executor");
 								executor.shutdownNow();
 							}
 						}
 					});
 				}
 			});		
-			return this.generateResultProxyFuture(resultFuture, pipelineExecutionSpecs);
+			if (config.containsKey("test")){
+				return this.mixinWithExecutionSpecExtractor(resultFuture, pipelineExecutionSpecs);
+			}
+			else {
+				return resultFuture;
+			}		
 		} 
 		catch (Exception e) {
 			executor.shutdownNow();
@@ -431,72 +435,64 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 	 * Will generate proxy over the result future which contains {@link ExecutionSpecExtractor} 
 	 * interface to allow access to and array of {@link ExecutionSpec}s
 	 */
-	@SuppressWarnings("unchecked")
-	private Future<Stream<?>> generateResultProxyFuture(Future<Stream<Stream<?>>> resultFuture, ExecutionSpec... pipelineExecutionSpecs){
-		ProxyFactory pf = new ProxyFactory(resultFuture);
-		pf.addInterface(ExecutionSpecExtractor.class);
-		pf.addAdvice(new MethodInterceptor() {
+	private Future<Stream<Stream<?>>> mixinWithExecutionSpecExtractor(Future<Stream<Stream<?>>> resultFuture, ExecutionSpec... pipelineExecutionSpecs){
+		MethodInterceptor advice = new MethodInterceptor() {
 			@Override
 			public Object invoke(MethodInvocation invocation) throws Throwable {
 				if (invocation.getMethod().getName().equals("getExecutionSpec")){
 					return pipelineExecutionSpecs;
 				}
-				else {
-					return invocation.proceed();
-				}
+				return invocation.proceed();
 			}
-		});
-		return (Future<Stream<?>>) pf.getProxy();
+		};
+		return JvmUtils.proxy(resultFuture, advice, ExecutionSpecExtractor.class);
 	}
 	
 	/**
 	 * Creates proxy over the result Stream to ensures that close() call is always delegated to
 	 * the close handler provided by the target ExecutionDelegate.
 	 */
-	@SuppressWarnings("unchecked")
-	private Stream<?> generateResultProxy(Stream<?> resultStream, Runnable closeHandler){
+	private Stream<?> mixinWithCloseHandler(Stream<?> resultStream, Runnable closeHandler){
 		resultStream.onClose(closeHandler);
-		ProxyFactory pf = new ProxyFactory(resultStream);
-		pf.addAdvice(new MethodInterceptor() {	
+		MethodInterceptor advice = new MethodInterceptor() {	
 			@Override
 			public Object invoke(MethodInvocation invocation) throws Throwable {
 				Object result = invocation.proceed();
 				if (Stream.class.isAssignableFrom(invocation.getMethod().getReturnType())){
 					Stream<?> stream = (Stream<?>) result;
-					result = generateResultProxy(stream, closeHandler);
+					result = mixinWithCloseHandler(stream, closeHandler);
 				}
 				return result;
 			}
-		});
-		return (Stream<Stream<?>>) pf.getProxy();
+		};
+		return JvmUtils.proxy(resultStream, advice);
 	}
 	
 	/**
 	 * 
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private R generateDistributableProxy(Class<?> proxyType){
-		ProxyFactory pf = new ProxyFactory(new ArrayList());
-		
+	@SuppressWarnings("rawtypes")
+	private R generateDistributable(Class<?> proxyType){	
+		List<Class<?>> interfaces = new ArrayList<Class<?>>();
 		if (DistributablePipeline.class.isAssignableFrom(proxyType)){
-			pf.addInterface(DistributablePipeline.class);
+			interfaces.add(DistributablePipeline.class);
 		} 
 		else if (DistributableStream.class.isAssignableFrom(proxyType)){
-			pf.addInterface(DistributableStream.class);
+			interfaces.add(DistributableStream.class);
 		}
 		else if (ExecutionGroup.class.isAssignableFrom(proxyType)){
-			pf.addInterface(ExecutionGroup.class);
+			interfaces.add(ExecutionGroup.class);
 		}
 		else {
 			throw new IllegalArgumentException("Unsupported proxy type: " +  proxyType);
 		}
-		pf.addInterface(ExecutionConfigGenerator.class);
-	
-		pf.addAdvice(this);
+		interfaces.add(ExecutionConfigGenerator.class);
+		
+		R builderProxy = JvmUtils.proxy(new ArrayList(), this, interfaces.toArray(new Class[]{}));
 		if (logger.isDebugEnabled()){
-			logger.debug("Constructed builder proxy for " + Stream.of(pf.getProxiedInterfaces()).collect(Collectors.toList()));
+			logger.debug("Constructed builder proxy for " + interfaces);
 		}
-		return (R) pf.getProxy();
+		return builderProxy;
 	}
 	
 	/**

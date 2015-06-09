@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.dstream.support.Aggregators;
+import org.apache.dstream.support.KeyValuesStreamAggregatorFunction;
 import org.apache.dstream.utils.KVUtils;
 import org.apache.dstream.utils.Pair;
 import org.junit.Test;
@@ -56,7 +57,7 @@ public class PredicateJoinFunctionTests {
 		
 		PredicateJoinFunction<Integer, String, Company> pjf = new PredicateJoinFunction<Integer, String, Company>(hashKvMapper, probeKvMapper);
 		
-		pjf.composeIntoProbe(new KeyValuesStreamAggregatingFunction(Aggregators::aggregate));
+		pjf.composeIntoProbe(new KeyValuesStreamAggregatorFunction(Aggregators::aggregateSingleObjects));
 		
 		List<Entry<Integer, String>> hash = new ArrayList<Entry<Integer,String>>();
 		hash.add(KVUtils.kv(1, "PUBLIC"));
