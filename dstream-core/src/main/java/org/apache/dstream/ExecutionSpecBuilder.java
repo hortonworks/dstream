@@ -40,15 +40,9 @@ import org.slf4j.LoggerFactory;
  * @param <T> the type of the elements in the pipeline
  * @param <R> the type of {@link DistributableExecutable}.
  */
-final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> implements MethodInterceptor {
+final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> extends AbstractExecutionSpecBuilder<T,R> {
 	
 	private static Logger logger = LoggerFactory.getLogger(ExecutionSpecBuilder.class);
-	
-	private final R targetDistributable;
-	
-	private final Class<?> sourceItemType;
-	
-	private final String pipelineName;
 	
 	/*
 	 * Since configuration is based on the job name most of the properties are inaccessible until "executeAs"
@@ -68,15 +62,8 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 	 * @param pipelineName
 	 * @param distributableType
 	 */
-	private ExecutionSpecBuilder(Class<?> sourceItemType, String pipelineName, Class<? extends DistributableExecutable<?>> distributableType) {	
-		Assert.isTrue(DistributableStream.class.isAssignableFrom(distributableType) 
-				|| DistributablePipeline.class.isAssignableFrom(distributableType)
-				|| ExecutionGroup.class.isAssignableFrom(distributableType), "Unsupported 'DistributableExecutable' type " + 
-						distributableType + ". Supported types are " + DistributablePipeline.class + " & " + DistributableStream.class);
-
-		this.targetDistributable =  this.generateDistributable(distributableType);
-		this.sourceItemType = sourceItemType;
-		this.pipelineName = pipelineName;
+	private ExecutionSpecBuilder(Class<?> sourceItemType, String pipelineName, Class<R> distributableType) {	
+		super(sourceItemType, pipelineName, distributableType);
 		this.preExecCallbacks = new ArrayList<Consumer<Properties>>();
 	}
 	
@@ -89,7 +76,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 	 * 
 	 * @return an instance of {@link DistributableExecutable}
 	 */
-	static <T,R extends DistributableExecutable<T>> R getAs(Class<T> sourceElementType, String pipelineName, Class<? extends R> distributableType) {
+	static <T,R extends DistributableExecutable<T>> R getAs(Class<T> sourceElementType, String pipelineName, Class<R> distributableType) {
 		ExecutionSpecBuilder<T,R> builder = new ExecutionSpecBuilder<T,R>(sourceElementType, pipelineName, distributableType);
 		return builder.targetDistributable;
 	}
@@ -102,7 +89,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 	 * @return
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	static <T,R extends DistributableExecutable<T>> R asGroupExecutable(String groupName, Class<? extends R> distributableType, DistributableExecutable[] distributables) {
+	static <T,R extends DistributableExecutable<T>> R asGroupExecutable(String groupName, Class<R> distributableType, DistributableExecutable[] distributables) {
 		ExecutionSpecBuilder<T,R> builder = new ExecutionSpecBuilder<T,R>(Object.class, groupName, distributableType);
 		Stream.of(distributables).forEach(((List)builder.targetDistributable)::add);	
 		return builder.targetDistributable;
@@ -113,7 +100,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public Object invoke(MethodInvocation invocation) throws Throwable {
+	protected Object doInvoke(MethodInvocation invocation) throws Throwable {
 		String operationName = invocation.getMethod().getName();
 		Object returnValue;
 		if ("executeAs".equals(operationName)){
@@ -179,7 +166,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 		Properties executionProperties = PipelineConfigurationHelper.loadExecutionConfig(executionName);
 
 		this.preExecCallbacks.forEach(s -> s.accept(executionProperties));
-		ExecutionSpec pipelineExecutionSpecs = this.buildExecutionChain(executionName, this.getOutputUri(this.pipelineName, executionProperties), currentDistributable);
+		ExecutionSpec pipelineExecutionSpecs = this.buildExecutionSpec(executionName, this.getOutputUri(this.pipelineName, executionProperties), currentDistributable);
 		this.setSourceSuppliers(executionProperties, stages, currentDistributable.getName(), executionName);
 
 		if (logger.isInfoEnabled()){
@@ -203,7 +190,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 		if (this.isStageOperation(operationName)){
 			this.processStageInvocation(invocation);
 		}
-		else if (this.isStageBoundaryOperation(operationName)){
+		else if (this.isShuffleOperation(operationName)){
 			this.processStageBoundaryInvocation(invocation);
 		} 
 		else {
@@ -247,7 +234,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 			// the output URI here is always null since joined execution chain is essentially an inner chain of
 			// another execution chain with common output.
 			ExecutionSpec dependentPipelineEecutuionSpec = 
-					this.buildExecutionChain(dependentDistributable.getName(), null, dependentDistributable);
+					this.buildExecutionSpec(dependentDistributable.getName(), null, dependentDistributable);
 				
 			Function pjFunc = new PredicateJoinFunction(
 					new KeyValueMappingFunction((Function<?,?>)arguments[1], (Function<?,?>)arguments[2]),
@@ -438,7 +425,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 	/**
 	 * 
 	 */
-	private ExecutionSpec buildExecutionChain(String executionName, URI outputPath, DistributableExecutable<?> targetExecutable){
+	private ExecutionSpec buildExecutionSpec(String executionName, URI outputPath, DistributableExecutable<?> targetExecutable){
 		ExecutionSpec pipelineExecutionSpec = new ExecutionSpec() {		
 			
 			@SuppressWarnings("unchecked")
@@ -574,62 +561,8 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 	/**
 	 * 
 	 */
-	@SuppressWarnings("rawtypes")
-	private R generateDistributable(Class<?> proxyType){	
-		List<Class<?>> interfaces = new ArrayList<Class<?>>();
-		if (DistributablePipeline.class.isAssignableFrom(proxyType)){
-			interfaces.add(DistributablePipeline.class);
-		} 
-		else if (DistributableStream.class.isAssignableFrom(proxyType)){
-			interfaces.add(DistributableStream.class);
-		}
-		else if (ExecutionGroup.class.isAssignableFrom(proxyType)){
-			interfaces.add(ExecutionGroup.class);
-		}
-		else {
-			throw new IllegalArgumentException("Unsupported proxy type: " +  proxyType);
-		}
-		interfaces.add(ExecutionConfigGenerator.class);
-		
-		R builderProxy = JvmUtils.proxy(new ArrayList(), this, interfaces.toArray(new Class[]{}));
-		if (logger.isDebugEnabled()){
-			logger.debug("Constructed builder proxy for " + interfaces);
-		}
-		return builderProxy;
-	}
-	
-	/**
-	 * 
-	 */
-	private boolean isStageOperation(String operationName){
-		return this.isStreamStageOperation(operationName) ||
-			   operationName.equals("compute");
-	}
-	
-	/**
-	 * 
-	 */
-	private boolean isStreamStageOperation(String operationName){
-		return operationName.equals("flatMap") || 
-			   operationName.equals("map") || 
-			   operationName.equals("filter");
-	}
-	
-	/**
-	 * 
-	 */
-	private boolean isStageBoundaryOperation(String operationName){
-		return operationName.equals("combine") ||
-			   operationName.equals("group") ||
-			   operationName.equals("join") ||
-			   operationName.equals("parallel");
-	}
-	
-	/**
-	 * 
-	 */
 	private boolean isStageOrBoundaryOperation(String operationName) {
-		if (this.isStageOperation(operationName) || this.isStageBoundaryOperation(operationName)) {
+		if (this.isStageOperation(operationName) || this.isShuffleOperation(operationName)) {
 			if (!(this.targetDistributable instanceof DistributableStream || 
 				  this.targetDistributable instanceof DistributablePipeline)) {
 				// should really never happen, but since we are dealing with a
