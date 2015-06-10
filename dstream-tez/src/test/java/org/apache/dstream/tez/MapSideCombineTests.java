@@ -39,7 +39,7 @@ public class MapSideCombineTests extends BaseTezTests {
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.map(word -> kv(word, 1))
-			).reduce(s -> s.getKey(), s -> s.getValue(), bo)
+			).combine(s -> s.getKey(), s -> s.getValue(), bo)
 			 .executeAs(this.applicationName);
 		
 		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
@@ -64,7 +64,7 @@ public class MapSideCombineTests extends BaseTezTests {
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.map(word -> kv(word, 1))
-			).reduce(s -> s.getKey(), s -> s.getValue(), bo)
+			).combine(s -> s.getKey(), s -> s.getValue(), bo)
 			 .executeAs(this.applicationName);
 		
 		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
@@ -89,7 +89,7 @@ public class MapSideCombineTests extends BaseTezTests {
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.map(word -> kv(word, 1))
-				.reduce(s -> s.getKey(), s -> s.getValue(), bo)
+				.combine(s -> s.getKey(), s -> s.getValue(), bo)
 			 .executeAs(this.applicationName);
 		
 		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
@@ -114,7 +114,7 @@ public class MapSideCombineTests extends BaseTezTests {
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.map(word -> kv(word, 1))
-				.reduce(s -> s.getKey(), s -> s.getValue(), bo)
+				.combine(s -> s.getKey(), s -> s.getValue(), bo)
 			 .executeAs(this.applicationName);
 		
 		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);

@@ -18,7 +18,7 @@ public class WordCountStream {
 		
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DistributableStream.ofType(String.class, "wc")
 				.flatMap(line -> Stream.of(line.split("\\s+")))
-				.reduce(word -> word, word -> 1, Integer::sum)
+				.combine(word -> word, word -> 1, Integer::sum)
 			.executeAs("WordCount");
 		
 		// each stream within a stream represents a partition essentially giving you access to each result partition

@@ -270,7 +270,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 				this.getCurrentStage().setParallelizer(new HashParallelizer((Integer)arguments[0], (Function)arguments[1]));
 			}	
 		}
-		else if (invocation.getMethod().getName().equals("reduce")) {
+		else if (invocation.getMethod().getName().equals("combine")) {
 			this.addMapSideCombineSettingCallback(invocation);
 			this.addStage(invocation, null, (BinaryOperator)arguments[2], invocation.getMethod().getName());
 		}
@@ -351,7 +351,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 							parallelizer = new HashParallelizer((int) invocation.getArguments()[0], (Function)invocation.getArguments()[1]);
 						}
 					}
-					else if (invocation.getMethod().getName().equals("reduce")){
+					else if (invocation.getMethod().getName().equals("combine")){
 						if (invocation.getArguments().length == 4){
 							parallelizer = invocation.getArguments()[3] instanceof Integer 
 									? new HashParallelizer((int) invocation.getArguments()[3]) 
@@ -619,7 +619,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 	 * 
 	 */
 	private boolean isStageBoundaryOperation(String operationName){
-		return operationName.equals("reduce") ||
+		return operationName.equals("combine") ||
 			   operationName.equals("group") ||
 			   operationName.equals("join") ||
 			   operationName.equals("parallel");

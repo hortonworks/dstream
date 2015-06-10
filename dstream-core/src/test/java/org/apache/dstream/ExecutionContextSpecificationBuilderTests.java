@@ -167,7 +167,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = pipeline.<String>compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split(" ")))
 				.map(word -> word)
-		).reduce(s -> s, s -> 1, Integer::sum)
+		).combine(s -> s, s -> 1, Integer::sum)
 		 .executeAs("pipeline-spec-validation");
 		
 		ExecutionSpec pipelineSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
@@ -212,7 +212,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = pipeline
 				.flatMap(line -> Stream.of(line.split(" ")))
 				.map(word -> word)
-				.reduce(word -> word, word -> 1, Integer::sum)
+				.combine(word -> word, word -> 1, Integer::sum)
 				.executeAs("pipeline-spec-validation");
 		
 		ExecutionSpec pipelineSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
@@ -253,7 +253,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		Future<Stream<Stream<Entry<String, Long>>>> resultFuture = pipeline.<String>compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split(" ")))
 				.map(word -> word)
-		).reduce(s -> s, s -> 1, Integer::sum)
+		).combine(s -> s, s -> 1, Integer::sum)
 		 .<Entry<String, Long>>compute(stream -> stream
 			    .map(entry -> KVUtils.kv(entry.getKey().toUpperCase(), new Long(entry.getValue())))
 		).executeAs("pipeline-spec-validation");
@@ -329,7 +329,7 @@ public class ExecutionContextSpecificationBuilderTests {
 				.flatMap(line -> Stream.of(line.split(" ")))
 				.map(word -> word)
 		).compute(stream -> stream)
-		 .reduce(s -> s, s -> 1, Integer::sum)
+		 .combine(s -> s, s -> 1, Integer::sum)
 		 .executeAs("pipeline-spec-validation");
 		
 		ExecutionSpec pipelineSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
