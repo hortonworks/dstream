@@ -56,8 +56,9 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	<R> DistributablePipeline<R> compute(Function<? extends Stream<T>, ? extends Stream<R>> computeFunction);
 	
 	/**
-	 * Operation to provide a set of functions to group value across distributable 
-	 * data set into Key/Values pairs based on the common <i>classifier</i> (e.g., key).<br>
+	 * Operation to provide a set of functions to create pipeline of Key/Values pairs 
+	 * where all <i>values</i> associated with the same <i>key</i> are grouped 
+	 * into a {@link List}.<br>
 	 * <br>
 	 * This is an <i>intermediate</i> operation. 
 	 * <br>
@@ -75,8 +76,9 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 			Function<? super T, ? extends V> valueMapper);
 	
 	/**
-	 * Operation to provide a set of functions to group value across distributable 
-	 * data set into Key/Values pairs based on the common <i>classifier</i> (e.g., key).<br>
+	 * Operation to provide a set of functions to create pipeline of Key/Values pairs 
+	 * where all <i>values</i> associated with the same <i>key</i> are grouped 
+	 * into a {@link List}.<br>
 	 * <br>
 	 * This is an <i>intermediate</i> operation. 
 	 * <br>
@@ -84,7 +86,7 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	 * 
 	 * @param classifier function to extract classifier (e.g., key)
 	 * @param valueMapper function to extract values
-	 * @param parallelismSize
+	 * @param parallelismSize size value to be used by default {@link Parallelizer}
 	 * 
 	 * @return {@link DistributablePipeline} of type {@link Entry}&lt;K, {@link List}&lt;V&gt;&gt;
 	 * 
@@ -95,8 +97,9 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 			Function<? super T, ? extends V> valueMapper, int parallelismSize);
 	
 	/**
-	 * Operation to provide a set of functions to group value across distributable 
-	 * data set into Key/Values pairs based on the common <i>classifier</i> (e.g., key).<br>
+	 * Operation to provide a set of functions to create pipeline of Key/Values pairs 
+	 * where all <i>values</i> associated with the same <i>key</i> are grouped 
+	 * into a {@link List}.<br>
 	 * <br>
 	 * This is an <i>intermediate</i> operation. 
 	 * <br>
@@ -104,7 +107,7 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	 * 
 	 * @param classifier function to extract classifier (e.g., key)
 	 * @param valueMapper function to extract values
-	 * @param parallelizer
+	 * @param parallelizer {@link Parallelizer} instance
 	 * 
 	 * @return {@link DistributablePipeline} of type {@link Entry}&lt;K, {@link List}&lt;V&gt;&gt;
 	 * 
@@ -116,29 +119,31 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	
 	
 	/**
-	 * Operation to provide a set of functions to group and reduce data across distributable 
-	 * data set into Key/Value pairs based on the common <i>classifier</i> (e.g., key).<br>
+	 * Operation to provide a set of functions to create pipeline of Key/Value pairs 
+	 * where all <i>values</i> corresponding to the same <i>key</i> are combined (reduced) 
+	 * into a single value using provided combiner.<br>
 	 * <br>
 	 * This is an <i>intermediate</i> operation. 
 	 * <br>
 	 * This is an <i>shuffle</i> operation.
 	 * 
-	 * @param classifier function to extract classifier
+	 * @param classifier function to extract classifier (e.g., key)
 	 * @param valueMapper function to extract values
-	 * @param reducer a merge function, to resolve collisions between
+	 * @param combiner a merge function, to resolve collisions between
      *                      values associated with the same key
 	 * @return {@link DistributablePipeline} of type {@link Entry}&lt;K,V&gt;
 	 * 
 	 * @param <K> classifier type (key)
 	 * @param <V> value type
 	 */
-	<K,V> DistributablePipeline<Entry<K, V>> reduce(Function<? super T, ? extends K> classifier, 
+	<K,V> DistributablePipeline<Entry<K, V>> combine(Function<? super T, ? extends K> classifier, 
 			Function<? super T, ? extends V> valueMapper, 
 			BinaryOperator<V> reducer);
 	
 	/**
-	 * Operation to provide a set of functions to group and reduce data across distributable 
-	 * data set into Key/Value pairs based on the common <i>classifier</i> (e.g., key).<br>
+	 * Operation to provide a set of functions to create pipeline of Key/Value pairs 
+	 * where all <i>values</i> corresponding to the same <i>key</i> are combined (reduced) 
+	 * into a single value using provided combiner.<br>
 	 * <br>
 	 * This is an <i>intermediate</i> operation. 
 	 * <br>
@@ -146,41 +151,40 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	 * 
 	 * @param classifier function to extract classifier (e.g., key)
 	 * @param valueMapper function to extract values
-	 * @param reducer a merge function, to resolve collisions between
+	 * @param combiner a merge function, to resolve collisions between
      *                      values associated with the same key
-     * @param parallelismSize
-	 * @return {@link DistributableStream} of type {@link Entry}&lt;K,V&gt;
+     * @param parallelismSize size value to be used by default {@link Parallelizer}
+	 * @return {@link DistributablePipeline} of type {@link Entry}&lt;K,V&gt;
 	 * 
 	 * @param <K> classifier type (key)
 	 * @param <V> value type
-	 * 
 	 */
-	<K,V> DistributablePipeline<Entry<K,V>> reduce(Function<? super T, ? extends K> classifier, 
+	<K,V> DistributablePipeline<Entry<K,V>> combine(Function<? super T, ? extends K> classifier, 
 			Function<? super T, ? extends V> valueMapper, 
-			BinaryOperator<V> reducer, int parallelismSize);
+			BinaryOperator<V> combiner, int parallelismSize);
 	
 	/**
-	 * Operation to provide a set of functions to group and reduce data across distributable 
-	 * data set into Key/Value pairs based on the common <i>classifier</i> (e.g., key).<br>
+	 * Operation to provide a set of functions to create pipeline of Key/Value pairs 
+	 * where all <i>values</i> corresponding to the same <i>key</i> are combined (reduced) 
+	 * into a single value using provided combiner.<br>
 	 * <br>
-	 * This is an <i>intermediate</i> operation.
+	 * This is an <i>intermediate</i> operation. 
 	 * <br>
 	 * This is an <i>shuffle</i> operation.
 	 * 
 	 * @param classifier function to extract classifier (e.g., key)
 	 * @param valueMapper function to extract values
-	 * @param reducer a merge function, to resolve collisions between
+	 * @param combiner a merge function, to resolve collisions between
      *                      values associated with the same key
-     * @param parallelizer
-	 * @return {@link DistributableStream} of type {@link Entry}&lt;K,V&gt;
+     * @param parallelizer {@link Parallelizer} instance
+	 * @return {@link DistributablePipeline} of type {@link Entry}&lt;K,V&gt;
 	 * 
 	 * @param <K> classifier type (key)
 	 * @param <V> value type
-	 * 
 	 */
-	<K,V> DistributablePipeline<Entry<K,V>> reduce(Function<? super T, ? extends K> classifier, 
+	<K,V> DistributablePipeline<Entry<K,V>> combine(Function<? super T, ? extends K> classifier, 
 			Function<? super T, ? extends V> valueMapper, 
-			BinaryOperator<V> reducer, Parallelizer<T> parallelizer);
+			BinaryOperator<V> combiner, Parallelizer<T> parallelizer);
 	
 	/**
 	 * Returns an equivalent pipeline while providing parallelization size directive.

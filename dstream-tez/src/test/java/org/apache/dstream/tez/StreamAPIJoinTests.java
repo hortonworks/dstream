@@ -37,7 +37,7 @@ public class StreamAPIJoinTests extends BaseTezTests {
 		DistributableStream<Entry<Integer, String>> probe = probeStream.map(line -> {
 					String[] split = line.trim().split("\\s+");
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
-	    }).filter(s -> true).reduce(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
+	    }).filter(s -> true).combine(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
 	
 		
 		Future<Stream<Stream<Entry<Integer, Pair<String, String>>>>> resultFuture = hash.join(probe, 

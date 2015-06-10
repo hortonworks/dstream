@@ -52,7 +52,7 @@ public class PipelineAPITests extends BaseTezTests {
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.map(word -> kv(word, 1))
-			).reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
+			).combine(s -> s.getKey(), s -> s.getValue(), Integer::sum)
 			 .executeAs(this.applicationName);
 		
 		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
@@ -75,7 +75,7 @@ public class PipelineAPITests extends BaseTezTests {
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.map(word -> kv(word, 1))
-			).reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
+			).combine(s -> s.getKey(), s -> s.getValue(), Integer::sum)
 			 .<Entry<String, Integer>>compute(stream -> stream
 				.map(entry -> kv(entry.getKey(), entry.getValue()))
 				.filter(entry -> entry.getKey().equals("we"))
@@ -101,7 +101,7 @@ public class PipelineAPITests extends BaseTezTests {
 		Future<Stream<Stream<String>>> resultFuture = sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.map(word -> kv(word, 1))
-			).reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
+			).combine(s -> s.getKey(), s -> s.getValue(), Integer::sum)
 			 .<String>compute(stream -> stream
 				.map(entry -> kv(entry.getKey(), entry.getValue()))
 				.filter(entry -> entry.getKey().equals("we"))
@@ -119,7 +119,7 @@ public class PipelineAPITests extends BaseTezTests {
 		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, "wc");
 		
 		Future<Stream<Stream<Entry<Integer, Integer>>>> resultFuture = sourcePipeline
-				.reduce(s -> s.length(), s -> 1, Integer::sum)
+				.combine(s -> s.length(), s -> 1, Integer::sum)
 				.executeAs(this.applicationName);
 		
 		Stream<Stream<Entry<Integer, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
@@ -228,7 +228,7 @@ public class PipelineAPITests extends BaseTezTests {
 				)
 				.compute(stream -> stream.filter(s -> s.getKey().startsWith("we")))
 				.compute(stream -> stream.filter(s -> s.getKey().length() < 3))
-				.reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
+				.combine(s -> s.getKey(), s -> s.getValue(), Integer::sum)
 				.executeAs(this.applicationName);
 		
 		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
@@ -253,12 +253,12 @@ public class PipelineAPITests extends BaseTezTests {
 				sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
 					.flatMap(line -> Stream.of(line.split("\\s+")))
 					.map(word -> kv(word, 1))
-				).reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
+				).combine(s -> s.getKey(), s -> s.getValue(), Integer::sum)
 				 .<Entry<String, Integer>>compute(stream -> stream
 					.map(entry -> kv(entry.getKey().toUpperCase(), entry.getValue()))
 				)
 				.compute(stream -> stream.filter(entry -> entry.getKey().startsWith("W")))
-				 .reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
+				 .combine(s -> s.getKey(), s -> s.getValue(), Integer::sum)
 				.executeAs(this.applicationName);
 		
 		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
@@ -287,8 +287,8 @@ public class PipelineAPITests extends BaseTezTests {
 		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, "wc");
 		
 		Future<Stream<Stream<Entry<String, Long>>>> resultFuture = sourcePipeline
-				.reduce(s -> s.toUpperCase(), s -> 1, Integer::sum)
-				.reduce(s -> s.getKey().trim() + "_" + s.hashCode(), s -> 1L, Long::sum)
+				.combine(s -> s.toUpperCase(), s -> 1, Integer::sum)
+				.combine(s -> s.getKey().trim() + "_" + s.hashCode(), s -> 1L, Long::sum)
 				.executeAs(this.applicationName);
 		
 		Stream<Stream<Entry<String, Long>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);

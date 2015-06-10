@@ -26,11 +26,11 @@ public class JoinSpecificationBuilderTests {
 		DistributablePipeline<Entry<String, Integer>> hash = pipelineA.<String>compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split(" ")))
 				.map(word -> word)
-		).reduce(s -> s, s -> 1, Integer::sum);
+		).combine(s -> s, s -> 1, Integer::sum);
 		
 		DistributablePipeline<Entry<String, Integer>> probe =  pipelineB.compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split(" ")))
-		).reduce(s -> (String)s, s -> 1, Integer::sum);
+		).combine(s -> (String)s, s -> 1, Integer::sum);
 		
 		DistributablePipeline<Entry<String, Pair<Integer, Integer>>> joinedPipeline = 
 				hash.join(probe, l -> l.getKey(), l -> l.getValue(), r -> r.getKey(), r -> r.getValue());

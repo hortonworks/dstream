@@ -133,7 +133,7 @@ public class ParallelismSpecificationBuilderTests {
 		DistributableStream<String> pipelineA = DistributableStream.ofType(String.class, "pConfig1");
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = pipelineA
 				.flatMap(line -> Stream.of(line.split("")))
-				.reduce(s -> s, s -> 1, Integer::sum, 4)
+				.combine(s -> s, s -> 1, Integer::sum, 4)
 				.executeAs("ParallelismSpecificationBuilderTests");
 		
 		ExecutionSpec executionSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
@@ -156,7 +156,7 @@ public class ParallelismSpecificationBuilderTests {
 		DistributableStream<String> pipelineA = DistributableStream.ofType(String.class, "pConfig2");
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = pipelineA
 				.flatMap(line -> Stream.of(line.split("")))
-				.reduce(s -> s, s -> 1, Integer::sum, 4)
+				.combine(s -> s, s -> 1, Integer::sum, 4)
 				.executeAs("ParallelismSpecificationBuilderTests");
 		
 		ExecutionSpec executionSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
@@ -180,7 +180,7 @@ public class ParallelismSpecificationBuilderTests {
 		DistributableStream<String> pipelineA = DistributableStream.ofType(String.class, "pConfig1");
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = pipelineA
 				.flatMap(line -> Stream.of(line.split("")))
-				.reduce(s -> s, s -> 1, Integer::sum, new HashParallelizer(3))
+				.combine(s -> s, s -> 1, Integer::sum, new HashParallelizer(3))
 				.executeAs("ParallelismSpecificationBuilderTests");
 		
 		ExecutionSpec executionSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
@@ -204,7 +204,7 @@ public class ParallelismSpecificationBuilderTests {
 		DistributableStream<String> pipelineA = DistributableStream.ofType(String.class, "pConfig3");
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = pipelineA
 				.flatMap(line -> Stream.of(line.split("")))
-				.reduce(s -> s, s -> 1, Integer::sum, new HashParallelizer(3))
+				.combine(s -> s, s -> 1, Integer::sum, new HashParallelizer(3))
 				.executeAs("ParallelismSpecificationBuilderTests");
 		
 		ExecutionSpec executionSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
@@ -228,7 +228,7 @@ public class ParallelismSpecificationBuilderTests {
 		DistributableStream<String> pipelineA = DistributableStream.ofType(String.class, "pConfig4");
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = pipelineA
 				.flatMap(line -> Stream.of(line.split("")))
-				.reduce(s -> s, s -> 1, Integer::sum, new HashParallelizer(3))
+				.combine(s -> s, s -> 1, Integer::sum, new HashParallelizer(3))
 				.executeAs("ParallelismSpecificationBuilderTests");
 		
 		ExecutionSpec executionSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);

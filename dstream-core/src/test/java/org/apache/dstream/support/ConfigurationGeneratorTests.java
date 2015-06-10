@@ -33,7 +33,7 @@ public class ConfigurationGeneratorTests {
 					String[] split = line.trim().split("\\s+");
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
 				})
-		).reduce(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
+		).combine(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
 		
 		DistributablePipeline<Entry<Integer, Pair<String, String>>> joinedPipeline = hash.join(probe, 
 				hashElement -> Integer.parseInt(hashElement.substring(0, hashElement.indexOf(" ")).trim()), 

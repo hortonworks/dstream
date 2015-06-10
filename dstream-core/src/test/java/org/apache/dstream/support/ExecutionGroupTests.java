@@ -44,7 +44,7 @@ public class ExecutionGroupTests {
 		DistributableStream<Entry<String, Integer>> ds1 = DistributableStream.ofType(String.class, "ds1")
 				.flatMap(line -> Stream.of(line.split(" ")))
 				.filter(word -> word.length() == 4)
-				.reduce(word -> word, word -> 1, Integer::sum);
+				.combine(word -> word, word -> 1, Integer::sum);
 		
 		DistributableStream<String> ds2 = DistributableStream.ofType(String.class, "ds2")
 				.filter(line -> line.length() <= 20);

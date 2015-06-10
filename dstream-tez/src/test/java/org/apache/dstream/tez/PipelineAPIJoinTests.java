@@ -41,7 +41,7 @@ public class PipelineAPIJoinTests extends BaseTezTests {
 					String[] split = line.trim().split("\\s+");
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
 				})
-		).reduce(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
+		).combine(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
 		
 		Future<Stream<Stream<Entry<Integer, Pair<String, String>>>>> resultFuture = hash.join(probe, 
 				hashElement -> Integer.parseInt(hashElement.substring(0, hashElement.indexOf(" ")).trim()), 

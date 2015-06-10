@@ -26,7 +26,7 @@ public class WordCountPipe {
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DistributablePipeline.ofType(String.class, "wc").compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)).entrySet().stream()
-			).reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
+			).combine(s -> s.getKey(), s -> s.getValue(), Integer::sum)
 			.executeAs("WordCount");
 		
 		AtomicInteger i = new AtomicInteger();
