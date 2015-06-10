@@ -12,7 +12,19 @@ public class ReflectionUtils {
 			Constructor<T> ctr = clazz.getDeclaredConstructor();
 			ctr.setAccessible(true);
 			return ctr.newInstance();
-		} catch (Exception e) {
+		} 
+		catch (Exception e) {
+			throw new IllegalStateException(e);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <T> T newDefaultInstance(String className) {
+		try {
+			Class<T> clazz = (Class<T>) Class.forName(className, false, Thread.currentThread().getContextClassLoader());
+			return newDefaultInstance(clazz);
+		} 
+		catch (Exception e) {
 			throw new IllegalStateException(e);
 		}
 	}
@@ -25,7 +37,22 @@ public class ReflectionUtils {
 			Constructor<T> ctr = clazz.getDeclaredConstructor(argumentTypes);
 			ctr.setAccessible(true);
 			return ctr.newInstance(arguments);
-		} catch (Exception e) {
+		} 
+		catch (Exception e) {
+			throw new IllegalStateException(e);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <T> T newInstance(String className, Class<?>[] argumentTypes,  Object[] arguments) {
+		if (argumentTypes == null || argumentTypes.length < 1){
+			return newDefaultInstance(className);
+		}
+		try {
+			Class<T> clazz = (Class<T>) Class.forName(className, false, Thread.currentThread().getContextClassLoader());
+			return newInstance(clazz, argumentTypes, arguments);
+		} 
+		catch (Exception e) {
 			throw new IllegalStateException(e);
 		}
 	}

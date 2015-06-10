@@ -30,6 +30,7 @@ import org.apache.tez.runtime.library.api.KeyValueWriter;
 import org.apache.tez.runtime.library.api.KeyValuesReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 /**
  * 
  */
@@ -126,18 +127,18 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 	private Function extractTaskFunction() throws Exception {
 		ObjectRegistry registry = this.getContext().getObjectRegistry();
 		
-		Function processingFunction = (Function) registry.get(this.vertexName);
-		if (processingFunction == null){
+		TaskPayload payload = (TaskPayload) registry.get(this.vertexName);
+		if (payload == null){
 			FileSystem fs = FileSystem.get(this.configuration);
 			ByteBuffer payloadBuffer = this.getContext().getUserPayload().getPayload();
 			byte[] payloadBytes = new byte[payloadBuffer.capacity()];
 			payloadBuffer.get(payloadBytes);
 			String taskPath = new String(payloadBytes);
-			processingFunction = HdfsSerializerUtils.deserialize(new Path(taskPath), fs, Function.class);
-			registry.cacheForDAG(this.vertexName, processingFunction);
-//			TezDelegatingPartitioner.setDelegator(task.partitioner);
+			payload = HdfsSerializerUtils.deserialize(new Path(taskPath), fs, TaskPayload.class);
+			registry.cacheForDAG(this.vertexName, payload);
+			TezDelegatingPartitioner.setDelegator(payload.getParallelizer());
 		}
-		return processingFunction;
+		return payload.getTask();
 	}
 	
 	/**

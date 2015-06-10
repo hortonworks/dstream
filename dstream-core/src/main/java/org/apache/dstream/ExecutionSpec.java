@@ -6,8 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.apache.dstream.support.DefaultHashPartitioner;
-import org.apache.dstream.support.Partitioner;
+import org.apache.dstream.support.Parallelizer;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SourceSupplier;
@@ -39,11 +38,21 @@ public interface ExecutionSpec {
 		
 		private ExecutionSpec dependentExecutionSpec;
 
+		private Parallelizer<? super Object> parallelizer;
+
 		public abstract BinaryOperator<Object> getAggregatorOperator();
 		
 		public abstract String getName();
 		
 		public abstract int getId();
+		
+		public void setParallelizer(Parallelizer<? super Object> parallelizer) {
+			this.parallelizer = parallelizer;
+		}
+		
+		public Parallelizer<? super Object> getParallelizer(){
+			return this.parallelizer;
+		}
 		
 		public Function<Stream<?>, Stream<?>> getProcessingFunction(){
 			return this.processingFunction;
@@ -63,13 +72,18 @@ public interface ExecutionSpec {
 		
 		public abstract Class<?> getSourceItemType();
 		
-		public Partitioner<? extends Object> getPartitioner(){
-			return new DefaultHashPartitioner<>(1);
-		}
 		
 		public String toString() {
 			return this.getName() + 
 					(this.getDependentExecutionSpec() == null ? "" : this.getDependentExecutionSpec().getStages());
+		}
+		
+		public ExecutionSpec getDependentExecutionSpec() {
+			return this.dependentExecutionSpec;
+		}
+
+		public void setDependentExecutionSpec(ExecutionSpec dependentExecutionSpec) {
+			this.dependentExecutionSpec = dependentExecutionSpec;
 		}
 		
 		protected void setProcessingFunction(Function<Stream<?>, Stream<?>> processingFunction){
@@ -79,14 +93,6 @@ public interface ExecutionSpec {
 		
 		protected void setSourceSupplier(SourceSupplier<?> sourceSupplier){
 			this.sourceSupplier = sourceSupplier;
-		}
-		
-		public ExecutionSpec getDependentExecutionSpec() {
-			return this.dependentExecutionSpec;
-		}
-
-		public void setDependentExecutionSpec(ExecutionSpec dependentExecutionSpec) {
-			this.dependentExecutionSpec = dependentExecutionSpec;
 		}
 	}
 }

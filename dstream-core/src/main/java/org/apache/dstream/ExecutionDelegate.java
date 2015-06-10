@@ -18,7 +18,7 @@ public interface ExecutionDelegate  {
 	 * 
 	 *  See {@link DistributableExecutable} for more details on the different result structures.
 	 */
-	Stream<Stream<?>>[] execute(String executionName, ExecutionSpec[] executionSpecs);
+	Stream<Stream<?>>[] execute(String executionName, ExecutionSpec... executionSpecs);
 
 	/**
 	 * Returns {@link Runnable} which contains logic relevant to closing of the result {@link Stream}.

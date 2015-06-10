@@ -17,6 +17,8 @@ import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.apache.dstream.ExecutionSpec.Stage;
 import org.apache.dstream.support.ConfigurationGenerator;
+import org.apache.dstream.support.HashParallelizer;
+import org.apache.dstream.support.Parallelizer;
 import org.apache.dstream.support.PipelineConfigurationHelper;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
@@ -53,7 +55,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 	 * the callbacks will be created as Consumers and executed when "executeAs" is invoked when those
 	 * config properties are known. 
 	 */
-	private final List<Consumer<Properties>> postConfigInitCallbacks;
+	private final List<Consumer<Properties>> preExecCallbacks;
 	
 	
 	private int stageIdCounter;
@@ -74,7 +76,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 		this.targetDistributable =  this.generateDistributable(distributableType);
 		this.sourceItemType = sourceItemType;
 		this.pipelineName = pipelineName;
-		this.postConfigInitCallbacks = new ArrayList<Consumer<Properties>>();
+		this.preExecCallbacks = new ArrayList<Consumer<Properties>>();
 	}
 	
 	/**
@@ -131,10 +133,10 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 				List<String> argNames = Stream.of(invocation.getMethod().getParameterTypes()).map(s -> s.getSimpleName()).collect(Collectors.toList());	
 				logger.debug("Op:" + operationName + "(" + (argNames.isEmpty() ? "" : argNames.toString()) + ")");
 			}
-			
 			// cloning, so each instance of a flow is distinctly (instance) addressable
 			ExecutionSpecBuilder clonedDistributable = this.cloneTargetDistributable();
 			// process on the clone
+			
 			clonedDistributable.doProcess(invocation);
 			
 			returnValue = clonedDistributable.targetDistributable;
@@ -170,12 +172,12 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 		 * essentially returning source data
 		 */
 		if (stages.size() == 0){
-			this.addStage((Stream<?> wysiwyg) -> wysiwyg, null, operationName);
+			this.addStage(invocation, (Stream<?> wysiwyg) -> wysiwyg, null, operationName);
 		}
 		
 		Properties executionProperties = PipelineConfigurationHelper.loadExecutionConfig(executionName);
 
-		this.postConfigInitCallbacks.forEach(s -> s.accept(executionProperties));
+		this.preExecCallbacks.forEach(s -> s.accept(executionProperties));
 		ExecutionSpec pipelineExecutionSpecs = this.buildExecutionChain(executionName, this.getOutputUri(this.pipelineName, executionProperties), currentDistributable);
 		this.setSourceSuppliers(executionProperties, stages, currentDistributable.getName(), executionName);
 
@@ -194,7 +196,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 	private void doProcess(MethodInvocation invocation){
 		String operationName = invocation.getMethod().getName();	
 		if (((List<Stage>)this.targetDistributable).size() == 0){
-			this.addStage(null, null, null);
+			this.addStage(invocation, null, null, null);
 		}
 		
 		if (this.isStageOperation(operationName)){
@@ -251,30 +253,119 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 					new KeyValueMappingFunction((Function<?,?>)arguments[3], (Function<?,?>)arguments[4]));
 
 			Stage depStage = dependentPipelineEecutuionSpec.getStages().get(dependentPipelineEecutuionSpec.getStages().size()-1);
-			this.addStage(pjFunc, depStage.getAggregatorOperator(), invocation.getMethod().getName());
+			this.addStage(invocation, pjFunc, depStage.getAggregatorOperator(), invocation.getMethod().getName());
 			this.getCurrentStage().setDependentExecutionSpec(dependentPipelineEecutuionSpec);
 		}
-		else {
-			//dstream.stage.ms_combine.0_foo=true
-			String propertyName = DistributableConstants.MAP_SIDE_COMBINE + this.getCurrentStage().getName();
-			Stage currentStage = this.getCurrentStage();
-			
-			Consumer<Properties> msCombineCallback = new Consumer<Properties>() {
-				@Override
-				public void accept(Properties executionProperties) {
-					boolean mapSideCombine = executionProperties.containsKey(propertyName) 
-							? Boolean.parseBoolean(executionProperties.getProperty(propertyName)) : false;
-							
-					BinaryOperator combiner = mapSideCombine ? (BinaryOperator)arguments[2] : null;
-					composeWithStageFunction(currentStage, 
-							new KeyValueMappingFunction((Function)arguments[0], (Function)arguments[1], combiner), invocation.getMethod().getName());
+		else if (invocation.getMethod().getName().equals("parallel")) {
+			if (arguments.length == 1){
+				if (arguments[0] instanceof Integer){
+					this.getCurrentStage().setParallelizer(new HashParallelizer((Integer)arguments[0]));
 				}
-			};
-			
-			this.postConfigInitCallbacks.add(msCombineCallback);
-					
-			this.addStage(null, (BinaryOperator)arguments[2], invocation.getMethod().getName());
+				else {
+					this.getCurrentStage().setParallelizer((Parallelizer)arguments[0]);
+				}
+			}
+			else {
+				this.getCurrentStage().setParallelizer(new HashParallelizer((Integer)arguments[0], (Function)arguments[1]));
+			}	
 		}
+		else if (invocation.getMethod().getName().equals("reduce")) {
+			this.addMapSideCombineSettingCallback(invocation);
+			this.addStage(invocation, null, (BinaryOperator)arguments[2], invocation.getMethod().getName());
+		}
+		else {
+			throw new IllegalArgumentException("Unrecognized invocation: " + invocation.getMethod());
+		}
+	}
+	
+	/**
+	 * 
+	 */
+	private void addMapSideCombineSettingCallback(MethodInvocation invocation){
+		Object[] arguments = invocation.getArguments();
+		String propertyName = DistributableConstants.MAP_SIDE_COMBINE + this.getCurrentStage().getName();
+		Stage currentStage = this.getCurrentStage();
+		Consumer<Properties> configCallback = new Consumer<Properties>() {
+			@SuppressWarnings({ "rawtypes", "unchecked" })
+			@Override
+			public void accept(Properties executionProperties) {
+				boolean mapSideCombine = executionProperties.containsKey(propertyName) 
+						? Boolean.parseBoolean(executionProperties.getProperty(propertyName)) : false;
+						
+				BinaryOperator combiner = mapSideCombine ? (BinaryOperator)arguments[2] : null;
+				composeWithStageFunction(currentStage, 
+						new KeyValueMappingFunction((Function)arguments[0], (Function)arguments[1], combiner), invocation.getMethod().getName());
+			}
+		};	
+		this.preExecCallbacks.add(configCallback);
+	}
+	
+	/**
+	 * 
+	 */
+	private void addParallelismSettingCallback(MethodInvocation invocation){
+		Stage currentStage = this.getCurrentStage();
+		Consumer<Properties> configCallback = new Consumer<Properties>() {
+			@SuppressWarnings({"unchecked", "rawtypes"})
+			@Override
+			public void accept(Properties executionProperties) {
+				String parallelismConfigValue = executionProperties.containsKey(DistributableConstants.PARALLELISM + currentStage.getName()) 
+						? executionProperties.getProperty(DistributableConstants.PARALLELISM + currentStage.getName())
+								: null;
+				// config takes precedence over code 
+				if (parallelismConfigValue != null){
+					String[] pParts = parallelismConfigValue.split(",");
+					if (pParts.length == 1){
+						if (currentStage.getParallelizer() != null){
+							currentStage.getParallelizer().updatePartitionSize(Integer.parseInt(pParts[0].trim()));
+						}
+						else {
+							currentStage.setParallelizer(new HashParallelizer(Integer.parseInt(pParts[0].trim())));
+						}
+					}
+					else if (pParts.length == 2){
+						Parallelizer parallelizer = 
+								ReflectionUtils.newInstance(pParts[1].trim(), new Class[]{int.class}, new Object[]{Integer.parseInt(pParts[0].trim())});
+						currentStage.setParallelizer(parallelizer);
+					}
+					else {
+						throw new IllegalStateException("Invalid parallelization configuration: " + parallelismConfigValue);
+					}
+				}
+				else {
+					Parallelizer parallelizer = new HashParallelizer(1);
+					if (invocation.getMethod().getName().equals("parallel")){
+						if (invocation.getArguments().length == 1){
+							if (invocation.getArguments()[0] instanceof Integer){
+								parallelizer.updatePartitionSize((int) invocation.getArguments()[0]);
+							}
+							else {
+								parallelizer = (HashParallelizer) invocation.getArguments()[0];
+							}
+						}
+						else {
+							parallelizer = new HashParallelizer((int) invocation.getArguments()[0], (Function)invocation.getArguments()[1]);
+						}
+					}
+					else if (invocation.getMethod().getName().equals("reduce")){
+						if (invocation.getArguments().length == 4){
+							parallelizer = invocation.getArguments()[3] instanceof Integer 
+									? new HashParallelizer((int) invocation.getArguments()[3]) 
+										: (Parallelizer) invocation.getArguments()[3];
+						}
+					}
+					else if (invocation.getMethod().getName().equals("join")){
+						if (invocation.getArguments().length == 6){
+							parallelizer = invocation.getArguments()[5] instanceof Integer 
+									? new HashParallelizer((int) invocation.getArguments()[5]) 
+										: (Parallelizer) invocation.getArguments()[5];
+						}
+					}
+					currentStage.setParallelizer(parallelizer);
+				}
+			}
+		};		
+		this.preExecCallbacks.add(configCallback);
 	}
 	
 	/**
@@ -296,7 +387,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 	 * 
 	 */
 	@SuppressWarnings("unchecked")
-	private void addStage(Function<Stream<?>, Stream<?>> processingFunction, BinaryOperator<Object> aggregatorOp, String operationName) {	
+	private void addStage(MethodInvocation invocation, Function<Stream<?>, Stream<?>> processingFunction, BinaryOperator<Object> aggregatorOp, String operationName) {	
 		int stageId = this.stageIdCounter++;
 		Stage stage = new Stage() {
 			@Override
@@ -330,6 +421,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 			logger.debug("Constructed stage: " + stage);
 		}
 		((List<Stage>)this.targetDistributable).add(stage);
+		this.addParallelismSettingCallback(invocation);
 	}
 	
 	/**
@@ -517,7 +609,8 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 	 */
 	private boolean isStageBoundaryOperation(String operationName){
 		return operationName.equals("reduce") ||
-			   operationName.equals("join")	;
+			   operationName.equals("join") ||
+			   operationName.equals("parallel");
 	}
 	
 	/**
@@ -543,7 +636,10 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 	@SuppressWarnings("unchecked")
 	private Stage getCurrentStage(){
 		List<Stage> stages = (List<Stage>)this.targetDistributable;
-		return stages.get(stages.size()-1);
+		if (stages.size() > 0){
+			return stages.get(stages.size()-1);
+		}
+		return null;
 	}
 	
 	/**
@@ -599,7 +695,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 				this.targetDistributable instanceof DistributablePipeline ? DistributablePipeline.class : DistributableStream.class);
 		((List)clonedDistributable.targetDistributable).addAll(Collections.unmodifiableList(((List)this.targetDistributable)));
 		clonedDistributable.stageIdCounter = this.stageIdCounter;
-		clonedDistributable.postConfigInitCallbacks.addAll(Collections.unmodifiableList(this.postConfigInitCallbacks));
+		clonedDistributable.preExecCallbacks.addAll(Collections.unmodifiableList(this.preExecCallbacks));
 		return clonedDistributable;
 	}
 }

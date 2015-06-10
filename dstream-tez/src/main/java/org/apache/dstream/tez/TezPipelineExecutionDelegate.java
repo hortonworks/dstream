@@ -8,10 +8,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.DistributableConstants;
 import org.apache.dstream.ExecutionDelegate;
 import org.apache.dstream.ExecutionSpec;
-import org.apache.dstream.ExecutionSpec.Stage;
 import org.apache.dstream.support.PipelineConfigurationHelper;
 import org.apache.dstream.tez.utils.HadoopUtils;
 import org.apache.dstream.tez.utils.SequenceFileOutputStreamsBuilder;
@@ -101,7 +99,7 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 		List<String> outputURIs  = new ArrayList<String>();
 		for (int i = 0; i < pipelineExecutionChains.length; i++) {
 			ExecutionSpec pipelineExecutionChain = pipelineExecutionChains[i];
-			pipelineExecutionChain.getStages().forEach(stage -> executableDagBuilder.addStage(stage, this.getStageParallelizm(stage)) );
+			pipelineExecutionChain.getStages().forEach(stage -> executableDagBuilder.addStage(stage));
 			String output = pipelineExecutionChain.getOutputUri() == null 
 					? this.tezClient.getClientName() + "/out/"
 							: pipelineExecutionChain.getOutputUri().toString();
@@ -142,14 +140,5 @@ public class TezPipelineExecutionDelegate implements ExecutionDelegate {
 		catch (Exception e) {
 			throw new IllegalStateException("Failed to start TezClient", e);
 		}
-	}
-	
-	/**
-	 * 
-	 */
-	private int getStageParallelizm(Stage stage){
-		return this.pipelineConfig.containsKey(DistributableConstants.PARALLELISM + stage.getName()) 
-				? Integer.parseInt(this.pipelineConfig.getProperty(DistributableConstants.PARALLELISM + stage.getName())) 
-						: 1;
 	}
 }
