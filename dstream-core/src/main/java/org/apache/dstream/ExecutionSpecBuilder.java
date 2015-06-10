@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.apache.dstream.ExecutionSpec.Stage;
+import org.apache.dstream.support.Aggregators;
 import org.apache.dstream.support.ConfigurationGenerator;
 import org.apache.dstream.support.HashParallelizer;
 import org.apache.dstream.support.Parallelizer;
@@ -273,6 +274,9 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 			this.addMapSideCombineSettingCallback(invocation);
 			this.addStage(invocation, null, (BinaryOperator)arguments[2], invocation.getMethod().getName());
 		}
+		else if (invocation.getMethod().getName().equals("group")) {
+			this.addStage(invocation, null, Aggregators::aggregateFlatten, invocation.getMethod().getName());
+		}
 		else {
 			throw new IllegalArgumentException("Unrecognized invocation: " + invocation.getMethod());
 		}
@@ -352,6 +356,13 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 							parallelizer = invocation.getArguments()[3] instanceof Integer 
 									? new HashParallelizer((int) invocation.getArguments()[3]) 
 										: (Parallelizer) invocation.getArguments()[3];
+						}
+					}
+					else if (invocation.getMethod().getName().equals("group")){
+						if (invocation.getArguments().length == 3){
+							parallelizer = invocation.getArguments()[2] instanceof Integer 
+									? new HashParallelizer((int) invocation.getArguments()[2]) 
+										: (Parallelizer) invocation.getArguments()[2];
 						}
 					}
 					else if (invocation.getMethod().getName().equals("join")){
@@ -609,6 +620,7 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> impleme
 	 */
 	private boolean isStageBoundaryOperation(String operationName){
 		return operationName.equals("reduce") ||
+			   operationName.equals("group") ||
 			   operationName.equals("join") ||
 			   operationName.equals("parallel");
 	}

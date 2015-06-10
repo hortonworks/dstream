@@ -1,6 +1,7 @@
 package org.apache.dstream;
 
 
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
@@ -109,6 +110,64 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 //	 */
 //	DistributableStream<T> sorted();
 	
+	/**
+	 * Operation to provide a set of functions to group value across distributable 
+	 * data set into Key/Values pairs based on the common <i>classifier</i> (e.g., key).<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation. 
+	 * <br>
+	 * This is an <i>shuffle</i> operation.
+	 * 
+	 * @param classifier function to extract classifier (e.g., key)
+	 * @param valueMapper function to extract values
+	 * 
+	 * @return {@link DistributableStream} of type {@link Entry}&lt;K, {@link List}&lt;V&gt;&gt;
+	 * 
+	 * @param <K> classifier type (key)
+	 * @param <V> value type
+	 */
+	<K,V> DistributableStream<Entry<K,List<V>>> group(Function<? super T, ? extends K> classifier, 
+			Function<? super T, ? extends V> valueMapper);
+	
+	/**
+	 * Operation to provide a set of functions to group value across distributable 
+	 * data set into Key/Values pairs based on the common <i>classifier</i> (e.g., key).<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation. 
+	 * <br>
+	 * This is an <i>shuffle</i> operation.
+	 * 
+	 * @param classifier function to extract classifier (e.g., key)
+	 * @param valueMapper function to extract values
+	 * @param parallelismSize
+	 * 
+	 * @return {@link DistributableStream} of type {@link Entry}&lt;K, {@link List}&lt;V&gt;&gt;
+	 * 
+	 * @param <K> classifier type (key)
+	 * @param <V> value type
+	 */
+	<K,V> DistributableStream<Entry<K,List<V>>> group(Function<? super T, ? extends K> classifier, 
+			Function<? super T, ? extends V> valueMapper, int parallelismSize);
+	
+	/**
+	 * Operation to provide a set of functions to group value across distributable 
+	 * data set into Key/Values pairs based on the common <i>classifier</i> (e.g., key).<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation. 
+	 * <br>
+	 * This is an <i>shuffle</i> operation.
+	 * 
+	 * @param classifier function to extract classifier (e.g., key)
+	 * @param valueMapper function to extract values
+	 * @param parallelizer
+	 * 
+	 * @return {@link DistributableStream} of type {@link Entry}&lt;K, {@link List}&lt;V&gt;&gt;
+	 * 
+	 * @param <K> classifier type (key)
+	 * @param <V> value type
+	 */
+	<K,V> DistributableStream<Entry<K,List<V>>> group(Function<? super T, ? extends K> classifier, 
+			Function<? super T, ? extends V> valueMapper, Parallelizer<T> parallelizer);
 	
 	/**
 	 * Operation to provide a set of functions to group and reduce data across distributable 
