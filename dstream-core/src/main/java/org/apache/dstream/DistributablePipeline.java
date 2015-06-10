@@ -3,6 +3,7 @@ package org.apache.dstream;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
+import org.apache.dstream.support.Parallelizer;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.utils.Pair;
@@ -58,6 +59,8 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	 * data set into Key/Value pairs based on the common <i>classifier</i> (e.g., key).<br>
 	 * <br>
 	 * This is an <i>intermediate</i> operation. 
+	 * <br>
+	 * This is an <i>shuffle</i> operation.
 	 * 
 	 * @param classifier function to extract classifier
 	 * @param valueMapper function to extract values
@@ -72,6 +75,74 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 			Function<? super T, ? extends V> valueMapper, 
 			BinaryOperator<V> reducer);
 	
+	/**
+	 * Operation to provide a set of functions to group and reduce data across distributable 
+	 * data set into Key/Value pairs based on the common <i>classifier</i> (e.g., key).<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation. 
+	 * <br>
+	 * This is an <i>shuffle</i> operation.
+	 * 
+	 * @param classifier function to extract classifier (e.g., key)
+	 * @param valueMapper function to extract values
+	 * @param reducer a merge function, to resolve collisions between
+     *                      values associated with the same key
+     * @param parallelismSize
+	 * @return {@link DistributableStream} of type {@link Entry}&lt;K,V&gt;
+	 * 
+	 * @param <K> classifier type (key)
+	 * @param <V> value type
+	 * 
+	 */
+	<K,V> DistributablePipeline<Entry<K,V>> reduce(Function<? super T, ? extends K> classifier, 
+			Function<? super T, ? extends V> valueMapper, 
+			BinaryOperator<V> reducer, int parallelismSize);
+	
+	/**
+	 * Operation to provide a set of functions to group and reduce data across distributable 
+	 * data set into Key/Value pairs based on the common <i>classifier</i> (e.g., key).<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
+	 * <br>
+	 * This is an <i>shuffle</i> operation.
+	 * 
+	 * @param classifier function to extract classifier (e.g., key)
+	 * @param valueMapper function to extract values
+	 * @param reducer a merge function, to resolve collisions between
+     *                      values associated with the same key
+     * @param parallelizer
+	 * @return {@link DistributableStream} of type {@link Entry}&lt;K,V&gt;
+	 * 
+	 * @param <K> classifier type (key)
+	 * @param <V> value type
+	 * 
+	 */
+	<K,V> DistributablePipeline<Entry<K,V>> reduce(Function<? super T, ? extends K> classifier, 
+			Function<? super T, ? extends V> valueMapper, 
+			BinaryOperator<V> reducer, Parallelizer<T> parallelizer);
+	
+	/**
+	 * Returns an equivalent pipeline while providing parallelization size directive.
+	 * <br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
+	 * <br>
+	 * This is an <i>shuffle</i> operation.
+	 * 
+	 * @param parallelismSize
+	 * @return
+	 */
+	DistributablePipeline<T> parallel(int parallelismSize);
+	
+	/**
+	 * Returns an equivalent pipeline while providing {@link Parallelizer}.
+	 * 
+	 * @param partitioner
+	 * @return
+	 */
+	//Classifier can be provided with the partitioner
+	DistributablePipeline<T> parallel(Parallelizer<T> parallelizer);
+	
 //	/**
 //	 * 
 //	 * @param classifier the classifier function mapping input elements to keys
@@ -81,28 +152,14 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 //	 * @param <V> value type
 //	 */
 //	<K,V> DistributablePipeline<Entry<K, V[]>> group(Function<? super T, ? extends K> classifier);
-
-//	/**
-//	 * Will calculate partitions using the entire value of each element of the stream.
-//	 * 
-//	 * 
-//	 * @return the new {@link DistributablePipeline} of type T
-//	 */
-//	DistributablePipeline<T> partition();
-//	
-//	/**
-//	 * Will calculate partitions using the resulting value of applying classifier function on each 
-//	 * element of the stream.
-//	 * 
-//	 * @return the new {@link DistributablePipeline} of type T
-//	 * 
-//	 * @param <V>
-//	 */
-//	<V> DistributablePipeline<T> partition(Function<? super T, ? extends V> classifier);
 	
 	/**
 	 * Operation to provide a set of functions to join data set represented by this {@link DistributablePipeline} 
 	 * with another {@link DistributablePipeline} based on the common predicate (hash join).<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
+	 * <br>
+	 * This is an <i>shuffle</i> operation.
 	 * 
 	 * @param pipelineP instance of {@link DistributablePipeline} to join with - (probe)
 	 * @param hashKeyClassifier function to extract Key from this instance of the {@link DistributablePipeline} - (hash)
@@ -121,4 +178,60 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 																	  Function<? super T, ? extends VL> hashValueMapper,
 																	  Function<? super TT, ? extends K> probeKeyClassifier,
 																	  Function<? super TT, ? extends VR> probeValueMapper);
+	
+	/**
+	 * Operation to provide a set of functions to join data set represented by this {@link DistributableStream} 
+	 * with another {@link DistributableStream} based on the common predicate (hash join).<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
+	 * <br>
+	 * This is an <i>shuffle</i> operation.
+	 * 
+	 * @param streamP instance of {@link DistributableStream} to join with - (probe)
+	 * @param hashKeyClassifier function to extract Key from this instance of the {@link DistributablePipeline} - (hash)
+	 * @param hashValueMapper function to extract value from this instance of the {@link DistributablePipeline} - (hash)
+	 * @param probeKeyClassifier function to extract Key from the joined instance of the {@link DistributablePipeline} - (probe)
+	 * @param probeValueMapper function to extract value from the joined instance of the {@link DistributablePipeline} - (probe)
+	 * @param parallelismSize
+	 * @return {@link DistributableStream} of type {@link Entry}&lt;K, {@link Pair}&lt;VL,VR&gt;&gt;
+	 * 
+	 * @param <TT> the type of elements of the {@link DistributableStream} to join with - (probe)
+	 * @param <K>  the type of common classifier (key)
+	 * @param <VH> the type of values of the elements extracted from this instance of the {@link DistributableStream} - hash
+	 * @param <VP> the type of values of the elements extracted from the joined instance of the {@link DistributableStream} - probe
+	 */
+	<TT, K, VH, VP> DistributableStream<Entry<K, Pair<VH,VP>>> join(DistributableStream<TT> streamP,
+																	  Function<? super T, ? extends K> hashKeyClassifier,
+																	  Function<? super T, ? extends VH> hashValueMapper,
+																	  Function<? super TT, ? extends K> probeKeyClassifier,
+																	  Function<? super TT, ? extends VP> probeValueMapper,
+																	  int parallelismSize);
+	
+	/**
+	 * Operation to provide a set of functions to join data set represented by this {@link DistributableStream} 
+	 * with another {@link DistributableStream} based on the common predicate (hash join).<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
+	 * <br>
+	 * This is an <i>shuffle</i> operation.
+	 * 
+	 * @param streamP instance of {@link DistributableStream} to join with - (probe)
+	 * @param hashKeyClassifier function to extract Key from this instance of the {@link DistributablePipeline} - (hash)
+	 * @param hashValueMapper function to extract value from this instance of the {@link DistributablePipeline} - (hash)
+	 * @param probeKeyClassifier function to extract Key from the joined instance of the {@link DistributablePipeline} - (probe)
+	 * @param probeValueMapper function to extract value from the joined instance of the {@link DistributablePipeline} - (probe)
+	 * @param parallelizer
+	 * @return {@link DistributableStream} of type {@link Entry}&lt;K, {@link Pair}&lt;VL,VR&gt;&gt;
+	 * 
+	 * @param <TT> the type of elements of the {@link DistributableStream} to join with - (probe)
+	 * @param <K>  the type of common classifier (key)
+	 * @param <VH> the type of values of the elements extracted from this instance of the {@link DistributableStream} - hash
+	 * @param <VP> the type of values of the elements extracted from the joined instance of the {@link DistributableStream} - probe
+	 */
+	<TT, K, VH, VP> DistributableStream<Entry<K, Pair<VH,VP>>> join(DistributableStream<TT> streamP,
+																	  Function<? super T, ? extends K> hashKeyClassifier,
+																	  Function<? super T, ? extends VH> hashValueMapper,
+																	  Function<? super TT, ? extends K> probeKeyClassifier,
+																	  Function<? super TT, ? extends VP> probeValueMapper,
+																	  Parallelizer<T> parallelizer);
 }

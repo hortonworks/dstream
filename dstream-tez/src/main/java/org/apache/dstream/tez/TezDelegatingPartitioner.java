@@ -1,20 +1,21 @@
 package org.apache.dstream.tez;
 
-import org.apache.tez.runtime.library.api.Partitioner;
+import org.apache.dstream.support.Parallelizer;
 import org.apache.tez.runtime.library.partitioner.HashPartitioner;
 
 public class TezDelegatingPartitioner extends HashPartitioner {
-	private static Partitioner delegatorPartitioner;
+	private static Parallelizer<? super Object> delegatorPartitioner;
 	
-	public static void setDelegator(Partitioner partitioner){
-		delegatorPartitioner = partitioner;
+	public static void setDelegator(Parallelizer<? super Object> parallelizer){
+		delegatorPartitioner = parallelizer;
 	}
 
 	@Override
 	public int getPartition(Object key, Object value, int numPartitions) {
 		if (delegatorPartitioner != null){
-			return delegatorPartitioner.getPartition(key, value, numPartitions);
-		} else {
+			return delegatorPartitioner.apply(key);
+		} 
+		else {
 			return super.getPartition(key, value, numPartitions);
 		}
 	}

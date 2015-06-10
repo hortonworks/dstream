@@ -23,7 +23,6 @@ public class WordCountPipe {
 	 * @throws Exception
 	 */
 	public static void main(String... args) throws Exception {
-
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DistributablePipeline.ofType(String.class, "wc").compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)).entrySet().stream()

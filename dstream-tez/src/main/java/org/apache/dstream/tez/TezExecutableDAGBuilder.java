@@ -11,7 +11,6 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.DistributableConstants;
 import org.apache.dstream.ExecutionSpec;
 import org.apache.dstream.ExecutionSpec.Stage;
 import org.apache.dstream.PredicateJoinFunction;
@@ -54,8 +53,6 @@ public class TezExecutableDAGBuilder {
 	
 	private final OrderedPartitionedKVEdgeConfig edgeConf;
 	
-	private final Properties pipelineConfig;
-	
 	private final TezDagExecutor dagExecutor;
 	
 	private Vertex lastVertex;
@@ -71,7 +68,6 @@ public class TezExecutableDAGBuilder {
 	public TezExecutableDAGBuilder(String pipelineName, ExecutionContextAwareTezClient tezClient, Properties pipelineConfig) {
 		this.dag = DAG.create(pipelineName + "_" + System.currentTimeMillis());
 		this.tezClient = tezClient;
-		this.pipelineConfig = pipelineConfig;
 		
 		//TODO need to figure out when and why would the Edge be different and how to configure it
 		this.edgeConf = OrderedPartitionedKVEdgeConfig
@@ -86,16 +82,17 @@ public class TezExecutableDAGBuilder {
 	 * @param stage
 	 * @param parallelizm
 	 */
-	public void addStage(Stage stage, int parallelizm) {	
+	public void addStage(Stage stage) {	
 		String vertexName = stage.getName();
 		Class<?> inputFormatClass = stage.getId() == 0 ? this.determineInputFormatClass(stage) : null;
-		UserPayload payload = this.createPayloadFromTaskSerPath(this.composeFunctionIfNecessary(stage, inputFormatClass), this.dag.getName(), vertexName);
+		UserPayload payload = this.createPayloadFromTaskSerPath(this.buildTask(stage, inputFormatClass), this.dag.getName(), stage);
 		ProcessorDescriptor pd = ProcessorDescriptor.create(TezTaskProcessor.class.getName()).setUserPayload(payload);	
 		
 		// inputOrderCounter needed to maintain the order of inputs for joins
 		Vertex vertex = stage.getId() == 0 
 				? Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd) 
-						: Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd, parallelizm);
+						: Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd, 
+								stage.getParallelizer() == null ? 1 : stage.getParallelizer().getPartitionSize());
 				
 		vertex.addTaskLocalFiles(this.tezClient.getLocalResources());
 		
@@ -127,11 +124,7 @@ public class TezExecutableDAGBuilder {
 			ExecutionSpec execSpec = stage.getDependentExecutionSpec();
 			List<Stage> dependentStages = execSpec.getStages();
 			
-			int stageParallelizm = this.pipelineConfig.containsKey(DistributableConstants.PARALLELISM + stage.getName()) 
-					? Integer.parseInt(this.pipelineConfig.getProperty(DistributableConstants.PARALLELISM + stage.getName())) 
-							: 1;
-			
-			dependentStages.forEach(dependentStage -> this.addStage(dependentStage, stageParallelizm));
+			dependentStages.forEach(dependentStage -> this.addStage(dependentStage));
 			Edge edge = Edge.create(this.lastVertex, vertex, this.edgeConf.createDefaultEdgeProperty());
 			this.dag.addEdge(edge);
 		}
@@ -156,7 +149,7 @@ public class TezExecutableDAGBuilder {
 	 * @return
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private Function<Stream<?>, Stream<?>> composeFunctionIfNecessary(Stage stage, Class<?> inputFormatClass) {
+	private TaskPayload buildTask(Stage stage, Class<?> inputFormatClass) {
 		Function<Stream<?>, Stream<?>> processingFunction = (Function<Stream<?>, Stream<?>>) stage.getProcessingFunction();
 		if (stage.getAggregatorOperator() != null) {
 			Function<Stream<?>,Stream<?>> aggregatingFunction = new KeyValuesStreamAggregatorFunction(stage.getAggregatorOperator());
@@ -189,7 +182,9 @@ public class TezExecutableDAGBuilder {
 				}
 			}
 		}	
-		return processingFunction;
+		TaskPayload payload = new TaskPayload(processingFunction);
+		payload.setParallelizer(stage.getParallelizer());
+		return payload;
 	}
 	
 	/**
@@ -226,10 +221,10 @@ public class TezExecutableDAGBuilder {
 	/**
 	 * 
 	 */
-	private UserPayload createPayloadFromTaskSerPath(Object task, String pipelineName, String vertexName){
+	private UserPayload createPayloadFromTaskSerPath(Object task, String pipelineName, Stage stage){
 		org.apache.hadoop.fs.Path mapTaskPath = 
 				HdfsSerializerUtils.serialize(task, this.tezClient.getFileSystem(), 
-						new org.apache.hadoop.fs.Path(pipelineName + "/tasks/" + vertexName + ".ser"));
+						new org.apache.hadoop.fs.Path(pipelineName + "/tasks/" + stage.getName() + ".ser"));
 		UserPayload payload = UserPayload.create(ByteBuffer.wrap(mapTaskPath.toString().getBytes()));
 		return payload;
 	}
