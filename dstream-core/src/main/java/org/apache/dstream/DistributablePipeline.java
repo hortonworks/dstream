@@ -18,7 +18,7 @@ import org.apache.dstream.utils.Pair;
  *   .compute(stream -> stream
  *      .flatMap(line -> Stream.of(line.split("\\s+")))
  *      .collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)).entrySet().stream())
- *   .reduce(s -> s.getKey(), s -> s.getValue(), Integer::sum)
+ *   .combine(s -> s.getKey(), s -> s.getValue(), Integer::sum)
  *   .executeAs("WordCount"); 
  * </pre>
  *  
@@ -187,36 +187,28 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 			BinaryOperator<V> combiner, Parallelizer<T> parallelizer);
 	
 	/**
-	 * Returns an equivalent pipeline while providing parallelization size directive.
-	 * <br>
+	 * Returns an equivalent pipeline while providing parallelization size directive.<br>
 	 * <br>
 	 * This is an <i>intermediate</i> operation.
 	 * <br>
 	 * This is an <i>shuffle</i> operation.
 	 * 
-	 * @param parallelismSize
+	 * @param parallelismSize size value to be used by default {@link Parallelizer}
 	 * @return
 	 */
 	DistributablePipeline<T> parallel(int parallelismSize);
 	
 	/**
-	 * Returns an equivalent pipeline while providing {@link Parallelizer}.
+	 * Returns an equivalent stream while providing {@link Parallelizer}.<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
+	 * <br>
+	 * This is an <i>shuffle</i> operation.
 	 * 
-	 * @param partitioner
+	 * @param parallelizer instance of {@link Parallelizer}
 	 * @return
 	 */
-	//Classifier can be provided with the partitioner
 	DistributablePipeline<T> parallel(Parallelizer<T> parallelizer);
-	
-//	/**
-//	 * 
-//	 * @param classifier the classifier function mapping input elements to keys
-//	 * @return
-//	 * 
-//	 * @param <K> key type
-//	 * @param <V> value type
-//	 */
-//	<K,V> DistributablePipeline<Entry<K, V[]>> group(Function<? super T, ? extends K> classifier);
 	
 	/**
 	 * Operation to provide a set of functions to join data set represented by this {@link DistributablePipeline} 
@@ -257,7 +249,7 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	 * @param hashValueMapper function to extract value from this instance of the {@link DistributablePipeline} - (hash)
 	 * @param probeKeyClassifier function to extract Key from the joined instance of the {@link DistributablePipeline} - (probe)
 	 * @param probeValueMapper function to extract value from the joined instance of the {@link DistributablePipeline} - (probe)
-	 * @param parallelismSize
+	 * @param parallelismSize size value to be used by default {@link Parallelizer}
 	 * @return {@link DistributableStream} of type {@link Entry}&lt;K, {@link Pair}&lt;VL,VR&gt;&gt;
 	 * 
 	 * @param <TT> the type of elements of the {@link DistributableStream} to join with - (probe)
@@ -285,7 +277,7 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	 * @param hashValueMapper function to extract value from this instance of the {@link DistributablePipeline} - (hash)
 	 * @param probeKeyClassifier function to extract Key from the joined instance of the {@link DistributablePipeline} - (probe)
 	 * @param probeValueMapper function to extract value from the joined instance of the {@link DistributablePipeline} - (probe)
-	 * @param parallelizer
+	 * @param parallelizer instance of {@link Parallelizer}
 	 * @return {@link DistributableStream} of type {@link Entry}&lt;K, {@link Pair}&lt;VL,VR&gt;&gt;
 	 * 
 	 * @param <TT> the type of elements of the {@link DistributableStream} to join with - (probe)
