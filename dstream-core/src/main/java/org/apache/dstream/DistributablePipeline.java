@@ -72,7 +72,7 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	 * @param <K> classifier type (key)
 	 * @param <V> value type
 	 */
-	<K,V> DistributablePipeline<Entry<K,List<V>>> group(Function<? super T, ? extends K> classifier, 
+	<K,V> DistributablePipeline<Entry<K,Iterable<V>>> group(Function<? super T, ? extends K> classifier, 
 			Function<? super T, ? extends V> valueMapper);
 	
 	/**
@@ -93,7 +93,7 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	 * @param <K> classifier type (key)
 	 * @param <V> value type
 	 */
-	<K,V> DistributablePipeline<Entry<K,List<V>>> group(Function<? super T, ? extends K> classifier, 
+	<K,V> DistributablePipeline<Entry<K,Iterable<V>>> group(Function<? super T, ? extends K> classifier, 
 			Function<? super T, ? extends V> valueMapper, int parallelismSize);
 	
 	/**
@@ -114,7 +114,7 @@ public interface DistributablePipeline<T> extends DistributableExecutable<T> {
 	 * @param <K> classifier type (key)
 	 * @param <V> value type
 	 */
-	<K,V> DistributablePipeline<Entry<K,List<V>>> group(Function<? super T, ? extends K> classifier, 
+	<K,V> DistributablePipeline<Entry<K,Iterable<V>>> group(Function<? super T, ? extends K> classifier, 
 			Function<? super T, ? extends V> valueMapper, Parallelizer<T> parallelizer);
 	
 	

@@ -62,8 +62,8 @@ public interface ExecutionSpec {
 			this.operations.add(operationName);
 		}
 		
-		public String getOperationNames(){
-			return this.operations.toString();
+		public String[] getOperationNames(){
+			return this.operations.toArray(new String[]{});
 		}
 		
 		public SourceSupplier<?> getSourceSupplier(){

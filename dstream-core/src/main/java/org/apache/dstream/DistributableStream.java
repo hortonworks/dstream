@@ -127,7 +127,7 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	 * @param <K> classifier type (key)
 	 * @param <V> value type
 	 */
-	<K,V> DistributableStream<Entry<K,List<V>>> group(Function<? super T, ? extends K> classifier, 
+	<K,V> DistributableStream<Entry<K,Iterable<V>>> group(Function<? super T, ? extends K> classifier, 
 			Function<? super T, ? extends V> valueMapper);
 	
 	/**
@@ -148,7 +148,7 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	 * @param <K> classifier type (key)
 	 * @param <V> value type
 	 */
-	<K,V> DistributableStream<Entry<K,List<V>>> group(Function<? super T, ? extends K> classifier, 
+	<K,V> DistributableStream<Entry<K,Iterable<V>>> group(Function<? super T, ? extends K> classifier, 
 			Function<? super T, ? extends V> valueMapper, int parallelismSize);
 	
 	/**
@@ -170,7 +170,7 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	 * @param <K> classifier type (key)
 	 * @param <V> value type
 	 */
-	<K,V> DistributableStream<Entry<K,List<V>>> group(Function<? super T, ? extends K> classifier, 
+	<K,V> DistributableStream<Entry<K,Iterable<V>>> group(Function<? super T, ? extends K> classifier, 
 			Function<? super T, ? extends V> valueMapper, Parallelizer<T> parallelizer);
 	
 	/**

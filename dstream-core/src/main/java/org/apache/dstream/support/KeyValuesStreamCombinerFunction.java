@@ -12,19 +12,19 @@ import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.utils.KVUtils;
 
 /**
- * Will aggregate values of a {@link Stream} who's elements are Key/Values pairs 
- * as in [K, Iterator[V]] using provided 'aggregationOperator' producing a new {@link Stream}
+ * Will combine (reduce) values of a {@link Stream} who's elements are Key/Values pairs 
+ * as in [K, Iterator[V]] using provided 'combiner' producing a new {@link Stream}
  * with [K,V] semantics.
  *
  * @param <K> key type
  * @param <V> value type
  */
-public class KeyValuesStreamAggregatorFunction<K,V,T> implements Function<Stream<Entry<K,Iterator<V>>>,Stream<T>> {
+public class KeyValuesStreamCombinerFunction<K,V,T> implements Function<Stream<Entry<K,Iterator<V>>>,Stream<T>> {
 
 	private static final long serialVersionUID = 1133920289646508908L;
 	
 	@SuppressWarnings("rawtypes")
-	private final BinaryOperator aggregationOperator;
+	private final BinaryOperator combiner;
 	
 	/**
 	 * 
@@ -34,8 +34,8 @@ public class KeyValuesStreamAggregatorFunction<K,V,T> implements Function<Stream
 	 * BinaryOperator is type-less to accommodate BiFunctions (e.g. Aggregators::aggregate)
 	 */
 	@SuppressWarnings("rawtypes")
-	public KeyValuesStreamAggregatorFunction(BinaryOperator aggregationOperator) {
-		this.aggregationOperator = aggregationOperator;
+	public KeyValuesStreamCombinerFunction(BinaryOperator combiner) {
+		this.combiner = combiner;
 	}
 
 	/**
@@ -45,6 +45,11 @@ public class KeyValuesStreamAggregatorFunction<K,V,T> implements Function<Stream
 	public Stream<T> apply(Stream<Entry<K, Iterator<V>>> sourceStream) {
 		return sourceStream.map(entry -> this.mergeValuesForCurrentKey(entry));
 	}
+	
+	@SuppressWarnings("unchecked")
+	protected Object buildValue(Stream<V> valuesStream){
+		return valuesStream.reduce(this.combiner).get();
+	}
 
 	/**
 	 * 
@@ -52,7 +57,7 @@ public class KeyValuesStreamAggregatorFunction<K,V,T> implements Function<Stream
 	@SuppressWarnings("unchecked")
 	private T mergeValuesForCurrentKey(Entry<K, Iterator<V>> currentEntry){
 		Stream<V> valuesStream = (Stream<V>) StreamSupport.stream(Spliterators.spliteratorUnknownSize(currentEntry.getValue(), Spliterator.ORDERED), false);
-		Object value = this.aggregationOperator == null ? valuesStream.findFirst().get() : KVUtils.kv(currentEntry.getKey(), valuesStream.reduce(this.aggregationOperator).get());
+		Object value = this.combiner == null ? valuesStream.findFirst().get() : KVUtils.kv(currentEntry.getKey(), this.buildValue(valuesStream));
 		return (T) value;
 	}
 }
