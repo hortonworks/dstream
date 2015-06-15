@@ -14,7 +14,8 @@ import java.util.stream.Stream;
 import org.apache.dstream.ExecutionSpec;
 import org.apache.dstream.ExecutionSpec.Stage;
 import org.apache.dstream.PredicateJoinFunction;
-import org.apache.dstream.support.KeyValuesStreamAggregatorFunction;
+import org.apache.dstream.support.KeyValuesStreamCombinerFunction;
+import org.apache.dstream.support.KeyValuesStreamGrouperFunction;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.tez.io.KeyWritable;
@@ -152,9 +153,11 @@ public class TezExecutableDAGBuilder {
 	private TaskPayload buildTask(Stage stage, Class<?> inputFormatClass) {
 		Function<Stream<?>, Stream<?>> processingFunction = (Function<Stream<?>, Stream<?>>) stage.getProcessingFunction();
 		if (stage.getAggregatorOperator() != null) {
-			Function<Stream<?>,Stream<?>> aggregatingFunction = new KeyValuesStreamAggregatorFunction(stage.getAggregatorOperator());
+			Function<Stream<?>,Stream<?>> aggregatingFunction = stage.getOperationNames()[0].equals("group")
+					? new KeyValuesStreamGrouperFunction(stage.getAggregatorOperator())
+						: new KeyValuesStreamCombinerFunction(stage.getAggregatorOperator());
 			if (processingFunction instanceof PredicateJoinFunction){
-				((PredicateJoinFunction)processingFunction).composeIntoHash(new KeyValuesStreamAggregatorFunction(null));
+				((PredicateJoinFunction)processingFunction).composeIntoHash(new KeyValuesStreamCombinerFunction(null));
 				((PredicateJoinFunction)processingFunction).composeIntoProbe(aggregatingFunction);
 			}
 			else {
