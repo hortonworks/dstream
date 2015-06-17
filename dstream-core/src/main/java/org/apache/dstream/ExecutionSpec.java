@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.apache.dstream.support.Parallelizer;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SourceSupplier;
@@ -38,7 +37,7 @@ public interface ExecutionSpec {
 		
 		private ExecutionSpec dependentExecutionSpec;
 
-		private Parallelizer<? super Object> parallelizer;
+		private Splitter<? super Object> splitter;
 
 		public abstract BinaryOperator<Object> getAggregatorOperator();
 		
@@ -46,12 +45,12 @@ public interface ExecutionSpec {
 		
 		public abstract int getId();
 		
-		public void setParallelizer(Parallelizer<? super Object> parallelizer) {
-			this.parallelizer = parallelizer;
+		public void setSplitter(Splitter<? super Object> splitter) {
+			this.splitter = splitter;
 		}
 		
-		public Parallelizer<? super Object> getParallelizer(){
-			return this.parallelizer;
+		public Splitter<? super Object> getSplitter(){
+			return this.splitter;
 		}
 		
 		public Function<Stream<?>, Stream<?>> getProcessingFunction(){

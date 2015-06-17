@@ -1,5 +1,6 @@
 package org.apache.dstream.support;
 
+import org.apache.dstream.Splitter;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 
 /**
@@ -7,15 +8,15 @@ import org.apache.dstream.support.SerializableFunctionConverters.Function;
  *
  * @param <T>
  */
-public class HashParallelizer<T> extends Parallelizer<T> {
+public class HashSplitter<T> extends Splitter<T> {
 	private static final long serialVersionUID = -3799649258371438298L;
 	
-	public HashParallelizer(int partitionSize){
-		this(partitionSize, null);
+	public HashSplitter(int splitSize){
+		this(splitSize, null);
 	}
 	
-	public HashParallelizer(int partitionSize, Function<? super T, ?> classifier){
-		super(partitionSize, classifier);
+	public HashSplitter(int splitSize, Function<? super T, ?> classifier){
+		super(splitSize, classifier);
 	}
 
 	@Override
@@ -24,6 +25,6 @@ public class HashParallelizer<T> extends Parallelizer<T> {
 		if (this.getClassifier() != null){
 			hashValue = this.getClassifier().apply(input);
 		}
-		return (hashValue.hashCode() & Integer.MAX_VALUE) % this.getPartitionSize();
+		return (hashValue.hashCode() & Integer.MAX_VALUE) % this.getSplitSize();
 	}
 }

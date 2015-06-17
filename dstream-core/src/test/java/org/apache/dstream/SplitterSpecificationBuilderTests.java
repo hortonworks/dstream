@@ -11,18 +11,20 @@ import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
 import org.apache.dstream.ExecutionSpec.Stage;
-import org.apache.dstream.support.HashParallelizer;
+import org.apache.dstream.support.HashSplitter;
 import org.junit.Test;
 
 /**
  */
-public class ParallelismSpecificationBuilderTests {
+public class SplitterSpecificationBuilderTests {
+	
+	private String executionName = this.getClass().getSimpleName();
 	
 	@Test
 	public void validateDefaultParallel() throws Exception {
 		DistributableStream<String> pipelineA = DistributableStream.ofType(String.class, "foo");
 		
-		Future<Stream<Stream<String>>> resultFuture = pipelineA.executeAs("ParallelismSpecificationBuilderTests");
+		Future<Stream<Stream<String>>> resultFuture = pipelineA.executeAs(this.executionName);
 		
 		ExecutionSpec executionSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
 		
@@ -30,17 +32,17 @@ public class ParallelismSpecificationBuilderTests {
 		assertEquals(1, stages.size());
 		
 		Stage stage = stages.get(0);
-		assertNotNull(stage.getParallelizer());
-		assertTrue(stage.getParallelizer() instanceof HashParallelizer);
-		assertEquals(1, stage.getParallelizer().getPartitionSize());
-		assertNull(stage.getParallelizer().getClassifier());
+		assertNotNull(stage.getSplitter());
+		assertTrue(stage.getSplitter() instanceof HashSplitter);
+		assertEquals(1, stage.getSplitter().getSplitSize());
+		assertNull(stage.getSplitter().getClassifier());
 	}
 	
 	@Test
 	public void validateParallelWithInteger() throws Exception {
 		DistributableStream<String> pipelineA = DistributableStream.ofType(String.class, "foo");
 		
-		Future<Stream<Stream<String>>> resultFuture = pipelineA.parallel(3).executeAs("ParallelismSpecificationBuilderTests");
+		Future<Stream<Stream<String>>> resultFuture = pipelineA.split(3).executeAs(this.executionName);
 		
 		ExecutionSpec executionSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
 		
@@ -48,10 +50,10 @@ public class ParallelismSpecificationBuilderTests {
 		assertEquals(1, stages.size());
 		
 		Stage stage = stages.get(0);
-		assertNotNull(stage.getParallelizer());
-		assertTrue(stage.getParallelizer() instanceof HashParallelizer);
-		assertEquals(3, stage.getParallelizer().getPartitionSize());
-		assertNull(stage.getParallelizer().getClassifier());
+		assertNotNull(stage.getSplitter());
+		assertTrue(stage.getSplitter() instanceof HashSplitter);
+		assertEquals(3, stage.getSplitter().getSplitSize());
+		assertNull(stage.getSplitter().getClassifier());
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -59,7 +61,7 @@ public class ParallelismSpecificationBuilderTests {
 	public void validateParallelWithParallelizer() throws Exception {
 		DistributableStream<String> pipelineA = DistributableStream.ofType(String.class, "foo");
 		
-		Future<Stream<Stream<String>>> resultFuture = pipelineA.parallel(new HashParallelizer(5)).executeAs("ParallelismSpecificationBuilderTests");
+		Future<Stream<Stream<String>>> resultFuture = pipelineA.split(new HashSplitter(5)).executeAs(this.executionName);
 		
 		ExecutionSpec executionSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
 		
@@ -67,17 +69,17 @@ public class ParallelismSpecificationBuilderTests {
 		assertEquals(1, stages.size());
 		
 		Stage stage = stages.get(0);
-		assertNotNull(stage.getParallelizer());
-		assertTrue(stage.getParallelizer() instanceof HashParallelizer);
-		assertEquals(5, stage.getParallelizer().getPartitionSize());
-		assertNull(stage.getParallelizer().getClassifier());
+		assertNotNull(stage.getSplitter());
+		assertTrue(stage.getSplitter() instanceof HashSplitter);
+		assertEquals(5, stage.getSplitter().getSplitSize());
+		assertNull(stage.getSplitter().getClassifier());
 	}
 
 	@Test
 	public void validateParallelWithParallelizerIntegerOverride() throws Exception {
 		DistributableStream<String> pipelineA = DistributableStream.ofType(String.class, "pConfig3");
 		
-		Future<Stream<Stream<String>>> resultFuture = pipelineA.parallel(7).executeAs("ParallelismSpecificationBuilderTests");
+		Future<Stream<Stream<String>>> resultFuture = pipelineA.split(7).executeAs(this.executionName);
 		
 		ExecutionSpec executionSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
 		
@@ -85,17 +87,17 @@ public class ParallelismSpecificationBuilderTests {
 		assertEquals(1, stages.size());
 		
 		Stage stage = stages.get(0);
-		assertNotNull(stage.getParallelizer());
-		assertTrue(stage.getParallelizer() instanceof HashParallelizer);
-		assertEquals(5, stage.getParallelizer().getPartitionSize());
-		assertNull(stage.getParallelizer().getClassifier());
+		assertNotNull(stage.getSplitter());
+		assertTrue(stage.getSplitter() instanceof HashSplitter);
+		assertEquals(5, stage.getSplitter().getSplitSize());
+		assertNull(stage.getSplitter().getClassifier());
 	}
 	
 	@Test
 	public void validateParallelWithIntegerCompleteOverride() throws Exception {
 		DistributableStream<String> pipelineA = DistributableStream.ofType(String.class, "pConfig4");
 		
-		Future<Stream<Stream<String>>> resultFuture = pipelineA.parallel(7).executeAs("ParallelismSpecificationBuilderTests");
+		Future<Stream<Stream<String>>> resultFuture = pipelineA.split(7).executeAs(this.executionName);
 		
 		ExecutionSpec executionSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
 		
@@ -103,10 +105,10 @@ public class ParallelismSpecificationBuilderTests {
 		assertEquals(1, stages.size());
 		
 		Stage stage = stages.get(0);
-		assertNotNull(stage.getParallelizer());
-		assertTrue(stage.getParallelizer() instanceof HashParallelizer);
-		assertEquals(6, stage.getParallelizer().getPartitionSize());
-		assertNull(stage.getParallelizer().getClassifier());
+		assertNotNull(stage.getSplitter());
+		assertTrue(stage.getSplitter() instanceof HashSplitter);
+		assertEquals(6, stage.getSplitter().getSplitSize());
+		assertNull(stage.getSplitter().getClassifier());
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -114,7 +116,7 @@ public class ParallelismSpecificationBuilderTests {
 	public void validateParallelWithParallelizerCompleteOverride() throws Exception {
 		DistributableStream<String> pipelineA = DistributableStream.ofType(String.class, "pConfig4");
 		
-		Future<Stream<Stream<String>>> resultFuture = pipelineA.parallel(new HashParallelizer(8)).executeAs("ParallelismSpecificationBuilderTests");
+		Future<Stream<Stream<String>>> resultFuture = pipelineA.split(new HashSplitter(8)).executeAs(this.executionName);
 		
 		ExecutionSpec executionSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
 		
@@ -122,10 +124,10 @@ public class ParallelismSpecificationBuilderTests {
 		assertEquals(1, stages.size());
 		
 		Stage stage = stages.get(0);
-		assertNotNull(stage.getParallelizer());
-		assertTrue(stage.getParallelizer() instanceof HashParallelizer);
-		assertEquals(6, stage.getParallelizer().getPartitionSize());
-		assertNull(stage.getParallelizer().getClassifier());
+		assertNotNull(stage.getSplitter());
+		assertTrue(stage.getSplitter() instanceof HashSplitter);
+		assertEquals(6, stage.getSplitter().getSplitSize());
+		assertNull(stage.getSplitter().getClassifier());
 	}
 	
 	@Test
@@ -134,21 +136,21 @@ public class ParallelismSpecificationBuilderTests {
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = pipelineA
 				.flatMap(line -> Stream.of(line.split("")))
 				.combine(s -> s, s -> 1, Integer::sum, 4)
-				.executeAs("ParallelismSpecificationBuilderTests");
+				.executeAs(this.executionName);
 		
 		ExecutionSpec executionSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
 		List<Stage> stages = executionSpec.getStages();
 		assertEquals(2, stages.size());
 		
 		Stage stage = stages.get(0);
-		assertNotNull(stage.getParallelizer());
-		assertTrue(stage.getParallelizer() instanceof HashParallelizer);
-		assertEquals(1, stage.getParallelizer().getPartitionSize());
+		assertNotNull(stage.getSplitter());
+		assertTrue(stage.getSplitter() instanceof HashSplitter);
+		assertEquals(1, stage.getSplitter().getSplitSize());
 		
 		stage = stages.get(1);
-		assertNotNull(stage.getParallelizer());
-		assertTrue(stage.getParallelizer() instanceof HashParallelizer);
-		assertEquals(4, stage.getParallelizer().getPartitionSize());
+		assertNotNull(stage.getSplitter());
+		assertTrue(stage.getSplitter() instanceof HashSplitter);
+		assertEquals(4, stage.getSplitter().getSplitSize());
 	}
 	
 	@Test
@@ -157,21 +159,21 @@ public class ParallelismSpecificationBuilderTests {
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = pipelineA
 				.flatMap(line -> Stream.of(line.split("")))
 				.combine(s -> s, s -> 1, Integer::sum, 4)
-				.executeAs("ParallelismSpecificationBuilderTests");
+				.executeAs(this.executionName);
 		
 		ExecutionSpec executionSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
 		List<Stage> stages = executionSpec.getStages();
 		assertEquals(2, stages.size());
 		
 		Stage stage = stages.get(0);
-		assertNotNull(stage.getParallelizer());
-		assertTrue(stage.getParallelizer() instanceof HashParallelizer);
-		assertEquals(1, stage.getParallelizer().getPartitionSize());
+		assertNotNull(stage.getSplitter());
+		assertTrue(stage.getSplitter() instanceof HashSplitter);
+		assertEquals(1, stage.getSplitter().getSplitSize());
 		
 		stage = stages.get(1);
-		assertNotNull(stage.getParallelizer());
-		assertTrue(stage.getParallelizer() instanceof HashParallelizer);
-		assertEquals(5, stage.getParallelizer().getPartitionSize());
+		assertNotNull(stage.getSplitter());
+		assertTrue(stage.getSplitter() instanceof HashSplitter);
+		assertEquals(5, stage.getSplitter().getSplitSize());
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -180,22 +182,22 @@ public class ParallelismSpecificationBuilderTests {
 		DistributableStream<String> pipelineA = DistributableStream.ofType(String.class, "pConfig1");
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = pipelineA
 				.flatMap(line -> Stream.of(line.split("")))
-				.combine(s -> s, s -> 1, Integer::sum, new HashParallelizer(3))
-				.executeAs("ParallelismSpecificationBuilderTests");
+				.combine(s -> s, s -> 1, Integer::sum, new HashSplitter(3))
+				.executeAs(this.executionName);
 		
 		ExecutionSpec executionSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
 		List<Stage> stages = executionSpec.getStages();
 		assertEquals(2, stages.size());
 		
 		Stage stage = stages.get(0);
-		assertNotNull(stage.getParallelizer());
-		assertTrue(stage.getParallelizer() instanceof HashParallelizer);
-		assertEquals(1, stage.getParallelizer().getPartitionSize());
+		assertNotNull(stage.getSplitter());
+		assertTrue(stage.getSplitter() instanceof HashSplitter);
+		assertEquals(1, stage.getSplitter().getSplitSize());
 		
 		stage = stages.get(1);
-		assertNotNull(stage.getParallelizer());
-		assertTrue(stage.getParallelizer() instanceof HashParallelizer);
-		assertEquals(3, stage.getParallelizer().getPartitionSize());
+		assertNotNull(stage.getSplitter());
+		assertTrue(stage.getSplitter() instanceof HashSplitter);
+		assertEquals(3, stage.getSplitter().getSplitSize());
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -204,22 +206,22 @@ public class ParallelismSpecificationBuilderTests {
 		DistributableStream<String> pipelineA = DistributableStream.ofType(String.class, "pConfig3");
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = pipelineA
 				.flatMap(line -> Stream.of(line.split("")))
-				.combine(s -> s, s -> 1, Integer::sum, new HashParallelizer(3))
-				.executeAs("ParallelismSpecificationBuilderTests");
+				.combine(s -> s, s -> 1, Integer::sum, new HashSplitter(3))
+				.executeAs(this.executionName);
 		
 		ExecutionSpec executionSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
 		List<Stage> stages = executionSpec.getStages();
 		assertEquals(2, stages.size());
 		
 		Stage stage = stages.get(0);
-		assertNotNull(stage.getParallelizer());
-		assertTrue(stage.getParallelizer() instanceof HashParallelizer);
-		assertEquals(5, stage.getParallelizer().getPartitionSize());
+		assertNotNull(stage.getSplitter());
+		assertTrue(stage.getSplitter() instanceof HashSplitter);
+		assertEquals(5, stage.getSplitter().getSplitSize());
 		
 		stage = stages.get(1);
-		assertNotNull(stage.getParallelizer());
-		assertTrue(stage.getParallelizer() instanceof HashParallelizer);
-		assertEquals(5, stage.getParallelizer().getPartitionSize());
+		assertNotNull(stage.getSplitter());
+		assertTrue(stage.getSplitter() instanceof HashSplitter);
+		assertEquals(5, stage.getSplitter().getSplitSize());
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -228,21 +230,21 @@ public class ParallelismSpecificationBuilderTests {
 		DistributableStream<String> pipelineA = DistributableStream.ofType(String.class, "pConfig4");
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = pipelineA
 				.flatMap(line -> Stream.of(line.split("")))
-				.combine(s -> s, s -> 1, Integer::sum, new HashParallelizer(3))
-				.executeAs("ParallelismSpecificationBuilderTests");
+				.combine(s -> s, s -> 1, Integer::sum, new HashSplitter(3))
+				.executeAs(this.executionName);
 		
 		ExecutionSpec executionSpec = DstreamTestUtils.extractFirstPipelineExecutionSpec(resultFuture);
 		List<Stage> stages = executionSpec.getStages();
 		assertEquals(2, stages.size());
 		
 		Stage stage = stages.get(0);
-		assertNotNull(stage.getParallelizer());
-		assertTrue(stage.getParallelizer() instanceof HashParallelizer);
-		assertEquals(6, stage.getParallelizer().getPartitionSize());
+		assertNotNull(stage.getSplitter());
+		assertTrue(stage.getSplitter() instanceof HashSplitter);
+		assertEquals(6, stage.getSplitter().getSplitSize());
 		
 		stage = stages.get(1);
-		assertNotNull(stage.getParallelizer());
-		assertTrue(stage.getParallelizer() instanceof HashParallelizer);
-		assertEquals(6, stage.getParallelizer().getPartitionSize());
+		assertNotNull(stage.getSplitter());
+		assertTrue(stage.getSplitter() instanceof HashSplitter);
+		assertEquals(6, stage.getSplitter().getSplitSize());
 	}
 }

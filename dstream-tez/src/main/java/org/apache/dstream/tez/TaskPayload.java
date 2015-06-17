@@ -3,7 +3,7 @@ package org.apache.dstream.tez;
 import java.io.Serializable;
 import java.util.stream.Stream;
 
-import org.apache.dstream.support.Parallelizer;
+import org.apache.dstream.Splitter;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 
 class TaskPayload implements Serializable {
@@ -11,18 +11,18 @@ class TaskPayload implements Serializable {
 
 	private final Function<Stream<?>, Stream<?>> task;
 
-	private Parallelizer<? super Object> parallelizer;
+	private Splitter<? super Object> splitter;
 
 	TaskPayload(Function<Stream<?>, Stream<?>> task){
 		this.task = task;
 	}
 	
-	Parallelizer<? super Object> getParallelizer() {
-		return parallelizer;
+	Splitter<? super Object> getSplitter() {
+		return splitter;
 	}
 
-	void setParallelizer(Parallelizer<? super Object> parallelizer) {
-		this.parallelizer = parallelizer;
+	void setSplitter(Splitter<? super Object> splitter) {
+		this.splitter = splitter;
 	}
 	
 	Function<Stream<?>, Stream<?>> getTask() {

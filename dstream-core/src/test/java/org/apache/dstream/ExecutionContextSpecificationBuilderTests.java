@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.apache.dstream.ExecutionSpec.Stage;
-import org.apache.dstream.support.HashParallelizer;
+import org.apache.dstream.support.HashSplitter;
 import org.apache.dstream.support.UriSourceSupplier;
 import org.apache.dstream.utils.KVUtils;
 import org.junit.Test;
@@ -68,7 +68,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
-		assertTrue(stage.getParallelizer().getClass().isAssignableFrom(HashParallelizer.class));
+		assertTrue(stage.getSplitter().getClass().isAssignableFrom(HashSplitter.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(Integer.class));
 		
 		Stream<Stream<Object>> result = resultFuture.get(1000, TimeUnit.MILLISECONDS);
@@ -94,7 +94,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
-		assertTrue(stage.getParallelizer().getClass().isAssignableFrom(HashParallelizer.class));
+		assertTrue(stage.getSplitter().getClass().isAssignableFrom(HashSplitter.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(Integer.class));
 		
 		Stream<Stream<Object>> result = resultFuture.get(1000, TimeUnit.MILLISECONDS);
@@ -123,7 +123,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
-		assertTrue(stage.getParallelizer().getClass().isAssignableFrom(HashParallelizer.class));
+		assertTrue(stage.getSplitter().getClass().isAssignableFrom(HashSplitter.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));
 		
 		Stream<Stream<Object>> result = resultFuture.get(1000, TimeUnit.MILLISECONDS);
@@ -154,7 +154,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
-		assertTrue(stage.getParallelizer().getClass().isAssignableFrom(HashParallelizer.class));
+		assertTrue(stage.getSplitter().getClass().isAssignableFrom(HashSplitter.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));
 		
 		Stream<Stream<String>> result = resultFuture.get(1000, TimeUnit.MILLISECONDS);
@@ -185,7 +185,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
-		assertTrue(stage.getParallelizer().getClass().isAssignableFrom(HashParallelizer.class));
+		assertTrue(stage.getSplitter().getClass().isAssignableFrom(HashSplitter.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));
 		
 		stage = pipelineSpec.getStages().get(1);
@@ -198,7 +198,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertNull(stage.getProcessingFunction());	
 		assertEquals("1_foo", stage.getName());
 		assertNull(stage.getSourceSupplier());
-		assertTrue(stage.getParallelizer().getClass().isAssignableFrom(HashParallelizer.class));
+		assertTrue(stage.getSplitter().getClass().isAssignableFrom(HashSplitter.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));
 		
 		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(1000, TimeUnit.MILLISECONDS);
@@ -230,7 +230,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
-		assertTrue(stage.getParallelizer().getClass().isAssignableFrom(HashParallelizer.class));
+		assertTrue(stage.getSplitter().getClass().isAssignableFrom(HashSplitter.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));
 		
 		stage = pipelineSpec.getStages().get(1);
@@ -243,7 +243,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertNull(stage.getProcessingFunction());
 		assertEquals("1_foo", stage.getName());
 		assertNull(stage.getSourceSupplier());
-		assertTrue(stage.getParallelizer().getClass().isAssignableFrom(HashParallelizer.class));
+		assertTrue(stage.getSplitter().getClass().isAssignableFrom(HashSplitter.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));
 	}
 	
@@ -273,7 +273,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
-		assertTrue(stage.getParallelizer().getClass().isAssignableFrom(HashParallelizer.class));
+		assertTrue(stage.getSplitter().getClass().isAssignableFrom(HashSplitter.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));
 		
 		stage = pipelineSpec.getStages().get(1);
@@ -291,7 +291,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		
 		assertEquals("1_foo", stage.getName());
 		assertNull(stage.getSourceSupplier());
-		assertTrue(stage.getParallelizer().getClass().isAssignableFrom(HashParallelizer.class));
+		assertTrue(stage.getSplitter().getClass().isAssignableFrom(HashSplitter.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));
 	}
 	
@@ -318,7 +318,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
-		assertTrue(stage.getParallelizer().getClass().isAssignableFrom(HashParallelizer.class));
+		assertTrue(stage.getSplitter().getClass().isAssignableFrom(HashSplitter.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));
 	}
 	
@@ -347,7 +347,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertEquals("0_foo", stage.getName());
 		assertNotNull(stage.getSourceSupplier());
 		assertEquals(new UriSourceSupplier(new URI("file:" + this.userDir + "/src/test/java/demo/monte-cristo.txt")), stage.getSourceSupplier());
-		assertTrue(stage.getParallelizer().getClass().isAssignableFrom(HashParallelizer.class));
+		assertTrue(stage.getSplitter().getClass().isAssignableFrom(HashSplitter.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));
 		
 		stage = pipelineSpec.getStages().get(1);
@@ -360,7 +360,7 @@ public class ExecutionContextSpecificationBuilderTests {
 		assertNull(stage.getProcessingFunction());
 		assertEquals("1_foo", stage.getName());
 		assertNull(stage.getSourceSupplier());
-		assertTrue(stage.getParallelizer().getClass().isAssignableFrom(HashParallelizer.class));
+		assertTrue(stage.getSplitter().getClass().isAssignableFrom(HashSplitter.class));
 		assertTrue(stage.getSourceItemType().isAssignableFrom(String.class));
 	}
 }

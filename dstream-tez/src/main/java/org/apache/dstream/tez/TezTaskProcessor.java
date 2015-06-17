@@ -136,7 +136,7 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 			String taskPath = new String(payloadBytes);
 			payload = HdfsSerializerUtils.deserialize(new Path(taskPath), fs, TaskPayload.class);
 			registry.cacheForDAG(this.vertexName, payload);
-			TezDelegatingPartitioner.setDelegator(payload.getParallelizer());
+			TezDelegatingPartitioner.setDelegator(payload.getSplitter());
 		}
 		return payload.getTask();
 	}

@@ -18,8 +18,7 @@ import org.aopalliance.intercept.MethodInvocation;
 import org.apache.dstream.ExecutionSpec.Stage;
 import org.apache.dstream.support.Aggregators;
 import org.apache.dstream.support.ConfigurationGenerator;
-import org.apache.dstream.support.HashParallelizer;
-import org.apache.dstream.support.Parallelizer;
+import org.apache.dstream.support.HashSplitter;
 import org.apache.dstream.support.PipelineConfigurationHelper;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
@@ -244,17 +243,17 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> extends
 			this.addStage(invocation, pjFunc, depStage.getAggregatorOperator(), invocation.getMethod().getName());
 			this.getCurrentStage().setDependentExecutionSpec(dependentPipelineEecutuionSpec);
 		}
-		else if (invocation.getMethod().getName().equals("parallel")) {
+		else if (invocation.getMethod().getName().equals("split")) {
 			if (arguments.length == 1){
 				if (arguments[0] instanceof Integer){
-					this.getCurrentStage().setParallelizer(new HashParallelizer((Integer)arguments[0]));
+					this.getCurrentStage().setSplitter(new HashSplitter((Integer)arguments[0]));
 				}
 				else {
-					this.getCurrentStage().setParallelizer((Parallelizer)arguments[0]);
+					this.getCurrentStage().setSplitter((Splitter)arguments[0]);
 				}
 			}
 			else {
-				this.getCurrentStage().setParallelizer(new HashParallelizer((Integer)arguments[0], (Function)arguments[1]));
+				this.getCurrentStage().setSplitter(new HashSplitter((Integer)arguments[0], (Function)arguments[1]));
 			}	
 		}
 		else if (invocation.getMethod().getName().equals("combine")) {
@@ -307,59 +306,59 @@ final class ExecutionSpecBuilder<T,R extends DistributableExecutable<T>> extends
 				if (parallelismConfigValue != null){
 					String[] pParts = parallelismConfigValue.split(",");
 					if (pParts.length == 1){
-						if (currentStage.getParallelizer() != null){
-							currentStage.getParallelizer().updatePartitionSize(Integer.parseInt(pParts[0].trim()));
+						if (currentStage.getSplitter() != null){
+							currentStage.getSplitter().updateSplitSize(Integer.parseInt(pParts[0].trim()));
 						}
 						else {
-							currentStage.setParallelizer(new HashParallelizer(Integer.parseInt(pParts[0].trim())));
+							currentStage.setSplitter(new HashSplitter(Integer.parseInt(pParts[0].trim())));
 						}
 					}
 					else if (pParts.length == 2){
-						Parallelizer parallelizer = 
+						Splitter parallelizer = 
 								ReflectionUtils.newInstance(pParts[1].trim(), new Class[]{int.class}, new Object[]{Integer.parseInt(pParts[0].trim())});
-						currentStage.setParallelizer(parallelizer);
+						currentStage.setSplitter(parallelizer);
 					}
 					else {
 						throw new IllegalStateException("Invalid parallelization configuration: " + parallelismConfigValue);
 					}
 				}
 				else {
-					Parallelizer parallelizer = new HashParallelizer(1);
-					if (invocation.getMethod().getName().equals("parallel")){
+					Splitter parallelizer = new HashSplitter(1);
+					if (invocation.getMethod().getName().equals("split")){
 						if (invocation.getArguments().length == 1){
 							if (invocation.getArguments()[0] instanceof Integer){
-								parallelizer.updatePartitionSize((int) invocation.getArguments()[0]);
+								parallelizer.updateSplitSize((int) invocation.getArguments()[0]);
 							}
 							else {
-								parallelizer = (HashParallelizer) invocation.getArguments()[0];
+								parallelizer = (HashSplitter) invocation.getArguments()[0];
 							}
 						}
 						else {
-							parallelizer = new HashParallelizer((int) invocation.getArguments()[0], (Function)invocation.getArguments()[1]);
+							parallelizer = new HashSplitter((int) invocation.getArguments()[0], (Function)invocation.getArguments()[1]);
 						}
 					}
 					else if (invocation.getMethod().getName().equals("combine")){
 						if (invocation.getArguments().length == 4){
 							parallelizer = invocation.getArguments()[3] instanceof Integer 
-									? new HashParallelizer((int) invocation.getArguments()[3]) 
-										: (Parallelizer) invocation.getArguments()[3];
+									? new HashSplitter((int) invocation.getArguments()[3]) 
+										: (Splitter) invocation.getArguments()[3];
 						}
 					}
 					else if (invocation.getMethod().getName().equals("group")){
 						if (invocation.getArguments().length == 3){
 							parallelizer = invocation.getArguments()[2] instanceof Integer 
-									? new HashParallelizer((int) invocation.getArguments()[2]) 
-										: (Parallelizer) invocation.getArguments()[2];
+									? new HashSplitter((int) invocation.getArguments()[2]) 
+										: (Splitter) invocation.getArguments()[2];
 						}
 					}
 					else if (invocation.getMethod().getName().equals("join")){
 						if (invocation.getArguments().length == 6){
 							parallelizer = invocation.getArguments()[5] instanceof Integer 
-									? new HashParallelizer((int) invocation.getArguments()[5]) 
-										: (Parallelizer) invocation.getArguments()[5];
+									? new HashSplitter((int) invocation.getArguments()[5]) 
+										: (Splitter) invocation.getArguments()[5];
 						}
 					}
-					currentStage.setParallelizer(parallelizer);
+					currentStage.setSplitter(parallelizer);
 				}
 			}
 		};		

@@ -93,7 +93,7 @@ public class TezExecutableDAGBuilder {
 		Vertex vertex = stage.getId() == 0 
 				? Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd) 
 						: Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd, 
-								stage.getParallelizer() == null ? 1 : stage.getParallelizer().getPartitionSize());
+								stage.getSplitter() == null ? 1 : stage.getSplitter().getSplitSize());
 				
 		vertex.addTaskLocalFiles(this.tezClient.getLocalResources());
 		
@@ -186,7 +186,7 @@ public class TezExecutableDAGBuilder {
 			}
 		}	
 		TaskPayload payload = new TaskPayload(processingFunction);
-		payload.setParallelizer(stage.getParallelizer());
+		payload.setSplitter(stage.getSplitter());
 		return payload;
 	}
 	

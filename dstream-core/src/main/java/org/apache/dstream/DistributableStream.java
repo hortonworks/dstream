@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
-import org.apache.dstream.support.Parallelizer;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SerializableFunctionConverters.Predicate;
@@ -141,7 +140,7 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	 * 
 	 * @param classifier function to extract classifier (e.g., key)
 	 * @param valueMapper function to extract values
-	 * @param parallelismSize size value to be used by default {@link Parallelizer}
+	 * @param splitSize size value to be used by default {@link Splitter}
 	 * 
 	 * @return {@link DistributableStream} of type {@link Entry}&lt;K, {@link List}&lt;V&gt;&gt;
 	 * 
@@ -149,7 +148,7 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	 * @param <V> value type
 	 */
 	<K,V> DistributableStream<Entry<K,Iterable<V>>> group(Function<? super T, ? extends K> classifier, 
-			Function<? super T, ? extends V> valueMapper, int parallelismSize);
+			Function<? super T, ? extends V> valueMapper, int splitSize);
 	
 	/**
 	 * Operation to provide a set of functions to create stream of Key/Values pairs 
@@ -163,7 +162,7 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	 * 
 	 * @param classifier function to extract classifier (e.g., key)
 	 * @param valueMapper function to extract values
-	 * @param  parallelizer {@link Parallelizer} instance
+	 * @param splitter {@link Splitter} instance
 	 * 
 	 * @return {@link DistributableStream} of type {@link Entry}&lt;K, {@link List}&lt;V&gt;&gt;
 	 * 
@@ -171,7 +170,7 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	 * @param <V> value type
 	 */
 	<K,V> DistributableStream<Entry<K,Iterable<V>>> group(Function<? super T, ? extends K> classifier, 
-			Function<? super T, ? extends V> valueMapper, Parallelizer<T> parallelizer);
+			Function<? super T, ? extends V> valueMapper, Splitter<T> splitter);
 	
 	/**
 	 * Operation to provide a set of functions to create stream of Key/Value pairs 
@@ -208,7 +207,7 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	 * @param valueMapper function to extract values
 	 * @param combiner a merge function, to resolve collisions between
      *                      values associated with the same key
-     * @param parallelismSize size value to be used by default {@link Parallelizer}
+     * @param splitSize size value to be used by default {@link Splitter}
 	 * @return {@link DistributableStream} of type {@link Entry}&lt;K,V&gt;
 	 * 
 	 * @param <K> classifier type (key)
@@ -216,7 +215,7 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	 */
 	<K,V> DistributableStream<Entry<K,V>> combine(Function<? super T, ? extends K> classifier, 
 			Function<? super T, ? extends V> valueMapper, 
-			BinaryOperator<V> combiner, int parallelismSize);
+			BinaryOperator<V> combiner, int splitSize);
 	
 	/**
 	 * Operation to provide a set of functions to create stream of Key/Value pairs 
@@ -231,7 +230,7 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	 * @param valueMapper function to extract values
 	 * @param combiner a merge function, to resolve collisions between
      *                      values associated with the same key
-     * @param parallelizer {@link Parallelizer} instance
+     * @param splitter {@link Splitter} instance
 	 * @return {@link DistributableStream} of type {@link Entry}&lt;K,V&gt;
 	 * 
 	 * @param <K> classifier type (key)
@@ -239,31 +238,32 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	 */
 	<K,V> DistributableStream<Entry<K,V>> combine(Function<? super T, ? extends K> classifier, 
 			Function<? super T, ? extends V> valueMapper, 
-			BinaryOperator<V> combiner, Parallelizer<T> parallelizer);
+			BinaryOperator<V> combiner, Splitter<T> splitter);
 	
 	/**
-	 * Returns an equivalent stream while providing parallelization size directive.<br>
+	 * Returns an equivalent stream while providing stream parallelization hint.<br>
 	 * <br>
 	 * This is an <i>intermediate</i> operation. 
 	 * <br>
 	 * This is an <i>shuffle</i> operation.
 	 * 
-	 * @param parallelismSize size value to be used by default {@link Parallelizer}
+	 * @param splitSize size value to be used by the default {@link Splitter}
 	 * @return
 	 */
-	DistributableStream<T> parallel(int parallelismSize);
+	DistributableStream<T> split(int splitSize);
 	
 	/**
-	 * Returns an equivalent stream while providing {@link Parallelizer}.<br>
+	 * Returns an equivalent stream while providing the {@link Splitter} to use 
+	 * while parallelizing this stream<br>
 	 * <br>
 	 * This is an <i>intermediate</i> operation.
 	 * <br>
 	 * This is an <i>shuffle</i> operation.
 	 * 
-	 * @param parallelizer {@link Parallelizer} instance
+	 * @param splitter {@link Splitter} instance
 	 * @return
 	 */
-	DistributableStream<T> parallel(Parallelizer<T> parallelizer);	
+	DistributableStream<T> split(Splitter<T> splitter);	
 	
 	/**
 	 * Operation to provide a set of functions to join data set represented by this {@link DistributableStream} 
@@ -304,7 +304,7 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	 * @param hashValueMapper function to extract value from this instance of the {@link DistributablePipeline} - (hash)
 	 * @param probeKeyClassifier function to extract Key from the joined instance of the {@link DistributablePipeline} - (probe)
 	 * @param probeValueMapper function to extract value from the joined instance of the {@link DistributablePipeline} - (probe)
-	 * @param parallelismSize size value to be used by default {@link Parallelizer}
+	 * @param splitSize size value to be used by default {@link Splitter}
 	 * @return {@link DistributableStream} of type {@link Entry}&lt;K, {@link Pair}&lt;VL,VR&gt;&gt;
 	 * 
 	 * @param <TT> the type of elements of the {@link DistributableStream} to join with - (probe)
@@ -317,7 +317,7 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 																	  Function<? super T, ? extends VH> hashValueMapper,
 																	  Function<? super TT, ? extends K> probeKeyClassifier,
 																	  Function<? super TT, ? extends VP> probeValueMapper,
-																	  int parallelismSize);
+																	  int splitSize);
 	
 	/**
 	 * Operation to provide a set of functions to join data set represented by this {@link DistributableStream} 
@@ -332,7 +332,7 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 	 * @param hashValueMapper function to extract value from this instance of the {@link DistributablePipeline} - (hash)
 	 * @param probeKeyClassifier function to extract Key from the joined instance of the {@link DistributablePipeline} - (probe)
 	 * @param probeValueMapper function to extract value from the joined instance of the {@link DistributablePipeline} - (probe)
-	 * @param parallelizer {@link Parallelizer} instance
+	 * @param splitter {@link Splitter} instance
 	 * @return {@link DistributableStream} of type {@link Entry}&lt;K, {@link Pair}&lt;VL,VR&gt;&gt;
 	 * 
 	 * @param <TT> the type of elements of the {@link DistributableStream} to join with - (probe)
@@ -345,5 +345,5 @@ public interface DistributableStream<T> extends DistributableExecutable<T>{
 																	  Function<? super T, ? extends VH> hashValueMapper,
 																	  Function<? super TT, ? extends K> probeKeyClassifier,
 																	  Function<? super TT, ? extends VP> probeValueMapper,
-																	  Parallelizer<T> parallelizer);
+																	  Splitter<T> splitter);
 }
