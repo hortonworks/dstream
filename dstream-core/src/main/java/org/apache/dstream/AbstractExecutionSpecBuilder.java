@@ -110,6 +110,6 @@ public abstract class AbstractExecutionSpecBuilder<T,R> implements MethodInterce
 		return operationName.equals("combine") ||
 			   operationName.equals("group") ||
 			   operationName.equals("join") ||
-			   operationName.equals("parallel");
+			   operationName.equals("split");
 	}
 }

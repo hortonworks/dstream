@@ -25,11 +25,6 @@ public interface DistributableConstants {
 	public static String OUTPUT = DSTR_PREFIX + "output";
 	
 	/**
-	 * TODO
-	 */
-	public static String PARTITIONER = DSTR_PREFIX + "partitioner";
-	
-	/**
 	 * Prefix to identify 'stage' related configurations 
 	 * (see {@link #PARALLELISM}, {@link #MAP_SIDE_COMBINE} etc.)
 	 */
