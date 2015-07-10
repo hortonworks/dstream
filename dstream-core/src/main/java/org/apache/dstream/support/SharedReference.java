@@ -1,4 +1,4 @@
-package org.apache.dstream;
+package org.apache.dstream.support;
 
 import java.io.Serializable;
 import java.util.Iterator;

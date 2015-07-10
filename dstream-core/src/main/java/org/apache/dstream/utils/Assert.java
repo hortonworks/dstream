@@ -11,8 +11,12 @@ public class Assert {
 	}
 	
 	public static void notEmpty(Collection<?> collection) {
+		notEmpty(collection, "'collection' must not be null or empty");
+	}
+	
+	public static void notEmpty(Collection<?> collection, String message) {
 		if (collection == null || collection.size() == 0){
-			throw new IllegalArgumentException("'collection' must not be null or empty");
+			throw new IllegalArgumentException(message);
 		}
 	}
 	

@@ -91,7 +91,13 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 		}
 		
 		WritingConsumer consume = new WritingConsumer(kvWriter);
-		streamProcessingFunction.apply(functionArgument).forEach(consume);
+		try {
+			streamProcessingFunction.apply(functionArgument).forEach(consume);
+		} 
+		catch (Exception e) {
+			e.printStackTrace();
+			throw new IllegalStateException("Failed to process Tez task", e);
+		}
 
 		logger.info("Finished processing task-[" + this.dagName + ":" + this.vertexName + ":" + this.taskIndex + "]");
 	}
@@ -127,18 +133,18 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 	private Function extractTaskFunction() throws Exception {
 		ObjectRegistry registry = this.getContext().getObjectRegistry();
 		
-		TaskPayload payload = (TaskPayload) registry.get(this.vertexName);
-		if (payload == null){
+		Task task = (Task) registry.get(this.vertexName);
+		if (task == null){
 			FileSystem fs = FileSystem.get(this.configuration);
 			ByteBuffer payloadBuffer = this.getContext().getUserPayload().getPayload();
 			byte[] payloadBytes = new byte[payloadBuffer.capacity()];
 			payloadBuffer.get(payloadBytes);
 			String taskPath = new String(payloadBytes);
-			payload = HdfsSerializerUtils.deserialize(new Path(taskPath), fs, TaskPayload.class);
-			registry.cacheForDAG(this.vertexName, payload);
-			TezDelegatingPartitioner.setDelegator(payload.getSplitter());
+			task = HdfsSerializerUtils.deserialize(new Path(taskPath), fs, Task.class);
+			registry.cacheForDAG(this.vertexName, task);
+			TezDelegatingPartitioner.setDelegator(task.getPartitioner());
 		}
-		return payload.getTask();
+		return task.getFunction();
 	}
 	
 	/**

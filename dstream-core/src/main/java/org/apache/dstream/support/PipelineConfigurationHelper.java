@@ -12,7 +12,7 @@ public class PipelineConfigurationHelper {
 	 * @return
 	 */
 	public static Properties loadDelegatesConfig(){
-		return loadConfig("pipeline-delegates.cfg");
+		return loadConfig("execution-delegates.cfg");
 	}
 	
 	/**

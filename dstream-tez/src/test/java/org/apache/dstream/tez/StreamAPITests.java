@@ -28,7 +28,7 @@ public class StreamAPITests extends BaseTezTests {
 		
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
-				.combine(word -> word, word -> 1, Integer::sum)
+				.reduceGroups(word -> word, word -> 1, Integer::sum)
 			.executeAs(this.applicationName);
 		
 		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
@@ -48,7 +48,7 @@ public class StreamAPITests extends BaseTezTests {
 		
 		Future<Stream<Stream<String>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
-				.combine(word -> word, word -> 1, Integer::sum)
+				.reduceGroups(word -> word, word -> 1, Integer::sum)
 				.map(entry -> entry.toString())
 			.executeAs(this.applicationName);
 		
@@ -71,7 +71,7 @@ public class StreamAPITests extends BaseTezTests {
 		Future<Stream<Stream<String>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.filter(word -> word.equals("we"))
-				.combine(word -> word, word -> 1, Integer::sum)
+				.reduceGroups(word -> word, word -> 1, Integer::sum)
 				.map(entry -> entry.toString())
 			.executeAs(this.applicationName);
 		
@@ -95,7 +95,7 @@ public class StreamAPITests extends BaseTezTests {
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.filter(word -> word.equals("we"))
 				.map(word -> word.toUpperCase())
-				.combine(word -> word, word -> 1, Integer::sum)
+				.reduceGroups(word -> word, word -> 1, Integer::sum)
 				.map(entry -> entry.toString())
 			.executeAs(this.applicationName);
 		

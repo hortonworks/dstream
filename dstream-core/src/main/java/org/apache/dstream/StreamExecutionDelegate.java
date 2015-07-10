@@ -1,11 +1,13 @@
 package org.apache.dstream;
 
+import java.util.Properties;
+import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
 /**
- * Strategy to implement delegates to execute an array of {@link ExecutionSpec}s.
+ * Strategy to implement delegates to execute {@link DistributableStream} operations
  */
-public interface ExecutionDelegate  {
+public interface StreamExecutionDelegate<T> {
 
 	/**
 	 * Main delegation operation to pass an array of {@link ExecutionSpec}s to 
@@ -18,7 +20,8 @@ public interface ExecutionDelegate  {
 	 * 
 	 *  See {@link DistributableExecutable} for more details on the different result structures.
 	 */
-	Stream<Stream<?>>[] execute(String executionName, ExecutionSpec... executionSpecs);
+	// add comment that while signature allows for async invocation, the actual style coudl still be controlled by the implementation
+	Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, OperationContext<T>... operationContexts);
 
 	/**
 	 * Returns {@link Runnable} which contains logic relevant to closing of the result {@link Stream}.

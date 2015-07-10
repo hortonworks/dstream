@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
  * @param <T>
  */
 public class TezDagExecutor implements Runnable {
-	private final Logger logger = LoggerFactory.getLogger(TezExecutableDAGBuilder.class);
+	private final Logger logger = LoggerFactory.getLogger(TezDagExecutor.class);
 	
 	private final ExecutionContextAwareTezClient tezClient;
 	

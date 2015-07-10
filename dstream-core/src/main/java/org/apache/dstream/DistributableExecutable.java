@@ -11,7 +11,7 @@ import org.apache.dstream.utils.TypeUtils;
  * 
  * @param <T> the type of streamable elements of this {@link DistributableExecutable}
  */
-public interface DistributableExecutable<T> {
+public interface DistributableExecutable<T>{
 	
 	/**
 	 * Will execute the task represented by this {@link DistributableExecutable} returning the result 
@@ -52,7 +52,9 @@ public interface DistributableExecutable<T> {
 	 * <br><br>
 	 * 
 	 * How the actual output will be stored or how long will it remain after the resulting 
-	 * {@link Stream} is closed is undefined and is implementation dependent.
+	 * {@link Stream} is closed is undefined and is implementation dependent.<br>
+	 * <br>
+	 * This is an <i>terminal</i> operation.
 	 * 
 	 * @param executionName the name of this execution
 	 * @return 
@@ -60,8 +62,8 @@ public interface DistributableExecutable<T> {
 	Future<Stream<Stream<T>>> executeAs(String executionName);
 	
 	/**
-	 * Returns the execution name of this {@link DistributableExecutable}.
+	 * Returns the value of the sourceProperty of this stream.
 	 * @return
 	 */
-	String getName();
+	String getSourceIdentifier();
 }

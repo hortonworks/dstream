@@ -12,17 +12,23 @@ import org.apache.dstream.tez.BaseTezTests;
  * A rudimentary WordCount
  *
  */
-public class WordCountStream {
+public class WordCount {
 
+	@SuppressWarnings("unchecked")
 	public static void main(String[] args) throws Exception {
-		
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DistributableStream.ofType(String.class, "wc")
 				.flatMap(line -> Stream.of(line.split("\\s+")))
-				.combine(word -> word, word -> 1, Integer::sum)
+				.reduceGroups(word -> word, word -> 1, Integer::sum)
 			.executeAs("WordCount");
 		
+//		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DistributableStream.ofType(String.class, "wc")
+//				.<String>compute(stream -> stream
+//						.flatMap(line -> Stream.of(line.split("\\s+")))
+//				).reduceGroups(word -> word, word -> 1, Integer::sum)
+//			.executeAs("WordCount");
+		
 		// each stream within a stream represents a partition essentially giving you access to each result partition
-		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
+		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000000, TimeUnit.MILLISECONDS);
 		
 		result.forEach(stream -> stream.forEach(System.out::println));
 		result.close();
@@ -30,5 +36,4 @@ public class WordCountStream {
 		BaseTezTests.clean("WordCount");
 		System.exit(0);// until 0.6.1 Tez see TEZ-1661
 	}
-
 }
