@@ -1,7 +1,6 @@
 package org.apache.dstream;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.dstream.utils.Assert;
@@ -28,17 +27,7 @@ public interface ExecutionGroup extends DistributableExecutable<Stream<? extends
 	public static ExecutionGroup create(String executionGroupName, DistributableExecutable<?>... distributables){
 		Assert.notEmpty(executionGroupName, "'executionGroupName' must not be null or empty");
 		Assert.notEmpty(distributables, "'distributables' must not be null and must contain at least one element");
-		
-		Set<DistributableExecutable<?>> s = new LinkedHashSet<DistributableExecutable<?>>();
-		for (DistributableExecutable<?> distributableExecutable : distributables) {
-			if (s.contains(distributableExecutable)){
-				logger.warn("DistributableExecutable: " + distributableExecutable + 
-						" already exist in the group. Subsequent istance is excluded from the group");
-			}
-			else {
-				s.add(distributableExecutable);
-			}
-		}
-		return ExecutionSpecBuilder.asGroupExecutable(executionGroupName, ExecutionGroup.class, s.toArray(new DistributableExecutable[]{}));
+		throw new UnsupportedOperationException("ExecutionGroup is temporarily not supported");
+		//return ExecutionGroupSpecBuilder.as(executionGroupName, ExecutionGroup.class, Stream.of(distributables).distinct().collect(Collectors.toList()));
 	}
 }

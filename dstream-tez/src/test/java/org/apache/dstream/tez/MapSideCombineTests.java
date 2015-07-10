@@ -12,7 +12,6 @@ import java.util.stream.Stream;
 
 import junit.framework.Assert;
 
-import org.apache.dstream.DistributablePipeline;
 import org.apache.dstream.DistributableStream;
 import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.utils.JvmUtils;
@@ -33,13 +32,13 @@ public class MapSideCombineTests extends BaseTezTests {
 	}
 
 	@Test
-	public void pipelineMapSideCombine() throws Exception {	
-		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, "ms");
+	public void computeMapSideCombine() throws Exception {	
+		DistributableStream<String> sourcePipeline = DistributableStream.ofType(String.class, "ms");
 		
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.map(word -> kv(word, 1))
-			).combine(s -> s.getKey(), s -> s.getValue(), bo)
+			).reduceGroups(s -> s.getKey(), s -> s.getValue(), bo)
 			 .executeAs(this.applicationName);
 		
 		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
@@ -58,13 +57,13 @@ public class MapSideCombineTests extends BaseTezTests {
 	}
 	
 	@Test
-	public void pipelineReduceSideCombineOnly() throws Exception {	
-		DistributablePipeline<String> sourcePipeline = DistributablePipeline.ofType(String.class, "rs");
+	public void computeReduceSideCombineOnly() throws Exception {	
+		DistributableStream<String> sourcePipeline = DistributableStream.ofType(String.class, "rs");
 		
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.map(word -> kv(word, 1))
-			).combine(s -> s.getKey(), s -> s.getValue(), bo)
+			).reduceGroups(s -> s.getKey(), s -> s.getValue(), bo)
 			 .executeAs(this.applicationName);
 		
 		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
@@ -88,11 +87,12 @@ public class MapSideCombineTests extends BaseTezTests {
 		
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
+//				.reduceGroups(s -> s, s -> 1, bo)
 				.map(word -> kv(word, 1))
-				.combine(s -> s.getKey(), s -> s.getValue(), bo)
+				.reduceGroups(s -> s.getKey(), s -> s.getValue(), bo)
 			 .executeAs(this.applicationName);
 		
-		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
+		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
 		List<Stream<Entry<String, Integer>>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
 		Stream<Entry<String, Integer>> firstResultStream = resultStreams.get(0);
@@ -114,7 +114,7 @@ public class MapSideCombineTests extends BaseTezTests {
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.map(word -> kv(word, 1))
-				.combine(s -> s.getKey(), s -> s.getValue(), bo)
+				.reduceGroups(s -> s.getKey(), s -> s.getValue(), bo)
 			 .executeAs(this.applicationName);
 		
 		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);

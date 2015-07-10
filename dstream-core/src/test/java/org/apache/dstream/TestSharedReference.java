@@ -2,7 +2,7 @@ package org.apache.dstream;
 
 import java.io.Serializable;
 
-import org.apache.dstream.SharedReference.MutableSharedReference;
+import org.apache.dstream.support.SharedReference.MutableSharedReference;
 
 
 public class TestSharedReference<T extends Serializable> extends MutableSharedReference<T> {
@@ -10,8 +10,6 @@ public class TestSharedReference<T extends Serializable> extends MutableSharedRe
 	
 	private T object;
 	
-	public TestSharedReference(){}
-
 	@Override
 	public T get() {
 		return this.object;

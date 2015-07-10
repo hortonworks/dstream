@@ -2,6 +2,7 @@ package org.apache.dstream;
 
 import static org.junit.Assert.assertEquals;
 
+import org.apache.dstream.support.SharedReference;
 import org.junit.Test;
 
 public class SharedReferenceTests {

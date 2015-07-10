@@ -11,7 +11,7 @@ import org.apache.dstream.support.SerializableFunctionConverters.Predicate;
  * It will be created and collected by the {@link ExecutionSpecBuilder} for each operation 
  * on the {@link DistributableStream}.
  */
-class DistributableStreamToStreamAdapterFunction implements Function<Stream<?>, Stream<?>>{
+public class DistributableStreamToStreamAdapterFunction implements Function<Stream<?>, Stream<?>>{
 
 	private static final long serialVersionUID = 6836233233261184905L;
 	
@@ -24,7 +24,7 @@ class DistributableStreamToStreamAdapterFunction implements Function<Stream<?>, 
 	 * @param streamOperationName
 	 * @param sourceFunction
 	 */
-	DistributableStreamToStreamAdapterFunction(String streamOperationName, Object sourceFunction){
+	public DistributableStreamToStreamAdapterFunction(String streamOperationName, Object sourceFunction){
 		this.sourceFunction = sourceFunction;
 		this.streamOperationName = streamOperationName;
 	}

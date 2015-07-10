@@ -17,6 +17,9 @@ public interface DistributableConstants {
 	 */
 	public static String SOURCE= DSTR_PREFIX + "source.";
 	
+	
+	public static String DELEGATE= DSTR_PREFIX + "delegate";
+	
 	/**
 	 * Identifies the output directory {@link URI} of the execution identified by 
 	 * name (e.g., <i>stream.executeAs("myExecution")</i>).

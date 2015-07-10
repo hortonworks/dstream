@@ -44,9 +44,9 @@ import org.springframework.util.StringUtils;
 /**
  * 
  */
-public class TezExecutableDAGBuilder {
+public class TezDAGBuilder {
 	
-	private final Logger logger = LoggerFactory.getLogger(TezExecutableDAGBuilder.class);
+	private final Logger logger = LoggerFactory.getLogger(TezDAGBuilder.class);
 	
 	private final DAG dag;
 	
@@ -66,8 +66,8 @@ public class TezExecutableDAGBuilder {
 	 * @param tezClient
 	 * @param inputFormatClass
 	 */
-	public TezExecutableDAGBuilder(String pipelineName, ExecutionContextAwareTezClient tezClient, Properties pipelineConfig) {
-		this.dag = DAG.create(pipelineName + "_" + System.currentTimeMillis());
+	public TezDAGBuilder(String executionName, ExecutionContextAwareTezClient tezClient, Properties executionConfig) {
+		this.dag = DAG.create(executionName + "_" + System.currentTimeMillis());
 		this.tezClient = tezClient;
 		
 		//TODO need to figure out when and why would the Edge be different and how to configure it
@@ -83,24 +83,26 @@ public class TezExecutableDAGBuilder {
 	 * @param stage
 	 * @param parallelizm
 	 */
-	public void addStage(Stage stage) {	
-		String vertexName = stage.getName();
-		Class<?> inputFormatClass = stage.getId() == 0 ? this.determineInputFormatClass(stage) : null;
-		UserPayload payload = this.createPayloadFromTaskSerPath(this.buildTask(stage, inputFormatClass), this.dag.getName(), stage);
+	public void addTask(TaskDescriptor taskDescriptor) {	
+		String vertexName = taskDescriptor.getName();
+		if (taskDescriptor.getId() == 0){
+			this.determineInputFormatClass(taskDescriptor);
+		}
+		UserPayload payload = this.createPayloadFromTaskSerPath(Task.build(taskDescriptor), this.dag.getName());
 		ProcessorDescriptor pd = ProcessorDescriptor.create(TezTaskProcessor.class.getName()).setUserPayload(payload);	
 		
 		// inputOrderCounter needed to maintain the order of inputs for joins
-		Vertex vertex = stage.getId() == 0 
+		Vertex vertex = taskDescriptor.getId() == 0 
 				? Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd) 
 						: Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd, 
-								stage.getSplitter() == null ? 1 : stage.getSplitter().getSplitSize());
+								taskDescriptor.getPartitioner() == null ? 1 : taskDescriptor.getPartitioner().getPartitionSize());
 				
 		vertex.addTaskLocalFiles(this.tezClient.getLocalResources());
 		
 		this.dag.addVertex(vertex);
 		
-		if (stage.getId() == 0){	
-			SourceSupplier<?> sourceSupplier = stage.getSourceSupplier();
+		if (taskDescriptor.getId() == 0){	
+			SourceSupplier<?> sourceSupplier = taskDescriptor.getSourceSupplier();
 			Object[] sources = sourceSupplier.get();
 			
 			Assert.notEmpty(sources, "'sources' must not be null or empty");
@@ -108,11 +110,11 @@ public class TezExecutableDAGBuilder {
 			if (sources != null){
 				if (sources[0] instanceof URI){
 					URI[] uris = Arrays.copyOf(sources, sources.length, URI[].class);
-					DataSourceDescriptor dataSource = this.buildDataSourceDescriptorFromUris(inputFormatClass, uris);
+					DataSourceDescriptor dataSource = this.buildDataSourceDescriptorFromUris(taskDescriptor.getInputFormatClass(), uris);
 					vertex.addDataSource(this.inputOrderCounter++ + ":" + vertexName + "_INPUT", dataSource);
 				} 
 				else {
-					throw new IllegalArgumentException("Unsupported sources: " + Arrays.asList(stage.getSourceSupplier()));
+					throw new IllegalArgumentException("Unsupported sources: " + Arrays.asList(taskDescriptor.getSourceSupplier()));
 				}
 			}
 		} 
@@ -121,14 +123,14 @@ public class TezExecutableDAGBuilder {
 			this.dag.addEdge(edge);
 		}
 		
-		if (stage.getDependentExecutionSpec() != null){
-			ExecutionSpec execSpec = stage.getDependentExecutionSpec();
-			List<Stage> dependentStages = execSpec.getStages();
-			
-			dependentStages.forEach(dependentStage -> this.addStage(dependentStage));
-			Edge edge = Edge.create(this.lastVertex, vertex, this.edgeConf.createDefaultEdgeProperty());
-			this.dag.addEdge(edge);
-		}
+//		if (stage.getDependentExecutionSpec() != null){
+//			ExecutionSpec execSpec = stage.getDependentExecutionSpec();
+//			List<Stage> dependentStages = execSpec.getStages();
+//			
+//			dependentStages.forEach(dependentStage -> this.addStage(dependentStage));
+//			Edge edge = Edge.create(this.lastVertex, vertex, this.edgeConf.createDefaultEdgeProperty());
+//			this.dag.addEdge(edge);
+//		}
 		
 		if (logger.isDebugEnabled()){
 			logger.debug("Created Vertex: " + vertex);
@@ -149,46 +151,46 @@ public class TezExecutableDAGBuilder {
 	 * @param stage
 	 * @return
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private TaskPayload buildTask(Stage stage, Class<?> inputFormatClass) {
-		Function<Stream<?>, Stream<?>> processingFunction = (Function<Stream<?>, Stream<?>>) stage.getProcessingFunction();
-		if (stage.getAggregatorOperator() != null) {
-			Function<Stream<?>,Stream<?>> aggregatingFunction = stage.getOperationNames()[0].equals("group")
-					? new KeyValuesStreamGrouperFunction(stage.getAggregatorOperator())
-						: new KeyValuesStreamCombinerFunction(stage.getAggregatorOperator());
-			if (processingFunction instanceof PredicateJoinFunction){
-				((PredicateJoinFunction)processingFunction).composeIntoHash(new KeyValuesStreamCombinerFunction(null));
-				((PredicateJoinFunction)processingFunction).composeIntoProbe(aggregatingFunction);
-			}
-			else {
-				processingFunction = processingFunction == null ? aggregatingFunction : processingFunction.compose(aggregatingFunction);
-			}
-		} 
-		else if (processingFunction == null) {
-			throw new IllegalStateException("Both processing function and aggregator op are null. "
-					+ "This condition is invalid as it will result in a stage with no processing instruction and is definitely a bug. Please report!");
-		}
-		
-		if (stage.getId() == 0 && !Entry.class.isAssignableFrom(stage.getSourceItemType())){	
-			if (Writable.class.isAssignableFrom(stage.getSourceItemType())){
-				processingFunction = processingFunction.compose(stream -> stream.map(s -> ((Entry)s).getValue()));
-			} 
-			else {
-				ParameterizedType parameterizedType = (ParameterizedType) inputFormatClass.getGenericSuperclass();
-				Type type = parameterizedType.getActualTypeArguments()[1];
-				if (Text.class.getName().equals(type.getTypeName())){
-					processingFunction = processingFunction.compose(stream -> stream.map( s -> ((Entry)s).getValue().toString()));
-				} 
-				else {
-					//TODO need to design some type of extensible converter to support multiple types of Writable
-					throw new IllegalStateException("Can't determine modified function");
-				}
-			}
-		}	
-		TaskPayload payload = new TaskPayload(processingFunction);
-		payload.setSplitter(stage.getSplitter());
-		return payload;
-	}
+//	@SuppressWarnings({ "unchecked", "rawtypes" })
+//	private TaskPayload buildTask(Stage stage, Class<?> inputFormatClass) {
+//		Function<Stream<?>, Stream<?>> processingFunction = (Function<Stream<?>, Stream<?>>) stage.getProcessingFunction();
+//		if (stage.getAggregatorOperator() != null) {
+//			Function<Stream<?>,Stream<?>> aggregatingFunction = stage.getOperationNames()[0].equals("group")
+//					? new KeyValuesStreamGrouperFunction(stage.getAggregatorOperator())
+//						: new KeyValuesStreamCombinerFunction(stage.getAggregatorOperator());
+//			if (processingFunction instanceof PredicateJoinFunction){
+//				((PredicateJoinFunction)processingFunction).composeIntoHash(new KeyValuesStreamCombinerFunction(null));
+//				((PredicateJoinFunction)processingFunction).composeIntoProbe(aggregatingFunction);
+//			}
+//			else {
+//				processingFunction = processingFunction == null ? aggregatingFunction : processingFunction.compose(aggregatingFunction);
+//			}
+//		} 
+//		else if (processingFunction == null) {
+//			throw new IllegalStateException("Both processing function and aggregator op are null. "
+//					+ "This condition is invalid as it will result in a stage with no processing instruction and is definitely a bug. Please report!");
+//		}
+//		
+//		if (stage.getId() == 0 && !Entry.class.isAssignableFrom(stage.getSourceItemType())){	
+//			if (Writable.class.isAssignableFrom(stage.getSourceItemType())){
+//				processingFunction = processingFunction.compose(stream -> stream.map(s -> ((Entry)s).getValue()));
+//			} 
+//			else {
+//				ParameterizedType parameterizedType = (ParameterizedType) inputFormatClass.getGenericSuperclass();
+//				Type type = parameterizedType.getActualTypeArguments()[1];
+//				if (Text.class.getName().equals(type.getTypeName())){
+//					processingFunction = processingFunction.compose(stream -> stream.map( s -> ((Entry)s).getValue().toString()));
+//				} 
+//				else {
+//					//TODO need to design some type of extensible converter to support multiple types of Writable
+//					throw new IllegalStateException("Can't determine modified function");
+//				}
+//			}
+//		}	
+//		TaskPayload payload = new TaskPayload(processingFunction);
+//		payload.setSplitter(stage.getSplitter());
+//		return payload;
+//	}
 	
 	/**
 	 * 
@@ -224,10 +226,10 @@ public class TezExecutableDAGBuilder {
 	/**
 	 * 
 	 */
-	private UserPayload createPayloadFromTaskSerPath(Object task, String pipelineName, Stage stage){
+	private UserPayload createPayloadFromTaskSerPath(Task task, String dagName){
 		org.apache.hadoop.fs.Path mapTaskPath = 
 				HdfsSerializerUtils.serialize(task, this.tezClient.getFileSystem(), 
-						new org.apache.hadoop.fs.Path(pipelineName + "/tasks/" + stage.getName() + ".ser"));
+						new org.apache.hadoop.fs.Path(dagName + "/tasks/" + task.getId() + "_" + task.getName() + ".ser"));
 		UserPayload payload = UserPayload.create(ByteBuffer.wrap(mapTaskPath.toString().getBytes()));
 		return payload;
 	}
@@ -255,16 +257,16 @@ public class TezExecutableDAGBuilder {
 	/**
 	 * 
 	 */
-	private Class<?> determineInputFormatClass(Stage firstStage){
-		SourceSupplier<?> sourceSupplier = firstStage.getSourceSupplier();
-		
+	private void determineInputFormatClass(TaskDescriptor firstTask){
+		SourceSupplier<?> sourceSupplier = (SourceSupplier<?>) firstTask.getSourceSupplier();
+		Class<?> sourceElementType = (Class<?>) firstTask.getSourceElementType();
 		if (sourceSupplier.get()[0] instanceof URI){
-			if (firstStage.getSourceItemType().isAssignableFrom(String.class)){
-				return TextInputFormat.class;
+			if (sourceElementType.isAssignableFrom(String.class)){
+				firstTask.setInputFormatClass(TextInputFormat.class);
 			} 
 			else {
 				// TODO design a configurable component to handle other standard and custom input types
-				throw new IllegalArgumentException("Failed to determine Input Format class for source item type " + firstStage.getSourceItemType());
+				throw new IllegalArgumentException("Failed to determine Input Format class for source item type " + sourceElementType);
 			}
 		} 
 		else {

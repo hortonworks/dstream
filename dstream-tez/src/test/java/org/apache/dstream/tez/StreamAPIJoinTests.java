@@ -37,21 +37,21 @@ public class StreamAPIJoinTests extends BaseTezTests {
 		DistributableStream<Entry<Integer, String>> probe = probeStream.map(line -> {
 					String[] split = line.trim().split("\\s+");
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
-	    }).filter(s -> true).combine(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
+	    }).filter(s -> true).reduceGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
 	
 		
-		Future<Stream<Stream<Entry<Integer, Pair<String, String>>>>> resultFuture = hash.join(probe, 
-				l -> Integer.parseInt(l.substring(0, l.indexOf(" ")).trim()), l -> l.substring(l.indexOf(" ")).trim(), r -> r.getKey(), r -> r.getValue()
+		Future<Stream<Stream<Pair<String, Entry<Integer, String>>>>> resultFuture = hash.join(probe, 
+				l -> Integer.parseInt(l.substring(0, l.indexOf(" ")).trim()), r -> r.getKey()
 				).executeAs(this.applicationName);
 
-		Stream<Stream<Entry<Integer, Pair<String, String>>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
+		Stream<Stream<Pair<String, Entry<Integer, String>>>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
 		
-		List<Stream<Entry<Integer, Pair<String, String>>>> resultStreams = result.collect(Collectors.toList());
+		List<Stream<Pair<String, Entry<Integer, String>>>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
-		Stream<Entry<Integer,  Pair<String, String>>> firstResultStream = resultStreams.get(0);
+		Stream<Pair<String, Entry<Integer, String>>> firstResultStream = resultStreams.get(0);
 		
 		
-		List<Entry<Integer, Pair<String, String>>> firstResult = firstResultStream.collect(Collectors.toList());
+		List<Pair<String, Entry<Integer, String>>> firstResult = firstResultStream.collect(Collectors.toList());
 		Assert.assertEquals(3, firstResult.size());
 		
 		assertEquals(firstResult.get(0), KVUtils.kv(1, Pair.of("ORACLE", "Thomas Kurian, Larry Ellison")));

@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.dstream.DistributableConstants;
-import org.apache.dstream.DistributablePipeline;
+import org.apache.dstream.DistributableStream;
 import org.apache.dstream.ExecutionGroup;
 import org.apache.dstream.tez.BaseTezTests;
 import org.apache.dstream.utils.Pair;
@@ -35,23 +35,21 @@ public class ExecutionGroupTests extends BaseTezTests {
 	@Test
 	public void validateWithDefaultOutput() throws Exception {
 		
-		DistributablePipeline<String> hash = DistributablePipeline.ofType(String.class, "hash").compute(stream -> stream
+		DistributableStream<String> hash = DistributableStream.ofType(String.class, "hash").compute(stream -> stream
 				.map(line -> line.toUpperCase())
 		);
 		
-		DistributablePipeline<Entry<Integer, String>> probe = DistributablePipeline.ofType(String.class, "probe").<Entry<Integer, String>>compute(stream -> stream
+		DistributableStream<Entry<Integer, String>> probe = DistributableStream.ofType(String.class, "probe").<Entry<Integer, String>>compute(stream -> stream
 				.map(line -> {
 					String[] split = line.trim().split("\\s+");
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
 				})
-		).combine(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
+		).reduceGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
 		
 		
-		DistributablePipeline<Entry<Integer, Pair<String, String>>> joined = hash.join(probe, 
+		DistributableStream<Pair<String, Entry<Integer, String>>> joined = hash.join(probe, 
 				hashElement -> Integer.parseInt(hashElement.substring(0, hashElement.indexOf(" ")).trim()), 
-				hashElement -> hashElement.substring(hashElement.indexOf(" ")).trim(), 
-				probeElement -> probeElement.getKey(), 
-				probeElement -> probeElement.getValue()
+				probeElement -> probeElement.getKey()
 			);
 		
 		ExecutionGroup jg = ExecutionGroup.create("group_defaultOut", hash, joined, probe);
@@ -85,23 +83,21 @@ public class ExecutionGroupTests extends BaseTezTests {
 	@Test
 	public void validateWithProvidedOutput() throws Exception {
 		String executionPipelineName = "group_providedOut";
-		DistributablePipeline<String> hash = DistributablePipeline.ofType(String.class, "hash").compute(stream -> stream
+		DistributableStream<String> hash = DistributableStream.ofType(String.class, "hash").compute(stream -> stream
 				.map(line -> line.toUpperCase())
 		);
 		
-		DistributablePipeline<Entry<Integer, String>> probe = DistributablePipeline.ofType(String.class, "probe").<Entry<Integer, String>>compute(stream -> stream
+		DistributableStream<Entry<Integer, String>> probe = DistributableStream.ofType(String.class, "probe").<Entry<Integer, String>>compute(stream -> stream
 				.map(line -> {
 					String[] split = line.trim().split("\\s+");
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
 				})
-		).combine(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
+		).reduceGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
 		
 		
-		DistributablePipeline<Entry<Integer, Pair<String, String>>> joined = hash.join(probe, 
+		DistributableStream<Pair<String, Entry<Integer, String>>> joined = hash.join(probe, 
 				hashElement -> Integer.parseInt(hashElement.substring(0, hashElement.indexOf(" ")).trim()), 
-				hashElement -> hashElement.substring(hashElement.indexOf(" ")).trim(), 
-				probeElement -> probeElement.getKey(), 
-				probeElement -> probeElement.getValue()
+				probeElement -> probeElement.getKey()
 			);
 		
 		ExecutionGroup jg = ExecutionGroup.create(executionPipelineName, hash, joined, probe);

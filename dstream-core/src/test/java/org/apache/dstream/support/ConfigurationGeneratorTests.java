@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
 
-import org.apache.dstream.DistributablePipeline;
+import org.apache.dstream.DistributableStream;
 import org.apache.dstream.ExecutionConfigGenerator;
 import org.apache.dstream.utils.Pair;
 import org.apache.log4j.AppenderSkeleton;
@@ -21,46 +21,47 @@ public class ConfigurationGeneratorTests {
 	@Test
 	public void testConfigGeneration() throws Exception {
 		
-		DistributablePipeline<String> hashPipeline = DistributablePipeline.ofType(String.class, "hash");
-		DistributablePipeline<String> probePipeline = DistributablePipeline.ofType(String.class, "probe");
 		
-		DistributablePipeline<String> hash = hashPipeline.compute(stream -> stream
+		DistributableStream<String> hashPipeline = DistributableStream.ofType(String.class, "hash");
+		DistributableStream<String> probePipeline = DistributableStream.ofType(String.class, "probe");
+		
+		DistributableStream<String> hash = hashPipeline.compute(stream -> stream
 				.map(line -> line.toUpperCase())
 		);
 		
-		DistributablePipeline<Entry<Integer, String>> probe = probePipeline.<Entry<Integer, String>>compute(stream -> stream
+		DistributableStream<Entry<Integer, String>> probe = probePipeline.<Entry<Integer, String>>compute(stream -> stream
 				.map(line -> {
 					String[] split = line.trim().split("\\s+");
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
 				})
-		).combine(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
+		).reduceGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
 		
-		DistributablePipeline<Entry<Integer, Pair<String, String>>> joinedPipeline = hash.join(probe, 
-				hashElement -> Integer.parseInt(hashElement.substring(0, hashElement.indexOf(" ")).trim()), 
-				hashElement -> hashElement.substring(hashElement.indexOf(" ")).trim(), 
-				probeElement -> probeElement.getKey(), 
-				probeElement -> probeElement.getValue()
+		DistributableStream<Pair<String, Entry<Integer, String>>> joinPipeline = hash.join(probe, 
+				s -> 1,
+				s -> 1
 			);
 		
-		String configuration = ((ExecutionConfigGenerator)joinedPipeline).generateConfig();
-
-		Properties prop = new Properties();
-		prop.load(new StringReader(configuration));
+		throw new UnsupportedOperationException("Temporary disabled");
 		
-		assertTrue(prop.containsKey("dstream.source.hash"));
-		assertTrue(prop.containsKey("dstream.source.probe"));
-		
-		assertTrue(configuration.contains("#dstream.output="));
-		
-		assertTrue(configuration.contains("#dstream.stage.parallelizm.0_hash="));
-		assertTrue(configuration.contains("#dstream.stage.parallelizm.1_hash="));
-		assertTrue(configuration.contains("#dstream.stage.parallelizm.0_probe="));
-		assertTrue(configuration.contains("#dstream.stage.parallelizm.1_probe="));
-		
-		assertTrue(configuration.contains("#dstream.stage.ms_combine.0_hash="));
-		assertTrue(configuration.contains("#dstream.stage.ms_combine.1_hash="));
-		assertTrue(configuration.contains("#dstream.stage.ms_combine.0_probe="));
-		assertTrue(configuration.contains("#dstream.stage.ms_combine.1_probe="));
+//		String configuration = ((ExecutionConfigGenerator)joinPipeline).generateConfig();
+//
+//		Properties prop = new Properties();
+//		prop.load(new StringReader(configuration));
+//		
+//		assertTrue(prop.containsKey("dstream.source.hash"));
+//		assertTrue(prop.containsKey("dstream.source.probe"));
+//		
+//		assertTrue(configuration.contains("#dstream.output="));
+//		
+//		assertTrue(configuration.contains("#dstream.stage.parallelizm.0_hash="));
+//		assertTrue(configuration.contains("#dstream.stage.parallelizm.1_hash="));
+//		assertTrue(configuration.contains("#dstream.stage.parallelizm.0_probe="));
+//		assertTrue(configuration.contains("#dstream.stage.parallelizm.1_probe="));
+//		
+//		assertTrue(configuration.contains("#dstream.stage.ms_combine.0_hash="));
+//		assertTrue(configuration.contains("#dstream.stage.ms_combine.1_hash="));
+//		assertTrue(configuration.contains("#dstream.stage.ms_combine.0_probe="));
+//		assertTrue(configuration.contains("#dstream.stage.ms_combine.1_probe="));
 	}
 	
 	public static class TestAppender extends AppenderSkeleton {
