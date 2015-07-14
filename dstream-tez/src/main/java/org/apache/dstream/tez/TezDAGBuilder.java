@@ -1,28 +1,17 @@
 package org.apache.dstream.tez;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.ExecutionSpec;
-import org.apache.dstream.ExecutionSpec.Stage;
-import org.apache.dstream.PredicateJoinFunction;
-import org.apache.dstream.support.KeyValuesStreamCombinerFunction;
-import org.apache.dstream.support.KeyValuesStreamGrouperFunction;
-import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.tez.io.KeyWritable;
 import org.apache.dstream.tez.io.ValueWritable;
 import org.apache.dstream.tez.utils.HdfsSerializerUtils;
 import org.apache.dstream.utils.Assert;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
@@ -138,60 +127,7 @@ public class TezDAGBuilder {
 		this.lastVertex = vertex;
 	}
 	
-	/**
-	 * This method will modify processing instruction to accommodate Tez's KV Reader
-	 * for cases where Stream type is non-Entry (e.g., String). It will compose a new Function
-	 * with value extracting mapper to comply with user defined types including extraction of 
-	 * value from Writable.
-	 * It also supports dealing with Writable directly if Writable is the type of the Stream.
-	 * Function will be composed if
-	 * - first stage
-	 * - source item type is not Entry<K,V> 
-	 * 
-	 * @param stage
-	 * @return
-	 */
-//	@SuppressWarnings({ "unchecked", "rawtypes" })
-//	private TaskPayload buildTask(Stage stage, Class<?> inputFormatClass) {
-//		Function<Stream<?>, Stream<?>> processingFunction = (Function<Stream<?>, Stream<?>>) stage.getProcessingFunction();
-//		if (stage.getAggregatorOperator() != null) {
-//			Function<Stream<?>,Stream<?>> aggregatingFunction = stage.getOperationNames()[0].equals("group")
-//					? new KeyValuesStreamGrouperFunction(stage.getAggregatorOperator())
-//						: new KeyValuesStreamCombinerFunction(stage.getAggregatorOperator());
-//			if (processingFunction instanceof PredicateJoinFunction){
-//				((PredicateJoinFunction)processingFunction).composeIntoHash(new KeyValuesStreamCombinerFunction(null));
-//				((PredicateJoinFunction)processingFunction).composeIntoProbe(aggregatingFunction);
-//			}
-//			else {
-//				processingFunction = processingFunction == null ? aggregatingFunction : processingFunction.compose(aggregatingFunction);
-//			}
-//		} 
-//		else if (processingFunction == null) {
-//			throw new IllegalStateException("Both processing function and aggregator op are null. "
-//					+ "This condition is invalid as it will result in a stage with no processing instruction and is definitely a bug. Please report!");
-//		}
-//		
-//		if (stage.getId() == 0 && !Entry.class.isAssignableFrom(stage.getSourceItemType())){	
-//			if (Writable.class.isAssignableFrom(stage.getSourceItemType())){
-//				processingFunction = processingFunction.compose(stream -> stream.map(s -> ((Entry)s).getValue()));
-//			} 
-//			else {
-//				ParameterizedType parameterizedType = (ParameterizedType) inputFormatClass.getGenericSuperclass();
-//				Type type = parameterizedType.getActualTypeArguments()[1];
-//				if (Text.class.getName().equals(type.getTypeName())){
-//					processingFunction = processingFunction.compose(stream -> stream.map( s -> ((Entry)s).getValue().toString()));
-//				} 
-//				else {
-//					//TODO need to design some type of extensible converter to support multiple types of Writable
-//					throw new IllegalStateException("Can't determine modified function");
-//				}
-//			}
-//		}	
-//		TaskPayload payload = new TaskPayload(processingFunction);
-//		payload.setSplitter(stage.getSplitter());
-//		return payload;
-//	}
-	
+
 	/**
 	 * 
 	 */

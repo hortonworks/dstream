@@ -1,6 +1,5 @@
 package org.apache.dstream;
 
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.dstream.utils.Assert;
@@ -28,6 +27,6 @@ public interface ExecutionGroup extends DistributableExecutable<Stream<? extends
 		Assert.notEmpty(executionGroupName, "'executionGroupName' must not be null or empty");
 		Assert.notEmpty(distributables, "'distributables' must not be null and must contain at least one element");
 		throw new UnsupportedOperationException("ExecutionGroup is temporarily not supported");
-		//return ExecutionGroupSpecBuilder.as(executionGroupName, ExecutionGroup.class, Stream.of(distributables).distinct().collect(Collectors.toList()));
+		
 	}
 }

@@ -6,27 +6,27 @@ import org.apache.dstream.utils.Assert;
 public abstract class Partitioner<T> implements Function<T, Integer> {
 	private static final long serialVersionUID = -250807397502312547L;
 	
-	private int splitSize;
+	private int partitionSize;
 	
 	private final Function<? super T, ?> classifier;
 
-	public Partitioner(int splitSize) {
-		this(splitSize, null);
+	public Partitioner(int partitionSize) {
+		this(partitionSize, null);
 	}
 	
-	public Partitioner(int splitSize, Function<? super T, ?> classifier) {
-		Assert.isTrue(splitSize > 0, "'splitSize' must be > 0");
-		this.splitSize = splitSize;
+	public Partitioner(int partitionSize, Function<? super T, ?> classifier) {
+		Assert.isTrue(partitionSize > 0, "'partitionSize' must be > 0");
+		this.partitionSize = partitionSize;
 		this.classifier = classifier;
 	}
 
 	public int getPartitionSize(){
-		return this.splitSize;
+		return this.partitionSize;
 	}
 	
-	public void updatePartitionSize(int splitSize){
-		Assert.isTrue(splitSize > 0, "'splitSize' must be > 0");
-		this.splitSize = splitSize;
+	public void updatePartitionSize(int partitionSize){
+		Assert.isTrue(partitionSize > 0, "'partitionSize' must be > 0");
+		this.partitionSize = partitionSize;
 	}
 	
 	public Function<? super T, ?> getClassifier() {

@@ -113,7 +113,9 @@ final class StreamOperationsCollector<T,R extends DistributableStream<?>> implem
 	}
 
 	/**
-	 * 
+	 * Will add {@link OperationContext} interface to the proxy delegating it's invocation to the 
+	 * list of operations of this stream. The list of operations will be used by 
+	 * target execution environment ( {@link StreamExecutionDelegate} ) to execute the stream.
 	 */
 	@SuppressWarnings("unchecked")
 	private Object doExecute(String executionName, Properties executionConfig, StreamExecutionDelegate<List<MethodInvocation>> executionDelegate) {	

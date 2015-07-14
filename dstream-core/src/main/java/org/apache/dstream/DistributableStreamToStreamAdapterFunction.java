@@ -4,6 +4,7 @@ import java.util.stream.Stream;
 
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SerializableFunctionConverters.Predicate;
+import org.apache.dstream.utils.Assert;
 
 /**
  * An implementation of {@link Function} which will translate Stream-like
@@ -25,6 +26,13 @@ public class DistributableStreamToStreamAdapterFunction implements Function<Stre
 	 * @param sourceFunction
 	 */
 	public DistributableStreamToStreamAdapterFunction(String streamOperationName, Object sourceFunction){
+		Assert.notEmpty(streamOperationName, "'streamOperationName' must not be null or empty");
+		if (!(streamOperationName.equals("flatMap") ||
+			streamOperationName.equals("map") ||
+			streamOperationName.equals("filter"))){
+			throw new UnsupportedOperationException("Operation '" + streamOperationName + "' is not supported.");
+		}
+		Assert.notNull(sourceFunction, "'sourceFunction' must not be null");
 		this.sourceFunction = sourceFunction;
 		this.streamOperationName = streamOperationName;
 	}
@@ -45,6 +53,7 @@ public class DistributableStreamToStreamAdapterFunction implements Function<Stre
 			return streamIn.map((Function)this.sourceFunction);
 		}
 		else {
+			// should never happen due to the constructor assertions. Simply concludes IF statement
 			throw new UnsupportedOperationException("Operation '" + this.streamOperationName + "' is not supported.");
 		}
 	}
