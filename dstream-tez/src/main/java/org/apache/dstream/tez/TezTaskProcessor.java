@@ -16,7 +16,6 @@ import org.apache.dstream.tez.io.ValueWritable;
 import org.apache.dstream.tez.utils.HdfsSerializerUtils;
 import org.apache.dstream.tez.utils.StreamUtils;
 import org.apache.dstream.utils.Assert;
-import org.apache.dstream.utils.ReflectionUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -55,7 +54,7 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 		this.dagName = this.getContext().getDAGName();
 		this.taskIndex = this.getContext().getTaskIndex();
 		this.vertexName = this.getContext().getTaskVertexName();
-		this.configuration = ReflectionUtils.getFieldValue(this.getContext(), "conf", Configuration.class);
+		this.configuration = new Configuration();
 	}
 
 	/**

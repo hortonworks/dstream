@@ -21,7 +21,7 @@ public interface StreamExecutionDelegate<T> {
 	 *  See {@link DistributableExecutable} for more details on the different result structures.
 	 */
 	// add comment that while signature allows for async invocation, the actual style coudl still be controlled by the implementation
-	Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, OperationContext<T>... operationContexts);
+	Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, StreamInvocationChain... invocationChains);
 
 	/**
 	 * Returns {@link Runnable} which contains logic relevant to closing of the result {@link Stream}.

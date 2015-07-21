@@ -1,10 +1,11 @@
 package org.apache.dstream.tez;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.apache.dstream.Partitioner;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
-import org.apache.dstream.support.SourceSupplier;
+import org.apache.dstream.support.SerializableFunctionConverters.Supplier;
 
 public class TaskDescriptor {
 	
@@ -18,8 +19,10 @@ public class TaskDescriptor {
 	
 	private Class<?> sourceElementType;
 	
-	private SourceSupplier<?> sourceSupplier;
+	private Supplier<?> sourceSupplier;
 	
+	private List<TaskDescriptor> dependentTasksChain;
+
 	private Class<?> inputFormatClass;
 
 	public TaskDescriptor(int id){
@@ -31,6 +34,14 @@ public class TaskDescriptor {
 		this.id = id;
 	}
 	
+	public List<TaskDescriptor> getDependentTasksChain() {
+		return dependentTasksChain;
+	}
+
+	public void setDependentTasksChain(List<TaskDescriptor> dependentTasksChain) {
+		this.dependentTasksChain = dependentTasksChain;
+	}
+	
 	public Class<?> getInputFormatClass() {
 		return inputFormatClass;
 	}
@@ -39,11 +50,11 @@ public class TaskDescriptor {
 		this.inputFormatClass = inputFormatClass;
 	}
 	
-	public SourceSupplier<?> getSourceSupplier() {
+	public Supplier<?> getSourceSupplier() {
 		return sourceSupplier;
 	}
 
-	public void setSourceSupplier(SourceSupplier<?> sourceSupplier) {
+	public void setSourceSupplier(Supplier<?> sourceSupplier) {
 		this.sourceSupplier = sourceSupplier;
 	}
 	

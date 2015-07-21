@@ -9,16 +9,16 @@ import java.util.stream.Stream;
 
 public abstract class AbstractStreamExecutionDelegate<T> implements StreamExecutionDelegate<T> {
 
-	@SuppressWarnings("unchecked")
+//	@SuppressWarnings("unchecked")
 	@Override
-	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, OperationContext<T>... operationContexts) {
+	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, StreamInvocationChain... invocationChains) {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 		try {
 			Future<Stream<Stream<?>>> resultFuture = executor.submit(new Callable<Stream<Stream<?>>>() {
 				@Override
 				public Stream<Stream<?>> call() throws Exception {
 					try {
-						return doExecute(executionName, executionConfig, operationContexts);
+						return doExecute(executionName, executionConfig, invocationChains);
 					} 
 					catch (Exception e) {
 						e.printStackTrace();
@@ -36,8 +36,8 @@ public abstract class AbstractStreamExecutionDelegate<T> implements StreamExecut
 		} 
 	}
 
-	@SuppressWarnings("unchecked")
-	protected abstract Stream<Stream<?>> doExecute(String executionName, Properties executionConfig, OperationContext<T>... operationContexts);
+//	@SuppressWarnings("unchecked")
+	protected abstract Stream<Stream<?>> doExecute(String executionName, Properties executionConfig, StreamInvocationChain... invocationChains);
 	
 	/**
 	 * 

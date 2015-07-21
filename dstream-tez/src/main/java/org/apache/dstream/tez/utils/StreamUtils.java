@@ -68,14 +68,14 @@ public class StreamUtils {
 						hasNext = this.currentValues.hasNext();
 					} 
 				} else {
-					if (this.currentValues.hasNext()){
-						hasNext = true;
-					} else {
+//					if (this.currentValues.hasNext()){
+//						hasNext = true;
+//					} else {
 						if (this.kvsReader.next()){
 							this.currentValues = (Iterator<V>) this.kvsReader.getCurrentValues().iterator();
 							hasNext = this.currentValues.hasNext();
 						} 
-					}
+//					}
 				}
 				return hasNext;
 			} 

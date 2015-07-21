@@ -34,7 +34,7 @@ public class ConfigurationGeneratorTests {
 					String[] split = line.trim().split("\\s+");
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
 				})
-		).reduceGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
+		).aggregateGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
 		
 		DistributableStream<Pair<String, Entry<Integer, String>>> joinPipeline = hash.join(probe, 
 				s -> 1,
