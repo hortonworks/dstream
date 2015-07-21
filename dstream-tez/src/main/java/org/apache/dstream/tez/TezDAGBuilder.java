@@ -3,10 +3,12 @@ package org.apache.dstream.tez;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.dstream.support.SerializableFunctionConverters.Supplier;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.tez.io.KeyWritable;
 import org.apache.dstream.tez.io.ValueWritable;
@@ -64,6 +66,7 @@ public class TezDAGBuilder {
 				.newBuilder("org.apache.dstream.tez.io.KeyWritable",
 						"org.apache.dstream.tez.io.ValueWritable",
 						TezDelegatingPartitioner.class.getName(), null).build();
+//		edgeConf.cr
 		this.dagExecutor = new TezDagExecutor(this.tezClient, this.dag);
 	}
 	
@@ -91,35 +94,38 @@ public class TezDAGBuilder {
 		this.dag.addVertex(vertex);
 		
 		if (taskDescriptor.getId() == 0){	
-			SourceSupplier<?> sourceSupplier = taskDescriptor.getSourceSupplier();
-			Object[] sources = sourceSupplier.get();
+			Supplier<?> sourceSupplier = taskDescriptor.getSourceSupplier();
 			
-			Assert.notEmpty(sources, "'sources' must not be null or empty");
-			
-			if (sources != null){
-				if (sources[0] instanceof URI){
-					URI[] uris = Arrays.copyOf(sources, sources.length, URI[].class);
-					DataSourceDescriptor dataSource = this.buildDataSourceDescriptorFromUris(taskDescriptor.getInputFormatClass(), uris);
-					vertex.addDataSource(this.inputOrderCounter++ + ":" + vertexName + "_INPUT", dataSource);
-				} 
-				else {
-					throw new IllegalArgumentException("Unsupported sources: " + Arrays.asList(taskDescriptor.getSourceSupplier()));
+			if (sourceSupplier instanceof SourceSupplier){
+				Object[] sources = ((SourceSupplier<?>)sourceSupplier).get();
+				
+				Assert.notEmpty(sources, "'sources' must not be null or empty");	
+				if (sources != null){
+					if (sources[0] instanceof URI){
+						URI[] uris = Arrays.copyOf(sources, sources.length, URI[].class);
+						DataSourceDescriptor dataSource = this.buildDataSourceDescriptorFromUris(taskDescriptor.getInputFormatClass(), uris);
+						vertex.addDataSource(this.inputOrderCounter++ + ":" + vertexName + "_INPUT", dataSource);
+					} 
+					else {
+						throw new IllegalArgumentException("Unsupported sources: " + Arrays.asList(taskDescriptor.getSourceSupplier()));
+					}
 				}
-			}
+			} 
+			else {
+				throw new IllegalArgumentException("Urecognized source supplier: " + sourceSupplier);
+			}	
 		} 
 		else {
 			Edge edge = Edge.create(this.lastVertex, vertex, this.edgeConf.createDefaultEdgeProperty());
 			this.dag.addEdge(edge);
 		}
 		
-//		if (stage.getDependentExecutionSpec() != null){
-//			ExecutionSpec execSpec = stage.getDependentExecutionSpec();
-//			List<Stage> dependentStages = execSpec.getStages();
-//			
-//			dependentStages.forEach(dependentStage -> this.addStage(dependentStage));
-//			Edge edge = Edge.create(this.lastVertex, vertex, this.edgeConf.createDefaultEdgeProperty());
-//			this.dag.addEdge(edge);
-//		}
+		if (taskDescriptor.getDependentTasksChain() != null){
+			List<TaskDescriptor> dependentTasks = taskDescriptor.getDependentTasksChain();
+			dependentTasks.forEach(this::addTask);
+			Edge edge = Edge.create(this.lastVertex, vertex, this.edgeConf.createDefaultEdgeProperty());
+			this.dag.addEdge(edge);
+		}
 		
 		if (logger.isDebugEnabled()){
 			logger.debug("Created Vertex: " + vertex);

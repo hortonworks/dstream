@@ -12,6 +12,11 @@ import org.apache.dstream.utils.Assert;
  *
  */
 public abstract class Aggregators {
+	
+	public static <T extends Number> List<T> sum(Object v1, T v2) {
+		//Math.addExact(v1, v2);
+		return null;
+	}
 
 	/**
 	 * Aggregation operation which collects single (non-{@link List}) values into a {@link List}.<br>

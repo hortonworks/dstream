@@ -131,6 +131,7 @@ public interface DistributableStream<T> extends DistributableExecutable<T> {
 	 * @param valueReducer
 	 * @return
 	 */
+	// the same semantics as Reduce for groups, meaning reducing being a BinaryOperator aggregates to a single value
 	<K,V> DistributableStream<Entry<K,V>> reduceGroups(Function<? super T, ? extends K> groupClassifier, 
 			Function<? super T, ? extends V> valueMapper,
 			BinaryOperator<V> valueReducer);
@@ -149,6 +150,7 @@ public interface DistributableStream<T> extends DistributableExecutable<T> {
 	 * @param valueAggregator
 	 * @return
 	 */
+	// BinaryFunction "is" BinaryOperator hence this method could be used in place of reduce
 	<K,V,D> DistributableStream<Entry<K,D>> aggregateGroups(Function<? super T, ? extends K> groupClassifier, 
 			Function<? super T, ? extends V> valueMapper,
 			BiFunction<?,V,D> valueAggregator);
@@ -217,7 +219,7 @@ public interface DistributableStream<T> extends DistributableExecutable<T> {
 	 * 
 	 * @return
 	 */
-	DistributableStream<T> sorted();
+	SortedDistributableStream<T> sorted();
 	
 	/**
 	 * Returns an equivalent stream with elements sorted using the provided <i>comparator</i>.<br>
@@ -229,7 +231,7 @@ public interface DistributableStream<T> extends DistributableExecutable<T> {
 	 * @param comparator
 	 * @return
 	 */
-	DistributableStream<T> sorted(Comparator<? super T> comparator);
+	SortedDistributableStream<T> sorted(Comparator<? super T> comparator);
 	
 	
 	

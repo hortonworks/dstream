@@ -1,5 +1,7 @@
 package org.apache.dstream;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -15,6 +17,7 @@ import org.apache.dstream.utils.JvmUtils;
 import org.apache.dstream.utils.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.aop.framework.ReflectiveMethodInvocation;
 
 /**
@@ -28,11 +31,7 @@ final class StreamOperationsCollector<T,R extends DistributableStream<?>> implem
 	
 	private final R targetStream;
 	
-	private final List<MethodInvocation> operations;
-	
-	private final Class<?> sourceElementType;
-	
-	private final String sourceIdentifier;
+	private final StreamInvocationChain invocationChain;
 	
 	private final Set<String> streamOperationNames;
 	
@@ -54,11 +53,11 @@ final class StreamOperationsCollector<T,R extends DistributableStream<?>> implem
 	 * 
 	 */
 	private StreamOperationsCollector(Class<?> sourceElementType, String sourceIdentifier, Class<R> streamType) {
-		this.sourceElementType = sourceElementType;
-		this.sourceIdentifier = sourceIdentifier;
+//		this.sourceElementType = sourceElementType;
+//		this.sourceIdentifier = sourceIdentifier;
 		this.streamType = streamType;
 		this.targetStream =  this.generateStreamProxy(streamType);
-		this.operations = new ArrayList<>();
+		this.invocationChain = new StreamInvocationChain(sourceElementType, sourceIdentifier);
 		this.streamOperationNames = Stream.of(DistributableStream.class.getDeclaredMethods()).map(s -> s.getName()).collect(Collectors.toSet());
 	}
 	
@@ -68,16 +67,16 @@ final class StreamOperationsCollector<T,R extends DistributableStream<?>> implem
 	@SuppressWarnings("unchecked")
 	@Override
 	public Object invoke(MethodInvocation invocation) throws Throwable {
-		((ReflectiveMethodInvocation)invocation).setUserAttribute("sourceElementType", sourceElementType);
-		((ReflectiveMethodInvocation)invocation).setUserAttribute("sourceIdentifier", sourceIdentifier);
-		
 		String operationName = invocation.getMethod().getName();
 		Object result;
 		if (this.streamOperationNames.contains(operationName)){
 			result = this.cloneTargetDistributable(invocation);
 		}
-		else if (operationName.equals("getSourceIdentifier")){
-			result = this.sourceIdentifier;
+		else if (operationName.equals("getSourceIdentifier")){// do we still need this? Invocation chain has it
+			result = this.invocationChain.getSourceIdentifier();
+		}
+		else if (operationName.equals("get")){
+			result = this.invocationChain;
 		}
 		else if (operationName.equals("executeAs")){
 			String executionName = (String) invocation.getArguments()[0];
@@ -109,7 +108,8 @@ final class StreamOperationsCollector<T,R extends DistributableStream<?>> implem
 	 */
 	@Override
 	public String toString(){
-		return this.sourceIdentifier + ":" + this.operations.stream().map(s -> s.getMethod().getName()).collect(Collectors.toList());
+		return this.invocationChain.getSourceIdentifier() + ":" + 
+				this.invocationChain.getInvocations().stream().map(s -> s.getMethod().getName()).collect(Collectors.toList());
 	}
 
 	/**
@@ -119,16 +119,16 @@ final class StreamOperationsCollector<T,R extends DistributableStream<?>> implem
 	 */
 	@SuppressWarnings("unchecked")
 	private Object doExecute(String executionName, Properties executionConfig, StreamExecutionDelegate<List<MethodInvocation>> executionDelegate) {	
-		OperationContext<List<MethodInvocation>> invocationChain = JvmUtils.proxy(this, new MethodInterceptor() {		
-			@Override
-			public Object invoke(MethodInvocation invocation) throws Throwable {
-				return invocation.getMethod().getName().equals("get") 
-						? StreamOperationsCollector.this.operations 
-								: invocation.proceed();
-			}
-		}, OperationContext.class);
-		
-		return executionDelegate.execute(executionName, executionConfig, invocationChain);
+//		OperationContext<List<MethodInvocation>> operationContext = JvmUtils.proxy(this, new MethodInterceptor() {		
+//			@Override
+//			public Object invoke(MethodInvocation invocation) throws Throwable {
+//				return invocation.getMethod().getName().equals("get") 
+//						? StreamOperationsCollector.this.invocationChain 
+//								: invocation.proceed();
+//			}
+//		}, OperationContext.class);
+		//Why OperationContext, why not just send invocationChain?
+		return executionDelegate.execute(executionName, executionConfig, this.invocationChain);
 	}
 
 	/**
@@ -136,9 +136,18 @@ final class StreamOperationsCollector<T,R extends DistributableStream<?>> implem
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private R cloneTargetDistributable(MethodInvocation invocation){
-		StreamOperationsCollector clonedDistributable = new StreamOperationsCollector(null, this.sourceIdentifier, this.streamType);	
-		clonedDistributable.operations.addAll(this.operations);	
-		clonedDistributable.operations.add(invocation);
+		String operationName = invocation.getMethod().getName();
+
+		if (operationName.equals("join")){
+			Object[] arguments = invocation.getArguments();
+			StreamInvocationChainAccessor invocationChainAccessor = (StreamInvocationChainAccessor) invocation.getArguments()[0];
+			StreamInvocationChain dependentInvocationChain = invocationChainAccessor.get();
+			((ReflectiveMethodInvocation)invocation).setArguments(new Object[]{dependentInvocationChain, arguments[1], arguments[2]});
+		}
+			
+		StreamOperationsCollector clonedDistributable = new StreamOperationsCollector(this.invocationChain.getSourceElementType(), this.invocationChain.getSourceIdentifier(), this.streamType);	
+		clonedDistributable.invocationChain.getInvocations().addAll(this.invocationChain.getInvocations());	
+		clonedDistributable.invocationChain.getInvocations().add(invocation);
 		return (R) clonedDistributable.targetStream;
 	}
 	
@@ -149,6 +158,8 @@ final class StreamOperationsCollector<T,R extends DistributableStream<?>> implem
 		List<Class<?>> interfaces = new ArrayList<Class<?>>();
 		if (DistributableStream.class.isAssignableFrom(proxyType)){
 			interfaces.add(DistributableStream.class);
+			interfaces.add(SortedDistributableStream.class);
+			interfaces.add(StreamInvocationChainAccessor.class);
 		}
 		else if (ExecutionGroup.class.isAssignableFrom(proxyType)){
 			interfaces.add(ExecutionGroup.class);

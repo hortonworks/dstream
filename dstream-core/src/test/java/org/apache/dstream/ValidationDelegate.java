@@ -1,6 +1,5 @@
 package org.apache.dstream;
 
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -20,12 +19,12 @@ import org.slf4j.LoggerFactory;
  * Implementation of {@link StreamExecutionDelegate}.
  * Primary use is testing.
  */
-public class ValidationDelegate implements StreamExecutionDelegate<List<MethodInvocation>> {
+public class ValidationDelegate implements StreamExecutionDelegate<StreamInvocationChain> {
 	
 	private final Logger logger = LoggerFactory.getLogger(ValidationDelegate.class);
 	
 	@Override
-	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, OperationContext<List<MethodInvocation>>... operationContexts) {
+	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, StreamInvocationChain... invocationChains) {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 		CountDownLatch latch = new CountDownLatch(1);
 		Future<Stream<Stream<?>>> result = executor.submit(new Callable<Stream<Stream<?>>>() {
@@ -33,8 +32,9 @@ public class ValidationDelegate implements StreamExecutionDelegate<List<MethodIn
 			@Override
 			public Stream<Stream<?>> call() throws Exception {
 				try {	
-					Stream<?>[] results = Stream.of(operationContexts)
-							.map(v -> operationContexts.length > 1 ? Stream.of(Stream.of(v)) : Stream.of(v))
+					Stream<?>[] results = Stream.of(invocationChains)
+							.map(v -> proxy(v))
+							.map(v -> invocationChains.length > 1 ? Stream.of(Stream.of(v)) : Stream.of(v))
 							.collect(Collectors.toList()).toArray(new Stream[]{});
 					
 					Stream<Stream<?>> streamOfResults = (Stream<Stream<?>>) mixinWithCloseHandler(Stream.of(results), new Runnable() {
@@ -71,6 +71,17 @@ public class ValidationDelegate implements StreamExecutionDelegate<List<MethodIn
 		}
 		
 		return result;
+	}
+	
+	private Object proxy(Object o) {
+		return JvmUtils.proxy(this, new MethodInterceptor() {		
+			@Override
+			public Object invoke(MethodInvocation invocation) throws Throwable {
+				return invocation.getMethod().getName().equals("get") 
+						? o 
+								: invocation.proceed();
+			}
+		}, StreamInvocationChainAccessor.class);
 	}
 
 	@Override

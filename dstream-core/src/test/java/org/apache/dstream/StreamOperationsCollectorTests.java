@@ -43,8 +43,8 @@ public class StreamOperationsCollectorTests {
 		List<Object> partitionStreams = resultStreams.get(0).collect(Collectors.toList());
 		assertEquals(1, partitionStreams.size());
 
-		OperationContext<List<MethodInvocation>> context = (OperationContext<List<MethodInvocation>>) partitionStreams.get(0);
-		assertEquals(0, context.get().size());
+		StreamInvocationChainAccessor chainAccessor = (StreamInvocationChainAccessor) partitionStreams.get(0);
+		assertEquals(0, chainAccessor.get().getInvocations().size());
 		result.close();
 	}
 	
@@ -65,8 +65,8 @@ public class StreamOperationsCollectorTests {
 		List<Object> partitionStreamsA = resultStreamsA.get(0).collect(Collectors.toList());
 		assertEquals(1, partitionStreamsA.size());
 
-		OperationContext<List<MethodInvocation>> contextA = (OperationContext<List<MethodInvocation>>) partitionStreamsA.get(0);
-		assertEquals(0, contextA.get().size());
+		StreamInvocationChainAccessor contextA = (StreamInvocationChainAccessor) partitionStreamsA.get(0);
+		assertEquals(0, contextA.get().getInvocations().size());
 		
 		resultA.close();
 		
@@ -78,8 +78,8 @@ public class StreamOperationsCollectorTests {
 		List<Object> partitionStreamsB = resultStreamsB.get(0).collect(Collectors.toList());
 		assertEquals(1, partitionStreamsB.size());
 
-		OperationContext<List<MethodInvocation>> contextB = (OperationContext<List<MethodInvocation>>) partitionStreamsB.get(0);
-		assertEquals(3, contextB.get().size());
+		StreamInvocationChainAccessor contextB = (StreamInvocationChainAccessor) partitionStreamsB.get(0);
+		assertEquals(3, contextB.get().getInvocations().size());
 		
 		resultB.close();
 	}
