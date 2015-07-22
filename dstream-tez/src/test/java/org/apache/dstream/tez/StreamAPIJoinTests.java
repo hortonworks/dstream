@@ -27,6 +27,41 @@ public class StreamAPIJoinTests extends BaseTezTests {
 	}
 	
 	@Test
+	public void joinTwoHashVProbeV() throws Exception {
+		DistributableStream<String> hashStream = DistributableStream.ofType(String.class, "hash");
+		DistributableStream<String> probeStream = DistributableStream.ofType(String.class, "probe");
+		
+		DistributableStream<String> hash = hashStream
+				.map(line ->  line.toUpperCase());
+		
+		DistributableStream<String> probe = probeStream.map(line -> {
+					String[] split = line.trim().split("\\s+");
+					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
+	    }).reduceGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b)
+	    .map(entry -> entry.toString());
+
+		Future<Stream<Stream<Pair<String, String>>>> resultFuture = hash.join(probe, 
+				l -> Integer.parseInt(l.substring(0, l.indexOf(" ")).trim()), r -> Integer.parseInt(r.split("=")[0].trim())
+				).executeAs(this.applicationName);
+		
+		Stream<Stream<Pair<String, String>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
+		
+		List<Stream<Pair<String, String>>> resultStreams = result.collect(Collectors.toList());
+		Assert.assertEquals(1, resultStreams.size());
+		Stream<Pair<String, String>> firstResultStream = resultStreams.get(0);
+		
+		
+		List<Pair<String, String>> firstResult = firstResultStream.collect(Collectors.toList());
+		Assert.assertEquals(3, firstResult.size());
+		
+		assertEquals(firstResult.get(0), Pair.of("1 ORACLE", "1=Thomas Kurian, Larry Ellison"));
+		assertEquals(firstResult.get(1), Pair.of("2 AMAZON", "2=Jeff Bezos, Jeffrey Blackburn"));
+		assertEquals(firstResult.get(2), Pair.of("3 HORTONWORKS", "3=Rob Bearden, Herb Cunitz, Tom McCuch, Oleg Zhurakousky, Arun Murthy"));
+		
+		result.close();
+	}
+	
+	@Test
 	public void joinTwoHashVProbeKV() throws Exception {
 		DistributableStream<String> hashStream = DistributableStream.ofType(String.class, "hash");
 		DistributableStream<String> probeStream = DistributableStream.ofType(String.class, "probe");

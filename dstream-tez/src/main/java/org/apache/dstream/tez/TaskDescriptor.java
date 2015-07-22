@@ -7,6 +7,10 @@ import org.apache.dstream.Partitioner;
 import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SerializableFunctionConverters.Supplier;
 
+/**
+ * 
+ *
+ */
 public class TaskDescriptor {
 	
 	private Function<Stream<?>, Stream<?>> function;

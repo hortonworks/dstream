@@ -66,7 +66,6 @@ public class TezDAGBuilder {
 				.newBuilder("org.apache.dstream.tez.io.KeyWritable",
 						"org.apache.dstream.tez.io.ValueWritable",
 						TezDelegatingPartitioner.class.getName(), null).build();
-//		edgeConf.cr
 		this.dagExecutor = new TezDagExecutor(this.tezClient, this.dag);
 	}
 	
@@ -98,17 +97,14 @@ public class TezDAGBuilder {
 			
 			if (sourceSupplier instanceof SourceSupplier){
 				Object[] sources = ((SourceSupplier<?>)sourceSupplier).get();
-				
-				Assert.notEmpty(sources, "'sources' must not be null or empty");	
-				if (sources != null){
-					if (sources[0] instanceof URI){
-						URI[] uris = Arrays.copyOf(sources, sources.length, URI[].class);
-						DataSourceDescriptor dataSource = this.buildDataSourceDescriptorFromUris(taskDescriptor.getInputFormatClass(), uris);
-						vertex.addDataSource(this.inputOrderCounter++ + ":" + vertexName + "_INPUT", dataSource);
-					} 
-					else {
-						throw new IllegalArgumentException("Unsupported sources: " + Arrays.asList(taskDescriptor.getSourceSupplier()));
-					}
+				Assert.notEmpty(sources, "Task with ID=0 must have non-null SourceSupplier");	
+				if (sources[0] instanceof URI){
+					URI[] uris = Arrays.copyOf(sources, sources.length, URI[].class);
+					DataSourceDescriptor dataSource = this.buildDataSourceDescriptorFromUris(taskDescriptor.getInputFormatClass(), uris);
+					vertex.addDataSource(this.inputOrderCounter++ + ":" + vertexName + "_INPUT", dataSource);
+				} 
+				else {
+					throw new IllegalArgumentException("Unsupported sources: " + Arrays.asList(taskDescriptor.getSourceSupplier()));
 				}
 			} 
 			else {
@@ -116,15 +112,13 @@ public class TezDAGBuilder {
 			}	
 		} 
 		else {
-			Edge edge = Edge.create(this.lastVertex, vertex, this.edgeConf.createDefaultEdgeProperty());
-			this.dag.addEdge(edge);
+			this.addEdge(vertex);
 		}
 		
 		if (taskDescriptor.getDependentTasksChain() != null){
 			List<TaskDescriptor> dependentTasks = taskDescriptor.getDependentTasksChain();
 			dependentTasks.forEach(this::addTask);
-			Edge edge = Edge.create(this.lastVertex, vertex, this.edgeConf.createDefaultEdgeProperty());
-			this.dag.addEdge(edge);
+			this.addEdge(vertex);
 		}
 		
 		if (logger.isDebugEnabled()){
@@ -133,6 +127,14 @@ public class TezDAGBuilder {
 		this.lastVertex = vertex;
 	}
 	
+	/**
+	 * 
+	 * @param vertex
+	 */
+	private void addEdge(Vertex vertex){
+		Edge edge = Edge.create(this.lastVertex, vertex, this.edgeConf.createDefaultEdgeProperty());
+		this.dag.addEdge(edge);
+	}
 
 	/**
 	 * 
@@ -161,8 +163,7 @@ public class TezDAGBuilder {
 	private DataSourceDescriptor buildDataSourceDescriptorFromUris(Class<?> inputFormatClass, URI[] sources) {
 		String inputPath = 
 				StringUtils.collectionToCommaDelimitedString(Stream.of(sources).map(uri -> uri.getPath()).collect(Collectors.toList()));
-		DataSourceDescriptor dataSource = MRInput.createConfigBuilder(this.tezClient.getTezConfiguration(), inputFormatClass, inputPath).groupSplits(false).build();
-		return dataSource;
+		return MRInput.createConfigBuilder(this.tezClient.getTezConfiguration(), inputFormatClass, inputPath).groupSplits(false).build();
 	}
 	
 	/**
@@ -172,8 +173,7 @@ public class TezDAGBuilder {
 		org.apache.hadoop.fs.Path mapTaskPath = 
 				HdfsSerializerUtils.serialize(task, this.tezClient.getFileSystem(), 
 						new org.apache.hadoop.fs.Path(dagName + "/tasks/" + task.getId() + "_" + task.getName() + ".ser"));
-		UserPayload payload = UserPayload.create(ByteBuffer.wrap(mapTaskPath.toString().getBytes()));
-		return payload;
+		return UserPayload.create(ByteBuffer.wrap(mapTaskPath.toString().getBytes()));
 	}
 	
 	/**

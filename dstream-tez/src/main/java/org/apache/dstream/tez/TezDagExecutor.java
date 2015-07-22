@@ -21,8 +21,6 @@ public class TezDagExecutor implements Runnable {
 	
 	private final DAG dag;
 	
-//	private final OutputStreamsBuilder<?> outputBuilder;
-	
 	/**
 	 * 
 	 * @param tezClient
@@ -32,13 +30,15 @@ public class TezDagExecutor implements Runnable {
 	public TezDagExecutor(ExecutionContextAwareTezClient tezClient, DAG dag) {
 		this.tezClient = tezClient;
 		this.dag = dag;
-//		this.outputBuilder = outputBuilder;
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public void run() {
 		if (logger.isInfoEnabled()){
-			logger.info("Constructed Tez DAG " + dag.getName());
+			logger.info("Constructed Tez DAG " + this.dag.getName());
 		}
 		
 		try {
@@ -48,8 +48,7 @@ public class TezDagExecutor implements Runnable {
 	        	logger.info("Submitting generated DAG to YARN/Tez cluster");
 	        }
 	 
-	        DAGClient dagClient = tezClient.submitDAG(dag);
-
+	        DAGClient dagClient = this.tezClient.submitDAG(this.dag);
 	        DAGStatus dagStatus =  dagClient.waitForCompletionWithStatusUpdates(null);
 	        
 	        if (logger.isInfoEnabled()){
@@ -61,9 +60,7 @@ public class TezDagExecutor implements Runnable {
 	        dagClient.close();
 		} 
 		catch (Exception e) {
-			e.printStackTrace();
 			throw new IllegalStateException("Failed to execute Tez DAG", e);
 		}
-        //return this.outputBuilder.build();
 	}
 }

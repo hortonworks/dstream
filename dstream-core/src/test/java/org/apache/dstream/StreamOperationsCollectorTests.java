@@ -7,7 +7,7 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.aopalliance.intercept.MethodInvocation;
+import org.apache.dstream.StreamOperationsCollector.ProxyInternalsAccessor;
 import org.junit.Test;
 
 public class StreamOperationsCollectorTests {
@@ -43,7 +43,7 @@ public class StreamOperationsCollectorTests {
 		List<Object> partitionStreams = resultStreams.get(0).collect(Collectors.toList());
 		assertEquals(1, partitionStreams.size());
 
-		StreamInvocationChainAccessor chainAccessor = (StreamInvocationChainAccessor) partitionStreams.get(0);
+		ProxyInternalsAccessor<StreamInvocationChain> chainAccessor = (ProxyInternalsAccessor<StreamInvocationChain>) partitionStreams.get(0);
 		assertEquals(0, chainAccessor.get().getInvocations().size());
 		result.close();
 	}
@@ -65,7 +65,7 @@ public class StreamOperationsCollectorTests {
 		List<Object> partitionStreamsA = resultStreamsA.get(0).collect(Collectors.toList());
 		assertEquals(1, partitionStreamsA.size());
 
-		StreamInvocationChainAccessor contextA = (StreamInvocationChainAccessor) partitionStreamsA.get(0);
+		ProxyInternalsAccessor<StreamInvocationChain> contextA = (ProxyInternalsAccessor<StreamInvocationChain>) partitionStreamsA.get(0);
 		assertEquals(0, contextA.get().getInvocations().size());
 		
 		resultA.close();
@@ -78,7 +78,7 @@ public class StreamOperationsCollectorTests {
 		List<Object> partitionStreamsB = resultStreamsB.get(0).collect(Collectors.toList());
 		assertEquals(1, partitionStreamsB.size());
 
-		StreamInvocationChainAccessor contextB = (StreamInvocationChainAccessor) partitionStreamsB.get(0);
+		ProxyInternalsAccessor<StreamInvocationChain> contextB = (ProxyInternalsAccessor<StreamInvocationChain>) partitionStreamsB.get(0);
 		assertEquals(3, contextB.get().getInvocations().size());
 		
 		resultB.close();
