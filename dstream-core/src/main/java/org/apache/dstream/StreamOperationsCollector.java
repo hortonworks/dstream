@@ -1,7 +1,5 @@
 package org.apache.dstream;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -17,7 +15,6 @@ import org.apache.dstream.utils.JvmUtils;
 import org.apache.dstream.utils.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.aop.framework.ReflectiveMethodInvocation;
 
 /**
@@ -53,8 +50,6 @@ final class StreamOperationsCollector<T,R extends DistributableStream<?>> implem
 	 * 
 	 */
 	private StreamOperationsCollector(Class<?> sourceElementType, String sourceIdentifier, Class<R> streamType) {
-//		this.sourceElementType = sourceElementType;
-//		this.sourceIdentifier = sourceIdentifier;
 		this.streamType = streamType;
 		this.targetStream =  this.generateStreamProxy(streamType);
 		this.invocationChain = new StreamInvocationChain(sourceElementType, sourceIdentifier);
@@ -72,7 +67,7 @@ final class StreamOperationsCollector<T,R extends DistributableStream<?>> implem
 		if (this.streamOperationNames.contains(operationName)){
 			result = this.cloneTargetDistributable(invocation);
 		}
-		else if (operationName.equals("getSourceIdentifier")){// do we still need this? Invocation chain has it
+		else if (operationName.equals("getSourceIdentifier")){
 			result = this.invocationChain.getSourceIdentifier();
 		}
 		else if (operationName.equals("get")){
@@ -84,8 +79,8 @@ final class StreamOperationsCollector<T,R extends DistributableStream<?>> implem
 	
 			Properties executionConfig = PipelineConfigurationHelper.loadExecutionConfig(executionName);
 			String executionDelegateClassName = executionConfig.getProperty(DistributableConstants.DELEGATE);
-			Assert.notEmpty(executionDelegateClassName, "Execution delegate for '" + executionName
-					+ "' is not provided in 'execution-delegates.cfg' (e.g., " + executionName + "=foo.bar.SomePipelineDelegate)");
+			Assert.notEmpty(executionDelegateClassName, "Execution delegate property is not provided in '" + executionName + 
+					".cfg' (e.g., dstream.delegate=foo.bar.SomePipelineDelegate)");
 			
 			if (logger.isInfoEnabled()) {
 				logger.info("Execution delegate: " + executionDelegateClassName);
@@ -94,7 +89,7 @@ final class StreamOperationsCollector<T,R extends DistributableStream<?>> implem
 			StreamExecutionDelegate<List<MethodInvocation>> executionDelegate = (StreamExecutionDelegate<List<MethodInvocation>>) ReflectionUtils
 					.newDefaultInstance(Class.forName(executionDelegateClassName, true, Thread.currentThread().getContextClassLoader()));
 			
-			result = this.doExecute(executionName, executionConfig, executionDelegate);
+			result = executionDelegate.execute(executionName, executionConfig, this.invocationChain);
 		}
 		else {
 			result = invocation.proceed();
@@ -113,25 +108,6 @@ final class StreamOperationsCollector<T,R extends DistributableStream<?>> implem
 	}
 
 	/**
-	 * Will add {@link OperationContext} interface to the proxy delegating it's invocation to the 
-	 * list of operations of this stream. The list of operations will be used by 
-	 * target execution environment ( {@link StreamExecutionDelegate} ) to execute the stream.
-	 */
-	@SuppressWarnings("unchecked")
-	private Object doExecute(String executionName, Properties executionConfig, StreamExecutionDelegate<List<MethodInvocation>> executionDelegate) {	
-//		OperationContext<List<MethodInvocation>> operationContext = JvmUtils.proxy(this, new MethodInterceptor() {		
-//			@Override
-//			public Object invoke(MethodInvocation invocation) throws Throwable {
-//				return invocation.getMethod().getName().equals("get") 
-//						? StreamOperationsCollector.this.invocationChain 
-//								: invocation.proceed();
-//			}
-//		}, OperationContext.class);
-		//Why OperationContext, why not just send invocationChain?
-		return executionDelegate.execute(executionName, executionConfig, this.invocationChain);
-	}
-
-	/**
 	 * 
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -140,7 +116,7 @@ final class StreamOperationsCollector<T,R extends DistributableStream<?>> implem
 
 		if (operationName.equals("join")){
 			Object[] arguments = invocation.getArguments();
-			StreamInvocationChainAccessor invocationChainAccessor = (StreamInvocationChainAccessor) invocation.getArguments()[0];
+			ProxyInternalsAccessor<StreamInvocationChain> invocationChainAccessor = (ProxyInternalsAccessor<StreamInvocationChain>) invocation.getArguments()[0];
 			StreamInvocationChain dependentInvocationChain = invocationChainAccessor.get();
 			((ReflectiveMethodInvocation)invocation).setArguments(new Object[]{dependentInvocationChain, arguments[1], arguments[2]});
 		}
@@ -159,7 +135,7 @@ final class StreamOperationsCollector<T,R extends DistributableStream<?>> implem
 		if (DistributableStream.class.isAssignableFrom(proxyType)){
 			interfaces.add(DistributableStream.class);
 			interfaces.add(SortedDistributableStream.class);
-			interfaces.add(StreamInvocationChainAccessor.class);
+			interfaces.add(ProxyInternalsAccessor.class);
 		}
 		else if (ExecutionGroup.class.isAssignableFrom(proxyType)){
 			interfaces.add(ExecutionGroup.class);
@@ -174,4 +150,12 @@ final class StreamOperationsCollector<T,R extends DistributableStream<?>> implem
 		}
 		return streamProxy;
 	}
+	
+	/**
+	 * @param <T>
+	 */
+	protected interface ProxyInternalsAccessor<T>{
+		T get();
+	}
+
 }

@@ -17,28 +17,50 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.yarn.api.records.LocalResource;
 import org.apache.tez.dag.api.TezConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TezExecutionDelegate extends AbstractStreamExecutionDelegate<StreamInvocationChain> {
+	
+	private final Logger logger = LoggerFactory.getLogger(TezExecutionDelegate.class);
 	
 	private final List<List<TaskDescriptor>> taskChains;
 	
 	private ExecutionContextAwareTezClient tezClient;
 	
-	
+	/**
+	 * 
+	 */
 	public TezExecutionDelegate(){
 		this.taskChains = new ArrayList<>();
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public Runnable getCloseHandler() {
-		// TODO Auto-generated method stub
-		return null;
+		return new Runnable() {
+			@Override
+			public void run() {
+				try {
+					logger.info("Stopping TezClient");
+					tezClient.clearAppMasterLocalFiles();
+					tezClient.stop();
+				} 
+				catch (Exception e) {
+					logger.warn("Failed to stop TezClient", e);
+				}
+			}
+		};
 	}
 
+	/**
+	 * 
+	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	protected Stream<Stream<?>> doExecute(String executionName, Properties executionConfig, StreamInvocationChain... invocationChains) {
-		
+	protected Stream<Stream<?>> doExecute(String executionName, Properties executionConfig, StreamInvocationChain... invocationChains) {		
 		for (StreamInvocationChain invocationChain : invocationChains) {
 			TaskDescriptorChainBuilder builder = new TaskDescriptorChainBuilder(executionName, invocationChain, executionConfig);
 			List<TaskDescriptor> taskDescriptors = builder.build();

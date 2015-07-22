@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
+import org.apache.dstream.StreamOperationsCollector.ProxyInternalsAccessor;
 import org.apache.dstream.utils.JvmUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,17 +74,22 @@ public class ValidationDelegate implements StreamExecutionDelegate<StreamInvocat
 		return result;
 	}
 	
+	/**
+	 * 
+	 */
 	private Object proxy(Object o) {
 		return JvmUtils.proxy(this, new MethodInterceptor() {		
 			@Override
 			public Object invoke(MethodInvocation invocation) throws Throwable {
 				return invocation.getMethod().getName().equals("get") 
-						? o 
-								: invocation.proceed();
+						? o : invocation.proceed();
 			}
-		}, StreamInvocationChainAccessor.class);
+		}, ProxyInternalsAccessor.class);
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public Runnable getCloseHandler() {
 		return new Runnable() {
