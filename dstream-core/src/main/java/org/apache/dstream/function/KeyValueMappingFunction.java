@@ -1,11 +1,11 @@
-package org.apache.dstream;
+package org.apache.dstream.function;
 
 import java.util.Map.Entry;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.support.SerializableFunctionConverters.Function;
+import org.apache.dstream.function.SerializableFunctionConverters.Function;
 import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.KVUtils;
 

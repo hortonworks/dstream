@@ -6,8 +6,8 @@ import java.lang.reflect.Type;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
-import org.apache.dstream.Partitioner;
-import org.apache.dstream.support.SerializableFunctionConverters.Function;
+import org.apache.dstream.function.SerializableFunctionConverters.Function;
+import org.apache.dstream.support.Partitioner;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 

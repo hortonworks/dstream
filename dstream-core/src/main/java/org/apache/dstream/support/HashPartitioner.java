@@ -1,7 +1,6 @@
 package org.apache.dstream.support;
 
-import org.apache.dstream.Partitioner;
-import org.apache.dstream.support.SerializableFunctionConverters.Function;
+import org.apache.dstream.function.SerializableFunctionConverters.Function;
 
 /**
  * 

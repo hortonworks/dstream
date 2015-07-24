@@ -1,7 +1,7 @@
 package org.apache.dstream.tez;
 
-import static org.apache.dstream.utils.KVUtils.kv;
 import static org.junit.Assert.assertEquals;
+import static org.apache.dstream.utils.KVUtils.kv;
 
 import java.util.List;
 import java.util.Map.Entry;
@@ -12,8 +12,8 @@ import java.util.stream.Stream;
 
 import junit.framework.Assert;
 
-import org.apache.dstream.DistributableStream;
-import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
+import org.apache.dstream.DStream;
+import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.utils.JvmUtils;
 import org.apache.dstream.utils.KVUtils;
 import org.junit.After;
@@ -33,7 +33,7 @@ public class MapSideCombineTests extends BaseTezTests {
 
 	@Test
 	public void computeMapSideCombine() throws Exception {	
-		DistributableStream<String> sourcePipeline = DistributableStream.ofType(String.class, "ms");
+		DStream<String> sourcePipeline = DStream.ofType(String.class, "ms");
 		
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
@@ -58,7 +58,7 @@ public class MapSideCombineTests extends BaseTezTests {
 	
 	@Test
 	public void computeReduceSideCombineOnly() throws Exception {	
-		DistributableStream<String> sourcePipeline = DistributableStream.ofType(String.class, "rs");
+		DStream<String> sourcePipeline = DStream.ofType(String.class, "rs");
 		
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourcePipeline.<Entry<String, Integer>>compute(stream -> stream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
@@ -83,7 +83,7 @@ public class MapSideCombineTests extends BaseTezTests {
 	
 	@Test
 	public void streamMapSideCombine() throws Exception {	
-		DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, "ms");
+		DStream<String> sourceStream = DStream.ofType(String.class, "ms");
 		
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
@@ -109,7 +109,7 @@ public class MapSideCombineTests extends BaseTezTests {
 	
 	@Test
 	public void streamReduceSideCombineOnly() throws Exception {
-		DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, "rs");
+		DStream<String> sourceStream = DStream.ofType(String.class, "rs");
 		
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))

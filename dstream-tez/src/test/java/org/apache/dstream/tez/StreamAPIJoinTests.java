@@ -1,6 +1,7 @@
 package org.apache.dstream.tez;
 
 import static org.apache.dstream.utils.KVUtils.kv;
+import static org.apache.dstream.utils.Tuples.Tuple2.tuple2;
 import static org.junit.Assert.assertEquals;
 
 import java.util.List;
@@ -12,8 +13,10 @@ import java.util.stream.Stream;
 
 import junit.framework.Assert;
 
-import org.apache.dstream.DistributableStream;
-import org.apache.dstream.utils.Pair;
+import org.apache.dstream.DStream;
+import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
+import org.apache.dstream.utils.Tuples.Tuple2;
+import org.apache.dstream.utils.Tuples.Tuple3;
 import org.junit.After;
 import org.junit.Test;
 
@@ -27,139 +30,162 @@ public class StreamAPIJoinTests extends BaseTezTests {
 	}
 	
 	@Test
-	public void joinTwoHashVProbeV() throws Exception {
-		DistributableStream<String> hashStream = DistributableStream.ofType(String.class, "hash");
-		DistributableStream<String> probeStream = DistributableStream.ofType(String.class, "probe");
+	public void threeWayJoin() throws Exception {
+		DStream<String> hashStream = DStream.ofType(String.class, "hash");
+		DStream<String> probeStream = DStream.ofType(String.class, "probe");	
+		DStream<Tuple2<String, Integer>> fooStream = DStream.ofType(String.class, "foo").map(s -> tuple2(s, s.hashCode()));
 		
-		DistributableStream<String> hash = hashStream
+		DStream<String> hash = hashStream
 				.map(line ->  line.toUpperCase());
 		
-		DistributableStream<String> probe = probeStream.map(line -> {
+		DStream<String> probe = probeStream.map(line -> {
 					String[] split = line.trim().split("\\s+");
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
 	    }).reduceGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b)
-	    .map(entry -> entry.toString());
+	      .map(entry -> entry.toString());
 
-		Future<Stream<Stream<Pair<String, String>>>> resultFuture = hash.join(probe, 
-				l -> Integer.parseInt(l.substring(0, l.indexOf(" ")).trim()), r -> Integer.parseInt(r.split("=")[0].trim())
-				).executeAs(this.applicationName);
+		Future<Stream<Stream<Tuple3<String, String, Tuple2<String, Integer>>>>> resultFuture = hash
+				.join(probe, tuple2 -> Integer.parseInt(tuple2._1.substring(0, tuple2._1.indexOf(" ")).trim()) == Integer.parseInt(tuple2._2.split("=")[0].trim()) )
+				.join(fooStream, tuple3 -> tuple3._3._2 < 0)
+				.executeAs(this.applicationName);
 		
-		Stream<Stream<Pair<String, String>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
+		Stream<Stream<Tuple3<String, String, Tuple2<String, Integer>>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
 		
-		List<Stream<Pair<String, String>>> resultStreams = result.collect(Collectors.toList());
+		List<Stream<Tuple3<String, String, Tuple2<String, Integer>>>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
-		Stream<Pair<String, String>> firstResultStream = resultStreams.get(0);
+		Stream<Tuple3<String, String, Tuple2<String, Integer>>> firstResultStream = resultStreams.get(0);
 		
 		
-		List<Pair<String, String>> firstResult = firstResultStream.collect(Collectors.toList());
+		List<Tuple3<String, String, Tuple2<String, Integer>>> firstResult = firstResultStream.collect(Collectors.toList());
+		System.out.println(firstResult);
+//		Assert.assertEquals(3, firstResult.size());
+		
+//		assertEquals(firstResult.get(0), tuple2("1 ORACLE", "1=Thomas Kurian, Larry Ellison"));
+//		assertEquals(firstResult.get(1), tuple2("2 AMAZON", "2=Jeff Bezos, Jeffrey Blackburn"));
+//		assertEquals(firstResult.get(2), tuple2("3 HORTONWORKS", "3=Rob Bearden, Herb Cunitz, Tom McCuch, Oleg Zhurakousky, Arun Murthy"));
+		
+//		result.close();
+	}
+	
+	@Test
+	public void joinTwoHashVProbeV() throws Exception {
+		DStream<String> hash = DStream.ofType(String.class, "hash").map(line ->  line.toUpperCase());
+		
+		DStream<String> probe = DStream.ofType(String.class, "probe").map(line -> {
+					String[] split = line.trim().split("\\s+");
+					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
+	    }).reduceGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b)
+	      .map(entry -> entry.toString());
+		
+		Predicate<Tuple2<String, String>> p =  tuple2 -> Integer.parseInt(tuple2._1.substring(0, tuple2._1.indexOf(" ")).trim()) == Integer.parseInt(tuple2._2.split("=")[0].trim());
+
+		Future<Stream<Stream<Tuple2<String, String>>>> resultFuture = hash.join(probe, p).executeAs(this.applicationName);
+		
+		Stream<Stream<Tuple2<String, String>>> result = resultFuture.get(5000, TimeUnit.MILLISECONDS);
+		
+		List<Stream<Tuple2<String, String>>> resultStreams = result.collect(Collectors.toList());
+		Assert.assertEquals(1, resultStreams.size());
+		Stream<Tuple2<String, String>> firstResultStream = resultStreams.get(0);
+
+		List<Tuple2<String, String>> firstResult = firstResultStream.collect(Collectors.toList());
 		Assert.assertEquals(3, firstResult.size());
 		
-		assertEquals(firstResult.get(0), Pair.of("1 ORACLE", "1=Thomas Kurian, Larry Ellison"));
-		assertEquals(firstResult.get(1), Pair.of("2 AMAZON", "2=Jeff Bezos, Jeffrey Blackburn"));
-		assertEquals(firstResult.get(2), Pair.of("3 HORTONWORKS", "3=Rob Bearden, Herb Cunitz, Tom McCuch, Oleg Zhurakousky, Arun Murthy"));
+		assertEquals(firstResult.get(0), tuple2("1 ORACLE", "1=Thomas Kurian, Larry Ellison"));
+		assertEquals(firstResult.get(1), tuple2("2 AMAZON", "2=Jeff Bezos, Jeffrey Blackburn"));
+		assertEquals(firstResult.get(2), tuple2("3 HORTONWORKS", "3=Rob Bearden, Herb Cunitz, Tom McCuch, Oleg Zhurakousky, Arun Murthy"));
 		
 		result.close();
 	}
 	
 	@Test
-	public void joinTwoHashVProbeKV() throws Exception {
-		DistributableStream<String> hashStream = DistributableStream.ofType(String.class, "hash");
-		DistributableStream<String> probeStream = DistributableStream.ofType(String.class, "probe");
+	public void joinTwoHashVProbeKV() throws Exception {	
+		DStream<String> hash = DStream.ofType(String.class, "hash").map(line ->  line.toUpperCase());
 		
-		DistributableStream<String> hash = hashStream
-				.map(line ->  line.toUpperCase());
-		
-		DistributableStream<Entry<Integer, String>> probe = probeStream.map(line -> {
+		DStream<Entry<Integer, String>> probe = DStream.ofType(String.class, "probe").map(line -> {
 					String[] split = line.trim().split("\\s+");
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
 	    }).reduceGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
 
-		Future<Stream<Stream<Pair<String, Entry<Integer, String>>>>> resultFuture = hash.join(probe, 
-				l -> Integer.parseInt(l.substring(0, l.indexOf(" ")).trim()), r -> r.getKey()
-				).executeAs(this.applicationName);
+		Predicate<Tuple2<String, Entry<Integer, String>>> p =  tuple2 -> Integer.parseInt(tuple2._1.substring(0, tuple2._1.indexOf(" ")).trim()) == tuple2._2.getKey();
 		
-		Stream<Stream<Pair<String, Entry<Integer, String>>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
+		Future<Stream<Stream<Tuple2<String, Entry<Integer, String>>>>> resultFuture = hash.join(probe, p).executeAs(this.applicationName);
 		
-		List<Stream<Pair<String, Entry<Integer, String>>>> resultStreams = result.collect(Collectors.toList());
+		Stream<Stream<Tuple2<String, Entry<Integer, String>>>> result = resultFuture.get(5000, TimeUnit.MILLISECONDS);
+		
+		List<Stream<Tuple2<String, Entry<Integer, String>>>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
-		Stream<Pair<String, Entry<Integer, String>>> firstResultStream = resultStreams.get(0);
+		Stream<Tuple2<String, Entry<Integer, String>>> firstResultStream = resultStreams.get(0);
 		
 		
-		List<Pair<String, Entry<Integer, String>>> firstResult = firstResultStream.collect(Collectors.toList());
+		List<Tuple2<String, Entry<Integer, String>>> firstResult = firstResultStream.collect(Collectors.toList());
 		Assert.assertEquals(3, firstResult.size());
 		
-		assertEquals(firstResult.get(0), Pair.of("1 ORACLE", kv(1, "Thomas Kurian, Larry Ellison")));
-		assertEquals(firstResult.get(1), Pair.of("2 AMAZON", kv(2, "Jeff Bezos, Jeffrey Blackburn")));
-		assertEquals(firstResult.get(2), Pair.of("3 HORTONWORKS", kv(3, "Rob Bearden, Herb Cunitz, Tom McCuch, Oleg Zhurakousky, Arun Murthy")));
+		assertEquals(firstResult.get(0), tuple2("1 ORACLE", kv(1, "Thomas Kurian, Larry Ellison")));
+		assertEquals(firstResult.get(1), tuple2("2 AMAZON", kv(2, "Jeff Bezos, Jeffrey Blackburn")));
+		assertEquals(firstResult.get(2), tuple2("3 HORTONWORKS", kv(3, "Rob Bearden, Herb Cunitz, Tom McCuch, Oleg Zhurakousky, Arun Murthy")));
 		
 		result.close();
 	}
 
 	@Test
 	public void joinTwoBothKV() throws Exception {
-		DistributableStream<String> hashStream = DistributableStream.ofType(String.class, "hash");
-		DistributableStream<String> probeStream = DistributableStream.ofType(String.class, "probe");
-		
-		DistributableStream<Entry<Integer, String>> hash = hashStream
+		DStream<Entry<Integer, String>> hash = DStream.ofType(String.class, "hash")
 				.map(line -> kv(Integer.parseInt(line.split(" ")[0]), line.split(" ")[1]));
 		
-		DistributableStream<Entry<Integer, String>> probe = probeStream.map(line -> {
+		DStream<Entry<Integer, String>> probe = DStream.ofType(String.class, "probe").map(line -> {
 					String[] split = line.trim().split("\\s+");
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
 	    }).reduceGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
 
-		Future<Stream<Stream<Pair<Entry<Integer, String>, Entry<Integer, String>>>>> resultFuture = hash.join(probe, 
-				l -> l.getKey(), r -> r.getKey()
-				).executeAs(this.applicationName);
+		Predicate<Tuple2<Entry<Integer, String>, Entry<Integer, String>>> p =  tuple2 -> tuple2._1.getKey() == tuple2._2.getKey();
 		
-		Stream<Stream<Pair<Entry<Integer, String>, Entry<Integer, String>>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
+		Future<Stream<Stream<Tuple2<Entry<Integer, String>, Entry<Integer, String>>>>> resultFuture = hash.join(probe, p).executeAs(this.applicationName);
+		
+		Stream<Stream<Tuple2<Entry<Integer, String>, Entry<Integer, String>>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
 
-		List<Stream<Pair<Entry<Integer, String>, Entry<Integer, String>>>> resultStreams = result.collect(Collectors.toList());
+		List<Stream<Tuple2<Entry<Integer, String>, Entry<Integer, String>>>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
-		Stream<Pair<Entry<Integer, String>, Entry<Integer, String>>> firstResultStream = resultStreams.get(0);
+		Stream<Tuple2<Entry<Integer, String>, Entry<Integer, String>>> firstResultStream = resultStreams.get(0);
 		
 		
-		List<Pair<Entry<Integer, String>, Entry<Integer, String>>> firstResult = firstResultStream.collect(Collectors.toList());
+		List<Tuple2<Entry<Integer, String>, Entry<Integer, String>>> firstResult = firstResultStream.collect(Collectors.toList());
 		Assert.assertEquals(3, firstResult.size());
 		
-		assertEquals(firstResult.get(0), Pair.of(kv(1, "Oracle"), kv(1, "Thomas Kurian, Larry Ellison")));
-		assertEquals(firstResult.get(1), Pair.of(kv(2, "Amazon"), kv(2, "Jeff Bezos, Jeffrey Blackburn")));
-		assertEquals(firstResult.get(2), Pair.of(kv(3, "Hortonworks"), kv(3, "Rob Bearden, Herb Cunitz, Tom McCuch, Oleg Zhurakousky, Arun Murthy")));
+		assertEquals(firstResult.get(0), tuple2(kv(1, "Oracle"), kv(1, "Thomas Kurian, Larry Ellison")));
+		assertEquals(firstResult.get(1), tuple2(kv(2, "Amazon"), kv(2, "Jeff Bezos, Jeffrey Blackburn")));
+		assertEquals(firstResult.get(2), tuple2(kv(3, "Hortonworks"), kv(3, "Rob Bearden, Herb Cunitz, Tom McCuch, Oleg Zhurakousky, Arun Murthy")));
 		
 		result.close();
 	}
 	
 	@Test
-	public void joinTwoBothKVwithReduce() throws Exception {
-		DistributableStream<String> hashStream = DistributableStream.ofType(String.class, "hash");
-		DistributableStream<String> probeStream = DistributableStream.ofType(String.class, "probe");
-		
-		DistributableStream<Entry<Integer, String>> hash = hashStream
+	public void joinTwoBothKVWithContinuation() throws Exception {
+		DStream<Entry<Integer, String>> hash = DStream.ofType(String.class, "hash")
 				.map(line -> kv(Integer.parseInt(line.split(" ")[0]), line.split(" ")[1]));
 		
-		DistributableStream<Entry<Integer, String>> probe = probeStream.map(line -> {
+		DStream<Entry<Integer, String>> probe = DStream.ofType(String.class, "probe").map(line -> {
 					String[] split = line.trim().split("\\s+");
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
 	    }).reduceGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
 
-		Future<Stream<Stream<Entry<Integer, Pair<String, String>>>>> resultFuture = hash.join(probe, 
-				l -> l.getKey(), r -> r.getKey()
-				).map(s -> kv(s._1().getKey(), Pair.of(s._1().getValue(), s._2().getValue())))
-				.executeAs(this.applicationName);
+		Future<Stream<Stream<Entry<Integer, Tuple2<String, String>>>>> resultFuture = hash
+			.join(probe, (Tuple2<Entry<Integer, String>,Entry<Integer, String>> tuple2) -> tuple2._1.getKey() == tuple2._2.getKey())
+			.map(s -> kv(s._1.getKey(), tuple2(s._1.getValue(), s._2.getValue())))
+			.executeAs(this.applicationName);
 		
-		Stream<Stream<Entry<Integer, Pair<String, String>>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
+		Stream<Stream<Entry<Integer, Tuple2<String, String>>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
 
-		List<Stream<Entry<Integer, Pair<String, String>>>> resultStreams = result.collect(Collectors.toList());
+		List<Stream<Entry<Integer, Tuple2<String, String>>>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());
-		Stream<Entry<Integer, Pair<String, String>>> firstResultStream = resultStreams.get(0);
+		Stream<Entry<Integer, Tuple2<String, String>>> firstResultStream = resultStreams.get(0);
 		
 		
-		List<Entry<Integer, Pair<String, String>>> firstResult = firstResultStream.collect(Collectors.toList());
+		List<Entry<Integer, Tuple2<String, String>>> firstResult = firstResultStream.collect(Collectors.toList());
 		Assert.assertEquals(3, firstResult.size());
 		
-		assertEquals(firstResult.get(0), kv(1, Pair.of("Oracle", "Thomas Kurian, Larry Ellison")));
-		assertEquals(firstResult.get(1), kv(2, Pair.of("Amazon", "Jeff Bezos, Jeffrey Blackburn")));
-		assertEquals(firstResult.get(2), kv(3, Pair.of("Hortonworks", "Rob Bearden, Herb Cunitz, Tom McCuch, Oleg Zhurakousky, Arun Murthy")));
+		assertEquals(firstResult.get(0), kv(1, tuple2("Oracle", "Thomas Kurian, Larry Ellison")));
+		assertEquals(firstResult.get(1), kv(2, tuple2("Amazon", "Jeff Bezos, Jeffrey Blackburn")));
+		assertEquals(firstResult.get(2), kv(3, tuple2("Hortonworks", "Rob Bearden, Herb Cunitz, Tom McCuch, Oleg Zhurakousky, Arun Murthy")));
 		
 		result.close();
 	}

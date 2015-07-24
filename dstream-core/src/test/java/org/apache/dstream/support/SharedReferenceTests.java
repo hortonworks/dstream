@@ -1,4 +1,4 @@
-package org.apache.dstream;
+package org.apache.dstream.support;
 
 import static org.junit.Assert.assertEquals;
 

@@ -1,19 +1,13 @@
-package org.apache.dstream.support;
+package org.apache.dstream;
 
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-public class PipelineConfigurationHelper {
+import org.apache.dstream.utils.Assert;
 
-	/**
-	 * 
-	 * @return
-	 */
-	public static Properties loadDelegatesConfig(){
-		return loadConfig("execution-delegates.cfg");
-	}
+class ExecutionConfigurationHelper {
 	
 	/**
 	 * 
@@ -40,6 +34,7 @@ public class PipelineConfigurationHelper {
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();
 		try {
 			is = cl.getResourceAsStream(configName);
+			Assert.notNull(is, "Failed to obtain InputStream for " + configName);
 			prop.load(is);
 			resolveSystemPropertyPlaceholders(prop);
 		} 

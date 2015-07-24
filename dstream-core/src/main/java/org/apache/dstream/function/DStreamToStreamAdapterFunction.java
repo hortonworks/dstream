@@ -1,9 +1,9 @@
-package org.apache.dstream;
+package org.apache.dstream.function;
 
 import java.util.stream.Stream;
 
-import org.apache.dstream.support.SerializableFunctionConverters.Function;
-import org.apache.dstream.support.SerializableFunctionConverters.Predicate;
+import org.apache.dstream.function.SerializableFunctionConverters.Function;
+import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
 import org.apache.dstream.utils.Assert;
 
 /**
@@ -12,7 +12,7 @@ import org.apache.dstream.utils.Assert;
  * It will be created and collected by the {@link ExecutionSpecBuilder} for each operation 
  * on the {@link DistributableStream}.
  */
-public class DistributableStreamToStreamAdapterFunction implements Function<Stream<?>, Stream<?>>{
+public class DStreamToStreamAdapterFunction implements Function<Stream<?>, Stream<?>>{
 
 	private static final long serialVersionUID = 6836233233261184905L;
 	
@@ -25,7 +25,7 @@ public class DistributableStreamToStreamAdapterFunction implements Function<Stre
 	 * @param streamOperationName
 	 * @param sourceFunction
 	 */
-	public DistributableStreamToStreamAdapterFunction(String streamOperationName, Object sourceFunction){
+	public DStreamToStreamAdapterFunction(String streamOperationName, Object sourceFunction){
 		Assert.notEmpty(streamOperationName, "'streamOperationName' must not be null or empty");
 		if (!(streamOperationName.equals("flatMap") ||
 			streamOperationName.equals("map") ||

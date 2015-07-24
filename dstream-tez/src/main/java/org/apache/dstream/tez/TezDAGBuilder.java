@@ -8,12 +8,14 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.support.SerializableFunctionConverters.Supplier;
+import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
+import org.apache.dstream.function.SerializableFunctionConverters.Supplier;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.tez.io.KeyWritable;
 import org.apache.dstream.tez.io.ValueWritable;
 import org.apache.dstream.tez.utils.HdfsSerializerUtils;
 import org.apache.dstream.utils.Assert;
+import org.apache.dstream.utils.Tuples.Tuple2;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
@@ -115,10 +117,12 @@ public class TezDAGBuilder {
 			this.addEdge(vertex);
 		}
 		
-		if (taskDescriptor.getDependentTasksChain() != null){
-			List<TaskDescriptor> dependentTasks = taskDescriptor.getDependentTasksChain();
-			dependentTasks.forEach(this::addTask);
-			this.addEdge(vertex);
+		if (taskDescriptor.getDependentTasksChains() != null){
+			List<Tuple2<Predicate<?>, List<TaskDescriptor>>> dependentTasksChains = taskDescriptor.getDependentTasksChains();
+			dependentTasksChains.forEach(dependentTasks -> {
+				dependentTasks._2.forEach(this::addTask);
+				this.addEdge(vertex);
+			});
 		}
 		
 		if (logger.isDebugEnabled()){

@@ -1,7 +1,7 @@
 package org.apache.dstream.tez;
 
-import static org.apache.dstream.utils.KVUtils.kv;
 import static org.junit.Assert.assertEquals;
+import static org.apache.dstream.utils.KVUtils.kv;
 
 import java.util.List;
 import java.util.Map.Entry;
@@ -13,7 +13,7 @@ import java.util.stream.StreamSupport;
 
 import junit.framework.Assert;
 
-import org.apache.dstream.DistributableStream;
+import org.apache.dstream.DStream;
 import org.junit.After;
 import org.junit.Test;
 
@@ -28,7 +28,7 @@ public class GroupTests extends BaseTezTests {
 	
 	@Test
 	public void streamGroup() throws Exception {	
-		DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, "ms");
+		DStream<String> sourceStream = DStream.ofType(String.class, "ms");
 		
 		Future<Stream<Stream<Entry<String, Iterable<Integer>>>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))	
@@ -60,7 +60,7 @@ public class GroupTests extends BaseTezTests {
 
 	@Test
 	public void streamGroupPreExistingKV() throws Exception {	
-		DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, "ms");
+		DStream<String> sourceStream = DStream.ofType(String.class, "ms");
 		
 		Future<Stream<Stream<Entry<String, Iterable<Integer>>>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))

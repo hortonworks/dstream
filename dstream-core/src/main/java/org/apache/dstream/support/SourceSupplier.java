@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.support.SerializableFunctionConverters.Supplier;
+import org.apache.dstream.function.SerializableFunctionConverters.Supplier;
 import org.apache.dstream.utils.Assert;
 
 

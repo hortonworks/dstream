@@ -5,7 +5,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import org.apache.dstream.DistributableStream;
+import org.apache.dstream.DStream;
 import org.apache.dstream.tez.BaseTezTests;
 
 /**
@@ -16,7 +16,7 @@ public class WordCount {
 
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) throws Exception {
-		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DistributableStream.ofType(String.class, "wc")
+		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DStream.ofType(String.class, "wc")
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.reduceGroups(word -> word, word -> 1, Integer::sum)
 			.executeAs("WordCount");

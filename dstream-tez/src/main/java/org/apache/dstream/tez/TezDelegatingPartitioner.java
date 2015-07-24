@@ -1,6 +1,6 @@
 package org.apache.dstream.tez;
 
-import org.apache.dstream.Partitioner;
+import org.apache.dstream.support.Partitioner;
 import org.apache.tez.runtime.library.partitioner.HashPartitioner;
 
 public class TezDelegatingPartitioner extends HashPartitioner {

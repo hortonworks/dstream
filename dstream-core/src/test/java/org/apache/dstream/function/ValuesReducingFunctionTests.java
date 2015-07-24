@@ -1,4 +1,4 @@
-package org.apache.dstream;
+package org.apache.dstream.function;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,20 +8,17 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.support.KeyValuesStreamCombinerFunction;
-import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
+import org.apache.dstream.function.ValuesReducingFunction;
+import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.utils.KVUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class KeyValuesStreamCombinerFunctionTests {
+public class ValuesReducingFunctionTests {
 
-	/**
-	 * This tests resembles certain shuffle behaviors where shuffle groups values essentially 
-	 * resulting in the following Key/Value semantics <K,V[]>
-	 */
+	
 	@Test
-	public void validateKeyValuesAggregation(){
+	public void validateValuesReducing(){
 		List<Entry<String, Iterator<Integer>>> keyValuesList = new ArrayList<Entry<String,Iterator<Integer>>>();
 		
 		keyValuesList.add(KVUtils.kv("Bob", Arrays.asList(new Integer[]{1,1,1,1,1,1,1}).iterator()));
@@ -30,8 +27,8 @@ public class KeyValuesStreamCombinerFunctionTests {
 		
 		Stream<Entry<String,Iterator<Integer>>> sourceStream = keyValuesList.stream();
 		// the above stream would be generated from reader provided by the target execution environment (e.g., Tez)
-		KeyValuesStreamCombinerFunction<String, Integer, Entry<String, Integer>> kvsStream = 
-				new KeyValuesStreamCombinerFunction<String, Integer, Entry<String, Integer>>((BinaryOperator<Integer>)Integer::sum);
+		ValuesReducingFunction<String, Integer, Entry<String, Integer>> kvsStream = 
+				new ValuesReducingFunction<String, Integer, Entry<String, Integer>>((BinaryOperator<Integer>)Integer::sum);
 		List<Entry<String, Integer>> result = kvsStream.apply(sourceStream).collect(Collectors.toList());
 		Assert.assertEquals(3, result.size());
 		Assert.assertEquals((Integer)7, result.get(0).getValue());

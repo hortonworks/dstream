@@ -7,16 +7,18 @@ import java.util.stream.Stream;
 
 import org.aopalliance.intercept.MethodInvocation;
 import org.apache.dstream.DistributableConstants;
-import org.apache.dstream.DistributableStreamToStreamAdapterFunction;
-import org.apache.dstream.KeyValueMappingFunction;
 import org.apache.dstream.StreamInvocationChain;
+import org.apache.dstream.function.DStreamToStreamAdapterFunction;
+import org.apache.dstream.function.KeyValueMappingFunction;
+import org.apache.dstream.function.ValuesReducingFunction;
+import org.apache.dstream.function.ValuesGroupingFunction;
+import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
+import org.apache.dstream.function.SerializableFunctionConverters.Function;
+import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
 import org.apache.dstream.support.Aggregators;
-import org.apache.dstream.support.KeyValuesStreamCombinerFunction;
-import org.apache.dstream.support.KeyValuesStreamGrouperFunction;
-import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
-import org.apache.dstream.support.SerializableFunctionConverters.Function;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.utils.Assert;
+import org.apache.dstream.utils.Tuples.Tuple2;
 
 class TaskDescriptorChainBuilder {
 	
@@ -29,6 +31,8 @@ class TaskDescriptorChainBuilder {
 	private final Properties executionConfig;
 	
 	private int sequenceIdCounter;
+	
+//	private MethodInvocation previous
 	
 	/**
 	 * 
@@ -96,7 +100,7 @@ class TaskDescriptorChainBuilder {
 			// common
 			this.taskChain.add(this.createTaskDescriptor(invocation));
 			TaskDescriptor curresntTaskDescriptor = this.getCurrentTask(invocation);
-			curresntTaskDescriptor.compose(new KeyValuesStreamCombinerFunction((BinaryOperator)arguments[2]));
+			curresntTaskDescriptor.compose(new ValuesReducingFunction((BinaryOperator)arguments[2]));
 		}
 		else if (operationName.equals("group")) {
 			BinaryOperator aggregator = null;
@@ -105,26 +109,23 @@ class TaskDescriptorChainBuilder {
 			currentTask.andThen(new KeyValueMappingFunction(keyMapper, valueMapper, aggregator));
 			
 			// common	
-			this.taskChain.add(new TaskDescriptor(this.sequenceIdCounter++, this.invocationChain.getSourceIdentifier()));
+			this.taskChain.add(new TaskDescriptor(this.sequenceIdCounter++, this.invocationChain.getSourceIdentifier(), invocation.getMethod().getName()));
 			TaskDescriptor curresntTaskDescriptor = this.getCurrentTask(invocation);
-			curresntTaskDescriptor.compose(new KeyValuesStreamGrouperFunction(Aggregators::aggregateFlatten));
+			curresntTaskDescriptor.compose(new ValuesGroupingFunction(Aggregators::aggregateFlatten));
 		}
 		else if (operationName.equals("join")) {
 	
 			StreamInvocationChain dependentInvocationChain = (StreamInvocationChain) arguments[0];
 			TaskDescriptorChainBuilder dependentBuilder = new TaskDescriptorChainBuilder(this.executionName, dependentInvocationChain, this.executionConfig);
 			List<TaskDescriptor> dependentTasks = dependentBuilder.build();
+
+			String shuffleOperationName =  currentTask.getShuffleOperationName();
 			
-			if (arguments.length == 3){		
-				Function taskFunction = new PredicateJoiner<>((Function)arguments[1], (Function)arguments[2]);
-				this.taskChain.add(new TaskDescriptor(this.sequenceIdCounter++, this.invocationChain.getSourceIdentifier()));
-				TaskDescriptor curresntTaskDescriptor = this.getCurrentTask(invocation);
-				curresntTaskDescriptor.setDependentTasksChain(dependentTasks);
-				curresntTaskDescriptor.andThen(taskFunction);
+			if (!shuffleOperationName.equals("join")){
+				this.taskChain.add(new TaskDescriptor(this.sequenceIdCounter++, this.invocationChain.getSourceIdentifier(), operationName));
 			}
-			else {
-				throw new UnsupportedOperationException("Operation '" + operationName + "' temporarily is not supported");
-			}
+			TaskDescriptor joinDescriptor = this.getCurrentTask(invocation);
+			joinDescriptor.addDependentTasksChain(Tuple2.tuple2((Predicate)arguments[1], dependentTasks));
 		}
 		else {
 			throw new UnsupportedOperationException("Operation '" + operationName + "' temporarily is not supported");
@@ -138,7 +139,7 @@ class TaskDescriptorChainBuilder {
 	private void processIntermediateOperation(MethodInvocation invocation){	
 		Function<Stream<?>, Stream<?>> function = invocation.getMethod().getName().equals("compute") 
 				? (Function<Stream<?>, Stream<?>>) invocation.getArguments()[0]
-						: new DistributableStreamToStreamAdapterFunction(invocation.getMethod().getName(), invocation.getArguments()[0]);
+						: new DStreamToStreamAdapterFunction(invocation.getMethod().getName(), invocation.getArguments()[0]);
 
 		TaskDescriptor task = this.getCurrentTask(invocation);
 		task.andThen(function);
@@ -179,7 +180,7 @@ class TaskDescriptorChainBuilder {
 	 * 
 	 */
 	private TaskDescriptor createTaskDescriptor(MethodInvocation invocation){
-		TaskDescriptor taskDescriptor = new TaskDescriptor(this.sequenceIdCounter++, this.invocationChain.getSourceIdentifier());
+		TaskDescriptor taskDescriptor = new TaskDescriptor(this.sequenceIdCounter++, this.invocationChain.getSourceIdentifier(), invocation.getMethod().getName());
 		return taskDescriptor;
 	}
 }
