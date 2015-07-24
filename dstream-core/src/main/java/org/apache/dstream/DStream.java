@@ -15,6 +15,18 @@ import org.apache.dstream.utils.Tuples.Tuple5;
 
 public interface DStream<A> extends DistributableExecutable<A>{
 		
+	/**
+	 * Factory method which creates an instance of the {@code DStream} of type T.
+	 * 
+	 * @param sourceItemType the type of the elements of this pipeline
+	 * @param sourceIdentifier the value which will be used in conjunction with 
+	 *                       {@link DistributableConstants#SOURCE} in configuration 
+	 *                       to point to source of this stream 
+	 *                       (e.g., dstream.source.foo=file://foo.txt where 'foo' is the <i>sourceIdentifier</i>)
+	 * @return the new {@link DStream} of type T
+	 * 
+	 * @param <T> the type of pipeline elements
+	 */
 	@SuppressWarnings("unchecked")
 	public static <T> DStream<T> ofType(Class<T> sourceElementType, String sourceIdentifier) {	
 		Assert.notNull(sourceElementType, "'sourceElementType' must not be null");
@@ -22,24 +34,101 @@ public interface DStream<A> extends DistributableExecutable<A>{
 		return DStreamOperationsCollector.as(sourceElementType, sourceIdentifier, DStream.class);
 	}
 	
+	/**
+	 * This operation maintains the same semantics as {@link Stream#filter(java.util.function.Predicate)} 
+	 * with the exception of returning {@link DStream} instead of the {@link Stream}.<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
+	 * 
+	 * @param predicate predicate to apply to each element to determine if it
+     *                  should be included
+	 * @return {@link DStream} of type T
+	 */
 	DStream<A> filter(Predicate<? super A> predicate);
 	
+	/**
+	 * This operation maintains the same semantics as {@link Stream#flatMap(java.util.function.Function)} 
+	 * with the exception of returning {@link DStream} instead of the {@link Stream}.<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
+     * 
+	 * @param mapper function to apply to each element which produces a stream
+     *               of new values
+	 * @return {@link DStream} of type R
+	 * 
+	 * @param <R> the type of the elements of the new stream
+	 */
 	<R> DStream<R> flatMap(Function<? super A, ? extends Stream<? extends R>> mapper);
 	
+	/**
+	 * This operation maintains the same semantics as {@link Stream#map(java.util.function.Function)} 
+	 * with the exception of returning {@link DStream} instead of the {@link Stream}.<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
+	 * 
+	 * @param mapper function to apply to each element
+	 * @return {@link DStream} of type R
+	 * 
+	 * @param <R> the type of the elements of the new stream
+	 */
 	<R> DStream<R> map(Function<? super A, ? extends R> mapper);
 	
+	/**
+	 * Operation to provide a {@link Function} to operate on the entire {@link Stream} representing 
+	 * individual partition.<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
+	 * 
+	 * @param computeFunction a mapping function to map {@link Stream}&lt;T&gt; to {@link Stream}&lt;R&gt;.
+	 * @return {@link DStream} of type R
+	 * 
+	 * @param <R> the type of the elements of the new pipeline
+	 */
 	<R> DStream<R> compute(Function<? super Stream<A>, ? extends Stream<? extends R>> computeFunction);
 	
-	// maintains teh same semantics as reduce (reducing to singular). A Streaming version of collect(Collectors.toMap)
+	/**
+	 * Will group values mapped from individual elements (via valueMapper) based on the 
+	 * provided <i>groupClassifier</i>, reducing grouped values using provided <i>valueReducer</i> 
+	 * returning a new Key/Value stream with reduced values<br>
+	 * Maintains semantics similar to Stream.collect(Collectors.toMap)
+	 * 
+	 * @param groupClassifier
+	 * @param valueMapper
+	 * @param valueReducer
+	 * @return
+	 */
 	<K,V> DStream<Entry<K,V>> reduceGroups(Function<? super A, ? extends K> groupClassifier, 
 			Function<? super A, ? extends V> valueMapper,
 			BinaryOperator<V> valueReducer);
-	
-	// BinaryFunction "is" BinaryOperator hence this method could be used in place of reduce
+
+	/**
+	 * Similar to {@link #reduceGroups(Function, Function, BinaryOperator)} will group values 
+	 * mapped from individual elements (via valueMapper) based on the 
+	 * provided <i>groupClassifier</i>, aggregating grouped values using provided <i>valueAggregator</i> 
+	 * returning a new Key/Value stream with aggregated values<br>
+	 * 
+	 * @param groupClassifier
+	 * @param valueMapper
+	 * @param valueAggregator
+	 * @return
+	 */
 	<K,V,F> DStream<Entry<K,F>> aggregateGroups(Function<? super A, ? extends K> groupClassifier, 
 			Function<? super A, ? extends V> valueMapper,
 			BiFunction<?,V,F> valueAggregator);
 	
+	/**
+	 * Will group values mapped from individual elements into an {@link Iterable} based on the provided 
+	 * <i>groupClassifier</i> returning a new stream of grouped elements mapped to a 'groupClassifier' 
+	 * as Key/Value pairs.<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
+	 * <br>
+	 * This is a <i>shuffle</i> operation.
+	 * 
+	 * @param groupClassifier
+	 * @param valueMapper
+	 * @return
+	 */
 	<K,V> DStream<Entry<K,Iterable<V>>> group(Function<? super A, ? extends K> groupClassifier, 
 			Function<? super A, ? extends V> valueMapper);
 	
@@ -57,11 +146,68 @@ public interface DStream<A> extends DistributableExecutable<A>{
 	 * @param <B>
 	 */
 	interface DStream2<A,B> extends DistributableExecutable<Tuple2<A,B>>{
+		/**
+		 * This operation maintains the same semantics as {@link Stream#filter(java.util.function.Predicate)} 
+		 * with the exception of returning {@link DStream2} instead of the {@link Stream}.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * 
+		 * @param predicate predicate to apply to each element to determine if it
+	     *                  should be included
+		 * @return {@link DStream2} of type T
+		 */
 		DStream2<A,B> filter(Predicate<? super Tuple2<A,B>> predicate);	
+		
+		/**
+		 * This operation maintains the same semantics as {@link Stream#flatMap(java.util.function.Function)} 
+		 * with the exception of returning {@link DStream} instead of the {@link Stream}.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+	     * 
+		 * @param mapper function to apply to each element which produces a stream
+	     *               of new values
+		 * @return {@link DStream} of type R
+		 * 
+		 * @param <R> the type of the elements of the new stream
+		 */
 		<R> DStream<R> flatMap(Function<? super Tuple2<A,B>, ? extends Stream<? extends R>> mapper);	
+		
+		/**
+		 * This operation maintains the same semantics as {@link Stream#map(java.util.function.Function)} 
+		 * with the exception of returning {@link DStream} instead of the {@link Stream}.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * 
+		 * @param mapper function to apply to each element
+		 * @return {@link DStream} of type R
+		 * 
+		 * @param <R> the type of the elements of the new stream
+		 */
 		<R> DStream<R> map(Function<? super Tuple2<A, B>, ? extends R> mapper);
+		
+		/**
+		 * Operation to provide a {@link Function} to operate on the entire {@link Stream} representing 
+		 * individual partition.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * 
+		 * @param computeFunction a mapping function to map {@link Stream}&lt;T&gt; to {@link Stream}&lt;R&gt;.
+		 * @return {@link DStream} of type R
+		 * 
+		 * @param <R> the type of the elements of the new pipeline
+		 */
 		<R> DStream<R> compute(Function<? super Stream<Tuple2<A, B>>, ? extends Stream<? extends R>> computeFunction);
-		// maintains teh same semantics as reduce (reducing to singular). A Streaming version of collect(Collectors.toMap)
+		/**
+		 * Will group values mapped from individual elements (via valueMapper) based on the 
+		 * provided <i>groupClassifier</i>, reducing grouped values using provided <i>valueReducer</i> 
+		 * returning a new Key/Value stream with reduced values<br>
+		 * Maintains semantics similar to Stream.collect(Collectors.toMap)
+		 * 
+		 * @param groupClassifier
+		 * @param valueMapper
+		 * @param valueReducer
+		 * @return
+		 */
 		<K,V> DStream<Entry<K,V>> reduceGroups(Function<? super Tuple2<A, B>, ? extends K> groupClassifier, 
 				Function<? super Tuple2<A, B>, ? extends V> valueMapper,
 				BinaryOperator<V> valueReducer);	
@@ -85,11 +231,69 @@ public interface DStream<A> extends DistributableExecutable<A>{
 	 * @param <C>
 	 */
 	interface DStream3<A,B,C> extends DistributableExecutable<Tuple3<A,B,C>> {
+		/**
+		 * This operation maintains the same semantics as {@link Stream#filter(java.util.function.Predicate)} 
+		 * with the exception of returning {@link DStream3} instead of the {@link Stream}.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * 
+		 * @param predicate predicate to apply to each element to determine if it
+	     *                  should be included
+		 * @return {@link DStream3} of type T
+		 */
 		DStream3<A,B,C> filter(Predicate<? super Tuple3<A,B,C>> predicate);	
+		
+		/**
+		 * This operation maintains the same semantics as {@link Stream#flatMap(java.util.function.Function)} 
+		 * with the exception of returning {@link DStream} instead of the {@link Stream}.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+	     * 
+		 * @param mapper function to apply to each element which produces a stream
+	     *               of new values
+		 * @return {@link DStream} of type R
+		 * 
+		 * @param <R> the type of the elements of the new stream
+		 */
 		<R> DStream<R> flatMap(Function<? super Tuple3<A,B,C>, ? extends Stream<? extends R>> mapper);	
+		
+		/**
+		 * This operation maintains the same semantics as {@link Stream#map(java.util.function.Function)} 
+		 * with the exception of returning {@link DStream} instead of the {@link Stream}.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * 
+		 * @param mapper function to apply to each element
+		 * @return {@link DStream} of type R
+		 * 
+		 * @param <R> the type of the elements of the new stream
+		 */
 		<R> DStream<R> map(Function<? super Tuple3<A,B,C>, ? extends R> mapper);		
+		
+		/**
+		 * Operation to provide a {@link Function} to operate on the entire {@link Stream} representing 
+		 * individual partition.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * 
+		 * @param computeFunction a mapping function to map {@link Stream}&lt;T&gt; to {@link Stream}&lt;R&gt;.
+		 * @return {@link DStream} of type R
+		 * 
+		 * @param <R> the type of the elements of the new pipeline
+		 */
 		<R> DStream<R> compute(Function<? super Stream<Tuple3<A,B,C>>, ? extends Stream<? extends R>> computeFunction);
-		// maintains teh same semantics as reduce (reducing to singular). A Streaming version of collect(Collectors.toMap)
+		
+		/**
+		 * Will group values mapped from individual elements (via valueMapper) based on the 
+		 * provided <i>groupClassifier</i>, reducing grouped values using provided <i>valueReducer</i> 
+		 * returning a new Key/Value stream with reduced values<br>
+		 * Maintains semantics similar to Stream.collect(Collectors.toMap)
+		 * 
+		 * @param groupClassifier
+		 * @param valueMapper
+		 * @param valueReducer
+		 * @return
+		 */
 		<K,V> DStream<Entry<K,V>> reduceGroups(Function<? super Tuple3<A,B,C>, ? extends K> groupClassifier, 
 				Function<? super Tuple3<A,B,C>, ? extends V> valueMapper,
 				BinaryOperator<V> valueReducer);	
@@ -113,11 +317,69 @@ public interface DStream<A> extends DistributableExecutable<A>{
 	 * @param <D>
 	 */
 	interface DStream4<A,B,C,D> extends DistributableExecutable<Tuple4<A,B,C,D>> {
+		/**
+		 * This operation maintains the same semantics as {@link Stream#filter(java.util.function.Predicate)} 
+		 * with the exception of returning {@link DStream4} instead of the {@link Stream}.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * 
+		 * @param predicate predicate to apply to each element to determine if it
+	     *                  should be included
+		 * @return {@link DStream4} of type T
+		 */
 		DStream4<A,B,C,D> filter(Predicate<? super Tuple4<A,B,C,D>> predicate);	
-		<R> DStream<R> flatMap(Function<? super Tuple4<A,B,C,D>, ? extends Stream<? extends R>> mapper);	
+		
+		/**
+		 * This operation maintains the same semantics as {@link Stream#flatMap(java.util.function.Function)} 
+		 * with the exception of returning {@link DStream} instead of the {@link Stream}.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+	     * 
+		 * @param mapper function to apply to each element which produces a stream
+	     *               of new values
+		 * @return {@link DStream} of type R
+		 * 
+		 * @param <R> the type of the elements of the new stream
+		 */
+		<R> DStream<R> flatMap(Function<? super Tuple4<A,B,C,D>, ? extends Stream<? extends R>> mapper);
+		
+		/**
+		 * This operation maintains the same semantics as {@link Stream#map(java.util.function.Function)} 
+		 * with the exception of returning {@link DStream} instead of the {@link Stream}.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * 
+		 * @param mapper function to apply to each element
+		 * @return {@link DStream} of type R
+		 * 
+		 * @param <R> the type of the elements of the new stream
+		 */
 		<R> DStream<R> map(Function<? super Tuple4<A,B,C,D>, ? extends R> mapper);
+		
+		/**
+		 * Operation to provide a {@link Function} to operate on the entire {@link Stream} representing 
+		 * individual partition.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * 
+		 * @param computeFunction a mapping function to map {@link Stream}&lt;T&gt; to {@link Stream}&lt;R&gt;.
+		 * @return {@link DStream} of type R
+		 * 
+		 * @param <R> the type of the elements of the new pipeline
+		 */
 		<R> DStream<R> compute(Function<? super Stream<Tuple4<A,B,C,D>>, ? extends Stream<? extends R>> computeFunction);
-		// maintains teh same semantics as reduce (reducing to singular). A Streaming version of collect(Collectors.toMap)
+		
+		/**
+		 * Will group values mapped from individual elements (via valueMapper) based on the 
+		 * provided <i>groupClassifier</i>, reducing grouped values using provided <i>valueReducer</i> 
+		 * returning a new Key/Value stream with reduced values<br>
+		 * Maintains semantics similar to Stream.collect(Collectors.toMap)
+		 * 
+		 * @param groupClassifier
+		 * @param valueMapper
+		 * @param valueReducer
+		 * @return
+		 */
 		<K,V> DStream<Entry<K,V>> reduceGroups(Function<? super Tuple4<A,B,C,D>, ? extends K> groupClassifier, 
 				Function<? super Tuple4<A,B,C,D>, ? extends V> valueMapper,
 				BinaryOperator<V> valueReducer);	
@@ -141,11 +403,69 @@ public interface DStream<A> extends DistributableExecutable<A>{
 	 * @param <E>
 	 */
 	interface DStream5<A,B,C,D,E>  extends DistributableExecutable<Tuple5<A,B,C,D,E>> {
+		/**
+		 * This operation maintains the same semantics as {@link Stream#filter(java.util.function.Predicate)} 
+		 * with the exception of returning {@link DStream5} instead of the {@link Stream}.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * 
+		 * @param predicate predicate to apply to each element to determine if it
+	     *                  should be included
+		 * @return {@link DStream5} of type T
+		 */
 		DStream5<A,B,C,D,E> filter(Predicate<? super Tuple5<A,B,C,D,E>> predicate);	
+		
+		/**
+		 * This operation maintains the same semantics as {@link Stream#flatMap(java.util.function.Function)} 
+		 * with the exception of returning {@link DStream} instead of the {@link Stream}.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+	     * 
+		 * @param mapper function to apply to each element which produces a stream
+	     *               of new values
+		 * @return {@link DStream} of type R
+		 * 
+		 * @param <R> the type of the elements of the new stream
+		 */
 		<R> DStream<R> flatMap(Function<? super Tuple5<A,B,C,D,E>, ? extends Stream<? extends R>> mapper);	
+		
+		/**
+		 * This operation maintains the same semantics as {@link Stream#map(java.util.function.Function)} 
+		 * with the exception of returning {@link DStream} instead of the {@link Stream}.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * 
+		 * @param mapper function to apply to each element
+		 * @return {@link DStream} of type R
+		 * 
+		 * @param <R> the type of the elements of the new stream
+		 */
 		<R> DStream<R> map(Function<? super Tuple5<A,B,C,D,E>, ? extends R> mapper);
+		
+		/**
+		 * Operation to provide a {@link Function} to operate on the entire {@link Stream} representing 
+		 * individual partition.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * 
+		 * @param computeFunction a mapping function to map {@link Stream}&lt;T&gt; to {@link Stream}&lt;R&gt;.
+		 * @return {@link DStream} of type R
+		 * 
+		 * @param <R> the type of the elements of the new pipeline
+		 */
 		<R> DStream<R> compute(Function<? super Stream<Tuple5<A,B,C,D,E>>, ? extends Stream<? extends R>> computeFunction);
-		// maintains teh same semantics as reduce (reducing to singular). A Streaming version of collect(Collectors.toMap)
+		
+		/**
+		 * Will group values mapped from individual elements (via valueMapper) based on the 
+		 * provided <i>groupClassifier</i>, reducing grouped values using provided <i>valueReducer</i> 
+		 * returning a new Key/Value stream with reduced values<br>
+		 * Maintains semantics similar to Stream.collect(Collectors.toMap)
+		 * 
+		 * @param groupClassifier
+		 * @param valueMapper
+		 * @param valueReducer
+		 * @return
+		 */
 		<K,V> DStream<Entry<K,V>> reduceGroups(Function<? super Tuple5<A,B,C,D,E>, ? extends K> groupClassifier, 
 				Function<? super Tuple5<A,B,C,D,E>, ? extends V> valueMapper,
 				BinaryOperator<V> valueReducer);	
