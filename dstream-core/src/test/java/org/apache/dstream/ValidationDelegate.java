@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
-import org.apache.dstream.StreamOperationsCollector.ProxyInternalsAccessor;
+import org.apache.dstream.DStreamOperationsCollector.ProxyInternalsAccessor;
 import org.apache.dstream.utils.JvmUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,12 +70,15 @@ public class ValidationDelegate implements StreamExecutionDelegate<StreamInvocat
 		catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 		}
+		finally {
+			executor.shutdownNow();
+		}
 		
 		return result;
 	}
 	
 	/**
-	 * 
+	 * Wraps it into ProxyInternalsAccessor for testing
 	 */
 	private Object proxy(Object o) {
 		return JvmUtils.proxy(this, new MethodInterceptor() {		

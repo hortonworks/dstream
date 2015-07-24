@@ -1,11 +1,15 @@
 package org.apache.dstream.tez;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.Partitioner;
-import org.apache.dstream.support.SerializableFunctionConverters.Function;
-import org.apache.dstream.support.SerializableFunctionConverters.Supplier;
+import org.apache.dstream.function.SerializableFunctionConverters.Function;
+import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
+import org.apache.dstream.function.SerializableFunctionConverters.Supplier;
+import org.apache.dstream.support.Partitioner;
+import org.apache.dstream.utils.Tuples.Tuple2;
 
 /**
  * 
@@ -21,29 +25,37 @@ public class TaskDescriptor {
 	
 	private final int id;
 	
+	
+	private final String shuffleOperationName;
+	
+
 	private Class<?> sourceElementType;
 	
 	private Supplier<?> sourceSupplier;
 	
-	private List<TaskDescriptor> dependentTasksChain;
+	private List<Tuple2<Predicate<?>, List<TaskDescriptor>>> dependentTasksChains;
 
 	private Class<?> inputFormatClass;
-
-	public TaskDescriptor(int id){
-		this(id, null);
-	}
 	
-	public TaskDescriptor(int id, String name){
+	public TaskDescriptor(int id, String name, String shuffleOperationName){
 		this.name = name;
 		this.id = id;
+		this.shuffleOperationName = shuffleOperationName;
 	}
 	
-	public List<TaskDescriptor> getDependentTasksChain() {
-		return dependentTasksChain;
+	public List<Tuple2<Predicate<?>, List<TaskDescriptor>>> getDependentTasksChains() {
+		return this.dependentTasksChains;
+	}
+	
+	public String getShuffleOperationName() {
+		return shuffleOperationName;
 	}
 
-	public void setDependentTasksChain(List<TaskDescriptor> dependentTasksChain) {
-		this.dependentTasksChain = dependentTasksChain;
+	public void addDependentTasksChain(Tuple2<Predicate<?>, List<TaskDescriptor>> dependentTasksChain) {
+		if (this.dependentTasksChains == null){
+			this.dependentTasksChains = new ArrayList<>();
+		}
+		this.dependentTasksChains.add(dependentTasksChain);
 	}
 	
 	public Class<?> getInputFormatClass() {
@@ -75,10 +87,13 @@ public class TaskDescriptor {
 	}
 	
 	public Function<Stream<?>, Stream<?>> getFunction() {
+		this.materializeJoinFunction();
+
 		return this.function;
 	}
 	
 	public void compose(Function<Stream<?>, Stream<?>> cFunction) {
+		this.materializeJoinFunction();
 		if (this.function != null){
 			this.function = this.function.compose(cFunction);
 		}
@@ -88,6 +103,7 @@ public class TaskDescriptor {
 	}
 	
 	public void andThen(Function<Stream<?>, Stream<?>> aFunction) {
+		this.materializeJoinFunction();
 		if (this.function != null){
 			this.function = aFunction.compose(this.function);
 		}
@@ -110,5 +126,15 @@ public class TaskDescriptor {
 
 	public void setSourceElementType(Class<?> sourceElementType) {
 		this.sourceElementType = sourceElementType;
+	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private void materializeJoinFunction(){
+		if (this.function == null && this.shuffleOperationName.equals("join")){
+			Predicate<?>[] predicates = this.dependentTasksChains.stream().map(s -> s._1).collect(Collectors.toList()).toArray(new Predicate[]{});
+			
+			Function f = new TezJoiner(predicates);
+			this.function = f;
+		}
 	}
 }

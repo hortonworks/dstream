@@ -7,9 +7,9 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.AbstractStreamExecutionDelegate;
 import org.apache.dstream.DistributableConstants;
 import org.apache.dstream.StreamInvocationChain;
+import org.apache.dstream.support.AbstractStreamExecutionDelegate;
 import org.apache.dstream.tez.utils.HadoopUtils;
 import org.apache.dstream.tez.utils.SequenceFileOutputStreamsBuilder;
 import org.apache.hadoop.conf.Configuration;

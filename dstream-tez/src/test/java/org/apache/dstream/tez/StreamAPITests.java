@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 
 import junit.framework.Assert;
 
-import org.apache.dstream.DistributableStream;
+import org.apache.dstream.DStream;
 import org.junit.After;
 import org.junit.Test;
 
@@ -24,7 +24,7 @@ public class StreamAPITests extends BaseTezTests {
 	
 	@Test
 	public void flatMapReduce() throws Exception {
-		DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, "wc");
+		DStream<String> sourceStream = DStream.ofType(String.class, "wc");
 		
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
@@ -44,7 +44,7 @@ public class StreamAPITests extends BaseTezTests {
 	
 	@Test
 	public void flatMapReduceMap() throws Exception {
-		DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, "wc");
+		DStream<String> sourceStream = DStream.ofType(String.class, "wc");
 		
 		Future<Stream<Stream<String>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
@@ -66,7 +66,7 @@ public class StreamAPITests extends BaseTezTests {
 	
 	@Test
 	public void flatMapFilterReduceMap() throws Exception {
-		DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, "wc");
+		DStream<String> sourceStream = DStream.ofType(String.class, "wc");
 		
 		Future<Stream<Stream<String>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
@@ -89,7 +89,7 @@ public class StreamAPITests extends BaseTezTests {
 	
 	@Test
 	public void flatMapFilterMapReduceMap() throws Exception {
-		DistributableStream<String> sourceStream = DistributableStream.ofType(String.class, "wc");
+		DStream<String> sourceStream = DStream.ofType(String.class, "wc");
 		
 		Future<Stream<Stream<String>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))

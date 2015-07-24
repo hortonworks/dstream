@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.apache.dstream.support.SerializableFunctionConverters.Function;
+import org.apache.dstream.function.SerializableFunctionConverters.Function;
 import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.KVUtils;
 import org.apache.dstream.utils.Pair;

@@ -21,7 +21,7 @@ public class ConfigurationGeneratorTests {
 	@Test
 	public void testConfigGeneration() throws Exception {
 		
-		
+		  
 		DistributableStream<String> hashPipeline = DistributableStream.ofType(String.class, "hash");
 		DistributableStream<String> probePipeline = DistributableStream.ofType(String.class, "probe");
 		

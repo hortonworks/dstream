@@ -1,4 +1,4 @@
-package org.apache.dstream.support;
+package org.apache.dstream.function;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -7,8 +7,8 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
-import org.apache.dstream.support.SerializableFunctionConverters.Function;
+import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
+import org.apache.dstream.function.SerializableFunctionConverters.Function;
 import org.apache.dstream.utils.KVUtils;
 
 /**
@@ -19,7 +19,7 @@ import org.apache.dstream.utils.KVUtils;
  * @param <K> key type
  * @param <V> value type
  */
-public class KeyValuesStreamCombinerFunction<K,V,T> implements Function<Stream<Entry<K,Iterator<V>>>,Stream<T>> {
+public class ValuesReducingFunction<K,V,T> implements Function<Stream<Entry<K,Iterator<V>>>,Stream<T>> {
 
 	private static final long serialVersionUID = 1133920289646508908L;
 	
@@ -34,7 +34,7 @@ public class KeyValuesStreamCombinerFunction<K,V,T> implements Function<Stream<E
 	 * BinaryOperator is type-less to accommodate BiFunctions (e.g. Aggregators::aggregate)
 	 */
 	@SuppressWarnings("rawtypes")
-	public KeyValuesStreamCombinerFunction(BinaryOperator combiner) {
+	public ValuesReducingFunction(BinaryOperator combiner) {
 		this.combiner = combiner;
 	}
 

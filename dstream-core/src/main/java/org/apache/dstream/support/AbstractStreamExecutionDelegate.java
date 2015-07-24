@@ -1,4 +1,4 @@
-package org.apache.dstream;
+package org.apache.dstream.support;
 
 import java.util.Properties;
 import java.util.concurrent.Callable;
@@ -9,6 +9,8 @@ import java.util.stream.Stream;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
+import org.apache.dstream.StreamExecutionDelegate;
+import org.apache.dstream.StreamInvocationChain;
 import org.apache.dstream.utils.JvmUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

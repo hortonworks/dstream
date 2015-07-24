@@ -1,13 +1,13 @@
-package org.apache.dstream.support;
+package org.apache.dstream.function;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
+import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
 
 /**
- * An extension to {@link KeyValuesStreamCombinerFunction} which simply ensures the 
+ * An extension to {@link ValuesReducingFunction} which simply ensures the 
  * semantical correctness of the value (Iterable[V]). In a typical case where more then one
  * value existed in the first place it is the expectation that the <i>combiner</i> will 
  * produce an {@link Iterable}. However, for cases where there was only one value, <i>combiner</i> 
@@ -16,11 +16,11 @@ import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
  * @param <K> key type
  * @param <V> value type
  */
-public class KeyValuesStreamGrouperFunction<K,V,T> extends  KeyValuesStreamCombinerFunction<K, V, T> {
+public class ValuesGroupingFunction<K,V,T> extends  ValuesReducingFunction<K, V, T> {
 	private static final long serialVersionUID = 5774838692658472433L;
 	
 	@SuppressWarnings("rawtypes")
-	public KeyValuesStreamGrouperFunction(BinaryOperator combiner) {
+	public ValuesGroupingFunction(BinaryOperator combiner) {
 		super(combiner);
 	}
 	

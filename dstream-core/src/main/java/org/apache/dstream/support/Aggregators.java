@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 
-import org.apache.dstream.support.SerializableFunctionConverters.BinaryOperator;
+import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.utils.Assert;
 
 /**

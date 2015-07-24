@@ -10,12 +10,11 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.support.SerializableFunctionConverters.Function;
+import org.apache.dstream.function.SerializableFunctionConverters.Function;
 import org.apache.dstream.tez.io.KeyWritable;
 import org.apache.dstream.tez.io.ValueWritable;
 import org.apache.dstream.tez.utils.HdfsSerializerUtils;
 import org.apache.dstream.tez.utils.StreamUtils;
-import org.apache.dstream.utils.Assert;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -23,7 +22,6 @@ import org.apache.tez.mapreduce.processor.SimpleMRProcessor;
 import org.apache.tez.runtime.api.LogicalInput;
 import org.apache.tez.runtime.api.ObjectRegistry;
 import org.apache.tez.runtime.api.ProcessorContext;
-import org.apache.tez.runtime.api.Reader;
 import org.apache.tez.runtime.library.api.KeyValueReader;
 import org.apache.tez.runtime.library.api.KeyValueWriter;
 import org.apache.tez.runtime.library.api.KeyValuesReader;
@@ -60,7 +58,7 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 	/**
 	 * 
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SuppressWarnings("unchecked")
 	@Override
 	public void run() throws Exception {
 		if (logger.isInfoEnabled()){
@@ -68,27 +66,26 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 					+ this.dagName + "; Vertex " + this.vertexName);
 		}
 		
-		List<LogicalInput> inputs = this.getOrderedInputs();
-		Assert.isTrue(inputs.size() <= 2, "More then two inputs are not supported");
+		List<?> listOfStreams = this.getOrderedInputs().stream()
+			.map(input -> {
+				try {
+					return input.getReader();
+				} catch (Exception e) {
+					throw new IllegalStateException("Failed to get reader", e);
+				}
+			})
+			.map(reader -> {
+				return reader instanceof KeyValueReader ? StreamUtils.toStream((KeyValueReader) reader) 
+						: StreamUtils.toStream((KeyValuesReader) reader);
+			}).collect(Collectors.toList());
 		
-		Reader reader = inputs.get(0).getReader();
-		Stream stream = (reader instanceof KeyValueReader) 
-				? StreamUtils.toStream((KeyValueReader) reader) 
-				: StreamUtils.toStream((KeyValuesReader) reader);
-		KeyValueWriter kvWriter = (KeyValueWriter) this.getOutputs().values().iterator().next().getWriter();
-		
-		Function<Object, Stream<?>> streamProcessingFunction = this.extractTaskFunction();
-		Object functionArgument = stream;
-		
-		if (inputs.size() == 2){
-			reader = inputs.get(1).getReader();
-			Stream streamB = (reader instanceof KeyValueReader) 
-					? StreamUtils.toStream((KeyValueReader) reader) 
-					: StreamUtils.toStream((KeyValuesReader) reader);
-			
-			functionArgument = Stream.of(stream, streamB);
+		Object functionArgument = listOfStreams.get(0);
+		if (listOfStreams.size() > 1){
+			functionArgument = listOfStreams.stream();
 		}
 		
+		Function<Object, Stream<?>> streamProcessingFunction = this.extractTaskFunction();
+		KeyValueWriter kvWriter = (KeyValueWriter) this.getOutputs().values().iterator().next().getWriter();
 		WritingConsumer consume = new WritingConsumer(kvWriter);
 		try {
 			streamProcessingFunction.apply(functionArgument).forEach(consume);
