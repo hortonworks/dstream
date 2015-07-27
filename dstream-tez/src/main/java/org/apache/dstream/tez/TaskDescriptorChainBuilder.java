@@ -3,6 +3,7 @@ package org.apache.dstream.tez;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aopalliance.intercept.MethodInvocation;
@@ -34,8 +35,6 @@ class TaskDescriptorChainBuilder {
 	private final Properties executionConfig;
 	
 	private int sequenceIdCounter;
-	
-//	private MethodInvocation previous
 	
 	/**
 	 * 
@@ -76,8 +75,10 @@ class TaskDescriptorChainBuilder {
 				else if (this.isShuffleOperation(operationName)){
 					this.processShuffleOperation(invocation);
 				}
+				
 			}
 		}
+		this.completeTaskDescriptor(this.taskChain.get(this.taskChain.size() - 1));
 		return this.taskChain;
 	}
 	
@@ -134,6 +135,7 @@ class TaskDescriptorChainBuilder {
 			curresntTaskDescriptor.compose(new ValuesGroupingFunction((BinaryOperator)arguments[2]));
 		}
 		else if (operationName.equals("partition")) {
+			this.completeTaskDescriptor(this.taskChain.get(this.taskChain.size() - 1));
 			this.taskChain.add(this.createTaskDescriptor(invocation));
 			currentTask = this.getCurrentTask(invocation);
 			String parallelizmProp = this.executionConfig.getProperty(DistributableConstants.PARALLELISM + currentTask.getId() + "_" + currentTask.getName());
@@ -181,8 +183,21 @@ class TaskDescriptorChainBuilder {
 				? (Function<Stream<?>, Stream<?>>) invocation.getArguments()[0]
 						: new DStreamToStreamAdapterFunction(invocation.getMethod().getName(), invocation.getArguments()[0]);
 
-		TaskDescriptor task = this.getCurrentTask(invocation);
-		task.andThen(function);
+		TaskDescriptor taskDescriptor = this.getCurrentTask(invocation);
+		this.completeTaskDescriptor(taskDescriptor);
+		taskDescriptor.andThen(function);
+	}
+	
+	/**
+	 * 
+	 */
+	@SuppressWarnings("rawtypes")
+	private void completeTaskDescriptor(TaskDescriptor taskDescriptor){
+		if (taskDescriptor.getShuffleOperationName().equals("join") && taskDescriptor.getFunction() == null){
+			Predicate<?>[] predicates = taskDescriptor.getDependentTasksChains().stream().map(s -> s._1).collect(Collectors.toList()).toArray(new Predicate[]{});
+			Function f = new TezJoiner(predicates);
+			taskDescriptor.andThen(f);
+		}
 	}
 	
 	/**
