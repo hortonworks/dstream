@@ -32,4 +32,9 @@ public abstract class Partitioner<T> implements Function<T, Integer> {
 	public Function<? super T, ?> getClassifier() {
 		return this.classifier;
 	}
+	
+	@Override
+	public String toString(){
+		return this.getClass().getSimpleName() + ":" + partitionSize;
+	}
 }

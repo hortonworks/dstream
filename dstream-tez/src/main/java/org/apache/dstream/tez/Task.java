@@ -95,8 +95,12 @@ final class Task implements Serializable {
 				Type type = parameterizedType.getActualTypeArguments()[1];
 				
 				if (Text.class.getName().equals(type.getTypeName())){
-					modifiedFunction = modifiedFunction.compose(stream -> stream.map( s -> {
-						return ((Entry)s).getValue().toString();}));
+					if (modifiedFunction == null) {
+						modifiedFunction = stream -> stream.map(s -> ((Entry) s).getValue().toString());
+					} else {
+						modifiedFunction = modifiedFunction.compose(stream -> stream.map(s -> ((Entry) s)
+										.getValue().toString()));
+					}
 				} 
 				else {
 					//TODO need to design some type of extensible converter to support multiple types of Writable
