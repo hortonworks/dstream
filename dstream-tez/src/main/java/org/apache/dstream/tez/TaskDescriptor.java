@@ -2,7 +2,6 @@ package org.apache.dstream.tez;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.dstream.function.SerializableFunctionConverters.Function;
@@ -87,13 +86,10 @@ public class TaskDescriptor {
 	}
 	
 	public Function<Stream<?>, Stream<?>> getFunction() {
-		this.materializeJoinFunction();
-
 		return this.function;
 	}
 	
 	public void compose(Function<Stream<?>, Stream<?>> cFunction) {
-		this.materializeJoinFunction();
 		if (this.function != null){
 			this.function = this.function.compose(cFunction);
 		}
@@ -103,7 +99,6 @@ public class TaskDescriptor {
 	}
 	
 	public void andThen(Function<Stream<?>, Stream<?>> aFunction) {
-		this.materializeJoinFunction();
 		if (this.function != null){
 			this.function = aFunction.compose(this.function);
 		}
@@ -126,14 +121,5 @@ public class TaskDescriptor {
 
 	public void setSourceElementType(Class<?> sourceElementType) {
 		this.sourceElementType = sourceElementType;
-	}
-	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private void materializeJoinFunction(){
-		if (this.function == null && this.shuffleOperationName.equals("join") && this.dependentTasksChains != null){
-			Predicate<?>[] predicates = this.dependentTasksChains.stream().map(s -> s._1).collect(Collectors.toList()).toArray(new Predicate[]{});
-			Function f = new TezJoiner(predicates);
-			this.function = f;
-		}
 	}
 }
