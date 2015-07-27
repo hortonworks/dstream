@@ -2,6 +2,7 @@ package org.apache.dstream.tez;
 
 import java.nio.ByteBuffer;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,6 +13,7 @@ import java.util.stream.Stream;
 
 import org.apache.dstream.function.SerializableFunctionConverters.Function;
 import org.apache.dstream.tez.io.KeyWritable;
+import org.apache.dstream.tez.io.TezDelegatingPartitioner;
 import org.apache.dstream.tez.io.ValueWritable;
 import org.apache.dstream.tez.utils.HdfsSerializerUtils;
 import org.apache.dstream.tez.utils.StreamUtils;
@@ -88,7 +90,14 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 		KeyValueWriter kvWriter = (KeyValueWriter) this.getOutputs().values().iterator().next().getWriter();
 		WritingConsumer consume = new WritingConsumer(kvWriter);
 		try {
-			streamProcessingFunction.apply(functionArgument).forEach(consume);
+			if (streamProcessingFunction == null){
+				// partition
+				// safe to cast to a single stream
+				((Stream<?>)functionArgument).forEach(consume);
+			}
+			else {
+				streamProcessingFunction.apply(functionArgument).forEach(consume);
+			}
 		} 
 		catch (Exception e) {
 			e.printStackTrace();
@@ -137,7 +146,7 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 			payloadBuffer.get(payloadBytes);
 			String taskPath = new String(payloadBytes);
 			task = HdfsSerializerUtils.deserialize(new Path(taskPath), fs, Task.class);
-			registry.cacheForDAG(this.vertexName, task);
+			registry.cacheForDAG(this.vertexName, task);	
 			TezDelegatingPartitioner.setDelegator(task.getPartitioner());
 		}
 		return task.getFunction();
@@ -160,11 +169,24 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 		/**
 		 * 
 		 */
+		@SuppressWarnings("rawtypes")
 		public void accept(Object input) {
 			try {
-				if (input instanceof Entry){		
-					this.kw.setValue(((Entry<?,?>)input).getKey());
-					this.vw.setValue(((Entry<?,?>)input).getValue());
+				if (input instanceof Entry){	
+					Entry inEntry = (Entry) input;
+					if (inEntry.getKey() == null){
+						Iterator iter = (Iterator) inEntry.getValue();
+						while (iter.hasNext()){
+							Object value = iter.next();
+							this.vw.setValue(value);
+							this.kvWriter.write(this.kw, this.vw);
+						}
+					}
+					else {
+						this.kw.setValue(((Entry<?,?>)input).getKey());
+						this.vw.setValue(((Entry<?,?>)input).getValue());
+					}
+					
 					this.kvWriter.write(this.kw, this.vw);
 				}
 				else {

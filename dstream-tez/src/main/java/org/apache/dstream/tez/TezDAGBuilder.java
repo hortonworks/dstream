@@ -12,6 +12,7 @@ import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
 import org.apache.dstream.function.SerializableFunctionConverters.Supplier;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.tez.io.KeyWritable;
+import org.apache.dstream.tez.io.TezDelegatingPartitioner;
 import org.apache.dstream.tez.io.ValueWritable;
 import org.apache.dstream.tez.utils.HdfsSerializerUtils;
 import org.apache.dstream.utils.Assert;
@@ -82,7 +83,7 @@ public class TezDAGBuilder {
 			this.determineInputFormatClass(taskDescriptor);
 		}
 		UserPayload payload = this.createPayloadFromTaskSerPath(Task.build(taskDescriptor), this.dag.getName());
-		ProcessorDescriptor pd = ProcessorDescriptor.create(TezTaskProcessor.class.getName()).setUserPayload(payload);	
+		ProcessorDescriptor pd = ProcessorDescriptor.create(TezTaskProcessor.class.getName()).setUserPayload(payload);
 		
 		// inputOrderCounter needed to maintain the order of inputs for joins
 		Vertex vertex = taskDescriptor.getId() == 0 

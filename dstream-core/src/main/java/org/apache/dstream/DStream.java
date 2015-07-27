@@ -132,6 +132,20 @@ public interface DStream<A> extends DistributableExecutable<A>{
 	<K,V> DStream<Entry<K,Iterable<V>>> group(Function<? super A, ? extends K> groupClassifier, 
 			Function<? super A, ? extends V> valueMapper);
 	
+	/**
+	 * Returns an equivalent stream while hinting the underlying system to partition data represented by this stream.
+	 * Each element of this stream will be used by the target partitioner to calculate the partition id.<br>
+	 * The size of partitions for each shuffle stage is configured using {@link DistributableConstants#PARALLELISM}
+	 * property in execution configuration.
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
+	 * <br>
+	 * This is a <i>shuffle</i> operation.
+	 * 
+	 * @return
+	 */
+	<K,V> DStream<A> partition();
+	
 	<_A> DStream2<A,_A> join(DStream<_A> ds, Predicate<Tuple2<A,_A>> predicate);
 	
 	<_A,_B> DStream3<A,_A,_B> join(DStream2<_A,_B> ds, Predicate<Tuple3<A,_A,_B>> predicate);
@@ -211,13 +225,51 @@ public interface DStream<A> extends DistributableExecutable<A>{
 		<K,V> DStream<Entry<K,V>> reduceGroups(Function<? super Tuple2<A, B>, ? extends K> groupClassifier, 
 				Function<? super Tuple2<A, B>, ? extends V> valueMapper,
 				BinaryOperator<V> valueReducer);	
-		// BinaryFunction "is" BinaryOperator hence this method could be used in place of reduce
+		
+		/**
+		 * Similar to {@link #reduceGroups(Function, Function, BinaryOperator)} will group values 
+		 * mapped from individual elements (via valueMapper) based on the 
+		 * provided <i>groupClassifier</i>, aggregating grouped values using provided <i>valueAggregator</i> 
+		 * returning a new Key/Value stream with aggregated values<br>
+		 * 
+		 * @param groupClassifier
+		 * @param valueMapper
+		 * @param valueAggregator
+		 * @return
+		 */
 		<K,V,F> DStream<Entry<K,F>> aggregateGroups(Function<? super Tuple2<A, B>, ? extends K> groupClassifier, 
 				Function<? super Tuple2<A, B>, ? extends V> valueMapper,
 				BiFunction<?,V,F> valueAggregator);
 		
+		/**
+		 * Will group values mapped from individual elements into an {@link Iterable} based on the provided 
+		 * <i>groupClassifier</i> returning a new stream of grouped elements mapped to a 'groupClassifier' 
+		 * as Key/Value pairs.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * <br>
+		 * This is a <i>shuffle</i> operation.
+		 * 
+		 * @param groupClassifier
+		 * @param valueMapper
+		 * @return
+		 */
 		<K,V> DStream<Entry<K,Iterable<V>>> group(Function<? super A, ? extends K> groupClassifier, 
 				Function<? super A, ? extends V> valueMapper);
+		
+		/**
+		 * Returns an equivalent stream while hinting the underlying system to partition data represented by this stream.
+		 * Each element of this stream will be used by the target partitioner to calculate the partition id.<br>
+		 * The size of partitions for each shuffle stage is configured using {@link DistributableConstants#PARALLELISM}
+		 * property in execution configuration.
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * <br>
+		 * This is a <i>shuffle</i> operation.
+		 * 
+		 * @return
+		 */
+		DStream2<A,B> partition();
 		
 		<_A> DStream3<A,B,_A> join(DStream<_A> ds, Predicate<Tuple3<A,B,_A>> predicate);
 		<_A,_B> DStream4<A,B,_A,_B> join(DStream2<_A,_B> ds, Predicate<Tuple4<A,B,_A,_B>> predicate);
@@ -297,13 +349,51 @@ public interface DStream<A> extends DistributableExecutable<A>{
 		<K,V> DStream<Entry<K,V>> reduceGroups(Function<? super Tuple3<A,B,C>, ? extends K> groupClassifier, 
 				Function<? super Tuple3<A,B,C>, ? extends V> valueMapper,
 				BinaryOperator<V> valueReducer);	
-		// BinaryFunction "is" BinaryOperator hence this method could be used in place of reduce
+		
+		/**
+		 * Similar to {@link #reduceGroups(Function, Function, BinaryOperator)} will group values 
+		 * mapped from individual elements (via valueMapper) based on the 
+		 * provided <i>groupClassifier</i>, aggregating grouped values using provided <i>valueAggregator</i> 
+		 * returning a new Key/Value stream with aggregated values<br>
+		 * 
+		 * @param groupClassifier
+		 * @param valueMapper
+		 * @param valueAggregator
+		 * @return
+		 */
 		<K,V,F> DStream<Entry<K,F>> aggregateGroups(Function<? super Tuple3<A,B,C>, ? extends K> groupClassifier, 
 				Function<? super Tuple3<A,B,C>, ? extends V> valueMapper,
 				BiFunction<?,V,F> valueAggregator);
 		
+		/**
+		 * Will group values mapped from individual elements into an {@link Iterable} based on the provided 
+		 * <i>groupClassifier</i> returning a new stream of grouped elements mapped to a 'groupClassifier' 
+		 * as Key/Value pairs.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * <br>
+		 * This is a <i>shuffle</i> operation.
+		 * 
+		 * @param groupClassifier
+		 * @param valueMapper
+		 * @return
+		 */
 		<K,V> DStream<Entry<K,Iterable<V>>> group(Function<? super A, ? extends K> groupClassifier, 
 				Function<? super A, ? extends V> valueMapper);
+		
+		/**
+		 * Returns an equivalent stream while hinting the underlying system to partition data represented by this stream.
+		 * Each element of this stream will be used by the target partitioner to calculate the partition id.<br>
+		 * The size of partitions for each shuffle stage is configured using {@link DistributableConstants#PARALLELISM}
+		 * property in execution configuration.
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * <br>
+		 * This is a <i>shuffle</i> operation.
+		 * 
+		 * @return
+		 */
+		DStream3<A,B,C> partition();
 		
 		<_A> DStream4<A,B,C,_A> join(DStream<_A> ds, Predicate<Tuple4<A,B,C,_A>> predicate);
 		<_A,_B> DStream5<A,B,C,_A,_B> join(DStream2<_A,_B> ds, Predicate<Tuple5<A,B,C,_A,_B>> predicate);
@@ -383,13 +473,51 @@ public interface DStream<A> extends DistributableExecutable<A>{
 		<K,V> DStream<Entry<K,V>> reduceGroups(Function<? super Tuple4<A,B,C,D>, ? extends K> groupClassifier, 
 				Function<? super Tuple4<A,B,C,D>, ? extends V> valueMapper,
 				BinaryOperator<V> valueReducer);	
-		// BinaryFunction "is" BinaryOperator hence this method could be used in place of reduce
+		
+		/**
+		 * Similar to {@link #reduceGroups(Function, Function, BinaryOperator)} will group values 
+		 * mapped from individual elements (via valueMapper) based on the 
+		 * provided <i>groupClassifier</i>, aggregating grouped values using provided <i>valueAggregator</i> 
+		 * returning a new Key/Value stream with aggregated values<br>
+		 * 
+		 * @param groupClassifier
+		 * @param valueMapper
+		 * @param valueAggregator
+		 * @return
+		 */
 		<K,V,F> DStream<Entry<K,F>> aggregateGroups(Function<? super Tuple4<A,B,C,D>, ? extends K> groupClassifier, 
 				Function<? super Tuple4<A,B,C,D>, ? extends V> valueMapper,
 				BiFunction<?,V,F> valueAggregator);
 		
+		/**
+		 * Will group values mapped from individual elements into an {@link Iterable} based on the provided 
+		 * <i>groupClassifier</i> returning a new stream of grouped elements mapped to a 'groupClassifier' 
+		 * as Key/Value pairs.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * <br>
+		 * This is a <i>shuffle</i> operation.
+		 * 
+		 * @param groupClassifier
+		 * @param valueMapper
+		 * @return
+		 */
 		<K,V> DStream<Entry<K,Iterable<V>>> group(Function<? super A, ? extends K> groupClassifier, 
 				Function<? super A, ? extends V> valueMapper);
+		
+		/**
+		 * Returns an equivalent stream while hinting the underlying system to partition data represented by this stream.
+		 * Each element of this stream will be used by the target partitioner to calculate the partition id.<br>
+		 * The size of partitions for each shuffle stage is configured using {@link DistributableConstants#PARALLELISM}
+		 * property in execution configuration.
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * <br>
+		 * This is a <i>shuffle</i> operation.
+		 * 
+		 * @return
+		 */
+		DStream4<A,B,C,D> partition();
 		
 		<_A> DStream5<A,B,C,D,_A> join(DStream<_A> ds, Predicate<Tuple5<A,B,C,D,_A>> predicate);
 	}
@@ -469,12 +597,50 @@ public interface DStream<A> extends DistributableExecutable<A>{
 		<K,V> DStream<Entry<K,V>> reduceGroups(Function<? super Tuple5<A,B,C,D,E>, ? extends K> groupClassifier, 
 				Function<? super Tuple5<A,B,C,D,E>, ? extends V> valueMapper,
 				BinaryOperator<V> valueReducer);	
-		// BinaryFunction "is" BinaryOperator hence this method could be used in place of reduce
+		
+		/**
+		 * Similar to {@link #reduceGroups(Function, Function, BinaryOperator)} will group values 
+		 * mapped from individual elements (via valueMapper) based on the 
+		 * provided <i>groupClassifier</i>, aggregating grouped values using provided <i>valueAggregator</i> 
+		 * returning a new Key/Value stream with aggregated values<br>
+		 * 
+		 * @param groupClassifier
+		 * @param valueMapper
+		 * @param valueAggregator
+		 * @return
+		 */
 		<K,V,F> DStream<Entry<K,D>> aggregateGroups(Function<? super Tuple5<A,B,C,D,E>, ? extends K> groupClassifier, 
 				Function<? super Tuple5<A,B,C,D,E>, ? extends V> valueMapper,
 				BiFunction<?,V,F> valueAggregator);
 		
+		/**
+		 * Will group values mapped from individual elements into an {@link Iterable} based on the provided 
+		 * <i>groupClassifier</i> returning a new stream of grouped elements mapped to a 'groupClassifier' 
+		 * as Key/Value pairs.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * <br>
+		 * This is a <i>shuffle</i> operation.
+		 * 
+		 * @param groupClassifier
+		 * @param valueMapper
+		 * @return
+		 */
 		<K,V> DStream<Entry<K,Iterable<V>>> group(Function<? super A, ? extends K> groupClassifier, 
 				Function<? super A, ? extends V> valueMapper);
+		
+		/**
+		 * Returns an equivalent stream while hinting the underlying system to partition data represented by this stream.
+		 * Each element of this stream will be used by the target partitioner to calculate the partition id.<br>
+		 * The size of partitions for each shuffle stage is configured using {@link DistributableConstants#PARALLELISM}
+		 * property in execution configuration.
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * <br>
+		 * This is a <i>shuffle</i> operation.
+		 * 
+		 * @return
+		 */
+		DStream5<A,B,C,D,E> partition();
 	}
 }

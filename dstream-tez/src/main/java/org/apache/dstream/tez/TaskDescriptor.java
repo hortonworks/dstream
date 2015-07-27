@@ -130,9 +130,8 @@ public class TaskDescriptor {
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void materializeJoinFunction(){
-		if (this.function == null && this.shuffleOperationName.equals("join")){
+		if (this.function == null && this.shuffleOperationName.equals("join") && this.dependentTasksChains != null){
 			Predicate<?>[] predicates = this.dependentTasksChains.stream().map(s -> s._1).collect(Collectors.toList()).toArray(new Predicate[]{});
-			
 			Function f = new TezJoiner(predicates);
 			this.function = f;
 		}

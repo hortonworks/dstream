@@ -3,6 +3,7 @@ package org.apache.dstream;
 import static org.junit.Assert.assertEquals;
 
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -118,7 +119,7 @@ public class DStreamOperationsCollectorTests {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void validateStreamJoinWihFollowUp() throws Exception {
+	public void validateStreamJoinWithContinuation() throws Exception {
 		DStream<Object> streamA = DStream.ofType(Object.class, "foo");
 		DStream<Object> streamB = streamA.filter(s -> true).map(s -> s).flatMap(s -> Stream.of(s));
 		
@@ -138,5 +139,49 @@ public class DStreamOperationsCollectorTests {
 		assertEquals("map", context.get().getInvocations().get(1).getMethod().getName());
 		
 		result.close();
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void validatePartitioning() throws Exception {
+		DStream<Object> stream = DStream.ofType(Object.class, "foo");
+		DStream<Object> partitioned = stream.partition();
+		
+		Future<Stream<Stream<Object>>> resultFuture = partitioned.executeAs(this.streamName);
+		Stream<Stream<Object>> result = resultFuture.get(1000, TimeUnit.MILLISECONDS);
+		List<Stream<Object>> resultStreams = result.collect(Collectors.toList());
+		assertEquals(1, resultStreams.size());
+		
+		List<Object> partitionStreams = resultStreams.get(0).collect(Collectors.toList());
+		assertEquals(1, partitionStreams.size());
+
+		ProxyInternalsAccessor<StreamInvocationChain> context = (ProxyInternalsAccessor<StreamInvocationChain>) partitionStreams.get(0);
+		assertEquals(1, context.get().getInvocations().size());
+		assertEquals("partition", context.get().getInvocations().get(0).getMethod().getName());
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void validatePartitioningAfterJoin() throws Exception {
+		DStream<Object> streamA = DStream.ofType(Object.class, "foo");
+		DStream<Object> streamB = streamA.filter(s -> true).map(s -> s).flatMap(s -> Stream.of(s));
+		
+		DStream<Tuple2<Object, Object>> joinedStream = streamA.join(streamB, s -> true).map(s -> s);
+		DStream<Entry<Tuple2<Object, Object>, Integer>> partitionedReduced = joinedStream.partition().reduceGroups(s -> s, s -> 1, (a,b) -> a);
+		
+		Future<Stream<Stream<Entry<Tuple2<Object, Object>, Integer>>>> resultFuture = partitionedReduced.executeAs(this.streamName);
+		Stream<Stream<Entry<Tuple2<Object, Object>, Integer>>> result = resultFuture.get(1000, TimeUnit.MILLISECONDS);
+		List<Stream<Entry<Tuple2<Object, Object>, Integer>>> resultStreams = result.collect(Collectors.toList());
+		assertEquals(1, resultStreams.size());
+		
+		List<Entry<Tuple2<Object, Object>, Integer>> partitionStreams = resultStreams.get(0).collect(Collectors.toList());
+		assertEquals(1, partitionStreams.size());
+		
+		ProxyInternalsAccessor<StreamInvocationChain> context = (ProxyInternalsAccessor<StreamInvocationChain>) partitionStreams.get(0);
+		assertEquals(4, context.get().getInvocations().size());
+		assertEquals("join", context.get().getInvocations().get(0).getMethod().getName());
+		assertEquals("map", context.get().getInvocations().get(1).getMethod().getName());
+		assertEquals("partition", context.get().getInvocations().get(2).getMethod().getName());
+		assertEquals("reduceGroups", context.get().getInvocations().get(3).getMethod().getName());
 	}
 }

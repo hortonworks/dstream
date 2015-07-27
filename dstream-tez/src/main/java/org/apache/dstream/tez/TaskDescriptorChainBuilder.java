@@ -16,8 +16,11 @@ import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator
 import org.apache.dstream.function.SerializableFunctionConverters.Function;
 import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
 import org.apache.dstream.support.Aggregators;
+import org.apache.dstream.support.HashPartitioner;
+import org.apache.dstream.support.Partitioner;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.utils.Assert;
+import org.apache.dstream.utils.ReflectionUtils;
 import org.apache.dstream.utils.Tuples.Tuple2;
 
 class TaskDescriptorChainBuilder {
@@ -53,32 +56,47 @@ class TaskDescriptorChainBuilder {
 	 */
 	public List<TaskDescriptor> build(){
 		List<MethodInvocation> invocations = this.invocationChain.getInvocations();
-		for (MethodInvocation invocation : invocations) {
-			String operationName = invocation.getMethod().getName();		
-			TaskDescriptor currentTask = this.getCurrentTask(invocation);
-			if (currentTask.getName() == null){
-				currentTask.setName(this.invocationChain.getSourceIdentifier());
-			}
-			
-			// create sources
-			if (currentTask.getId() == 0 && currentTask.getSourceSupplier() == null){
-				String sourceProperty = executionConfig.getProperty(DistributableConstants.SOURCE + this.invocationChain.getSourceIdentifier());
-				Assert.notEmpty(sourceProperty, DistributableConstants.SOURCE + this.invocationChain.getSourceIdentifier() +  "' property can not be found in " + 
-						this.executionName + ".cfg configuration file.");
-				SourceSupplier<?> sourceSupplier = SourceSupplier.create(sourceProperty, null);
-				currentTask.setSourceSupplier(sourceSupplier);
-				currentTask.setSourceElementType(this.invocationChain.getSourceElementType());
-			}
-			
-			if (this.isIntermediateOperation(operationName)){
-				this.processIntermediateOperation(invocation);
-			}
-			else if (this.isShuffleOperation(operationName)){
-				this.processShuffleOperation(invocation);
+		
+		if (invocations.size() == 0){
+			TaskDescriptor td = this.createTaskDescriptor(null, "map");
+			this.decorateTask(td);
+			Function<Stream<?>, Stream<?>> function = new DStreamToStreamAdapterFunction("map", (Function<?,?>)s -> s);
+			td.andThen(function);
+			this.taskChain.add(td);
+		}
+		else {
+			for (MethodInvocation invocation : invocations) {
+				String operationName = invocation.getMethod().getName();		
+				TaskDescriptor currentTask = this.getCurrentTask(invocation);
+				this.decorateTask(currentTask);
+				
+				if (this.isIntermediateOperation(operationName)){
+					this.processIntermediateOperation(invocation);
+				}
+				else if (this.isShuffleOperation(operationName)){
+					this.processShuffleOperation(invocation);
+				}
 			}
 		}
-		
 		return this.taskChain;
+	}
+	
+	/**
+	 * 
+	 * @param td
+	 */
+	private void decorateTask(TaskDescriptor td){
+		if (td.getName() == null){
+			td.setName(this.invocationChain.getSourceIdentifier());
+		}
+		if (td.getId() == 0 && td.getSourceSupplier() == null){
+			String sourceProperty = executionConfig.getProperty(DistributableConstants.SOURCE + this.invocationChain.getSourceIdentifier());
+			Assert.notEmpty(sourceProperty, DistributableConstants.SOURCE + this.invocationChain.getSourceIdentifier() +  "' property can not be found in " + 
+					this.executionName + ".cfg configuration file.");
+			SourceSupplier<?> sourceSupplier = SourceSupplier.create(sourceProperty, null);
+			td.setSourceSupplier(sourceSupplier);
+			td.setSourceElementType(this.invocationChain.getSourceElementType());
+		}
 	}
 	
 	/**
@@ -102,6 +120,30 @@ class TaskDescriptorChainBuilder {
 			TaskDescriptor curresntTaskDescriptor = this.getCurrentTask(invocation);
 			curresntTaskDescriptor.compose(new ValuesReducingFunction((BinaryOperator)arguments[2]));
 		}
+		else if (operationName.equals("aggregateGroups")) {
+			String propertyName = DistributableConstants.MAP_SIDE_COMBINE + currentTask.getId() + "_" + currentTask.getName();
+			boolean mapSideCombine = Boolean.parseBoolean((String)this.executionConfig.getOrDefault(propertyName, "false"));
+			BinaryOperator aggregator = mapSideCombine ? (BinaryOperator)arguments[2] : null;
+			Function keyMapper = (Function)arguments[0];
+			Function valueMapper = (Function)arguments[1];
+			currentTask.andThen(new KeyValueMappingFunction(keyMapper, valueMapper, aggregator));
+			
+			// common
+			this.taskChain.add(this.createTaskDescriptor(invocation));
+			TaskDescriptor curresntTaskDescriptor = this.getCurrentTask(invocation);
+			curresntTaskDescriptor.compose(new ValuesGroupingFunction((BinaryOperator)arguments[2]));
+		}
+		else if (operationName.equals("partition")) {
+			this.taskChain.add(this.createTaskDescriptor(invocation));
+			currentTask = this.getCurrentTask(invocation);
+			String parallelizmProp = this.executionConfig.getProperty(DistributableConstants.PARALLELISM + currentTask.getId() + "_" + currentTask.getName());
+			if (parallelizmProp != null){
+				String[] pDirective = parallelizmProp.split(",");
+				Partitioner partitioner = pDirective.length == 1 ? new HashPartitioner<>(Integer.parseInt(pDirective[0])) 
+						: ReflectionUtils.newInstance(pDirective[1], new Class[]{int.class}, new Object[]{Integer.parseInt(pDirective[0])});
+				currentTask.setPartitioner(partitioner);
+			}
+		}
 		else if (operationName.equals("group")) {
 			BinaryOperator aggregator = null;
 			Function keyMapper = (Function)arguments[0];
@@ -114,18 +156,16 @@ class TaskDescriptorChainBuilder {
 			curresntTaskDescriptor.compose(new ValuesGroupingFunction(Aggregators::aggregateFlatten));
 		}
 		else if (operationName.equals("join")) {
-	
 			StreamInvocationChain dependentInvocationChain = (StreamInvocationChain) arguments[0];
 			TaskDescriptorChainBuilder dependentBuilder = new TaskDescriptorChainBuilder(this.executionName, dependentInvocationChain, this.executionConfig);
 			List<TaskDescriptor> dependentTasks = dependentBuilder.build();
 
 			String shuffleOperationName =  currentTask.getShuffleOperationName();
-			
 			if (!shuffleOperationName.equals("join")){
 				this.taskChain.add(new TaskDescriptor(this.sequenceIdCounter++, this.invocationChain.getSourceIdentifier(), operationName));
 			}
-			TaskDescriptor joinDescriptor = this.getCurrentTask(invocation);
-			joinDescriptor.addDependentTasksChain(Tuple2.tuple2((Predicate)arguments[1], dependentTasks));
+			currentTask = this.getCurrentTask(invocation);
+			currentTask.addDependentTasksChain(Tuple2.tuple2((Predicate)arguments[1], dependentTasks));
 		}
 		else {
 			throw new UnsupportedOperationException("Operation '" + operationName + "' temporarily is not supported");
@@ -169,9 +209,17 @@ class TaskDescriptorChainBuilder {
 	/**
 	 * 
 	 */
+	@SuppressWarnings("rawtypes")
 	private TaskDescriptor getCurrentTask(MethodInvocation invocation){
 		if (this.taskChain.size() == 0){
-			this.taskChain.add(this.createTaskDescriptor(invocation));
+			if (invocation.getMethod().getName().equals("join")){
+				TaskDescriptor td = this.createTaskDescriptor(invocation, "map");
+				td.compose(new DStreamToStreamAdapterFunction("map", (Function)s -> s));
+				this.taskChain.add(td);
+			}
+			else {
+				this.taskChain.add(this.createTaskDescriptor(invocation));
+			}
 		}
 		return this.taskChain.get(this.taskChain.size() - 1);
 	}
@@ -179,8 +227,12 @@ class TaskDescriptorChainBuilder {
 	/**
 	 * 
 	 */
-	private TaskDescriptor createTaskDescriptor(MethodInvocation invocation){
-		TaskDescriptor taskDescriptor = new TaskDescriptor(this.sequenceIdCounter++, this.invocationChain.getSourceIdentifier(), invocation.getMethod().getName());
+	private TaskDescriptor createTaskDescriptor(MethodInvocation invocation, String name){
+		TaskDescriptor taskDescriptor = new TaskDescriptor(this.sequenceIdCounter++, this.invocationChain.getSourceIdentifier(), name);
 		return taskDescriptor;
+	}
+	
+	private TaskDescriptor createTaskDescriptor(MethodInvocation invocation){
+		return this.createTaskDescriptor(invocation, invocation.getMethod().getName());
 	}
 }
