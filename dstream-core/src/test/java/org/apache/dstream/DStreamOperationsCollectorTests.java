@@ -100,30 +100,7 @@ public class DStreamOperationsCollectorTests {
 		DStream<Object> streamA = DStream.ofType(Object.class, "foo");
 		DStream<Object> streamB = streamA.filter(s -> true).map(s -> s).flatMap(s -> Stream.of(s));
 		
-		DStream2<Object, Object> joinedStream = streamA.join(streamB, s -> true);
-		Future<Stream<Stream<Tuple2<Object, Object>>>> resultFuture = joinedStream.executeAs(this.streamName);
-		
-		Stream<Stream<Tuple2<Object, Object>>> result = resultFuture.get(1000, TimeUnit.MILLISECONDS);
-		List<Stream<Tuple2<Object, Object>>> resultStreams = result.collect(Collectors.toList());
-		assertEquals(1, resultStreams.size());
-		
-		List<Object> partitionStreams = resultStreams.get(0).collect(Collectors.toList());
-		assertEquals(1, partitionStreams.size());
-
-		ProxyInternalsAccessor<StreamInvocationChain> context = (ProxyInternalsAccessor<StreamInvocationChain>) partitionStreams.get(0);
-		assertEquals(1, context.get().getInvocations().size());
-		assertEquals("join", context.get().getInvocations().get(0).getMethod().getName());
-		
-		result.close();
-	}
-	
-	@SuppressWarnings("unchecked")
-	@Test
-	public void validateStreamJoinWithContinuation() throws Exception {
-		DStream<Object> streamA = DStream.ofType(Object.class, "foo");
-		DStream<Object> streamB = streamA.filter(s -> true).map(s -> s).flatMap(s -> Stream.of(s));
-		
-		DStream<Tuple2<Object, Object>> joinedStream = streamA.join(streamB, s -> true).map(s -> s);
+		DStream2<Object, Object> joinedStream = streamA.join(streamB).on(s -> true);
 		Future<Stream<Stream<Tuple2<Object, Object>>>> resultFuture = joinedStream.executeAs(this.streamName);
 		
 		Stream<Stream<Tuple2<Object, Object>>> result = resultFuture.get(1000, TimeUnit.MILLISECONDS);
@@ -136,7 +113,31 @@ public class DStreamOperationsCollectorTests {
 		ProxyInternalsAccessor<StreamInvocationChain> context = (ProxyInternalsAccessor<StreamInvocationChain>) partitionStreams.get(0);
 		assertEquals(2, context.get().getInvocations().size());
 		assertEquals("join", context.get().getInvocations().get(0).getMethod().getName());
-		assertEquals("map", context.get().getInvocations().get(1).getMethod().getName());
+		
+		result.close();
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void validateStreamJoinWithContinuation() throws Exception {
+		DStream<Object> streamA = DStream.ofType(Object.class, "foo");
+		DStream<Object> streamB = streamA.filter(s -> true).map(s -> s).flatMap(s -> Stream.of(s));
+		
+		DStream<Tuple2<Object, Object>> joinedStream = streamA.join(streamB).on(s -> true).map(s -> s);
+		Future<Stream<Stream<Tuple2<Object, Object>>>> resultFuture = joinedStream.executeAs(this.streamName);
+		
+		Stream<Stream<Tuple2<Object, Object>>> result = resultFuture.get(1000, TimeUnit.MILLISECONDS);
+		List<Stream<Tuple2<Object, Object>>> resultStreams = result.collect(Collectors.toList());
+		assertEquals(1, resultStreams.size());
+		
+		List<Object> partitionStreams = resultStreams.get(0).collect(Collectors.toList());
+		assertEquals(1, partitionStreams.size());
+
+		ProxyInternalsAccessor<StreamInvocationChain> context = (ProxyInternalsAccessor<StreamInvocationChain>) partitionStreams.get(0);
+		assertEquals(3, context.get().getInvocations().size());
+		assertEquals("join", context.get().getInvocations().get(0).getMethod().getName());
+		assertEquals("on", context.get().getInvocations().get(1).getMethod().getName());
+		assertEquals("map", context.get().getInvocations().get(2).getMethod().getName());
 		
 		result.close();
 	}
@@ -166,7 +167,7 @@ public class DStreamOperationsCollectorTests {
 		DStream<Object> streamA = DStream.ofType(Object.class, "foo");
 		DStream<Object> streamB = streamA.filter(s -> true).map(s -> s).flatMap(s -> Stream.of(s));
 		
-		DStream<Tuple2<Object, Object>> joinedStream = streamA.join(streamB, s -> true).map(s -> s);
+		DStream<Tuple2<Object, Object>> joinedStream = streamA.join(streamB).on(s -> true).map(s -> s);
 		DStream<Entry<Tuple2<Object, Object>, Integer>> partitionedReduced = joinedStream.partition().reduceGroups(s -> s, s -> 1, (a,b) -> a);
 		
 		Future<Stream<Stream<Entry<Tuple2<Object, Object>, Integer>>>> resultFuture = partitionedReduced.executeAs(this.streamName);
@@ -178,10 +179,11 @@ public class DStreamOperationsCollectorTests {
 		assertEquals(1, partitionStreams.size());
 		
 		ProxyInternalsAccessor<StreamInvocationChain> context = (ProxyInternalsAccessor<StreamInvocationChain>) partitionStreams.get(0);
-		assertEquals(4, context.get().getInvocations().size());
+		assertEquals(5, context.get().getInvocations().size());
 		assertEquals("join", context.get().getInvocations().get(0).getMethod().getName());
-		assertEquals("map", context.get().getInvocations().get(1).getMethod().getName());
-		assertEquals("partition", context.get().getInvocations().get(2).getMethod().getName());
-		assertEquals("reduceGroups", context.get().getInvocations().get(3).getMethod().getName());
+		assertEquals("on", context.get().getInvocations().get(1).getMethod().getName());
+		assertEquals("map", context.get().getInvocations().get(2).getMethod().getName());
+		assertEquals("partition", context.get().getInvocations().get(3).getMethod().getName());
+		assertEquals("reduceGroups", context.get().getInvocations().get(4).getMethod().getName());
 	}
 }

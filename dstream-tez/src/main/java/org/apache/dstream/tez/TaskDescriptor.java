@@ -5,10 +5,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.apache.dstream.function.SerializableFunctionConverters.Function;
-import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
 import org.apache.dstream.function.SerializableFunctionConverters.Supplier;
 import org.apache.dstream.support.Partitioner;
-import org.apache.dstream.utils.Tuples.Tuple2;
 
 /**
  * 
@@ -25,32 +23,31 @@ public class TaskDescriptor {
 	private final int id;
 	
 	
-	private final String shuffleOperationName;
-	
+	private String operationName;
 
 	private Class<?> sourceElementType;
 	
 	private Supplier<?> sourceSupplier;
 	
-	private List<Tuple2<Predicate<?>, List<TaskDescriptor>>> dependentTasksChains;
+	private List<List<TaskDescriptor>> dependentTasksChains;
 
 	private Class<?> inputFormatClass;
 	
-	public TaskDescriptor(int id, String name, String shuffleOperationName){
+	public TaskDescriptor(int id, String name, String operationName){
 		this.name = name;
 		this.id = id;
-		this.shuffleOperationName = shuffleOperationName;
+		this.operationName = operationName;
 	}
 	
-	public List<Tuple2<Predicate<?>, List<TaskDescriptor>>> getDependentTasksChains() {
+	public List<List<TaskDescriptor>> getDependentTasksChains() {
 		return this.dependentTasksChains;
 	}
 	
-	public String getShuffleOperationName() {
-		return shuffleOperationName;
+	public String getOperationName() {
+		return operationName;
 	}
 
-	public void addDependentTasksChain(Tuple2<Predicate<?>, List<TaskDescriptor>> dependentTasksChain) {
+	public void addDependentTasksChain(List<TaskDescriptor> dependentTasksChain) {
 		if (this.dependentTasksChains == null){
 			this.dependentTasksChains = new ArrayList<>();
 		}

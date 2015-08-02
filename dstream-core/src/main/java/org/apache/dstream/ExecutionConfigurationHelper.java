@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 import org.apache.dstream.utils.Assert;
 
-class ExecutionConfigurationHelper {
+public class ExecutionConfigurationHelper {
 	
 	/**
 	 * 
@@ -28,7 +28,7 @@ class ExecutionConfigurationHelper {
 	/**
 	 * 
 	 */
-	private static Properties loadConfig(String configName){
+	public static Properties loadConfig(String configName){
 		Properties prop = new Properties();
 		InputStream is = null;
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();

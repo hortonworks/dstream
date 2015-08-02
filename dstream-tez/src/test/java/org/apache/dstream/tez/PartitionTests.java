@@ -42,7 +42,7 @@ public class PartitionTests extends BaseTezTests {
 		Future<Stream<Stream<String>>> resultFuture = 
 				DStream.ofType(String.class, "wc").partition().executeAs(this.applicationName);
 		
-		Stream<Stream<String>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
+		Stream<Stream<String>> result = resultFuture.get(10000000, TimeUnit.MILLISECONDS);
 		List<Stream<String>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(2, resultStreams.size());
 		result.close();
@@ -66,8 +66,8 @@ public class PartitionTests extends BaseTezTests {
 		DStream<String> s1 = DStream.ofType(String.class, "foo");
 		DStream<String> s2 = DStream.ofType(String.class, "bar");
 		
-		Future<Stream<Stream<Tuple2<String, String>>>> resultFuture = s1.join(s2, a -> true).partition().executeAs(this.applicationName);
-		Stream<Stream<Tuple2<String, String>>> result = resultFuture.get(100000, TimeUnit.MILLISECONDS);
+		Future<Stream<Stream<Tuple2<String, String>>>> resultFuture = s1.join(s2).on(a -> true).partition().executeAs(this.applicationName);
+		Stream<Stream<Tuple2<String, String>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
 		List<Stream<Tuple2<String, String>>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(2, resultStreams.size());
 		result.close();

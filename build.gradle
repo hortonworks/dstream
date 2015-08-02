@@ -27,6 +27,7 @@ subprojects { subproject ->
 		junitVersion = '4.8.2'	
 		tezVersion = '0.7.0'
 		guavaVersion = '14.0.1'
+		javassistVersion = '3.20.0-GA'
 	}
 
 	sourceSets {
@@ -69,6 +70,8 @@ project('dstream-core') {
 		compile ("org.springframework:spring-aop:4.1.6.RELEASE") {
 			exclude group: "org.springframework", module: "spring-beans"
 		}
+		compile "org.javassist:javassist:$javassistVersion"
+		compile files('instrument/instrument.jar')
 	}
 }
 
