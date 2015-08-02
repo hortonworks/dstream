@@ -48,8 +48,10 @@ final class DStreamOperationsCollector<T,R> implements MethodInterceptor {
 	 */
 	private DStreamOperationsCollector(Class<?> sourceElementType, String sourceIdentifier, Class<R> streamType) {
 		this.targetStream =  this.generateStreamProxy(streamType);
-		this.invocationChain = new StreamInvocationChain(sourceElementType, sourceIdentifier);
+		this.invocationChain = new StreamInvocationChain(sourceElementType, sourceIdentifier, streamType);
 		this.streamOperationNames = Stream.of(DStream.class.getDeclaredMethods()).map(s -> s.getName()).collect(Collectors.toSet());
+		this.streamOperationNames.add("on");
+		this.streamOperationNames.add("where");
 	}
 	
 	/**
@@ -114,10 +116,9 @@ final class DStreamOperationsCollector<T,R> implements MethodInterceptor {
 		String operationName = invocation.getMethod().getName();
 
 		if (operationName.equals("join")){
-			Object[] arguments = invocation.getArguments();
 			ProxyInternalsAccessor<StreamInvocationChain> invocationChainAccessor = (ProxyInternalsAccessor<StreamInvocationChain>) invocation.getArguments()[0];
 			StreamInvocationChain dependentInvocationChain = invocationChainAccessor.get();
-			((ReflectiveMethodInvocation)invocation).setArguments(new Object[]{dependentInvocationChain, arguments[1]});
+			((ReflectiveMethodInvocation)invocation).setArguments(new Object[]{dependentInvocationChain});
 		}
 			
 		DStreamOperationsCollector clonedDistributable = new DStreamOperationsCollector(this.invocationChain.getSourceElementType(), this.invocationChain.getSourceIdentifier(), 
@@ -148,5 +149,4 @@ final class DStreamOperationsCollector<T,R> implements MethodInterceptor {
 	protected interface ProxyInternalsAccessor<T>{
 		T get();
 	}
-
 }

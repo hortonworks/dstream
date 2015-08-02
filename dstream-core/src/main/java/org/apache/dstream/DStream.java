@@ -3,6 +3,10 @@ package org.apache.dstream;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
+import org.apache.dstream.DStream.DStream2.DStream2WithPredicate;
+import org.apache.dstream.DStream.DStream3.DStream3WithPredicate;
+import org.apache.dstream.DStream.DStream4.DStream4WithPredicate;
+import org.apache.dstream.DStream.DStream5.DStream5WithPredicate;
 import org.apache.dstream.function.SerializableFunctionConverters.BiFunction;
 import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.function.SerializableFunctionConverters.Function;
@@ -146,20 +150,23 @@ public interface DStream<A> extends DistributableExecutable<A>{
 	 */
 	<K,V> DStream<A> partition();
 	
-	<_A> DStream2<A,_A> join(DStream<_A> ds, Predicate<Tuple2<A,_A>> predicate);
+	<_A> DStream2WithPredicate<A,_A> join(DStream<_A> ds);
 	
-	<_A,_B> DStream3<A,_A,_B> join(DStream2<_A,_B> ds, Predicate<Tuple3<A,_A,_B>> predicate);
+	<_A,_B> DStream3WithPredicate<A,_A,_B> join(DStream2<_A,_B> ds);
 	
-	<_A,_B,_C> DStream4<A,_A,_B,_C> join(DStream3<_A,_B,_C> ds, Predicate<Tuple4<A,_A,_B,_C>> predicate);
+	<_A,_B,_C> DStream4WithPredicate<A,_A,_B,_C> join(DStream3<_A,_B,_C> ds);
 	
-	<_A,_B,_C,_D> DStream5<A,_A,_B,_C,_D> join(DStream4<_A,_B,_C,_D> ds, Predicate<Tuple5<A,_A,_B,_C,_D>> predicate);
+	<_A,_B,_C,_D> DStream5WithPredicate<A,_A,_B,_C,_D> join(DStream4<_A,_B,_C,_D> ds);
 	
 	/**
 	 * 
 	 * @param <A>
 	 * @param <B>
 	 */
-	interface DStream2<A,B> extends DistributableExecutable<Tuple2<A,B>>{
+	interface DStream2<A,B> extends DistributableExecutable<Tuple2<A,B>> {
+		interface DStream2WithPredicate<A,B> extends DStream2<A,B>{
+			DStream2<A,B> on(Predicate<? super Tuple2<A,B>> predicate);	
+		}
 		/**
 		 * This operation maintains the same semantics as {@link Stream#filter(java.util.function.Predicate)} 
 		 * with the exception of returning {@link DStream2} instead of the {@link Stream}.<br>
@@ -271,9 +278,9 @@ public interface DStream<A> extends DistributableExecutable<A>{
 		 */
 		DStream2<A,B> partition();
 		
-		<_A> DStream3<A,B,_A> join(DStream<_A> ds, Predicate<Tuple3<A,B,_A>> predicate);
-		<_A,_B> DStream4<A,B,_A,_B> join(DStream2<_A,_B> ds, Predicate<Tuple4<A,B,_A,_B>> predicate);
-		<_A,_B,_C> DStream5<A,B,_A,_B,_C> join(DStream3<_A,_B,_C> ds, Predicate<Tuple5<A,B,_A,_B,_C>> predicate);
+		<_A> DStream3WithPredicate<A,B,_A> join(DStream<_A> ds);
+		<_A,_B> DStream4WithPredicate<A,B,_A,_B> join(DStream2<_A,_B> ds);
+		<_A,_B,_C> DStream5WithPredicate<A,B,_A,_B,_C> join(DStream3<_A,_B,_C> ds);
 	}
 	
 	/**
@@ -283,6 +290,9 @@ public interface DStream<A> extends DistributableExecutable<A>{
 	 * @param <C>
 	 */
 	interface DStream3<A,B,C> extends DistributableExecutable<Tuple3<A,B,C>> {
+		interface DStream3WithPredicate<A,B,C> extends DStream3<A,B,C>{
+			DStream3<A,B,C> on(Predicate<? super Tuple3<A,B,C>> predicate);	
+		}
 		/**
 		 * This operation maintains the same semantics as {@link Stream#filter(java.util.function.Predicate)} 
 		 * with the exception of returning {@link DStream3} instead of the {@link Stream}.<br>
@@ -395,8 +405,8 @@ public interface DStream<A> extends DistributableExecutable<A>{
 		 */
 		DStream3<A,B,C> partition();
 		
-		<_A> DStream4<A,B,C,_A> join(DStream<_A> ds, Predicate<Tuple4<A,B,C,_A>> predicate);
-		<_A,_B> DStream5<A,B,C,_A,_B> join(DStream2<_A,_B> ds, Predicate<Tuple5<A,B,C,_A,_B>> predicate);
+		<_A> DStream4WithPredicate<A,B,C,_A> join(DStream<_A> ds);
+		<_A,_B> DStream5WithPredicate<A,B,C,_A,_B> join(DStream2<_A,_B> ds);
 	}
 	
 	/**
@@ -407,6 +417,9 @@ public interface DStream<A> extends DistributableExecutable<A>{
 	 * @param <D>
 	 */
 	interface DStream4<A,B,C,D> extends DistributableExecutable<Tuple4<A,B,C,D>> {
+		interface DStream4WithPredicate<A,B,C,D> extends DStream4<A,B,C,D>{
+			DStream4<A,B,C,D> on(Predicate<? super Tuple4<A,B,C,D>> predicate);	
+		}
 		/**
 		 * This operation maintains the same semantics as {@link Stream#filter(java.util.function.Predicate)} 
 		 * with the exception of returning {@link DStream4} instead of the {@link Stream}.<br>
@@ -519,7 +532,7 @@ public interface DStream<A> extends DistributableExecutable<A>{
 		 */
 		DStream4<A,B,C,D> partition();
 		
-		<_A> DStream5<A,B,C,D,_A> join(DStream<_A> ds, Predicate<Tuple5<A,B,C,D,_A>> predicate);
+		<_A> DStream5WithPredicate<A,B,C,D,_A> join(DStream<_A> ds);
 	}
 	
 	/**
@@ -531,6 +544,9 @@ public interface DStream<A> extends DistributableExecutable<A>{
 	 * @param <E>
 	 */
 	interface DStream5<A,B,C,D,E>  extends DistributableExecutable<Tuple5<A,B,C,D,E>> {
+		interface DStream5WithPredicate<A,B,C,D,E> extends DStream5<A,B,C,D,E>{
+			DStream5<A,B,C,D,E> on(Predicate<? super Tuple5<A,B,C,D,E>> predicate);	
+		}
 		/**
 		 * This operation maintains the same semantics as {@link Stream#filter(java.util.function.Predicate)} 
 		 * with the exception of returning {@link DStream5} instead of the {@link Stream}.<br>

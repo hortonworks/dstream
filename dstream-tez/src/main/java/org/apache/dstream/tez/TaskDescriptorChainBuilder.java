@@ -3,7 +3,6 @@ package org.apache.dstream.tez;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aopalliance.intercept.MethodInvocation;
@@ -11,19 +10,22 @@ import org.apache.dstream.DistributableConstants;
 import org.apache.dstream.StreamInvocationChain;
 import org.apache.dstream.function.DStreamToStreamAdapterFunction;
 import org.apache.dstream.function.KeyValueMappingFunction;
-import org.apache.dstream.function.ValuesReducingFunction;
-import org.apache.dstream.function.ValuesGroupingFunction;
 import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.function.SerializableFunctionConverters.Function;
 import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
+import org.apache.dstream.function.StreamJoinerFunction;
+import org.apache.dstream.function.ValuesGroupingFunction;
+import org.apache.dstream.function.ValuesReducingFunction;
 import org.apache.dstream.support.Aggregators;
 import org.apache.dstream.support.HashPartitioner;
 import org.apache.dstream.support.Partitioner;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.ReflectionUtils;
-import org.apache.dstream.utils.Tuples.Tuple2;
 
+/**
+ * 
+ */
 class TaskDescriptorChainBuilder {
 	
 	private final List<TaskDescriptor> taskChain;
@@ -57,7 +59,7 @@ class TaskDescriptorChainBuilder {
 		List<MethodInvocation> invocations = this.invocationChain.getInvocations();
 		
 		if (invocations.size() == 0){
-			TaskDescriptor td = this.createTaskDescriptor(null, "map");
+			TaskDescriptor td = this.createTaskDescriptor("map");
 			this.decorateTask(td);
 			Function<Stream<?>, Stream<?>> function = new DStreamToStreamAdapterFunction("map", (Function<?,?>)s -> s);
 			td.andThen(function);
@@ -65,21 +67,146 @@ class TaskDescriptorChainBuilder {
 		}
 		else {
 			for (MethodInvocation invocation : invocations) {
-				String operationName = invocation.getMethod().getName();		
-				TaskDescriptor currentTask = this.getCurrentTask(invocation);
-				this.decorateTask(currentTask);
+				String operationName = invocation.getMethod().getName();	
+				this.addInitialTaskDescriptorIfNecessary(operationName);
 				
-				if (this.isIntermediateOperation(operationName)){
+				if (this.isTransformation(operationName)){
 					this.processIntermediateOperation(invocation);
 				}
-				else if (this.isShuffleOperation(operationName)){
+				else if (this.isShuffle(operationName)){		
 					this.processShuffleOperation(invocation);
 				}
-				
+				else {
+					if (operationName.equals("on")){
+						Function<?,?> f = this.getCurrentTask().getFunction();
+						StreamJoinerFunction joiner = (StreamJoinerFunction) f;
+						Predicate<?> p = (Predicate<?>) invocation.getArguments()[0];
+						joiner.addTransformationOrPredicate("filter", p);
+					}
+					else {
+						// Should never get here since checks will be performed in core. So, this is to complete IF statement only.
+						throw new UnsupportedOperationException(operationName);
+					}
+				}
 			}
 		}
-		this.completeTaskDescriptor(this.taskChain.get(this.taskChain.size() - 1));
 		return this.taskChain;
+	}
+	
+	/**
+	 * 
+	 */
+	@SuppressWarnings("unchecked")
+	private void processIntermediateOperation(MethodInvocation invocation){	
+		Function<Stream<?>, Stream<?>> function = invocation.getMethod().getName().equals("compute") 
+				? (Function<Stream<?>, Stream<?>>) invocation.getArguments()[0]
+						: new DStreamToStreamAdapterFunction(invocation.getMethod().getName(), invocation.getArguments()[0]);
+				
+		TaskDescriptor currentTask = this.getCurrentTask();
+		Function<?,?> f = currentTask.getFunction();
+		if (f instanceof StreamJoinerFunction){
+			StreamJoinerFunction joiner = (StreamJoinerFunction) f;
+			joiner.addTransformationOrPredicate(function);
+		}
+		else {
+			this.getCurrentTask().andThen(function);
+		}	
+	}
+	
+	/**
+	 * 
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private void processShuffleOperation(MethodInvocation invocation){
+		String operationName = invocation.getMethod().getName();
+		Object[] arguments = invocation.getArguments();
+		
+		if (operationName.equals("reduceGroups")) {
+			TaskDescriptor currentTask = this.getCurrentTask();
+			String propertyName = DistributableConstants.MAP_SIDE_COMBINE + currentTask.getId() + "_" + currentTask.getName();
+			boolean mapSideCombine = Boolean.parseBoolean((String)this.executionConfig.getOrDefault(propertyName, "false"));
+			BinaryOperator aggregator = mapSideCombine ? (BinaryOperator)arguments[2] : null;
+			Function keyMapper = (Function)arguments[0];
+			Function valueMapper = (Function)arguments[1];
+			currentTask.andThen(new KeyValueMappingFunction(keyMapper, valueMapper, aggregator));
+			
+			// common
+			TaskDescriptor newTaskDescriptor = this.createTaskDescriptor(operationName);
+			this.taskChain.add(newTaskDescriptor);
+			newTaskDescriptor.compose(new ValuesReducingFunction((BinaryOperator)arguments[2]));
+		}
+		else if (operationName.equals("aggregateGroups")) {
+			TaskDescriptor currentTask = this.getCurrentTask();
+			String propertyName = DistributableConstants.MAP_SIDE_COMBINE + currentTask.getId() + "_" + currentTask.getName();
+			boolean mapSideCombine = Boolean.parseBoolean((String)this.executionConfig.getOrDefault(propertyName, "false"));
+			BinaryOperator aggregator = mapSideCombine ? (BinaryOperator)arguments[2] : null;
+			Function keyMapper = (Function)arguments[0];
+			Function valueMapper = (Function)arguments[1];
+			currentTask.andThen(new KeyValueMappingFunction(keyMapper, valueMapper, aggregator));
+			
+			// common
+			TaskDescriptor newTaskDescriptor = this.createTaskDescriptor(operationName);
+			this.taskChain.add(newTaskDescriptor);
+			newTaskDescriptor.compose(new ValuesGroupingFunction((BinaryOperator)arguments[2]));	
+		}
+		else if (operationName.equals("group")) {
+			TaskDescriptor currentTask = this.getCurrentTask();
+			BinaryOperator aggregator = null;
+			Function keyMapper = (Function)arguments[0];
+			Function valueMapper = arguments.length == 2 ? (Function)arguments[1] : s -> s;
+			currentTask.andThen(new KeyValueMappingFunction(keyMapper, valueMapper, aggregator));
+			
+			// common	
+			TaskDescriptor newTaskDescriptor = this.createTaskDescriptor(operationName);
+			this.taskChain.add(newTaskDescriptor);
+			newTaskDescriptor.compose(new ValuesGroupingFunction(Aggregators::aggregateFlatten));
+		}
+		else if (operationName.equals("join")) {
+			StreamInvocationChain dependentInvocationChain = (StreamInvocationChain) arguments[0];
+			TaskDescriptorChainBuilder dependentBuilder = new TaskDescriptorChainBuilder(this.executionName, dependentInvocationChain, this.executionConfig);
+			List<TaskDescriptor> dependentTasks = dependentBuilder.build();
+
+			TaskDescriptor currentTask = this.getCurrentTask();
+			
+			if (currentTask.getId() == 0){
+				// create pass through mapper (Tez limitation)
+				currentTask.andThen(s -> s);
+			}
+			if (this.isTransformation(currentTask.getOperationName())){
+				TaskDescriptor td = this.createTaskDescriptor(operationName);
+				this.taskChain.add(td);
+				Function function = new TezJoiner();
+				td.andThen(function);
+				currentTask = this.getCurrentTask();
+			}
+			
+			currentTask.addDependentTasksChain(dependentTasks);
+			
+			Function function = currentTask.getFunction();
+			StreamJoinerFunction joiner = (StreamJoinerFunction) function;
+			int joiningStreamsSize = dependentInvocationChain.getStreamType().getTypeParameters().length;
+			joiner.addCheckPoint(joiningStreamsSize);
+		}
+		else if (operationName.equals("partition")) {
+			TaskDescriptor newTaskDescriptor = this.createTaskDescriptor(operationName);
+			this.taskChain.add(newTaskDescriptor);
+		}
+		else {
+			throw new UnsupportedOperationException("Operation '" + operationName + "' temporarily is not supported");
+		}
+		
+		this.setTaskParallelism(this.getCurrentTask());
+	}
+	
+	private void addInitialTaskDescriptorIfNecessary(String operationName) {
+		if (this.taskChain.size() == 0){
+			if (this.isShuffle(operationName)){
+				operationName = "map";
+			}
+			TaskDescriptor td = this.createTaskDescriptor(operationName);
+			this.taskChain.add(td);
+			this.decorateTask(td);
+		}
 	}
 	
 	/**
@@ -102,108 +229,23 @@ class TaskDescriptorChainBuilder {
 	
 	/**
 	 * 
+	 * @param taskDescriptor
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private void processShuffleOperation(MethodInvocation invocation){
-		String operationName = invocation.getMethod().getName();
-		Object[] arguments = invocation.getArguments();
-		TaskDescriptor currentTask = this.getCurrentTask(invocation);
-		if (operationName.equals("reduceGroups")) {
-			String propertyName = DistributableConstants.MAP_SIDE_COMBINE + currentTask.getId() + "_" + currentTask.getName();
-			boolean mapSideCombine = Boolean.parseBoolean((String)this.executionConfig.getOrDefault(propertyName, "false"));
-			BinaryOperator aggregator = mapSideCombine ? (BinaryOperator)arguments[2] : null;
-			Function keyMapper = (Function)arguments[0];
-			Function valueMapper = (Function)arguments[1];
-			currentTask.andThen(new KeyValueMappingFunction(keyMapper, valueMapper, aggregator));
-			
-			// common
-			this.taskChain.add(this.createTaskDescriptor(invocation));
-			TaskDescriptor curresntTaskDescriptor = this.getCurrentTask(invocation);
-			curresntTaskDescriptor.compose(new ValuesReducingFunction((BinaryOperator)arguments[2]));
-		}
-		else if (operationName.equals("aggregateGroups")) {
-			String propertyName = DistributableConstants.MAP_SIDE_COMBINE + currentTask.getId() + "_" + currentTask.getName();
-			boolean mapSideCombine = Boolean.parseBoolean((String)this.executionConfig.getOrDefault(propertyName, "false"));
-			BinaryOperator aggregator = mapSideCombine ? (BinaryOperator)arguments[2] : null;
-			Function keyMapper = (Function)arguments[0];
-			Function valueMapper = (Function)arguments[1];
-			currentTask.andThen(new KeyValueMappingFunction(keyMapper, valueMapper, aggregator));
-			
-			// common
-			this.taskChain.add(this.createTaskDescriptor(invocation));
-			TaskDescriptor curresntTaskDescriptor = this.getCurrentTask(invocation);
-			curresntTaskDescriptor.compose(new ValuesGroupingFunction((BinaryOperator)arguments[2]));
-		}
-		else if (operationName.equals("partition")) {
-			this.completeTaskDescriptor(this.taskChain.get(this.taskChain.size() - 1));
-			this.taskChain.add(this.createTaskDescriptor(invocation));
-			currentTask = this.getCurrentTask(invocation);
-			String parallelizmProp = this.executionConfig.getProperty(DistributableConstants.PARALLELISM + currentTask.getId() + "_" + currentTask.getName());
-			if (parallelizmProp != null){
-				String[] pDirective = parallelizmProp.split(",");
-				Partitioner partitioner = pDirective.length == 1 ? new HashPartitioner<>(Integer.parseInt(pDirective[0])) 
-						: ReflectionUtils.newInstance(pDirective[1], new Class[]{int.class}, new Object[]{Integer.parseInt(pDirective[0])});
-				currentTask.setPartitioner(partitioner);
-			}
-		}
-		else if (operationName.equals("group")) {
-			BinaryOperator aggregator = null;
-			Function keyMapper = (Function)arguments[0];
-			Function valueMapper = arguments.length == 2 ? (Function)arguments[1] : s -> s;
-			currentTask.andThen(new KeyValueMappingFunction(keyMapper, valueMapper, aggregator));
-			
-			// common	
-			this.taskChain.add(new TaskDescriptor(this.sequenceIdCounter++, this.invocationChain.getSourceIdentifier(), invocation.getMethod().getName()));
-			TaskDescriptor curresntTaskDescriptor = this.getCurrentTask(invocation);
-			curresntTaskDescriptor.compose(new ValuesGroupingFunction(Aggregators::aggregateFlatten));
-		}
-		else if (operationName.equals("join")) {
-			StreamInvocationChain dependentInvocationChain = (StreamInvocationChain) arguments[0];
-			TaskDescriptorChainBuilder dependentBuilder = new TaskDescriptorChainBuilder(this.executionName, dependentInvocationChain, this.executionConfig);
-			List<TaskDescriptor> dependentTasks = dependentBuilder.build();
-
-			String shuffleOperationName =  currentTask.getShuffleOperationName();
-			if (!shuffleOperationName.equals("join")){
-				this.taskChain.add(new TaskDescriptor(this.sequenceIdCounter++, this.invocationChain.getSourceIdentifier(), operationName));
-			}
-			currentTask = this.getCurrentTask(invocation);
-			currentTask.addDependentTasksChain(Tuple2.tuple2((Predicate)arguments[1], dependentTasks));
-		}
-		else {
-			throw new UnsupportedOperationException("Operation '" + operationName + "' temporarily is not supported");
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private void setTaskParallelism(TaskDescriptor taskDescriptor){
+		String parallelizmProp = this.executionConfig.getProperty(DistributableConstants.PARALLELISM + taskDescriptor.getId() + "_" + taskDescriptor.getName());
+		if (parallelizmProp != null){
+			String[] pDirective = parallelizmProp.split(",");
+			Partitioner partitioner = pDirective.length == 1 ? new HashPartitioner<>(Integer.parseInt(pDirective[0])) 
+					: ReflectionUtils.newInstance(pDirective[1], new Class[]{int.class}, new Object[]{Integer.parseInt(pDirective[0])});
+			taskDescriptor.setPartitioner(partitioner);
 		}
 	}
 	
 	/**
 	 * 
 	 */
-	@SuppressWarnings("unchecked")
-	private void processIntermediateOperation(MethodInvocation invocation){	
-		Function<Stream<?>, Stream<?>> function = invocation.getMethod().getName().equals("compute") 
-				? (Function<Stream<?>, Stream<?>>) invocation.getArguments()[0]
-						: new DStreamToStreamAdapterFunction(invocation.getMethod().getName(), invocation.getArguments()[0]);
-
-		TaskDescriptor taskDescriptor = this.getCurrentTask(invocation);
-		this.completeTaskDescriptor(taskDescriptor);
-		taskDescriptor.andThen(function);
-	}
-	
-	/**
-	 * 
-	 */
-	@SuppressWarnings("rawtypes")
-	private void completeTaskDescriptor(TaskDescriptor taskDescriptor){
-		if (taskDescriptor.getShuffleOperationName().equals("join") && taskDescriptor.getFunction() == null){
-			Predicate<?>[] predicates = taskDescriptor.getDependentTasksChains().stream().map(s -> s._1).collect(Collectors.toList()).toArray(new Predicate[]{});
-			Function f = new TezJoiner(predicates);
-			taskDescriptor.andThen(f);
-		}
-	}
-	
-	/**
-	 * 
-	 */
-	private boolean isIntermediateOperation(String operationName){
+	private boolean isTransformation(String operationName){
 		return operationName.equals("flatMap") || 
 			   operationName.equals("map") || 
 			   operationName.equals("filter") ||
@@ -213,7 +255,7 @@ class TaskDescriptorChainBuilder {
 	/**
 	 * 
 	 */
-	private boolean isShuffleOperation(String operationName){
+	private boolean isShuffle(String operationName){
 		return operationName.equals("group") ||
 			   operationName.equals("reduceGroups") ||
 			   operationName.equals("aggregateGroups") ||
@@ -224,30 +266,19 @@ class TaskDescriptorChainBuilder {
 	/**
 	 * 
 	 */
-	@SuppressWarnings("rawtypes")
-	private TaskDescriptor getCurrentTask(MethodInvocation invocation){
-		if (this.taskChain.size() == 0){
-			if (invocation.getMethod().getName().equals("join")){
-				TaskDescriptor td = this.createTaskDescriptor(invocation, "map");
-				td.compose(new DStreamToStreamAdapterFunction("map", (Function)s -> s));
-				this.taskChain.add(td);
-			}
-			else {
-				this.taskChain.add(this.createTaskDescriptor(invocation));
-			}
+	private TaskDescriptor getCurrentTask(){
+		if (this.taskChain.size() != 0){
+			return this.taskChain.get(this.taskChain.size() - 1);
 		}
-		return this.taskChain.get(this.taskChain.size() - 1);
+		return null;
 	}
-	
+
 	/**
 	 * 
 	 */
-	private TaskDescriptor createTaskDescriptor(MethodInvocation invocation, String name){
-		TaskDescriptor taskDescriptor = new TaskDescriptor(this.sequenceIdCounter++, this.invocationChain.getSourceIdentifier(), name);
+	private TaskDescriptor createTaskDescriptor(String operationName){
+		TaskDescriptor taskDescriptor = new TaskDescriptor(this.sequenceIdCounter++, this.invocationChain.getSourceIdentifier(), operationName);
+		this.decorateTask(taskDescriptor);
 		return taskDescriptor;
-	}
-	
-	private TaskDescriptor createTaskDescriptor(MethodInvocation invocation){
-		return this.createTaskDescriptor(invocation, invocation.getMethod().getName());
 	}
 }

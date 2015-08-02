@@ -8,7 +8,6 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
 import org.apache.dstream.function.SerializableFunctionConverters.Supplier;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.tez.io.KeyWritable;
@@ -16,7 +15,6 @@ import org.apache.dstream.tez.io.TezDelegatingPartitioner;
 import org.apache.dstream.tez.io.ValueWritable;
 import org.apache.dstream.tez.utils.HdfsSerializerUtils;
 import org.apache.dstream.utils.Assert;
-import org.apache.dstream.utils.Tuples.Tuple2;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
@@ -119,9 +117,14 @@ public class TezDAGBuilder {
 		}
 		
 		if (taskDescriptor.getDependentTasksChains() != null){
-			List<Tuple2<Predicate<?>, List<TaskDescriptor>>> dependentTasksChains = taskDescriptor.getDependentTasksChains();
+//			List<Tuple2<Predicate<?>, List<TaskDescriptor>>> dependentTasksChains = taskDescriptor.getDependentTasksChains();
+//			dependentTasksChains.forEach(dependentTasks -> {
+//				dependentTasks._2().forEach(this::addTask);
+//				this.addEdge(vertex);
+//			});
+			List<List<TaskDescriptor>> dependentTasksChains = taskDescriptor.getDependentTasksChains();
 			dependentTasksChains.forEach(dependentTasks -> {
-				dependentTasks._2.forEach(this::addTask);
+				dependentTasks.forEach(this::addTask);
 				this.addEdge(vertex);
 			});
 		}

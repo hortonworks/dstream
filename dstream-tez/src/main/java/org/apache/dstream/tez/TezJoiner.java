@@ -7,23 +7,25 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
-import org.apache.dstream.support.Joiner;
+import org.apache.dstream.function.StreamJoinerFunction;
 import org.apache.dstream.utils.KVUtils;
 
-class TezJoiner extends Joiner {
+class TezJoiner extends StreamJoinerFunction {
 	private static final long serialVersionUID = -2554454163443511159L;
 
-	public TezJoiner(Predicate<?>... predicates) {
-		super(predicates);
-	}
+//	public TezJoiner(){
+//		this(null);
+//	}
 	
+	/**
+	 * 
+	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
-	protected Object preProcessValue(Object v) {
-		Stream<Entry<Object, Iterator<?>>> stream = (Stream<Entry<Object, Iterator<?>>>) v;
+	protected Stream<?> preProcessStream(Stream<?> stream) {
+		Stream<Entry<Object, Iterator<?>>> entryStream = (Stream<Entry<Object, Iterator<?>>>) stream;
 		
-		return stream.flatMap(s -> {
+		return entryStream.flatMap(s -> {
 			Iterator iter = new Iterator(){
 
 				@Override

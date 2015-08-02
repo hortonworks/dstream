@@ -18,16 +18,24 @@ public final class StreamInvocationChain {
 	
 	private final String sourceIdentifier;
 	
+	private final Class<?> streamType;
+	
 	/**
 	 * 
 	 * @param sourceElementType
 	 * @param sourceIdentifier
 	 */
-	protected StreamInvocationChain(Class<?> sourceElementType, String sourceIdentifier){
+	protected StreamInvocationChain(Class<?> sourceElementType, String sourceIdentifier, Class<?> streamType){
 		this.sourceElementType = sourceElementType;
 		this.sourceIdentifier = sourceIdentifier;
 		this.invocations = new ArrayList<>();
+		this.streamType = streamType;
 	}
+	
+	public Class<?> getStreamType() {
+		return streamType;
+	}
+
 	
 	/**
 	 * 
