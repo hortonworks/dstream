@@ -20,7 +20,6 @@ import org.apache.dstream.utils.KVUtils;
  * @param <V> value type
  */
 public class ValuesReducingFunction<K,V,T> implements Function<Stream<Entry<K,Iterator<V>>>,Stream<T>> {
-
 	private static final long serialVersionUID = 1133920289646508908L;
 	
 	@SuppressWarnings("rawtypes")
@@ -46,6 +45,11 @@ public class ValuesReducingFunction<K,V,T> implements Function<Stream<Entry<K,It
 		return sourceStream.map(entry -> this.mergeValuesForCurrentKey(entry));
 	}
 	
+	/**
+	 * 
+	 * @param valuesStream
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	protected Object buildValue(Stream<V> valuesStream){
 		return valuesStream.reduce(this.combiner).get();

@@ -2,9 +2,9 @@ package org.apache.dstream.tez;
 
 import java.io.File;
 
-import org.apache.dstream.support.Partitioner;
+import org.apache.dstream.function.PartitionerFunction;
 
-public class TestPartitioner extends Partitioner<Object>{
+public class TestPartitioner extends PartitionerFunction<Object>{
 	private static final long serialVersionUID = -1677894725281384687L;
 
 	public TestPartitioner(int partitionSize) {

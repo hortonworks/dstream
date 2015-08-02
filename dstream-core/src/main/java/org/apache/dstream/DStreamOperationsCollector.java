@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.apache.dstream.utils.Assert;
+import org.apache.dstream.utils.PropertiesHelper;
 import org.apache.dstream.utils.JvmUtils;
 import org.apache.dstream.utils.ReflectionUtils;
 import org.slf4j.Logger;
@@ -78,7 +79,7 @@ final class DStreamOperationsCollector<T,R> implements MethodInterceptor {
 			String executionName = (String) invocation.getArguments()[0];
 			Assert.notEmpty(executionName, "'executionName' must not be null or empty");
 	
-			Properties executionConfig = ExecutionConfigurationHelper.loadExecutionConfig(executionName);
+			Properties executionConfig = PropertiesHelper.loadProperties(executionName + ".cfg");
 			String executionDelegateClassName = executionConfig.getProperty(DistributableConstants.DELEGATE);
 			Assert.notEmpty(executionDelegateClassName, "Execution delegate property is not provided in '" + executionName + 
 					".cfg' (e.g., dstream.delegate=foo.bar.SomePipelineDelegate)");

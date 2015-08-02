@@ -6,7 +6,7 @@ import java.util.Properties;
 import javassist.ClassPool;
 import javassist.CtClass;
 
-import org.apache.dstream.ExecutionConfigurationHelper;
+import org.apache.dstream.utils.PropertiesHelper;
 import org.springframework.util.Assert;
 
 /**
@@ -21,7 +21,7 @@ public class TupleEnhancer {
 		try {
 			ClassPool classPool = ClassPool.getDefault();
 			CtClass tupleCtClass = classPool.get("org.apache.dstream.utils.Tuples$Tuple");
-			Properties tupleDefs = ExecutionConfigurationHelper.loadConfig("tuples.def");
+			Properties tupleDefs = PropertiesHelper.loadProperties("tuples.def");
 			Iterator<Object> iter = tupleDefs.keySet().iterator();
 			while (iter.hasNext()){
 				String tupleClassName = (String) iter.next();

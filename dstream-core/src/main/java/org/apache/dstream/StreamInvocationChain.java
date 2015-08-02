@@ -32,11 +32,14 @@ public final class StreamInvocationChain {
 		this.streamType = streamType;
 	}
 	
+	/**
+	 * 
+	 * @return
+	 */
 	public Class<?> getStreamType() {
-		return streamType;
+		return this.streamType;
 	}
 
-	
 	/**
 	 * 
 	 * @return
@@ -50,7 +53,7 @@ public final class StreamInvocationChain {
 	 * @return
 	 */
 	public Class<?> getSourceElementType() {
-		return sourceElementType;
+		return this.sourceElementType;
 	}
 
 	/**
@@ -58,7 +61,7 @@ public final class StreamInvocationChain {
 	 * @return
 	 */
 	public String getSourceIdentifier() {
-		return sourceIdentifier;
+		return this.sourceIdentifier;
 	}
 	
 	/**
