@@ -9,7 +9,9 @@ import org.aopalliance.intercept.MethodInvocation;
 import org.apache.dstream.DistributableConstants;
 import org.apache.dstream.StreamInvocationChain;
 import org.apache.dstream.function.DStreamToStreamAdapterFunction;
+import org.apache.dstream.function.HashPartitionerFunction;
 import org.apache.dstream.function.KeyValueMappingFunction;
+import org.apache.dstream.function.PartitionerFunction;
 import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.function.SerializableFunctionConverters.Function;
 import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
@@ -17,8 +19,6 @@ import org.apache.dstream.function.StreamJoinerFunction;
 import org.apache.dstream.function.ValuesGroupingFunction;
 import org.apache.dstream.function.ValuesReducingFunction;
 import org.apache.dstream.support.Aggregators;
-import org.apache.dstream.support.HashPartitioner;
-import org.apache.dstream.support.Partitioner;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.ReflectionUtils;
@@ -236,7 +236,7 @@ class TaskDescriptorChainBuilder {
 		String parallelizmProp = this.executionConfig.getProperty(DistributableConstants.PARALLELISM + taskDescriptor.getId() + "_" + taskDescriptor.getName());
 		if (parallelizmProp != null){
 			String[] pDirective = parallelizmProp.split(",");
-			Partitioner partitioner = pDirective.length == 1 ? new HashPartitioner<>(Integer.parseInt(pDirective[0])) 
+			PartitionerFunction partitioner = pDirective.length == 1 ? new HashPartitionerFunction<>(Integer.parseInt(pDirective[0])) 
 					: ReflectionUtils.newInstance(pDirective[1], new Class[]{int.class}, new Object[]{Integer.parseInt(pDirective[0])});
 			taskDescriptor.setPartitioner(partitioner);
 		}

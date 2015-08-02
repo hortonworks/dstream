@@ -17,7 +17,9 @@ public interface DistributableConstants {
 	 */
 	public static String SOURCE= DSTR_PREFIX + "source.";
 	
-	
+	/**
+	 * 
+	 */
 	public static String DELEGATE= DSTR_PREFIX + "delegate";
 	
 	/**
@@ -26,24 +28,18 @@ public interface DistributableConstants {
 	 * For example, <i>dstream.output.myExecution=hdfs://hadoop.com/out</i><br>
 	 */
 	public static String OUTPUT = DSTR_PREFIX + "output";
-	
-	/**
-	 * Prefix to identify 'stage' related configurations 
-	 * (see {@link #PARALLELISM}, {@link #MAP_SIDE_COMBINE} etc.)
-	 */
-	public static String STAGE = DSTR_PREFIX + "stage.";
-	
+
 	/**
 	 * {@link #STAGE} related configuration.<br>
 	 * Identifies stage parallelism (e.g., <i>dstream.stage.parallelizm.1_hash=3</i>)<br>
 	 * In the above '1_hash' identifies combination of 'stage id' + "_" + 'pipeline name' 
 	 */
-	public static String PARALLELISM = STAGE + "parallelizm.";
+	public static String PARALLELISM = DSTR_PREFIX + "parallelizm.";
 	
 	/**
 	 * {@link #STAGE} related configuration.<br>
 	 * Provides a hint if map-side-combine should be attempted in a particular stage (e.g., <i>dstream.stage.ms_combine.0_ms=true</i>)<br>
 	 * In the above '0_ms' identifies combination of 'stage id' + "_" + 'pipeline name' 
 	 */
-	public static String MAP_SIDE_COMBINE = STAGE + "ms_combine.";
+	public static String MAP_SIDE_COMBINE = DSTR_PREFIX + "ms_combine.";
 }

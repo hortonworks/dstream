@@ -6,8 +6,8 @@ import java.lang.reflect.Type;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
+import org.apache.dstream.function.PartitionerFunction;
 import org.apache.dstream.function.SerializableFunctionConverters.Function;
-import org.apache.dstream.support.Partitioner;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
@@ -16,7 +16,7 @@ final class Task implements Serializable {
 
 	private final Function<Stream<?>, Stream<?>> function;
 
-	private final Partitioner<? super Object> partitioner;
+	private final PartitionerFunction<? super Object> partitioner;
 	
 	private final String name;
 	
@@ -29,7 +29,7 @@ final class Task implements Serializable {
 	 * @param partitioner
 	 * @param function
 	 */
-	private Task(int id, String name, Partitioner<? super Object> partitioner, Function<Stream<?>, Stream<?>> function){
+	private Task(int id, String name, PartitionerFunction<? super Object> partitioner, Function<Stream<?>, Stream<?>> function){
 		this.id = id;
 		this.name = name;
 		this.partitioner = partitioner;
@@ -59,7 +59,7 @@ final class Task implements Serializable {
 	 * 
 	 * @return
 	 */
-	public Partitioner<? super Object> getPartitioner() {
+	public PartitionerFunction<? super Object> getPartitioner() {
 		return partitioner;
 	}
 

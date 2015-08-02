@@ -1,20 +1,21 @@
-package org.apache.dstream.support;
+package org.apache.dstream.function;
 
 import org.apache.dstream.function.SerializableFunctionConverters.Function;
+
 
 /**
  * 
  *
  * @param <T>
  */
-public class HashPartitioner<T> extends Partitioner<T> {
+public class HashPartitionerFunction<T> extends PartitionerFunction<T> {
 	private static final long serialVersionUID = -3799649258371438298L;
 	
-	public HashPartitioner(int splitSize){
+	public HashPartitionerFunction(int splitSize){
 		this(splitSize, null);
 	}
 	
-	public HashPartitioner(int splitSize, Function<? super T, ?> classifier){
+	public HashPartitionerFunction(int splitSize, Function<? super T, ?> classifier){
 		super(splitSize, classifier);
 	}
 

@@ -1,34 +1,32 @@
-package org.apache.dstream;
+package org.apache.dstream.utils;
 
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import org.apache.dstream.utils.Assert;
-
-public class ExecutionConfigurationHelper {
+public class PropertiesHelper {
 	
-	/**
-	 * 
-	 * @param executionName
-	 * @return
-	 */
-	public static Properties loadExecutionConfig(String executionName){
-		try {
-			return loadConfig(executionName + ".cfg");
-		} 
-		catch (Exception e) {
-			String message = e.getMessage();
-			throw new IllegalStateException(message + ". Possible reason: Configuration file for execution '" 
-					+ executionName + "' is not provided at the root of the classpath.", e);
-		}
-	}
+//	/**
+//	 * 
+//	 * @param executionName
+//	 * @return
+//	 */
+//	public static Properties loadExecutionConfig(String executionName){
+//		try {
+//			return loadConfig(executionName + ".cfg");
+//		} 
+//		catch (Exception e) {
+//			String message = e.getMessage();
+//			throw new IllegalStateException(message + ". Possible reason: Configuration file for execution '" 
+//					+ executionName + "' is not provided at the root of the classpath.", e);
+//		}
+//	}
 	
 	/**
 	 * 
 	 */
-	public static Properties loadConfig(String configName){
+	public static Properties loadProperties(String configName){
 		Properties prop = new Properties();
 		InputStream is = null;
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();

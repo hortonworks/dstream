@@ -73,34 +73,6 @@ public abstract class AbstractStreamExecutionDelegate<T> implements StreamExecut
 	protected abstract Stream<Stream<?>> doExecute(String executionName, Properties executionConfig, StreamInvocationChain... invocationChains);
 	
 	/**
-	 * 
-	 */
-	protected boolean isIntermediateOperation(String operationName){
-		return operationName.equals("flatMap") || 
-			   operationName.equals("map") || 
-			   operationName.equals("filter") ||
-			   operationName.equals("compute");
-	}
-	
-	/**
-	 * 
-	 */
-	protected boolean isShuffleOperation(String operationName){
-		return operationName.equals("group") ||
-			   operationName.equals("reduceGroups") ||
-			   operationName.equals("aggregateGroups") ||
-			   operationName.equals("join") ||
-			   operationName.equals("partition");
-	}
-	
-	/**
-	 * 
-	 */
-	protected boolean isTerminalOperation(String operationName){
-		return operationName.equals("executeAs");
-	}
-	
-	/**
 	 * Creates proxy over the result Stream to ensures that close() call is always delegated to
 	 * the close handler provided by the target ExecutionDelegate.
 	 */

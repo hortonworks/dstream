@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.apache.dstream.function.PartitionerFunction;
 import org.apache.dstream.function.SerializableFunctionConverters.Function;
 import org.apache.dstream.function.SerializableFunctionConverters.Supplier;
-import org.apache.dstream.support.Partitioner;
 
 /**
  * 
@@ -16,7 +16,7 @@ public class TaskDescriptor {
 	
 	private Function<Stream<?>, Stream<?>> function;
 
-	private Partitioner<? super Object> partitioner;
+	private PartitionerFunction<? super Object> partitioner;
 	
 	private String name;
 	
@@ -74,11 +74,11 @@ public class TaskDescriptor {
 		return id;
 	}
 
-	public Partitioner<? super Object> getPartitioner() {
+	public PartitionerFunction<? super Object> getPartitioner() {
 		return partitioner;
 	}
 
-	public void setPartitioner(Partitioner<? super Object> splitter) {
+	public void setPartitioner(PartitionerFunction<? super Object> splitter) {
 		this.partitioner = splitter;
 	}
 	
