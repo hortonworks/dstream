@@ -90,6 +90,23 @@ public class StreamJoinerFunction implements Function<Stream<Stream<?>>, Stream<
 		Assert.notNull(streams, "'streams' must not be null");
 		List<Stream<?>> streamsList = streams.map(this::preProcessStream).collect(Collectors.toList());
 		Assert.isTrue(streamsList.size() >= 2, "There must be 2+ streams available to perform join. Was " + streamsList.size());
+		
+		if (this.collectionFactory == null){
+			Iterator<CollectionFactory> sl = ServiceLoader
+		            .load(CollectionFactory.class, ClassLoader.getSystemClassLoader()).iterator();
+			
+			this.collectionFactory = sl.hasNext() ? sl.next() : null;
+			if (this.collectionFactory == null){
+				throw new IllegalStateException("Failed to find '" + CollectionFactory.class.getName() + "' provider.");
+			}
+			else {
+				if (logger.isInfoEnabled()){
+					logger.info("Loaded CollectionFactory: " + this.collectionFactory.getClass().getName());
+				}
+			}
+		}
+		
+		
 		return this.join(streamsList);
 	}
 	
@@ -136,30 +153,22 @@ public class StreamJoinerFunction implements Function<Stream<Stream<?>>, Stream<
 	 * 
 	 */
 	private Stream<?> doJoin(Stream<?> joinedStream, Stream<?> joiningStream) {
-		if (this.collectionFactory == null){
-			Iterator<CollectionFactory> sl = ServiceLoader
-		            .load(CollectionFactory.class, ClassLoader.getSystemClassLoader()).iterator();
-			
-			this.collectionFactory = sl.hasNext() ? sl.next() : null;
-			if (this.collectionFactory == null){
-				throw new IllegalStateException("Failed to find '" + CollectionFactory.class.getName() + "' provider.");
-			}
-			else {
-				if (logger.isInfoEnabled()){
-					logger.info("Loaded CollectionFactory: " + this.collectionFactory.getClass().getName());
-				}
-			}
-		}
 		List<Object> joiningStreamCache = this.collectionFactory.newList();
 		return joinedStream.flatMap(lVal -> {
 			boolean cached = joiningStreamCache.size() > 0;
 			Stream<?> _joiningStream = cached ? joiningStreamCache.stream() : joiningStream;
-			return _joiningStream.map(rVal -> {
-				if (!cached){
-					joiningStreamCache.add(rVal);
-				}
-				return this.mergeValues(lVal, rVal);
-			});
+			try {
+				return _joiningStream.map(rVal -> {
+					if (!cached){
+						joiningStreamCache.add(rVal);
+					}
+					return this.mergeValues(lVal, rVal);
+				});
+			} catch (Exception e) {
+				throw new IllegalStateException("Failed to join partitions. Possible reason: The system may be trying to join on an empty partition. \n"
+						+ "This could happen due to the fact that your initial data was too small to be partitioned in the amount specified. \nPlease try"
+						+ " to lower dstream.parallelism size. ", e);
+			}
 		});	
 	}
 	

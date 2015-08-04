@@ -63,7 +63,6 @@ public class KeyWritable extends TypeAwareWritable<Object> implements WritableCo
 		} 
 		else { 
 			/*
-			 * NOTE: Mainly for Tuples and will NOT result i correct ordering. It only recognizes when two Tuples are the same
 			 * TODO REVISIT!!!
 			 */
 			if (this.value == o.value){

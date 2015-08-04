@@ -2,11 +2,16 @@ package org.apache.dstream.tez;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.stream.Stream;
 
+import org.apache.dstream.DistributableConstants;
+import org.apache.dstream.function.HashPartitionerFunction;
 import org.apache.dstream.function.PartitionerFunction;
 import org.apache.dstream.function.SerializableFunctionConverters.Function;
 import org.apache.dstream.function.SerializableFunctionConverters.Supplier;
+import org.apache.dstream.utils.ReflectionUtils;
+import org.apache.tez.dag.api.Vertex;
 
 /**
  * 
@@ -14,16 +19,20 @@ import org.apache.dstream.function.SerializableFunctionConverters.Supplier;
  */
 public class TaskDescriptor {
 	
+	private final String name;
+	
+	private final int id;
+	
+	private final TaskDescriptor previousTaskDescriptor;
+
+	private final String operationName;
+	
+	
 	private Function<Stream<?>, Stream<?>> function;
 
 	private PartitionerFunction<? super Object> partitioner;
 	
-	private String name;
-	
-	private final int id;
-	
-	
-	private String operationName;
+	private int parallelism = 1;
 
 	private Class<?> sourceElementType;
 	
@@ -33,20 +42,98 @@ public class TaskDescriptor {
 
 	private Class<?> inputFormatClass;
 	
-	public TaskDescriptor(int id, String name, String operationName){
+	/**
+	 * Will create description of a {@link Task} from which Tez {@link Vertex} is created.
+	 * Parallelism and {@link PartitionerFunction} of the task (Vertex) is determined 
+	 * from {@link DistributableConstants#PARALLELISM} configuration
+	 * which allows to configure both parallelism and {@link PartitionerFunction}. However, due to Tez way of 
+	 * doing things, the actual function itself should be applied to the previous task (Vertex) 
+	 * where the actual partitioning logic is invoked, while integer value representing parallelism should *also* 
+	 * be set on the current Vertex. 
+	 * To accommodate that the {@link TaskDescriptor} is created with reference to the previous 
+	 * {@link TaskDescriptor}. Upon determining partitioner configuration and parallelism for the current task, 
+	 * the actual {@link PartitionerFunction} is created and set on the previous {@link TaskDescriptor} while
+	 * it's parallelism is set on this task.
+	 * 
+	 * @param id
+	 * @param name
+	 * @param operationName
+	 * @param executionConfig
+	 * @param previousTaskDescriptor
+	 */
+	public TaskDescriptor(int id, String name, String operationName, Properties executionConfig, TaskDescriptor previousTaskDescriptor){
 		this.name = name;
 		this.id = id;
 		this.operationName = operationName;
+		this.previousTaskDescriptor = previousTaskDescriptor;
+		String parallelizmProp = executionConfig.getProperty(DistributableConstants.PARALLELISM);
+		String partitionerProp = executionConfig.getProperty(DistributableConstants.PARTITIONER);
+		
+		if (parallelizmProp != null){
+			this.parallelism = Integer.parseInt(parallelizmProp);
+		}
+		PartitionerFunction partitioner = partitionerProp != null 
+				? ReflectionUtils.newInstance(partitionerProp, new Class[]{int.class}, new Object[]{this.parallelism}) 
+						: new HashPartitionerFunction<>(this.parallelism);
+		this.setPartitioner(partitioner);
+//			if (partitionerProp != null){
+//				if (partitionerProp != null){
+//					this.setPartitioner(ReflectionUtils.newInstance(partitionerProp, 
+//							new Class[]{int.class}, new Object[]{this.parallelism}));
+//				}
+//				else {
+//					this.setPartitioner(new HashPartitionerFunction<>(this.parallelism));
+//				}
+//			}
+//			else if (partitionerProp != null){
+//				
+//			}
+//			if (pDirective.length == 1){
+//				previousTaskDescriptor.setPartitioner(new HashPartitionerFunction<>(this.parallelism));
+//			}
+//			else {
+//				previousTaskDescriptor.setPartitioner(ReflectionUtils.newInstance(pDirective[1], 
+//						new Class[]{int.class}, new Object[]{this.parallelism}));
+//			}
+//		}
 	}
 	
+	/**
+	 * 
+	 * @return
+	 */
+	public TaskDescriptor getPreviousTaskDescriptor() {
+		return previousTaskDescriptor;
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public int getParallelism() {
+		return parallelism;
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
 	public List<List<TaskDescriptor>> getDependentTasksChains() {
 		return this.dependentTasksChains;
 	}
 	
+	/**
+	 * 
+	 * @return
+	 */
 	public String getOperationName() {
 		return operationName;
 	}
 
+	/**
+	 * 
+	 * @param dependentTasksChain
+	 */
 	public void addDependentTasksChain(List<TaskDescriptor> dependentTasksChain) {
 		if (this.dependentTasksChains == null){
 			this.dependentTasksChains = new ArrayList<>();
@@ -54,38 +141,58 @@ public class TaskDescriptor {
 		this.dependentTasksChains.add(dependentTasksChain);
 	}
 	
+	/**
+	 * 
+	 * @return
+	 */
 	public Class<?> getInputFormatClass() {
 		return inputFormatClass;
 	}
 
+	/**
+	 * 
+	 * @param inputFormatClass
+	 */
 	public void setInputFormatClass(Class<?> inputFormatClass) {
 		this.inputFormatClass = inputFormatClass;
 	}
 	
+	/**
+	 * 
+	 * @return
+	 */
 	public Supplier<?> getSourceSupplier() {
-		return sourceSupplier;
-	}
-
-	public void setSourceSupplier(Supplier<?> sourceSupplier) {
-		this.sourceSupplier = sourceSupplier;
+		return this.sourceSupplier;
 	}
 	
+	/**
+	 * 
+	 * @return
+	 */
 	public int getId() {
-		return id;
+		return this.id;
 	}
 
+	/**
+	 * 
+	 * @return
+	 */
 	public PartitionerFunction<? super Object> getPartitioner() {
-		return partitioner;
-	}
-
-	public void setPartitioner(PartitionerFunction<? super Object> splitter) {
-		this.partitioner = splitter;
+		return this.partitioner;
 	}
 	
+	/**
+	 * 
+	 * @return
+	 */
 	public Function<Stream<?>, Stream<?>> getFunction() {
 		return this.function;
 	}
 	
+	/**
+	 * 
+	 * @param cFunction
+	 */
 	public void compose(Function<Stream<?>, Stream<?>> cFunction) {
 		if (this.function != null){
 			this.function = this.function.compose(cFunction);
@@ -95,6 +202,10 @@ public class TaskDescriptor {
 		}
 	}
 	
+	/**
+	 * 
+	 * @param aFunction
+	 */
 	public void andThen(Function<Stream<?>, Stream<?>> aFunction) {
 		if (this.function != null){
 			this.function = aFunction.compose(this.function);
@@ -104,19 +215,40 @@ public class TaskDescriptor {
 		}
 	}
 	
-	public void setName(String name) {
-		this.name = name;
-	}
-	
+	/**
+	 * 
+	 * @return
+	 */
 	public String getName() {
 		return name;
 	}
 	
+	/**
+	 * 
+	 * @return
+	 */
 	public Class<?> getSourceElementType() {
 		return sourceElementType;
 	}
-
-	public void setSourceElementType(Class<?> sourceElementType) {
+	
+	/**
+	 * 
+	 */
+	void setSourceElementType(Class<?> sourceElementType) {
 		this.sourceElementType = sourceElementType;
+	}
+	
+	/**
+	 * 
+	 */
+	void setPartitioner(PartitionerFunction<? super Object> partitioner) {
+		this.partitioner = partitioner;
+	}
+	
+	/**
+	 * 
+	 */
+	void setSourceSupplier(Supplier<?> sourceSupplier) {
+		this.sourceSupplier = sourceSupplier;
 	}
 }

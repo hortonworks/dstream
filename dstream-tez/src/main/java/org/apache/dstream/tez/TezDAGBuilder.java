@@ -86,9 +86,8 @@ public class TezDAGBuilder {
 		// inputOrderCounter needed to maintain the order of inputs for joins
 		Vertex vertex = taskDescriptor.getId() == 0 
 				? Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd) 
-						: Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd, 
-								taskDescriptor.getPartitioner() == null ? 1 : taskDescriptor.getPartitioner().getPartitionSize());
-				
+						: Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd, taskDescriptor.getParallelism());
+		
 		vertex.addTaskLocalFiles(this.tezClient.getLocalResources());
 		
 		this.dag.addVertex(vertex);

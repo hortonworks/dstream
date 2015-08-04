@@ -71,13 +71,13 @@ public class ReflectionUtils {
 			}
 			searchType = searchType.getSuperclass();
 		}
-		throw new NoSuchMethodException("Method which takes " + Arrays.asList(inputParams) + 
+		throw new IllegalArgumentException("Method which takes " + Arrays.asList(inputParams) + 
 				" parameters and return " + returnType + 
 				" is not found in object of class " + targetClass);
 	}
 	
-	public static Method findMethod(String name, Class<?> clazz, Class<?> returnType, Class<?>... inputParams) throws Exception {
-		Class<?> searchType = clazz;
+	public static Method findMethod(String name, Class<?> targetClass, Class<?> returnType, Class<?>... inputParams) throws Exception {
+		Class<?> searchType = targetClass;
 		while (searchType != null) {
 			Method[] methods = (searchType.isInterface() ? searchType.getMethods() : searchType.getDeclaredMethods());
 			for (Method method : methods) {
@@ -88,9 +88,24 @@ public class ReflectionUtils {
 			}
 			searchType = searchType.getSuperclass();
 		}
-		throw new NoSuchMethodException("Method which takes " + Arrays.asList(inputParams) + 
+		throw new IllegalArgumentException("Method which takes " + Arrays.asList(inputParams) + 
 				" parameters and return " + returnType + 
-				" is not found in object of class " + clazz);
+				" is not found in object of class " + targetClass);
+	}
+	
+	public static Method findSingleMethod(String name, Class<?> targetClass) {
+		Class<?> searchType = targetClass;
+		while (searchType != null) {
+			Method[] methods = (searchType.isInterface() ? searchType.getMethods() : searchType.getDeclaredMethods());
+			for (Method method : methods) {
+				if (name.equals(method.getName())) {
+					return method;
+				}
+			}
+			searchType = searchType.getSuperclass();
+		}
+		throw new IllegalArgumentException("Method with name " + name + 
+				" is not found in object of class " + targetClass);
 	}
 
 	public static void setFieldValue(Object instance, String fieldPath, Object newValue) {

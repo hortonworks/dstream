@@ -195,6 +195,7 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 				}
 			} 
 			catch (Exception e) {
+				e.printStackTrace();
 				throw new IllegalStateException("Failed to write " + input + " to KV Writer", e);
 			}
 		}
