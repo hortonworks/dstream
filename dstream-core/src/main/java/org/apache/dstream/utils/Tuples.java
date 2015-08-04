@@ -12,7 +12,7 @@ public interface Tuples {
 	/**
 	 * 
 	 */
-	public static class Tuple implements Serializable, 
+	public static class Tuple implements Serializable, Comparable<Object>,
 			Tuple2<Object, Object>,
 			Tuple3<Object, Object, Object>,
 			Tuple4<Object, Object, Object, Object>,
@@ -59,6 +59,12 @@ public interface Tuples {
 		}
 		
 		@Override
+		public int hashCode(){
+			int hashCode = this.values.hashCode();
+			return hashCode;
+		}
+		
+		@Override
 		public boolean equals(Object obj) {
 			if (obj instanceof Tuple){
 				Tuple that = (Tuple) obj;
@@ -66,6 +72,14 @@ public interface Tuples {
 			}
 	        return false;
 	    }
+
+		@Override
+		public int compareTo(Object that) {
+			if (this.equals(that)){
+				return 0;
+			}	
+			return -1;
+		}
 	}
 	
 	/**

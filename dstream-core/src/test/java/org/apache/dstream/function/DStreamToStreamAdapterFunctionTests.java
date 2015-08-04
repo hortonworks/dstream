@@ -15,13 +15,13 @@ import org.junit.Test;
 
 public class DStreamToStreamAdapterFunctionTests {
 	
-	@Test(expected=UnsupportedOperationException.class)
-	public void validateUnsupportedOperation(){
-		new DStreamToStreamAdapterFunction("foo", null);
+	@Test(expected=IllegalArgumentException.class)
+	public void unsupportedOperation(){
+		new DStreamToStreamAdapterFunction("foo", (Function<?,?>)s -> s);
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
-	public void validateNullFunctionFailure(){
+	public void nullOperation(){
 		new DStreamToStreamAdapterFunction("map", null);
 	}
 

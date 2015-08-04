@@ -32,7 +32,7 @@ public interface DStream<A> extends DistributableExecutable<A>{
 	 * @param <T> the type of pipeline elements
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> DStream<T> ofType(Class<T> sourceElementType, String sourceIdentifier) {	
+	public static <A> DStream<A> ofType(Class<A> sourceElementType, String sourceIdentifier) {	
 		Assert.notNull(sourceElementType, "'sourceElementType' must not be null");
 		Assert.notEmpty(sourceIdentifier, "'sourceIdentifier' must not be null or empty");
 		return DStreamOperationsCollector.as(sourceElementType, sourceIdentifier, DStream.class);
@@ -148,7 +148,9 @@ public interface DStream<A> extends DistributableExecutable<A>{
 	 * 
 	 * @return
 	 */
-	<K,V> DStream<A> partition();
+	DStream<A> partition();
+	
+	DStream<A> partition(Function<? super A, ?> classifier);
 	
 	<_A> DStream2WithPredicate<A,_A> join(DStream<_A> ds);
 	
@@ -278,6 +280,8 @@ public interface DStream<A> extends DistributableExecutable<A>{
 		 */
 		DStream2<A,B> partition();
 		
+		DStream2<A,B> partition(Function<? super Tuple2<A,B>, ?> classifier);
+		
 		<_A> DStream3WithPredicate<A,B,_A> join(DStream<_A> ds);
 		<_A,_B> DStream4WithPredicate<A,B,_A,_B> join(DStream2<_A,_B> ds);
 		<_A,_B,_C> DStream5WithPredicate<A,B,_A,_B,_C> join(DStream3<_A,_B,_C> ds);
@@ -404,6 +408,8 @@ public interface DStream<A> extends DistributableExecutable<A>{
 		 * @return
 		 */
 		DStream3<A,B,C> partition();
+		
+		DStream3<A,B,C> partition(Function<? super Tuple3<A,B,C>, ?> classifier);
 		
 		<_A> DStream4WithPredicate<A,B,C,_A> join(DStream<_A> ds);
 		<_A,_B> DStream5WithPredicate<A,B,C,_A,_B> join(DStream2<_A,_B> ds);
@@ -532,6 +538,8 @@ public interface DStream<A> extends DistributableExecutable<A>{
 		 */
 		DStream4<A,B,C,D> partition();
 		
+		DStream4<A,B,C,D> partition(Function<? super Tuple4<A,B,C,D>, ?> classifier);
+		
 		<_A> DStream5WithPredicate<A,B,C,D,_A> join(DStream<_A> ds);
 	}
 	
@@ -658,5 +666,7 @@ public interface DStream<A> extends DistributableExecutable<A>{
 		 * @return
 		 */
 		DStream5<A,B,C,D,E> partition();
+		
+		DStream5<A,B,C,D,E> partition(Function<? super Tuple5<A,B,C,D,E>, ?> classifier);
 	}
 }

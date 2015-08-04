@@ -48,6 +48,11 @@ public class KVUtils {
 		}
 		
 		@Override
+		public int hashCode(){
+			return this.key.hashCode() & this.value.hashCode();
+		}
+		
+		@Override
 		public String toString(){
 			return this.key + "=" + this.value;
 		}

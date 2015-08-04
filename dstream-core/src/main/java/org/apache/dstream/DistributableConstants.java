@@ -34,7 +34,9 @@ public interface DistributableConstants {
 	 * Identifies stage parallelism (e.g., <i>dstream.stage.parallelizm.1_hash=3</i>)<br>
 	 * In the above '1_hash' identifies combination of 'stage id' + "_" + 'pipeline name' 
 	 */
-	public static String PARALLELISM = DSTR_PREFIX + "parallelizm.";
+	public static String PARALLELISM = DSTR_PREFIX + "parallelizm";
+	
+	public static String PARTITIONER = DSTR_PREFIX + "patitioner";
 	
 	/**
 	 * {@link #STAGE} related configuration.<br>

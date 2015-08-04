@@ -1,8 +1,5 @@
 package org.apache.dstream.function;
 
-import org.apache.dstream.function.SerializableFunctionConverters.Function;
-
-
 /**
  * 
  *
@@ -11,12 +8,8 @@ import org.apache.dstream.function.SerializableFunctionConverters.Function;
 public class HashPartitionerFunction<T> extends PartitionerFunction<T> {
 	private static final long serialVersionUID = -3799649258371438298L;
 	
-	public HashPartitionerFunction(int splitSize){
-		this(splitSize, null);
-	}
-	
-	public HashPartitionerFunction(int splitSize, Function<? super T, ?> classifier){
-		super(splitSize, classifier);
+	public HashPartitionerFunction(int partitionSize){
+		super(partitionSize);
 	}
 
 	@Override
@@ -25,6 +18,7 @@ public class HashPartitionerFunction<T> extends PartitionerFunction<T> {
 		if (this.getClassifier() != null){
 			hashValue = this.getClassifier().apply(input);
 		}
-		return (hashValue.hashCode() & Integer.MAX_VALUE) % this.getPartitionSize();
+		int ret = (hashValue.hashCode() & Integer.MAX_VALUE) % this.getPartitionSize();
+		return ret;
 	}
 }

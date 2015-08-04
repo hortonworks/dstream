@@ -1,10 +1,13 @@
 package org.apache.dstream.function;
 
+import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.dstream.function.SerializableFunctionConverters.Function;
-import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
 import org.apache.dstream.utils.Assert;
+import org.apache.dstream.utils.ReflectionUtils;
 
 /**
  * An implementation of {@link Function} which will translate Stream-like
@@ -13,48 +16,52 @@ import org.apache.dstream.utils.Assert;
  * on the {@link DistributableStream}.
  */
 public class DStreamToStreamAdapterFunction implements Function<Stream<?>, Stream<?>>{
-
 	private static final long serialVersionUID = 6836233233261184905L;
+	
+	private static final Map<String, Method> supportedOperations = buildSupportedOperations(Stream.of("flatMap", "filter", "map"));
 	
 	private final String streamOperationName;
 	
-	private final Object sourceFunction;
+	private final Object streamOperation;
 	
 	/**
 	 * 
 	 * @param streamOperationName
 	 * @param sourceFunction
 	 */
-	public DStreamToStreamAdapterFunction(String streamOperationName, Object sourceFunction){
+	public DStreamToStreamAdapterFunction(String streamOperationName, Object streamOperation){
 		Assert.notEmpty(streamOperationName, "'streamOperationName' must not be null or empty");
-		if (!(streamOperationName.equals("flatMap") ||
-			streamOperationName.equals("map") ||
-			streamOperationName.equals("filter"))){
-			throw new UnsupportedOperationException("Operation '" + streamOperationName + "' is not supported.");
+		Assert.notNull(streamOperation, "'streamOperation' must not be null");
+
+		if (!supportedOperations.containsKey(streamOperationName)){
+			throw new IllegalArgumentException("Operation 'streamOperationName' is not supported");
 		}
-		Assert.notNull(sourceFunction, "'sourceFunction' must not be null");
-		this.sourceFunction = sourceFunction;
+		
+		this.streamOperation = streamOperation;
 		this.streamOperationName = streamOperationName;
 	}
 
 	/**
 	 * 
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public Stream<?> apply(Stream<?> streamIn) {
-		if (this.streamOperationName.equals("flatMap")){
-			return streamIn.flatMap((Function)this.sourceFunction);
+		try {
+			Method m = supportedOperations.get(this.streamOperationName);
+			return (Stream<?>) m.invoke(streamIn, this.streamOperation);
+		} 
+		catch (Exception e) {
+			throw new IllegalStateException("Operation '" + this.streamOperationName + "' is not supported.", e);
 		}
-		else if (this.streamOperationName.equals("filter")){
-			return streamIn.filter((Predicate)this.sourceFunction);
-		}
-		else if (this.streamOperationName.equals("map")){
-			return streamIn.map((Function)this.sourceFunction);
-		}
-		else {
-			// should never happen due to the constructor assertions. Simply concludes IF statement
-			throw new UnsupportedOperationException("Operation '" + this.streamOperationName + "' is not supported.");
-		}
+	}
+	
+	/**
+	 * 
+	 * @param operationsStream
+	 * @return
+	 */
+	private static Map<String, Method> buildSupportedOperations(Stream<String> operationsStream){
+		return operationsStream
+				.collect(Collectors.toMap(name -> name, name -> ReflectionUtils.findSingleMethod(name, Stream.class)));
 	}
 }
