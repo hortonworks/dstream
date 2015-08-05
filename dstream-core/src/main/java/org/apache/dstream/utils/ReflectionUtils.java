@@ -4,6 +4,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ReflectionUtils {
 	
@@ -55,6 +58,16 @@ public class ReflectionUtils {
 		catch (Exception e) {
 			throw new IllegalStateException(e);
 		}
+	}
+	
+	public static Set<String> findAllVisibleMethodOnInterface(Class<?> interfaze) {
+		Assert.isTrue(interfaze.isInterface());
+		Set<String> currentMethods = Stream.of(interfaze.getDeclaredMethods()).map(s -> s.getName()).collect(Collectors.toSet());
+		for (Class<?> intfc : interfaze.getInterfaces()) {
+			Set<String> visMethods = findAllVisibleMethodOnInterface(intfc);
+			currentMethods.addAll(visMethods);
+		}
+		return currentMethods;
 	}
 	
 	public static Method findMethod(Class<?> targetClass, Class<?> returnType, Class<?>... inputParams) throws Exception {

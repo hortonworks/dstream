@@ -13,6 +13,7 @@ import org.apache.dstream.StreamInvocationChain;
 import org.apache.dstream.function.BiFunctionToBinaryOperatorAdapter;
 import org.apache.dstream.function.DStreamToStreamAdapterFunction;
 import org.apache.dstream.function.KeyValueMappingFunction;
+import org.apache.dstream.function.StreamUnionFunction;
 import org.apache.dstream.function.SerializableFunctionConverters.BiFunction;
 import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.function.SerializableFunctionConverters.Function;
@@ -186,6 +187,34 @@ class TaskDescriptorChainBuilder {
 			int joiningStreamsSize = dependentInvocationChain.getStreamType().getTypeParameters().length;
 			joiner.addCheckPoint(joiningStreamsSize);
 		}
+		else if (operationName.startsWith("union")) {
+			StreamInvocationChain dependentInvocationChain = (StreamInvocationChain) arguments[0];
+			TaskDescriptorChainBuilder dependentBuilder = new TaskDescriptorChainBuilder(this.executionName, dependentInvocationChain, this.executionConfig);
+			List<TaskDescriptor> dependentTasks = dependentBuilder.build();
+
+			TaskDescriptor currentTask = this.getCurrentTask();
+			
+			if (currentTask.getId() == 0){
+				// create pass through mapper (Tez limitation)
+				currentTask.andThen(s -> s);
+			}
+
+			Function f = currentTask.getFunction();
+			if (!(f instanceof TezUnionFunction)){
+				TaskDescriptor td = this.createTaskDescriptor(operationName);
+				this.taskChain.add(td);
+				Function function = new TezUnionFunction(operationName.equals("union"));
+				td.andThen(function);
+				currentTask = this.getCurrentTask();
+			}
+			
+			currentTask.addDependentTasksChain(dependentTasks);
+			
+			Function function = currentTask.getFunction();
+			StreamUnionFunction joiner = (StreamUnionFunction) function;
+			int joiningStreamsSize = dependentInvocationChain.getStreamType().getTypeParameters().length;
+			joiner.addCheckPoint(joiningStreamsSize);
+		}
 		else if (operationName.equals("partition")) {
 			this.taskChain.add(this.createTaskDescriptor(operationName));
 			this.getCurrentTask().andThen(stream -> KeyValuesNormalizer.normalize((Stream<Entry<Object, Iterator<Object>>>) stream));
@@ -245,6 +274,8 @@ class TaskDescriptorChainBuilder {
 		return operationName.equals("reduceGroups") ||
 			   operationName.equals("aggregateGroups") ||
 			   operationName.equals("join") ||
+			   operationName.equals("union") ||
+			   operationName.equals("unionAll") ||
 			   operationName.equals("partition");
 	}
 	

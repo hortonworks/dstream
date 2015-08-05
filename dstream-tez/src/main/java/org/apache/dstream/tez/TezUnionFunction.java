@@ -4,16 +4,15 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
-import org.apache.dstream.function.StreamJoinerFunction;
+import org.apache.dstream.function.StreamUnionFunction;
 
-class TezJoiner extends StreamJoinerFunction {
-	private static final long serialVersionUID = -2554454163443511159L;
+public class TezUnionFunction extends StreamUnionFunction{
+	private static final long serialVersionUID = -6486755428802968586L;
+
+	public TezUnionFunction(boolean unionAll) {
+		super(unionAll);
+	}
 	
-	/**
-	 * 
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
 	protected Stream<?> preProcessStream(Stream<?> stream) {
 		return KeyValuesNormalizer.normalize((Stream<Entry<Object, Iterator<Object>>>) stream);
 	}

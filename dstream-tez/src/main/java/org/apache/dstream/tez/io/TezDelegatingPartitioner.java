@@ -8,7 +8,6 @@ public class TezDelegatingPartitioner extends HashPartitioner {
 	
 	public static void setDelegator(PartitionerFunction<? super Object> partitioner){
 		delegatorPartitioner = partitioner;
-		System.out.println("Delegating partitinoer: " + delegatorPartitioner);
 	}
 
 	/**

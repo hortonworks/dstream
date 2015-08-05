@@ -135,6 +135,9 @@ public class PartitionTests extends BaseTezTests {
 	@Test
 	public void partitionAfterJoinSizeAndPartitioner() throws Exception {	
 //		assertFalse(new File("TestPartitioner").exists());
+		
+		
+		
 		DStream<String> s1 = DStream.ofType(String.class, "hash");
 		DStream<String> s2 = DStream.ofType(String.class, "probe");
 		
