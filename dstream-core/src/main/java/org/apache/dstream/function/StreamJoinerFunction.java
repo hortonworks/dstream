@@ -106,8 +106,8 @@ public class StreamJoinerFunction implements Function<Stream<Stream<?>>, Stream<
 			}
 		}
 		
-		
-		return this.join(streamsList);
+		Stream s = this.join(streamsList);
+		return s;
 	}
 	
 	/**

@@ -29,9 +29,6 @@ public class ValuesReducingFunction<K,V,T> implements Function<Stream<Entry<K,It
 	 * 
 	 * @param aggregationOperator
 	 */
-	/*
-	 * BinaryOperator is type-less to accommodate BiFunctions (e.g. Aggregators::aggregate)
-	 */
 	@SuppressWarnings("rawtypes")
 	public ValuesReducingFunction(BinaryOperator combiner) {
 		this.combiner = combiner;
@@ -52,7 +49,7 @@ public class ValuesReducingFunction<K,V,T> implements Function<Stream<Entry<K,It
 	 */
 	@SuppressWarnings("unchecked")
 	protected Object buildValue(Stream<V> valuesStream){
-		return valuesStream.reduce(this.combiner).get();
+		return valuesStream.reduce((java.util.function.BinaryOperator<V>) this.combiner).get();
 	}
 
 	/**
