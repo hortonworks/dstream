@@ -16,7 +16,7 @@ final class Task implements Serializable {
 
 	private final Function<Stream<?>, Stream<?>> function;
 
-	private final PartitionerFunction<? super Object> partitioner;
+	private final PartitionerFunction<Object> partitioner;
 	
 	private final String name;
 	
@@ -29,7 +29,7 @@ final class Task implements Serializable {
 	 * @param partitioner
 	 * @param function
 	 */
-	private Task(int id, String name, PartitionerFunction<? super Object> partitioner, Function<Stream<?>, Stream<?>> function){
+	private Task(int id, String name, PartitionerFunction<Object> partitioner, Function<Stream<?>, Stream<?>> function){
 		this.id = id;
 		this.name = name;
 		this.partitioner = partitioner;
@@ -59,7 +59,7 @@ final class Task implements Serializable {
 	 * 
 	 * @return
 	 */
-	public PartitionerFunction<? super Object> getPartitioner() {
+	public PartitionerFunction<Object> getPartitioner() {
 		return partitioner;
 	}
 

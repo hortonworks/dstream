@@ -4,9 +4,10 @@ import org.apache.dstream.function.PartitionerFunction;
 import org.apache.tez.runtime.library.partitioner.HashPartitioner;
 
 public class TezDelegatingPartitioner extends HashPartitioner {
-	private static PartitionerFunction<? super Object> delegatorPartitioner;
 	
-	public static void setDelegator(PartitionerFunction<? super Object> partitioner){
+	private static PartitionerFunction<Object> delegatorPartitioner;
+	
+	public static void setDelegator(PartitionerFunction<Object> partitioner){
 		delegatorPartitioner = partitioner;
 	}
 
