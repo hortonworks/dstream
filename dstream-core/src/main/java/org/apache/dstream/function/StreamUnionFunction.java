@@ -21,7 +21,7 @@ public class StreamUnionFunction implements Function<Stream<Stream<?>>, Stream<?
 		this.distinct = distinct;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public Stream<?> apply(Stream<Stream<?>> streams) {	
 

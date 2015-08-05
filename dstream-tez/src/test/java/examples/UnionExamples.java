@@ -1,42 +1,89 @@
 package examples;
 
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
 import org.apache.dstream.DStream;
-import org.apache.dstream.DStream.DStream2;
+import org.apache.dstream.tez.BaseTezTests;
+import org.apache.dstream.utils.KVUtils;
 
 public class UnionExamples {
+	
+	static String EXECUTION_NAME = "UnionExamples";
 
 	public static void main(String[] args) throws Exception {
-//		BaseTezTests.clean("Join");
-//		
-		DStream<String> hash = DStream.ofType(String.class, "hash");
-		DStream<String> probe = DStream.ofType(String.class, "probe");
-		
-		DStream2<String, String> joined = hash.join(probe);
-		
-//		joined.union(joined).map(s -> 1).u;
-		
-		
-		hash.union(probe);
-		
-//		DStream<Entry<String, Integer>> foo = DStream.ofType(String.class, "probe").map(s -> KVUtils.kv(s, 1));
-//		
-//		hash.union(probe).union(foo);
-		
-		Stream<String> a = Stream.of("foo", "bar", "baz");
-		Stream<String> b = Stream.of("foo", "baz", "Seva");
-		Stream<String> c = Stream.of("baz", "oleg", "Seva");
-		
-		// ALL
-		
-//		Stream<String> uAll = Stream.of(a,b,c).reduce(Stream::concat).get();
-//		uAll.forEach(System.out::println);
-//		
-//		System.out.println("===");
-		
-		Stream<String> u = Stream.of(a,b,c).reduce(Stream::concat).get().distinct();
-		u.forEach(System.out::println);
+		// run all
+		SimpleUnion.main();
+		ThreeWayUnionWithTransformationInBetween.main();
+		ThreeWayUnionWithShuffleInBetween.main();
+		BaseTezTests.clean(EXECUTION_NAME);
+	}
+	
+	public static class SimpleUnion {
+		public static void main(String... args) throws Exception {
+			BaseTezTests.clean(EXECUTION_NAME);
+			
+			DStream<String> one = DStream.ofType(String.class, "one");
+			DStream<String> two = DStream.ofType(String.class, "two");
+			
+			Future<Stream<Stream<String>>> resultFuture = one
+					.union(two)
+					.executeAs(EXECUTION_NAME);
+			
+			Stream<Stream<String>> result = resultFuture.get();
+			result.forEach(resultPartitionStream -> {
+				resultPartitionStream.forEach(System.out::println);
+			});
+			result.close();
+		}
+	}
+	
+	public static class ThreeWayUnionWithTransformationInBetween{
+		public static void main(String... args) throws Exception {
+			BaseTezTests.clean(EXECUTION_NAME);
+			
+			DStream<String> one = DStream.ofType(String.class, "one");
+			DStream<String> two = DStream.ofType(String.class, "two");
+			DStream<String> three = DStream.ofType(String.class, "three");
+			
+			Future<Stream<Stream<String>>> resultFuture = one
+					.union(two)
+					.map(line -> line.toUpperCase())
+					.union(three)
+					.executeAs(EXECUTION_NAME);
+			
+			Stream<Stream<String>> result = resultFuture.get();
+			
+			result.forEach(resultPartitionStream -> {
+				resultPartitionStream.forEach(System.out::println);
+			});
+			result.close();
+		}
+	}
+	
+	public static class ThreeWayUnionWithShuffleInBetween{
+		public static void main(String... args) throws Exception {
+			BaseTezTests.clean(EXECUTION_NAME);
+			
+			DStream<String> one = DStream.ofType(String.class, "one");
+			DStream<String> two = DStream.ofType(String.class, "two");
+			DStream<String> three = DStream.ofType(String.class, "three");
+			
+			Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = one
+					.union(two)
+					.map(line -> line.toUpperCase())
+					.reduceGroups(s -> s, s -> 1, Integer::sum)
+					.union(three.map(s -> KVUtils.kv(s.toUpperCase(), 1)))
+					.executeAs(EXECUTION_NAME);
+			
+			Stream<Stream<Entry<String, Integer>>> result = resultFuture.get();
+			
+			result.forEach(resultPartitionStream -> {
+				resultPartitionStream.forEach(System.out::println);
+			});
+			result.close();
+		}
 	}
 
 }

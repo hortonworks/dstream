@@ -13,6 +13,7 @@ public class TezUnionFunction extends StreamUnionFunction{
 		super(unionAll);
 	}
 	
+	@SuppressWarnings("unchecked")
 	protected Stream<?> preProcessStream(Stream<?> stream) {
 		return KeyValuesNormalizer.normalize((Stream<Entry<Object, Iterator<Object>>>) stream);
 	}
