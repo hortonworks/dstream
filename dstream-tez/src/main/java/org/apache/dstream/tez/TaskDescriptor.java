@@ -30,7 +30,7 @@ public class TaskDescriptor {
 	
 	private Function<Stream<?>, Stream<?>> function;
 
-	private PartitionerFunction<? super Object> partitioner;
+	private PartitionerFunction<Object> partitioner;
 	
 	private int parallelism = 1;
 
@@ -72,30 +72,10 @@ public class TaskDescriptor {
 		if (parallelizmProp != null){
 			this.parallelism = Integer.parseInt(parallelizmProp);
 		}
-		PartitionerFunction partitioner = partitionerProp != null 
+		PartitionerFunction<Object> partitioner = partitionerProp != null 
 				? ReflectionUtils.newInstance(partitionerProp, new Class[]{int.class}, new Object[]{this.parallelism}) 
 						: new HashPartitionerFunction<>(this.parallelism);
 		this.setPartitioner(partitioner);
-//			if (partitionerProp != null){
-//				if (partitionerProp != null){
-//					this.setPartitioner(ReflectionUtils.newInstance(partitionerProp, 
-//							new Class[]{int.class}, new Object[]{this.parallelism}));
-//				}
-//				else {
-//					this.setPartitioner(new HashPartitionerFunction<>(this.parallelism));
-//				}
-//			}
-//			else if (partitionerProp != null){
-//				
-//			}
-//			if (pDirective.length == 1){
-//				previousTaskDescriptor.setPartitioner(new HashPartitionerFunction<>(this.parallelism));
-//			}
-//			else {
-//				previousTaskDescriptor.setPartitioner(ReflectionUtils.newInstance(pDirective[1], 
-//						new Class[]{int.class}, new Object[]{this.parallelism}));
-//			}
-//		}
 	}
 	
 	/**
@@ -177,7 +157,7 @@ public class TaskDescriptor {
 	 * 
 	 * @return
 	 */
-	public PartitionerFunction<? super Object> getPartitioner() {
+	public PartitionerFunction<Object> getPartitioner() {
 		return this.partitioner;
 	}
 	
@@ -241,7 +221,7 @@ public class TaskDescriptor {
 	/**
 	 * 
 	 */
-	void setPartitioner(PartitionerFunction<? super Object> partitioner) {
+	void setPartitioner(PartitionerFunction<Object> partitioner) {
 		this.partitioner = partitioner;
 	}
 	

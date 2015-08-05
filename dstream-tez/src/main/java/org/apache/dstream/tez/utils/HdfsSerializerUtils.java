@@ -2,7 +2,6 @@ package org.apache.dstream.tez.utils;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
 
 import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.SerializationUtils;
