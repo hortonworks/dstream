@@ -12,8 +12,16 @@ import org.apache.dstream.utils.Tuples.Tuple2;
 
 public class JoinSamples {
 	
+	public static void main(String[] args) throws Exception {
+		//run all
+		TwoWayCrossJoin.main();
+		TwoWayJoinWithPredicate.main();
+		TwoWayJoinWithPredicateAndReduce.main();
+		TwoWayJoinWithPredicateAndGroup.main();
+	}
+	
 	public static class TwoWayCrossJoin {
-		public static void main(String[] args) throws Exception {
+		public static void main(String... args) throws Exception {
 			BaseTezTests.clean("Join");
 			
 			DStream<String> hash = DStream.ofType(String.class, "hash");
@@ -32,7 +40,7 @@ public class JoinSamples {
 	}
 	
 	public static class TwoWayJoinWithPredicate {
-		public static void main(String[] args) throws Exception {
+		public static void main(String... args) throws Exception {
 			BaseTezTests.clean("Join");
 			
 			DStream<String> hash = DStream.ofType(String.class, "hash");
@@ -51,7 +59,7 @@ public class JoinSamples {
 	}
 	
 	public static class TwoWayJoinWithPredicateAndReduce {
-		public static void main(String[] args) throws Exception {
+		public static void main(String... args) throws Exception {
 			BaseTezTests.clean("Join");
 			
 			DStream<String> hash = DStream.ofType(String.class, "hash");
@@ -71,7 +79,7 @@ public class JoinSamples {
 	}
 	
 	public static class TwoWayJoinWithPredicateAndGroup {
-		public static void main(String[] args) throws Exception {
+		public static void main(String... args) throws Exception {
 			BaseTezTests.clean("Join");
 			
 			DStream<String> hash = DStream.ofType(String.class, "hash");

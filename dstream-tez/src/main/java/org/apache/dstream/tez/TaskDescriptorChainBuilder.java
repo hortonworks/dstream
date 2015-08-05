@@ -5,19 +5,18 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 import org.aopalliance.intercept.MethodInvocation;
 import org.apache.dstream.DistributableConstants;
 import org.apache.dstream.StreamInvocationChain;
+import org.apache.dstream.function.BiFunctionToBinaryOperatorAdapter;
 import org.apache.dstream.function.DStreamToStreamAdapterFunction;
 import org.apache.dstream.function.KeyValueMappingFunction;
 import org.apache.dstream.function.SerializableFunctionConverters.BiFunction;
 import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.function.SerializableFunctionConverters.Function;
 import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
-import org.apache.dstream.function.BiFunctionToBinaryOperatorAdapter;
 import org.apache.dstream.function.StreamJoinerFunction;
 import org.apache.dstream.function.ValuesGroupingFunction;
 import org.apache.dstream.function.ValuesReducingFunction;
@@ -143,31 +142,21 @@ class TaskDescriptorChainBuilder {
 		else if (operationName.equals("aggregateGroups")) {
 			TaskDescriptor currentTask = this.getCurrentTask();
 			String propertyName = DistributableConstants.MAP_SIDE_COMBINE + currentTask.getId() + "_" + currentTask.getName();
+			
+			BinaryOperator aggregator = arguments.length == 3 
+					? new BiFunctionToBinaryOperatorAdapter((BiFunction)arguments[2]) 
+						: Aggregators::aggregateFlatten;
+					
 			boolean mapSideCombine = Boolean.parseBoolean((String)this.executionConfig.getOrDefault(propertyName, "false"));
-			BinaryOperator aggregator = mapSideCombine ? (BinaryOperator)arguments[2] : null;
+			
 			Function keyMapper = (Function)arguments[0];
 			Function valueMapper = (Function)arguments[1];
-			currentTask.andThen(new KeyValueMappingFunction(keyMapper, valueMapper, aggregator));
+			currentTask.andThen(new KeyValueMappingFunction(keyMapper, valueMapper, mapSideCombine ? aggregator : null));
 			
 			// common
 			TaskDescriptor newTaskDescriptor = this.createTaskDescriptor(operationName);
 			this.taskChain.add(newTaskDescriptor);
-			
-			BiFunction bf = (BiFunction)arguments[2];
-			BiFunctionToBinaryOperatorAdapter biAdapter = new BiFunctionToBinaryOperatorAdapter(bf);
-			newTaskDescriptor.compose(new ValuesGroupingFunction(biAdapter));	
-		}
-		else if (operationName.equals("group")) {
-			TaskDescriptor currentTask = this.getCurrentTask();
-			BinaryOperator aggregator = null;
-			Function keyMapper = (Function)arguments[0];
-			Function valueMapper = arguments.length == 2 ? (Function)arguments[1] : s -> s;
-			currentTask.andThen(new KeyValueMappingFunction(keyMapper, valueMapper, aggregator));
-			
-			// common	
-			TaskDescriptor newTaskDescriptor = this.createTaskDescriptor(operationName);
-			this.taskChain.add(newTaskDescriptor);
-			newTaskDescriptor.compose(new ValuesGroupingFunction(Aggregators::aggregateFlatten));
+			newTaskDescriptor.compose(new ValuesGroupingFunction(aggregator));	
 		}
 		else if (operationName.equals("join")) {
 			StreamInvocationChain dependentInvocationChain = (StreamInvocationChain) arguments[0];
@@ -180,7 +169,7 @@ class TaskDescriptorChainBuilder {
 				// create pass through mapper (Tez limitation)
 				currentTask.andThen(s -> s);
 			}
-			//if (this.isTransformation(currentTask.getOperationName())){
+
 			Function f = currentTask.getFunction();
 			if (!(f instanceof TezJoiner)){
 				TaskDescriptor td = this.createTaskDescriptor(operationName);
@@ -253,8 +242,7 @@ class TaskDescriptorChainBuilder {
 	 * 
 	 */
 	private boolean isShuffle(String operationName){
-		return operationName.equals("group") ||
-			   operationName.equals("reduceGroups") ||
+		return operationName.equals("reduceGroups") ||
 			   operationName.equals("aggregateGroups") ||
 			   operationName.equals("join") ||
 			   operationName.equals("partition");

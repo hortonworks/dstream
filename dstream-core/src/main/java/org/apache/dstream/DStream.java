@@ -1,5 +1,6 @@
 package org.apache.dstream;
 
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
@@ -11,6 +12,7 @@ import org.apache.dstream.function.SerializableFunctionConverters.BiFunction;
 import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.function.SerializableFunctionConverters.Function;
 import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
+import org.apache.dstream.support.Aggregators;
 import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.Tuples.Tuple2;
 import org.apache.dstream.utils.Tuples.Tuple3;
@@ -105,6 +107,20 @@ public interface DStream<A> extends DistributableExecutable<A>{
 			Function<? super A, ? extends V> valueMapper,
 			BinaryOperator<V> valueReducer);
 
+	
+	/**
+	 * Similar to {@link #reduceGroups(Function, Function, BinaryOperator)} will group values 
+	 * mapped from individual elements (via valueMapper) based on the 
+	 * provided <i>groupClassifier</i>, aggregating grouped values using {@link Aggregators#aggregateFlatten(Object, Object)}
+	 * method returning a new Key/Value stream with aggregated values<br>
+	 * 
+	 * @param groupClassifier
+	 * @param valueMapper
+	 * @return
+	 */
+	<K,V> DStream<Entry<K,List<V>>> aggregateGroups(Function<? super A, ? extends K> groupClassifier, 
+			Function<? super A, ? extends V> valueMapper);
+	
 	/**
 	 * Similar to {@link #reduceGroups(Function, Function, BinaryOperator)} will group values 
 	 * mapped from individual elements (via valueMapper) based on the 
@@ -119,22 +135,6 @@ public interface DStream<A> extends DistributableExecutable<A>{
 	<K,V,F> DStream<Entry<K,F>> aggregateGroups(Function<? super A, ? extends K> groupClassifier, 
 			Function<? super A, ? extends V> valueMapper,
 			BiFunction<?,V,F> valueAggregator);
-	
-	/**
-	 * Will group values mapped from individual elements into an {@link Iterable} based on the provided 
-	 * <i>groupClassifier</i> returning a new stream of grouped elements mapped to a 'groupClassifier' 
-	 * as Key/Value pairs.<br>
-	 * <br>
-	 * This is an <i>intermediate</i> operation.
-	 * <br>
-	 * This is a <i>shuffle</i> operation.
-	 * 
-	 * @param groupClassifier
-	 * @param valueMapper
-	 * @return
-	 */
-	<K,V> DStream<Entry<K,Iterable<V>>> group(Function<? super A, ? extends K> groupClassifier, 
-			Function<? super A, ? extends V> valueMapper);
 	
 	/**
 	 * Returns an equivalent stream while hinting the underlying system to partition data represented by this stream.
@@ -238,6 +238,19 @@ public interface DStream<A> extends DistributableExecutable<A>{
 		/**
 		 * Similar to {@link #reduceGroups(Function, Function, BinaryOperator)} will group values 
 		 * mapped from individual elements (via valueMapper) based on the 
+		 * provided <i>groupClassifier</i>, aggregating grouped values using {@link Aggregators#aggregateFlatten(Object, Object)}
+		 * method returning a new Key/Value stream with aggregated values<br>
+		 * 
+		 * @param groupClassifier
+		 * @param valueMapper
+		 * @return
+		 */
+		<K,V> DStream<Entry<K,List<V>>> aggregateGroups(Function<? super Tuple2<A, B>, ? extends K> groupClassifier, 
+				Function<? super Tuple2<A, B>, ? extends V> valueMapper);
+		
+		/**
+		 * Similar to {@link #reduceGroups(Function, Function, BinaryOperator)} will group values 
+		 * mapped from individual elements (via valueMapper) based on the 
 		 * provided <i>groupClassifier</i>, aggregating grouped values using provided <i>valueAggregator</i> 
 		 * returning a new Key/Value stream with aggregated values<br>
 		 * 
@@ -248,23 +261,7 @@ public interface DStream<A> extends DistributableExecutable<A>{
 		 */
 		<K,V,F> DStream<Entry<K,F>> aggregateGroups(Function<? super Tuple2<A, B>, ? extends K> groupClassifier, 
 				Function<? super Tuple2<A, B>, ? extends V> valueMapper,
-				BiFunction<?,V,F> valueAggregator);
-		
-		/**
-		 * Will group values mapped from individual elements into an {@link Iterable} based on the provided 
-		 * <i>groupClassifier</i> returning a new stream of grouped elements mapped to a 'groupClassifier' 
-		 * as Key/Value pairs.<br>
-		 * <br>
-		 * This is an <i>intermediate</i> operation.
-		 * <br>
-		 * This is a <i>shuffle</i> operation.
-		 * 
-		 * @param groupClassifier
-		 * @param valueMapper
-		 * @return
-		 */
-		<K,V> DStream<Entry<K,Iterable<V>>> group(Function<? super A, ? extends K> groupClassifier, 
-				Function<? super A, ? extends V> valueMapper);
+				BiFunction<Object,V,F> valueAggregator);
 		
 		/**
 		 * Returns an equivalent stream while hinting the underlying system to partition data represented by this stream.
@@ -367,6 +364,19 @@ public interface DStream<A> extends DistributableExecutable<A>{
 		/**
 		 * Similar to {@link #reduceGroups(Function, Function, BinaryOperator)} will group values 
 		 * mapped from individual elements (via valueMapper) based on the 
+		 * provided <i>groupClassifier</i>, aggregating grouped values using {@link Aggregators#aggregateFlatten(Object, Object)}
+		 * method returning a new Key/Value stream with aggregated values<br>
+		 * 
+		 * @param groupClassifier
+		 * @param valueMapper
+		 * @return
+		 */
+		<K,V> DStream<Entry<K,List<V>>> aggregateGroups(Function<? super Tuple3<A,B,C>, ? extends K> groupClassifier, 
+				Function<? super Tuple3<A,B,C>, ? extends V> valueMapper);
+		
+		/**
+		 * Similar to {@link #reduceGroups(Function, Function, BinaryOperator)} will group values 
+		 * mapped from individual elements (via valueMapper) based on the 
 		 * provided <i>groupClassifier</i>, aggregating grouped values using provided <i>valueAggregator</i> 
 		 * returning a new Key/Value stream with aggregated values<br>
 		 * 
@@ -378,22 +388,6 @@ public interface DStream<A> extends DistributableExecutable<A>{
 		<K,V,F> DStream<Entry<K,F>> aggregateGroups(Function<? super Tuple3<A,B,C>, ? extends K> groupClassifier, 
 				Function<? super Tuple3<A,B,C>, ? extends V> valueMapper,
 				BiFunction<?,V,F> valueAggregator);
-		
-		/**
-		 * Will group values mapped from individual elements into an {@link Iterable} based on the provided 
-		 * <i>groupClassifier</i> returning a new stream of grouped elements mapped to a 'groupClassifier' 
-		 * as Key/Value pairs.<br>
-		 * <br>
-		 * This is an <i>intermediate</i> operation.
-		 * <br>
-		 * This is a <i>shuffle</i> operation.
-		 * 
-		 * @param groupClassifier
-		 * @param valueMapper
-		 * @return
-		 */
-		<K,V> DStream<Entry<K,Iterable<V>>> group(Function<? super A, ? extends K> groupClassifier, 
-				Function<? super A, ? extends V> valueMapper);
 		
 		/**
 		 * Returns an equivalent stream while hinting the underlying system to partition data represented by this stream.
@@ -496,6 +490,19 @@ public interface DStream<A> extends DistributableExecutable<A>{
 		/**
 		 * Similar to {@link #reduceGroups(Function, Function, BinaryOperator)} will group values 
 		 * mapped from individual elements (via valueMapper) based on the 
+		 * provided <i>groupClassifier</i>, aggregating grouped values using {@link Aggregators#aggregateFlatten(Object, Object)}
+		 * method returning a new Key/Value stream with aggregated values<br>
+		 * 
+		 * @param groupClassifier
+		 * @param valueMapper
+		 * @return
+		 */
+		<K,V> DStream<Entry<K,List<V>>> aggregateGroups(Function<? super Tuple4<A,B,C,D>, ? extends K> groupClassifier, 
+				Function<? super Tuple4<A,B,C,D>, ? extends V> valueMapper);
+		
+		/**
+		 * Similar to {@link #reduceGroups(Function, Function, BinaryOperator)} will group values 
+		 * mapped from individual elements (via valueMapper) based on the 
 		 * provided <i>groupClassifier</i>, aggregating grouped values using provided <i>valueAggregator</i> 
 		 * returning a new Key/Value stream with aggregated values<br>
 		 * 
@@ -508,21 +515,6 @@ public interface DStream<A> extends DistributableExecutable<A>{
 				Function<? super Tuple4<A,B,C,D>, ? extends V> valueMapper,
 				BiFunction<?,V,F> valueAggregator);
 		
-		/**
-		 * Will group values mapped from individual elements into an {@link Iterable} based on the provided 
-		 * <i>groupClassifier</i> returning a new stream of grouped elements mapped to a 'groupClassifier' 
-		 * as Key/Value pairs.<br>
-		 * <br>
-		 * This is an <i>intermediate</i> operation.
-		 * <br>
-		 * This is a <i>shuffle</i> operation.
-		 * 
-		 * @param groupClassifier
-		 * @param valueMapper
-		 * @return
-		 */
-		<K,V> DStream<Entry<K,Iterable<V>>> group(Function<? super A, ? extends K> groupClassifier, 
-				Function<? super A, ? extends V> valueMapper);
 		
 		/**
 		 * Returns an equivalent stream while hinting the underlying system to partition data represented by this stream.
@@ -625,6 +617,19 @@ public interface DStream<A> extends DistributableExecutable<A>{
 		/**
 		 * Similar to {@link #reduceGroups(Function, Function, BinaryOperator)} will group values 
 		 * mapped from individual elements (via valueMapper) based on the 
+		 * provided <i>groupClassifier</i>, aggregating grouped values using {@link Aggregators#aggregateFlatten(Object, Object)}
+		 * method returning a new Key/Value stream with aggregated values<br>
+		 * 
+		 * @param groupClassifier
+		 * @param valueMapper
+		 * @return
+		 */
+		<K,V> DStream<Entry<K,List<V>>> aggregateGroups(Function<? super Tuple5<A,B,C,D,E>, ? extends K> groupClassifier, 
+				Function<? super Tuple5<A,B,C,D,E>, ? extends V> valueMapper);
+		
+		/**
+		 * Similar to {@link #reduceGroups(Function, Function, BinaryOperator)} will group values 
+		 * mapped from individual elements (via valueMapper) based on the 
 		 * provided <i>groupClassifier</i>, aggregating grouped values using provided <i>valueAggregator</i> 
 		 * returning a new Key/Value stream with aggregated values<br>
 		 * 
@@ -636,22 +641,6 @@ public interface DStream<A> extends DistributableExecutable<A>{
 		<K,V,F> DStream<Entry<K,D>> aggregateGroups(Function<? super Tuple5<A,B,C,D,E>, ? extends K> groupClassifier, 
 				Function<? super Tuple5<A,B,C,D,E>, ? extends V> valueMapper,
 				BiFunction<?,V,F> valueAggregator);
-		
-		/**
-		 * Will group values mapped from individual elements into an {@link Iterable} based on the provided 
-		 * <i>groupClassifier</i> returning a new stream of grouped elements mapped to a 'groupClassifier' 
-		 * as Key/Value pairs.<br>
-		 * <br>
-		 * This is an <i>intermediate</i> operation.
-		 * <br>
-		 * This is a <i>shuffle</i> operation.
-		 * 
-		 * @param groupClassifier
-		 * @param valueMapper
-		 * @return
-		 */
-		<K,V> DStream<Entry<K,Iterable<V>>> group(Function<? super A, ? extends K> groupClassifier, 
-				Function<? super A, ? extends V> valueMapper);
 		
 		/**
 		 * Returns an equivalent stream while hinting the underlying system to partition data represented by this stream.
