@@ -79,6 +79,7 @@ final class DStreamOperationsCollector<T,R> implements MethodInterceptor {
 			result = this.invocationChain;
 		}
 		else if (operationName.equals("executeAs")){
+			StreamNameMonitor.reset();
 			String executionName = (String) invocation.getArguments()[0];
 			Assert.notEmpty(executionName, "'executionName' must not be null or empty");
 	
