@@ -52,14 +52,14 @@ public abstract class Aggregators {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> List<T> aggregateFlatten(Object v1, T v2) {
-		List<T> aggregatedValues = toList(v1);
+		List<Object> aggregatedValues = toList(v1);
 		if (v2 instanceof List){
 			aggregatedValues.addAll((List<T>)v2);
 		}
 		else {
 			aggregatedValues.add(v2);
 		}
-		return aggregatedValues;
+		return (List<T>) aggregatedValues;
 	}
 	
 	/**

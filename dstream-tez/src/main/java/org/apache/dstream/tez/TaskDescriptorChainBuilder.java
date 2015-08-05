@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 import org.aopalliance.intercept.MethodInvocation;
@@ -13,9 +13,11 @@ import org.apache.dstream.DistributableConstants;
 import org.apache.dstream.StreamInvocationChain;
 import org.apache.dstream.function.DStreamToStreamAdapterFunction;
 import org.apache.dstream.function.KeyValueMappingFunction;
+import org.apache.dstream.function.SerializableFunctionConverters.BiFunction;
 import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.function.SerializableFunctionConverters.Function;
 import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
+import org.apache.dstream.function.BiFunctionToBinaryOperatorAdapter;
 import org.apache.dstream.function.StreamJoinerFunction;
 import org.apache.dstream.function.ValuesGroupingFunction;
 import org.apache.dstream.function.ValuesReducingFunction;
@@ -111,10 +113,6 @@ class TaskDescriptorChainBuilder {
 			joiner.addTransformationOrPredicate(function);
 		}
 		else {
-			// this ensures that KeyValuesReader is translated lazily in KV pairs
-//			if (currentTask.getId() > 0 && currentTask.getFunction() == null){
-//				currentTask.andThen(stream -> KeyValuesNormalizer.normalize((Stream<Entry<Object, Iterator<Object>>>) stream));
-//			}
 			currentTask.andThen(function);
 		}	
 	}
@@ -154,8 +152,10 @@ class TaskDescriptorChainBuilder {
 			// common
 			TaskDescriptor newTaskDescriptor = this.createTaskDescriptor(operationName);
 			this.taskChain.add(newTaskDescriptor);
-			BinaryOperator bo = (BinaryOperator)arguments[2];
-			newTaskDescriptor.compose(new ValuesGroupingFunction(bo));	
+			
+			BiFunction bf = (BiFunction)arguments[2];
+			BiFunctionToBinaryOperatorAdapter biAdapter = new BiFunctionToBinaryOperatorAdapter(bf);
+			newTaskDescriptor.compose(new ValuesGroupingFunction(biAdapter));	
 		}
 		else if (operationName.equals("group")) {
 			TaskDescriptor currentTask = this.getCurrentTask();
