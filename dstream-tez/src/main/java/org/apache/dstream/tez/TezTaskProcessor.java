@@ -68,7 +68,8 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 					+ this.dagName + "; Vertex " + this.vertexName);
 		}
 		
-		List<?> listOfStreams = this.getOrderedInputs().stream()
+		List<LogicalInput> sortedInputs = this.getOrderedInputs();
+		List<?> listOfStreams = sortedInputs.stream()
 			.map(input -> {
 				try {
 					return input.getReader();

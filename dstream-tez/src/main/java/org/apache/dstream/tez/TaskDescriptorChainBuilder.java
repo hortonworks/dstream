@@ -112,6 +112,10 @@ class TaskDescriptorChainBuilder {
 			StreamJoinerFunction joiner = (StreamJoinerFunction) f;
 			joiner.addTransformationOrPredicate(function);
 		}
+		else if (f instanceof StreamUnionFunction){
+			StreamUnionFunction unionizer = (StreamUnionFunction) f;
+			unionizer.addTransformationOrPredicate(function);
+		}
 		else {
 			currentTask.andThen(function);
 		}	

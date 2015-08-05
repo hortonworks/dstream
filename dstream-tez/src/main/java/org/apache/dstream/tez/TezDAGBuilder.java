@@ -76,7 +76,7 @@ public class TezDAGBuilder {
 	 * @param parallelizm
 	 */
 	public void addTask(TaskDescriptor taskDescriptor) {	
-		String vertexName = taskDescriptor.getName();
+		String vertexName = taskDescriptor.getName() + "_" + taskDescriptor.getOperationName();
 		if (taskDescriptor.getId() == 0){
 			this.determineInputFormatClass(taskDescriptor);
 		}
@@ -101,7 +101,7 @@ public class TezDAGBuilder {
 				if (sources[0] instanceof URI){
 					URI[] uris = Arrays.copyOf(sources, sources.length, URI[].class);
 					DataSourceDescriptor dataSource = this.buildDataSourceDescriptorFromUris(taskDescriptor.getInputFormatClass(), uris);
-					vertex.addDataSource(this.inputOrderCounter++ + ":" + vertexName + "_INPUT", dataSource);
+					vertex.addDataSource(this.inputOrderCounter++ + ":" + vertexName + "_INPUT_" + Arrays.asList(uris), dataSource);
 				} 
 				else {
 					throw new IllegalArgumentException("Unsupported sources: " + Arrays.asList(taskDescriptor.getSourceSupplier()));
@@ -116,11 +116,6 @@ public class TezDAGBuilder {
 		}
 		
 		if (taskDescriptor.getDependentTasksChains() != null){
-//			List<Tuple2<Predicate<?>, List<TaskDescriptor>>> dependentTasksChains = taskDescriptor.getDependentTasksChains();
-//			dependentTasksChains.forEach(dependentTasks -> {
-//				dependentTasks._2().forEach(this::addTask);
-//				this.addEdge(vertex);
-//			});
 			List<List<TaskDescriptor>> dependentTasksChains = taskDescriptor.getDependentTasksChains();
 			dependentTasksChains.forEach(dependentTasks -> {
 				dependentTasks.forEach(this::addTask);

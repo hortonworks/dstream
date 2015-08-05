@@ -21,6 +21,8 @@ public interface DStream<A> extends BaseDStream<A, DStream<A>> {
 	 *                       {@link DistributableConstants#SOURCE} in configuration 
 	 *                       to point to source of this stream 
 	 *                       (e.g., dstream.source.foo=file://foo.txt where 'foo' is the <i>sourceIdentifier</i>)
+	 *                       <b>Must be unique!</b>. If you simply want to point to the same source, map it 
+	 *                       through configuration (e.g., dstream.source.foo=file://foo.txt, dstream.source.bar=file://foo.txt)
 	 * @return the new {@link DStream} of type T
 	 * 
 	 * @param <T> the type of pipeline elements
