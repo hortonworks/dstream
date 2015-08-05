@@ -5,13 +5,12 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.apache.dstream.utils.Assert;
-import org.apache.dstream.utils.PropertiesHelper;
 import org.apache.dstream.utils.JvmUtils;
+import org.apache.dstream.utils.PropertiesHelper;
 import org.apache.dstream.utils.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +31,9 @@ final class DStreamOperationsCollector<T,R> implements MethodInterceptor {
 	
 	private final Set<String> streamOperationNames;
 	
+	
+	private final Class<?> currentStreamType;
+	
 	/**
 	 * 
 	 * @param sourceElementType
@@ -48,11 +50,12 @@ final class DStreamOperationsCollector<T,R> implements MethodInterceptor {
 	 * 
 	 */
 	private DStreamOperationsCollector(Class<?> sourceElementType, String sourceIdentifier, Class<R> streamType) {
+		this.currentStreamType = streamType;
 		this.targetStream =  this.generateStreamProxy(streamType);
 		this.invocationChain = new StreamInvocationChain(sourceElementType, sourceIdentifier, streamType);
-		this.streamOperationNames = Stream.of(DStream.class.getDeclaredMethods()).map(s -> s.getName()).collect(Collectors.toSet());
-		this.streamOperationNames.add("on");
-		this.streamOperationNames.add("where");
+		this.streamOperationNames = ReflectionUtils.findAllVisibleMethodOnInterface(streamType);
+		this.streamOperationNames.remove("ofType");
+		this.streamOperationNames.remove("executeAs");
 	}
 	
 	/**
@@ -116,14 +119,14 @@ final class DStreamOperationsCollector<T,R> implements MethodInterceptor {
 	private R cloneTargetDistributable(MethodInvocation invocation){
 		String operationName = invocation.getMethod().getName();
 
-		if (operationName.equals("join")){
+		if (operationName.equals("join") || operationName.startsWith("union")){
 			ProxyInternalsAccessor<StreamInvocationChain> invocationChainAccessor = (ProxyInternalsAccessor<StreamInvocationChain>) invocation.getArguments()[0];
 			StreamInvocationChain dependentInvocationChain = invocationChainAccessor.get();
 			((ReflectiveMethodInvocation)invocation).setArguments(new Object[]{dependentInvocationChain});
 		}
-			
+
 		DStreamOperationsCollector clonedDistributable = new DStreamOperationsCollector(this.invocationChain.getSourceElementType(), this.invocationChain.getSourceIdentifier(), 
-				invocation.getMethod().getReturnType());	
+				invocation.getMethod().getReturnType().isInterface() ? invocation.getMethod().getReturnType() : this.currentStreamType);	
 		clonedDistributable.invocationChain.addAllInvocations(this.invocationChain.getInvocations());	
 		clonedDistributable.invocationChain.addInvocation(invocation);
 		return (R) clonedDistributable.targetStream;
