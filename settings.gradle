@@ -1,5 +1,0 @@
-rootProject.name = 'dstream'
-
-include 'dstream-core'
-include 'dstream-tez'
-
