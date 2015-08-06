@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 import junit.framework.Assert;
 
 import org.apache.dstream.DStream;
-import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
+import org.apache.dstream.function.SerializableFunctionConverters.SerPredicate;
 import org.apache.dstream.utils.Tuples.Tuple2;
 import org.apache.dstream.utils.Tuples.Tuple3;
 import org.junit.After;
@@ -66,7 +66,7 @@ public class StreamAPIJoinTests extends BaseTezTests {
 	    }).reduceGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b)
 	      .map(entry -> entry.toString());
 		
-		Predicate<Tuple2<String, String>> p =  tuple2 -> Integer.parseInt(tuple2._1().substring(0, tuple2._1().indexOf(" ")).trim()) == Integer.parseInt(tuple2._2().split("=")[0].trim());
+		SerPredicate<Tuple2<String, String>> p =  tuple2 -> Integer.parseInt(tuple2._1().substring(0, tuple2._1().indexOf(" ")).trim()) == Integer.parseInt(tuple2._2().split("=")[0].trim());
 
 		Future<Stream<Stream<Tuple2<String, String>>>> resultFuture = hash.join(probe).on(p).executeAs(this.applicationName);
 		
@@ -95,7 +95,7 @@ public class StreamAPIJoinTests extends BaseTezTests {
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
 	    }).reduceGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
 
-		Predicate<Tuple2<String, Entry<Integer, String>>> p =  tuple2 -> Integer.parseInt(tuple2._1().substring(0, tuple2._1().indexOf(" ")).trim()) == tuple2._2().getKey();
+		SerPredicate<Tuple2<String, Entry<Integer, String>>> p =  tuple2 -> Integer.parseInt(tuple2._1().substring(0, tuple2._1().indexOf(" ")).trim()) == tuple2._2().getKey();
 		
 		Future<Stream<Stream<Tuple2<String, Entry<Integer, String>>>>> resultFuture = hash.join(probe).on(p).executeAs(this.applicationName);
 		
@@ -126,7 +126,7 @@ public class StreamAPIJoinTests extends BaseTezTests {
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
 	    }).reduceGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
 
-		Predicate<Tuple2<Entry<Integer, String>, Entry<Integer, String>>> p =  tuple2 -> tuple2._1().getKey() == tuple2._2().getKey();
+		SerPredicate<Tuple2<Entry<Integer, String>, Entry<Integer, String>>> p =  tuple2 -> tuple2._1().getKey() == tuple2._2().getKey();
 		
 		Future<Stream<Stream<Tuple2<Entry<Integer, String>, Entry<Integer, String>>>>> resultFuture = hash.join(probe).on(p).executeAs(this.applicationName);
 		

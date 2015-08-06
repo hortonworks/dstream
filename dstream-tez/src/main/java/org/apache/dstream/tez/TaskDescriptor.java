@@ -8,8 +8,8 @@ import java.util.stream.Stream;
 import org.apache.dstream.DistributableConstants;
 import org.apache.dstream.function.HashPartitionerFunction;
 import org.apache.dstream.function.PartitionerFunction;
-import org.apache.dstream.function.SerializableFunctionConverters.Function;
-import org.apache.dstream.function.SerializableFunctionConverters.Supplier;
+import org.apache.dstream.function.SerializableFunctionConverters.SerFunction;
+import org.apache.dstream.function.SerializableFunctionConverters.SerSupplier;
 import org.apache.dstream.utils.ReflectionUtils;
 import org.apache.tez.dag.api.Vertex;
 
@@ -28,7 +28,7 @@ public class TaskDescriptor {
 	private final String operationName;
 	
 	
-	private Function<Stream<?>, Stream<?>> function;
+	private SerFunction<Stream<?>, Stream<?>> function;
 
 	private PartitionerFunction<Object> partitioner;
 	
@@ -36,7 +36,7 @@ public class TaskDescriptor {
 
 	private Class<?> sourceElementType;
 	
-	private Supplier<?> sourceSupplier;
+	private SerSupplier<?> sourceSupplier;
 	
 	private List<List<TaskDescriptor>> dependentTasksChains;
 
@@ -141,7 +141,7 @@ public class TaskDescriptor {
 	 * 
 	 * @return
 	 */
-	public Supplier<?> getSourceSupplier() {
+	public SerSupplier<?> getSourceSupplier() {
 		return this.sourceSupplier;
 	}
 	
@@ -165,7 +165,7 @@ public class TaskDescriptor {
 	 * 
 	 * @return
 	 */
-	public Function<Stream<?>, Stream<?>> getFunction() {
+	public SerFunction<Stream<?>, Stream<?>> getFunction() {
 		return this.function;
 	}
 	
@@ -173,7 +173,7 @@ public class TaskDescriptor {
 	 * 
 	 * @param cFunction
 	 */
-	public void compose(Function<Stream<?>, Stream<?>> cFunction) {
+	public void compose(SerFunction<Stream<?>, Stream<?>> cFunction) {
 		if (this.function != null){
 			this.function = this.function.compose(cFunction);
 		}
@@ -186,7 +186,7 @@ public class TaskDescriptor {
 	 * 
 	 * @param aFunction
 	 */
-	public void andThen(Function<Stream<?>, Stream<?>> aFunction) {
+	public void andThen(SerFunction<Stream<?>, Stream<?>> aFunction) {
 		if (this.function != null){
 			this.function = aFunction.compose(this.function);
 		}
@@ -228,7 +228,7 @@ public class TaskDescriptor {
 	/**
 	 * 
 	 */
-	void setSourceSupplier(Supplier<?> sourceSupplier) {
+	void setSourceSupplier(SerSupplier<?> sourceSupplier) {
 		this.sourceSupplier = sourceSupplier;
 	}
 }

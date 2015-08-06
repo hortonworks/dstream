@@ -4,7 +4,7 @@ import org.apache.dstream.DStream.DStream2.DStream2WithPredicate;
 import org.apache.dstream.DStream.DStream3.DStream3WithPredicate;
 import org.apache.dstream.DStream.DStream4.DStream4WithPredicate;
 import org.apache.dstream.DStream.DStream5.DStream5WithPredicate;
-import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
+import org.apache.dstream.function.SerializableFunctionConverters.SerPredicate;
 import org.apache.dstream.utils.Assert;
 
 public interface DStream<A> extends BaseDStream<A, DStream<A>> {
@@ -27,7 +27,6 @@ public interface DStream<A> extends BaseDStream<A, DStream<A>> {
 	public static <A> DStream<A> ofType(Class<A> sourceElementType, String sourceIdentifier) {	
 		Assert.notNull(sourceElementType, "'sourceElementType' must not be null");
 		Assert.notEmpty(sourceIdentifier, "'sourceIdentifier' must not be null or empty");
-		StreamNameMonitor.add(sourceIdentifier);
 		return DStreamOperationsCollector.as(sourceElementType, sourceIdentifier, DStream.class);
 	}
 	
@@ -48,7 +47,7 @@ public interface DStream<A> extends BaseDStream<A, DStream<A>> {
 	interface DStream2<A,B> extends BaseDStream<org.apache.dstream.utils.Tuples.Tuple2<A,B>, DStream2<A,B>> {
 		
 		public interface DStream2WithPredicate<A,B> extends DStream2<A,B>{
-			DStream2<A,B> on(Predicate<? super org.apache.dstream.utils.Tuples.Tuple2<A,B>> predicate);	
+			DStream2<A,B> on(SerPredicate<? super org.apache.dstream.utils.Tuples.Tuple2<A,B>> predicate);	
 		}
 
 		<_A> DStream3WithPredicate<A,B,_A> join(DStream<_A> ds);
@@ -65,7 +64,7 @@ public interface DStream<A> extends BaseDStream<A, DStream<A>> {
 	interface DStream3<A,B,C> extends BaseDStream<org.apache.dstream.utils.Tuples.Tuple3<A,B,C>, DStream3<A,B,C>> {
 		
 		interface DStream3WithPredicate<A,B,C> extends DStream3<A,B,C>{
-			DStream3<A,B,C> on(Predicate<? super org.apache.dstream.utils.Tuples.Tuple3<A,B,C>> predicate);	
+			DStream3<A,B,C> on(SerPredicate<? super org.apache.dstream.utils.Tuples.Tuple3<A,B,C>> predicate);	
 		}
 
 		<_A> DStream4WithPredicate<A,B,C,_A> join(DStream<_A> ds);
@@ -82,7 +81,7 @@ public interface DStream<A> extends BaseDStream<A, DStream<A>> {
 	interface DStream4<A,B,C,D> extends BaseDStream<org.apache.dstream.utils.Tuples.Tuple4<A,B,C,D>, DStream4<A,B,C,D>> {
 	
 		interface DStream4WithPredicate<A,B,C,D> extends DStream4<A,B,C,D>{
-			DStream4<A,B,C,D> on(Predicate<? super org.apache.dstream.utils.Tuples.Tuple4<A,B,C,D>> predicate);	
+			DStream4<A,B,C,D> on(SerPredicate<? super org.apache.dstream.utils.Tuples.Tuple4<A,B,C,D>> predicate);	
 		}
 
 		<_A> DStream5WithPredicate<A,B,C,D,_A> join(DStream<_A> ds);
@@ -99,7 +98,7 @@ public interface DStream<A> extends BaseDStream<A, DStream<A>> {
 	interface DStream5<A,B,C,D,E> extends BaseDStream<org.apache.dstream.utils.Tuples.Tuple5<A,B,C,D,E>, DStream5<A,B,C,D,E>> {
 		
 		interface DStream5WithPredicate<A,B,C,D,E> extends DStream5<A,B,C,D,E>{
-			DStream5<A,B,C,D,E> on(Predicate<? super org.apache.dstream.utils.Tuples.Tuple5<A,B,C,D,E>> predicate);	
+			DStream5<A,B,C,D,E> on(SerPredicate<? super org.apache.dstream.utils.Tuples.Tuple5<A,B,C,D,E>> predicate);	
 		}
 	}
 }

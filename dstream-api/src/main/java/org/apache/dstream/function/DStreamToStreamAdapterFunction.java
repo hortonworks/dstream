@@ -5,17 +5,17 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.function.SerializableFunctionConverters.Function;
+import org.apache.dstream.function.SerializableFunctionConverters.SerFunction;
 import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.ReflectionUtils;
 
 /**
- * An implementation of {@link Function} which will translate Stream-like
+ * An implementation of {@link SerFunction} which will translate Stream-like
  * invocations on the {@link DistributableStream} to {@link Stream} operations.
  * It will be created and collected by the {@link ExecutionSpecBuilder} for each operation 
  * on the {@link DistributableStream}.
  */
-public class DStreamToStreamAdapterFunction implements Function<Stream<?>, Stream<?>>{
+public class DStreamToStreamAdapterFunction implements SerFunction<Stream<?>, Stream<?>>{
 	private static final long serialVersionUID = 6836233233261184905L;
 	
 	private static final Map<String, Method> supportedOperations = buildSupportedOperations(Stream.of("flatMap", "filter", "map"));

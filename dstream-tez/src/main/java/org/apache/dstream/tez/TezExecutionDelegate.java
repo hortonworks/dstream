@@ -9,7 +9,8 @@ import java.util.stream.Stream;
 
 import org.apache.dstream.AbstractStreamExecutionDelegate;
 import org.apache.dstream.DistributableConstants;
-import org.apache.dstream.StreamInvocationChain;
+import org.apache.dstream.StreamExecutionDelegate;
+import org.apache.dstream.StreamInvocationPipeline;
 import org.apache.dstream.tez.utils.HadoopUtils;
 import org.apache.dstream.tez.utils.SequenceFileOutputStreamsBuilder;
 import org.apache.hadoop.conf.Configuration;
@@ -20,7 +21,11 @@ import org.apache.tez.dag.api.TezConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TezExecutionDelegate extends AbstractStreamExecutionDelegate<StreamInvocationChain> {
+/**
+ * Implementation of {@link StreamExecutionDelegate} for Apache Tez.
+ *
+ */
+public class TezExecutionDelegate extends AbstractStreamExecutionDelegate<StreamInvocationPipeline> {
 	
 	private final Logger logger = LoggerFactory.getLogger(TezExecutionDelegate.class);
 	
@@ -60,9 +65,9 @@ public class TezExecutionDelegate extends AbstractStreamExecutionDelegate<Stream
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	protected Stream<Stream<?>> doExecute(String executionName, Properties executionConfig, StreamInvocationChain... invocationChains) {		
-		for (StreamInvocationChain invocationChain : invocationChains) {
-			TaskDescriptorChainBuilder builder = new TaskDescriptorChainBuilder(executionName, invocationChain, executionConfig);
+	protected Stream<Stream<?>> doExecute(String executionName, Properties executionConfig, StreamInvocationPipeline... invocationPipelines) {		
+		for (StreamInvocationPipeline invocationPipeline : invocationPipelines) {
+			TaskDescriptorChainBuilder builder = new TaskDescriptorChainBuilder(executionName, invocationPipeline, executionConfig);
 			List<TaskDescriptor> taskDescriptors = builder.build();
 			this.taskChains.add(taskDescriptors);
 		}

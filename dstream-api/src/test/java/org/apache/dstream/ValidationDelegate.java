@@ -16,10 +16,10 @@ import java.util.stream.Stream;
  * Implementation of {@link StreamExecutionDelegate}.
  * Primary use is testing.
  */
-public class ValidationDelegate implements StreamExecutionDelegate<StreamInvocationChain> {
+public class ValidationDelegate implements StreamExecutionDelegate<StreamInvocationPipeline> {
 	
 	@Override
-	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, StreamInvocationChain... invocationChains) {
+	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, StreamInvocationPipeline... invocationChains) {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 		CountDownLatch latch = new CountDownLatch(1);
 		Future<Stream<Stream<?>>> result = executor.submit(new Callable<Stream<Stream<?>>>() {

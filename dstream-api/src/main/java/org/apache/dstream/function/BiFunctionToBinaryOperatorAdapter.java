@@ -1,16 +1,16 @@
 package org.apache.dstream.function;
 
-import org.apache.dstream.function.SerializableFunctionConverters.BiFunction;
-import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
+import org.apache.dstream.function.SerializableFunctionConverters.SerBiFunction;
+import org.apache.dstream.function.SerializableFunctionConverters.SerBinaryOperator;
 
 @SuppressWarnings("rawtypes")
-public class BiFunctionToBinaryOperatorAdapter implements BinaryOperator<Object> {
+public class BiFunctionToBinaryOperatorAdapter implements SerBinaryOperator<Object> {
 	private static final long serialVersionUID = -2240524865400623818L;
 	
 	
-	private final BiFunction bo;
+	private final SerBiFunction bo;
 	
-	public BiFunctionToBinaryOperatorAdapter(BiFunction bo){
+	public BiFunctionToBinaryOperatorAdapter(SerBiFunction bo){
 		this.bo = bo;
 	}
 

@@ -7,14 +7,14 @@ import java.util.Map.Entry;
 import java.util.stream.Stream;
 
 import org.apache.dstream.function.PartitionerFunction;
-import org.apache.dstream.function.SerializableFunctionConverters.Function;
+import org.apache.dstream.function.SerializableFunctionConverters.SerFunction;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
 final class Task implements Serializable {
 	private static final long serialVersionUID = -1800812882885490376L;
 
-	private final Function<Stream<?>, Stream<?>> function;
+	private final SerFunction<Stream<?>, Stream<?>> function;
 
 	private final PartitionerFunction<Object> partitioner;
 	
@@ -29,7 +29,7 @@ final class Task implements Serializable {
 	 * @param partitioner
 	 * @param function
 	 */
-	private Task(int id, String name, PartitionerFunction<Object> partitioner, Function<Stream<?>, Stream<?>> function){
+	private Task(int id, String name, PartitionerFunction<Object> partitioner, SerFunction<Stream<?>, Stream<?>> function){
 		this.id = id;
 		this.name = name;
 		this.partitioner = partitioner;
@@ -42,7 +42,7 @@ final class Task implements Serializable {
 	 * @return
 	 */
 	static Task build(TaskDescriptor taskDescriptor) {
-		Function<Stream<?>, Stream<?>> taskFunction = adjustTaskFunction(taskDescriptor);
+		SerFunction<Stream<?>, Stream<?>> taskFunction = adjustTaskFunction(taskDescriptor);
 		Task task = new Task(taskDescriptor.getId(), taskDescriptor.getName(), taskDescriptor.getPartitioner(), taskFunction);
 		return task;
 	}
@@ -51,7 +51,7 @@ final class Task implements Serializable {
 	 * 
 	 * @return
 	 */
-	public Function<Stream<?>, Stream<?>> getFunction() {
+	public SerFunction<Stream<?>, Stream<?>> getFunction() {
 		return function;
 	}
 
@@ -84,8 +84,8 @@ final class Task implements Serializable {
 	 * For example, reading Text file Tez will produce KV pairs (offset, line), while user is only expected the value.
 	 */
 	@SuppressWarnings("rawtypes")
-	private static Function<Stream<?>, Stream<?>> adjustTaskFunction(TaskDescriptor taskDescriptor){
-		Function<Stream<?>, Stream<?>> modifiedFunction = taskDescriptor.getFunction();
+	private static SerFunction<Stream<?>, Stream<?>> adjustTaskFunction(TaskDescriptor taskDescriptor){
+		SerFunction<Stream<?>, Stream<?>> modifiedFunction = taskDescriptor.getFunction();
 		if (taskDescriptor.getId() == 0 && !Entry.class.isAssignableFrom(taskDescriptor.getSourceElementType())){	
 			if (Writable.class.isAssignableFrom(taskDescriptor.getSourceElementType())){
 				modifiedFunction = modifiedFunction.compose(stream -> stream.map(s -> ((Entry)s).getValue()));

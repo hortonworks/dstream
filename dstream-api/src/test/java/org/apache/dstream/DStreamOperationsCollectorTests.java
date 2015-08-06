@@ -51,7 +51,7 @@ public class DStreamOperationsCollectorTests {
 		List<Object> partitionStreams = resultStreams.get(0).collect(Collectors.toList());
 		assertEquals(1, partitionStreams.size());
 
-		StreamInvocationChain chainAccessor = (StreamInvocationChain) partitionStreams.get(0);
+		StreamInvocationPipeline chainAccessor = (StreamInvocationPipeline) partitionStreams.get(0);
 		assertEquals(0, chainAccessor.getInvocations().size());
 		result.close();
 	}
@@ -71,7 +71,7 @@ public class DStreamOperationsCollectorTests {
 		List<Object> partitionStreamsA = resultStreamsA.get(0).collect(Collectors.toList());
 		assertEquals(1, partitionStreamsA.size());
 
-		StreamInvocationChain contextA = (StreamInvocationChain) partitionStreamsA.get(0);
+		StreamInvocationPipeline contextA = (StreamInvocationPipeline) partitionStreamsA.get(0);
 		assertEquals(0, contextA.getInvocations().size());
 		
 		resultA.close();
@@ -84,7 +84,7 @@ public class DStreamOperationsCollectorTests {
 		List<Object> partitionStreamsB = resultStreamsB.get(0).collect(Collectors.toList());
 		assertEquals(1, partitionStreamsB.size());
 
-		StreamInvocationChain contextB = (StreamInvocationChain) partitionStreamsB.get(0);
+		StreamInvocationPipeline contextB = (StreamInvocationPipeline) partitionStreamsB.get(0);
 		assertEquals(3, contextB.getInvocations().size());
 		
 		resultB.close();
@@ -105,7 +105,7 @@ public class DStreamOperationsCollectorTests {
 		List<Object> partitionStreams = resultStreams.get(0).collect(Collectors.toList());
 		assertEquals(1, partitionStreams.size());
 
-		StreamInvocationChain context = (StreamInvocationChain) partitionStreams.get(0);
+		StreamInvocationPipeline context = (StreamInvocationPipeline) partitionStreams.get(0);
 		assertEquals(2, context.getInvocations().size());
 		assertEquals("join", context.getInvocations().get(0).getMethod().getName());
 		
@@ -127,7 +127,7 @@ public class DStreamOperationsCollectorTests {
 		List<Object> partitionStreams = resultStreams.get(0).collect(Collectors.toList());
 		assertEquals(1, partitionStreams.size());
 		
-		StreamInvocationChain context = (StreamInvocationChain) partitionStreams.get(0);
+		StreamInvocationPipeline context = (StreamInvocationPipeline) partitionStreams.get(0);
 		assertEquals(3, context.getInvocations().size());
 		assertEquals("join", context.getInvocations().get(0).getMethod().getName());
 		assertEquals("on", context.getInvocations().get(1).getMethod().getName());
@@ -149,7 +149,7 @@ public class DStreamOperationsCollectorTests {
 		List<Object> partitionStreams = resultStreams.get(0).collect(Collectors.toList());
 		assertEquals(1, partitionStreams.size());
 
-		StreamInvocationChain context = (StreamInvocationChain) partitionStreams.get(0);
+		StreamInvocationPipeline context = (StreamInvocationPipeline) partitionStreams.get(0);
 		assertEquals(1, context.getInvocations().size());
 		assertEquals("partition", context.getInvocations().get(0).getMethod().getName());
 	}
@@ -170,7 +170,7 @@ public class DStreamOperationsCollectorTests {
 		List<Object> partitionStreams = resultStreams.get(0).collect(Collectors.toList());
 		assertEquals(1, partitionStreams.size());
 		
-		StreamInvocationChain context = (StreamInvocationChain) partitionStreams.get(0);
+		StreamInvocationPipeline context = (StreamInvocationPipeline) partitionStreams.get(0);
 		assertEquals(5, context.getInvocations().size());
 		assertEquals("join", context.getInvocations().get(0).getMethod().getName());
 		assertEquals("on", context.getInvocations().get(1).getMethod().getName());

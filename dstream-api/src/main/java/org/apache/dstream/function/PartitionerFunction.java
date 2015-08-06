@@ -1,14 +1,14 @@
 package org.apache.dstream.function;
 
-import org.apache.dstream.function.SerializableFunctionConverters.Function;
+import org.apache.dstream.function.SerializableFunctionConverters.SerFunction;
 import org.apache.dstream.utils.Assert;
 
-public abstract class PartitionerFunction<T> implements Function<T, Integer> {
+public abstract class PartitionerFunction<T> implements SerFunction<T, Integer> {
 	private static final long serialVersionUID = -250807397502312547L;
 	
 	private int partitionSize;
 	
-	private Function<? super T, ?> classifier;
+	private SerFunction<? super T, ?> classifier;
 
 	public PartitionerFunction(int partitionSize) {
 		Assert.isTrue(partitionSize > 0, "'partitionSize' must be > 0");
@@ -24,11 +24,11 @@ public abstract class PartitionerFunction<T> implements Function<T, Integer> {
 		this.partitionSize = partitionSize;
 	}
 	
-	public void setClassifier(Function<? super T, ?> classifier) {
+	public void setClassifier(SerFunction<? super T, ?> classifier) {
 		this.classifier = classifier;
 	}
 	
-	public Function<? super T, ?> getClassifier() {
+	public SerFunction<? super T, ?> getClassifier() {
 		return this.classifier;
 	}
 	

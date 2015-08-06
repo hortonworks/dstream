@@ -1,25 +1,22 @@
 package org.apache.dstream.tez;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.apache.dstream.APIInvocation;
 import org.apache.dstream.DistributableConstants;
-import org.apache.dstream.StreamInvocationChain;
+import org.apache.dstream.StreamInvocationPipeline;
 import org.apache.dstream.function.BiFunctionToBinaryOperatorAdapter;
 import org.apache.dstream.function.DStreamToStreamAdapterFunction;
 import org.apache.dstream.function.KeyValueMappingFunction;
-import org.apache.dstream.function.SerializableFunctionConverters.BiFunction;
-import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
-import org.apache.dstream.function.SerializableFunctionConverters.Function;
-import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
+import org.apache.dstream.function.SerializableFunctionConverters.SerBiFunction;
+import org.apache.dstream.function.SerializableFunctionConverters.SerBinaryOperator;
+import org.apache.dstream.function.SerializableFunctionConverters.SerFunction;
+import org.apache.dstream.function.SerializableFunctionConverters.SerPredicate;
 import org.apache.dstream.function.StreamJoinerFunction;
 import org.apache.dstream.function.StreamUnionFunction;
 import org.apache.dstream.function.ValuesGroupingFunction;
@@ -35,7 +32,7 @@ class TaskDescriptorChainBuilder {
 	
 	private final List<TaskDescriptor> taskChain;
 	
-	private final StreamInvocationChain invocationChain;
+	private final StreamInvocationPipeline invocationChain;
 	
 	private final String executionName;
 	
@@ -49,7 +46,7 @@ class TaskDescriptorChainBuilder {
 	 * @param invocationChain
 	 * @param executionConfig
 	 */
-	public TaskDescriptorChainBuilder(String executionName, StreamInvocationChain invocationChain, Properties executionConfig){
+	public TaskDescriptorChainBuilder(String executionName, StreamInvocationPipeline invocationChain, Properties executionConfig){
 		this.taskChain = new ArrayList<>();
 		this.invocationChain = invocationChain;
 		this.executionName = executionName;
@@ -66,7 +63,7 @@ class TaskDescriptorChainBuilder {
 		if (invocations.size() == 0){
 			TaskDescriptor td = this.createTaskDescriptor("map");
 			this.decorateTask(td);
-			Function<Stream<?>, Stream<?>> function = new DStreamToStreamAdapterFunction("map", (Function<?,?>)s -> s);
+			SerFunction<Stream<?>, Stream<?>> function = new DStreamToStreamAdapterFunction("map", (SerFunction<?,?>)s -> s);
 			td.andThen(function);
 			this.taskChain.add(td);
 		}
@@ -83,9 +80,9 @@ class TaskDescriptorChainBuilder {
 				}
 				else {
 					if (operationName.equals("on")){
-						Function<?,?> f = this.getCurrentTask().getFunction();
+						SerFunction<?,?> f = this.getCurrentTask().getFunction();
 						StreamJoinerFunction joiner = (StreamJoinerFunction) f;
-						Predicate<?> p = (Predicate<?>) invocation.getArguments()[0];
+						SerPredicate<?> p = (SerPredicate<?>) invocation.getArguments()[0];
 						joiner.addTransformationOrPredicate("filter", p);
 					}
 					else {
@@ -105,12 +102,12 @@ class TaskDescriptorChainBuilder {
 	 */
 	@SuppressWarnings("unchecked")
 	private void processIntermediateOperation(APIInvocation invocation){	
-		Function<Stream<?>, Stream<?>> function = invocation.getMethod().getName().equals("compute") 
-				? (Function<Stream<?>, Stream<?>>) invocation.getArguments()[0]
+		SerFunction<Stream<?>, Stream<?>> function = invocation.getMethod().getName().equals("compute") 
+				? (SerFunction<Stream<?>, Stream<?>>) invocation.getArguments()[0]
 						: new DStreamToStreamAdapterFunction(invocation.getMethod().getName(), invocation.getArguments()[0]);
 				
 		TaskDescriptor currentTask = this.getCurrentTask();	
-		Function<?,?> f = currentTask.getFunction();
+		SerFunction<?,?> f = currentTask.getFunction();
 		if (f instanceof StreamJoinerFunction){
 			StreamJoinerFunction joiner = (StreamJoinerFunction) f;
 			joiner.addTransformationOrPredicate(function);
@@ -136,29 +133,29 @@ class TaskDescriptorChainBuilder {
 			TaskDescriptor currentTask = this.getCurrentTask();
 			String propertyName = DistributableConstants.MAP_SIDE_COMBINE + currentTask.getId() + "_" + currentTask.getName();
 			boolean mapSideCombine = Boolean.parseBoolean((String)this.executionConfig.getOrDefault(propertyName, "false"));
-			BinaryOperator aggregator = mapSideCombine ? (BinaryOperator)arguments[2] : null;
-			Function keyMapper = (Function)arguments[0];
-			Function valueMapper = (Function)arguments[1];
+			SerBinaryOperator aggregator = mapSideCombine ? (SerBinaryOperator)arguments[2] : null;
+			SerFunction keyMapper = (SerFunction)arguments[0];
+			SerFunction valueMapper = (SerFunction)arguments[1];
 			
 			currentTask.andThen(new KeyValueMappingFunction(keyMapper, valueMapper, aggregator));
 			
 			// common
 			TaskDescriptor newTaskDescriptor = this.createTaskDescriptor(operationName);
 			this.taskChain.add(newTaskDescriptor);
-			newTaskDescriptor.compose(new ValuesReducingFunction((BinaryOperator)arguments[2]));
+			newTaskDescriptor.compose(new ValuesReducingFunction((SerBinaryOperator)arguments[2]));
 		}
 		else if (operationName.equals("aggregateGroups")) {
 			TaskDescriptor currentTask = this.getCurrentTask();
 			String propertyName = DistributableConstants.MAP_SIDE_COMBINE + currentTask.getId() + "_" + currentTask.getName();
 			
-			BinaryOperator aggregator = arguments.length == 3 
-					? new BiFunctionToBinaryOperatorAdapter((BiFunction)arguments[2]) 
+			SerBinaryOperator aggregator = arguments.length == 3 
+					? new BiFunctionToBinaryOperatorAdapter((SerBiFunction)arguments[2]) 
 						: Aggregators::aggregateFlatten;
 					
 			boolean mapSideCombine = Boolean.parseBoolean((String)this.executionConfig.getOrDefault(propertyName, "false"));
 			
-			Function keyMapper = (Function)arguments[0];
-			Function valueMapper = (Function)arguments[1];
+			SerFunction keyMapper = (SerFunction)arguments[0];
+			SerFunction valueMapper = (SerFunction)arguments[1];
 			currentTask.andThen(new KeyValueMappingFunction(keyMapper, valueMapper, mapSideCombine ? aggregator : null));
 			
 			// common
@@ -167,7 +164,7 @@ class TaskDescriptorChainBuilder {
 			newTaskDescriptor.compose(new ValuesGroupingFunction(aggregator));	
 		}
 		else if (operationName.equals("join")) {
-			StreamInvocationChain dependentInvocationChain = (StreamInvocationChain) arguments[0];
+			StreamInvocationPipeline dependentInvocationChain = (StreamInvocationPipeline) arguments[0];
 			TaskDescriptorChainBuilder dependentBuilder = new TaskDescriptorChainBuilder(this.executionName, dependentInvocationChain, this.executionConfig);
 			List<TaskDescriptor> dependentTasks = dependentBuilder.build();
 
@@ -178,24 +175,24 @@ class TaskDescriptorChainBuilder {
 				currentTask.andThen(s -> s);
 			}
 
-			Function f = currentTask.getFunction();
+			SerFunction f = currentTask.getFunction();
 			if (!(f instanceof TezJoiner)){
 				TaskDescriptor td = this.createTaskDescriptor(operationName);
 				this.taskChain.add(td);
-				Function function = new TezJoiner();
+				SerFunction function = new TezJoiner();
 				td.andThen(function);
 				currentTask = this.getCurrentTask();
 			}
 			
 			currentTask.addDependentTasksChain(dependentTasks);
 			
-			Function function = currentTask.getFunction();
+			SerFunction function = currentTask.getFunction();
 			StreamJoinerFunction joiner = (StreamJoinerFunction) function;
 			int joiningStreamsSize = dependentInvocationChain.getStreamType().getTypeParameters().length;
 			joiner.addCheckPoint(joiningStreamsSize);
 		}
 		else if (operationName.startsWith("union")) {
-			StreamInvocationChain dependentInvocationChain = (StreamInvocationChain) arguments[0];
+			StreamInvocationPipeline dependentInvocationChain = (StreamInvocationPipeline) arguments[0];
 			TaskDescriptorChainBuilder dependentBuilder = new TaskDescriptorChainBuilder(this.executionName, dependentInvocationChain, this.executionConfig);
 			List<TaskDescriptor> dependentTasks = dependentBuilder.build();
 
@@ -206,18 +203,18 @@ class TaskDescriptorChainBuilder {
 				currentTask.andThen(s -> s);
 			}
 
-			Function f = currentTask.getFunction();
+			SerFunction f = currentTask.getFunction();
 			if (!(f instanceof TezUnionFunction)){
 				TaskDescriptor td = this.createTaskDescriptor(operationName);
 				this.taskChain.add(td);
-				Function function = new TezUnionFunction(operationName.equals("union"));
+				SerFunction function = new TezUnionFunction(operationName.equals("union"));
 				td.andThen(function);
 				currentTask = this.getCurrentTask();
 			}
 			
 			currentTask.addDependentTasksChain(dependentTasks);
 			
-			Function function = currentTask.getFunction();
+			SerFunction function = currentTask.getFunction();
 			StreamUnionFunction joiner = (StreamUnionFunction) function;
 			int joiningStreamsSize = dependentInvocationChain.getStreamType().getTypeParameters().length;
 			joiner.addCheckPoint(joiningStreamsSize);
@@ -227,7 +224,7 @@ class TaskDescriptorChainBuilder {
 			this.getCurrentTask().andThen(stream -> KeyValuesNormalizer.normalize((Stream<Entry<Object, Iterator<Object>>>) stream));
 			if (invocation.getArguments().length == 1){
 				TaskDescriptor previousTaskDescriptor = this.getCurrentTask().getPreviousTaskDescriptor();
-				previousTaskDescriptor.getPartitioner().setClassifier((Function<? super Object, ?>) invocation.getArguments()[0]);
+				previousTaskDescriptor.getPartitioner().setClassifier((SerFunction<? super Object, ?>) invocation.getArguments()[0]);
 			}
 		}
 		else {

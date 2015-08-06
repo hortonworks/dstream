@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 import junit.framework.Assert;
 
 import org.apache.dstream.DStream;
-import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
+import org.apache.dstream.function.SerializableFunctionConverters.SerBinaryOperator;
 import org.apache.dstream.utils.KVUtils;
 import org.junit.After;
 import org.junit.Test;
@@ -131,7 +131,7 @@ public class MapSideCombineTests extends BaseTezTests {
 		assertEquals(1, this.bo.getTotalInvocations());
 	}
 	
-	private static class TestCombiner implements BinaryOperator<Integer> {
+	private static class TestCombiner implements SerBinaryOperator<Integer> {
 		private static final long serialVersionUID = 8366519776101104961L;
 		private final long pointer;
 		

@@ -11,7 +11,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.function.SerializableFunctionConverters.Function;
+import org.apache.dstream.function.SerializableFunctionConverters.SerFunction;
 import org.apache.dstream.tez.io.KeyWritable;
 import org.apache.dstream.tez.io.TezDelegatingPartitioner;
 import org.apache.dstream.tez.io.ValueWritable;
@@ -87,7 +87,7 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 			functionArgument = listOfStreams.stream();
 		}
 		
-		Function<Object, Stream<?>> streamProcessingFunction = this.extractTaskFunction();
+		SerFunction<Object, Stream<?>> streamProcessingFunction = this.extractTaskFunction();
 		KeyValueWriter kvWriter = (KeyValueWriter) this.getOutputs().values().iterator().next().getWriter();
 		WritingConsumer consume = new WritingConsumer(kvWriter);
 		try {
@@ -136,7 +136,7 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 	 * 
 	 */
 	@SuppressWarnings("rawtypes")
-	private Function extractTaskFunction() throws Exception {
+	private SerFunction extractTaskFunction() throws Exception {
 		ObjectRegistry registry = this.getContext().getObjectRegistry();
 		
 		Task task = (Task) registry.get(this.vertexName);

@@ -7,8 +7,8 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
-import org.apache.dstream.function.SerializableFunctionConverters.Function;
+import org.apache.dstream.function.SerializableFunctionConverters.SerBinaryOperator;
+import org.apache.dstream.function.SerializableFunctionConverters.SerFunction;
 import org.apache.dstream.utils.KVUtils;
 
 /**
@@ -19,18 +19,18 @@ import org.apache.dstream.utils.KVUtils;
  * @param <K> key type
  * @param <V> value type
  */
-public class ValuesReducingFunction<K,V,T> implements Function<Stream<Entry<K,Iterator<V>>>,Stream<T>> {
+public class ValuesReducingFunction<K,V,T> implements SerFunction<Stream<Entry<K,Iterator<V>>>,Stream<T>> {
 	private static final long serialVersionUID = 1133920289646508908L;
 	
 	@SuppressWarnings("rawtypes")
-	private final BinaryOperator combiner;
+	private final SerBinaryOperator combiner;
 	
 	/**
 	 * 
 	 * @param aggregationOperator
 	 */
 	@SuppressWarnings("rawtypes")
-	public ValuesReducingFunction(BinaryOperator combiner) {
+	public ValuesReducingFunction(SerBinaryOperator combiner) {
 		this.combiner = combiner;
 	}
 

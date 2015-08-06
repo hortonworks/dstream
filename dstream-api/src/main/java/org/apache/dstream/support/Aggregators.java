@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 
-import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
+import org.apache.dstream.function.SerializableFunctionConverters.SerBinaryOperator;
 import org.apache.dstream.utils.Assert;
 
 /**
@@ -21,7 +21,7 @@ public abstract class Aggregators {
 	 * If right value (v2) is of type {@link List} the {@link IllegalArgumentException} is thrown, otherwise the 
 	 * value is added to the accumulating list<br>
 	 * <br>
-	 * It could be used as {@link BiFunction} or {@link BinaryOperator} (e.g., Aggregators::aggregateSingleObjects)
+	 * It could be used as {@link BiFunction} or {@link SerBinaryOperator} (e.g., Aggregators::aggregateSingleObjects)
 	 * 
 	 * @param v1 first value which on each subsequent invocation is of type {@link List}
 	 * @param v2 second value which must not be of type {@link List}
@@ -44,7 +44,7 @@ public abstract class Aggregators {
 	 * the accumulating list<br>
 	 * See {@link #aggregateSingleObjects(Object, Object)} when collected values are never {@link List}.<br>
 	 * <br>
-	 * It could be used as {@link BiFunction} or {@link BinaryOperator} (e.g., Aggregators::aggregateFlatten)
+	 * It could be used as {@link BiFunction} or {@link SerBinaryOperator} (e.g., Aggregators::aggregateFlatten)
 	 * 
 	 * @param v1 first value which on each subsequent invocation is of type {@link List}
 	 * @param v2 second value which could be single value or of type {@link List}
