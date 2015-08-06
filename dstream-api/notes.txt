@@ -1,0 +1,18 @@
+1. Two independent efforts that may or may not be orthogonal
+1. What/how user provided function plays to Callcite
+2. Sequential operations in Stream are tied to the type system. This means that each function relies on this type sustem , this means that runtime type should be the same
+
+
+1. Job group is not enough if you look at pipeline assembly as DAG where everything that's been added to it is part of the execution spec and *must* be executed.
+2. Aggregation (min/max/average:
+
+	Select average(foo), max(bar) form employee where . . . group by . .  .
+	
+	In the above 
+	
+	DistributableStream.ofType(User[].class, "user");
+	
+	
+!!!!!!!!!!!!!!!
+With Serializable function check what happenes if user provides a java.util.Function that was composed with other java.util.Function. Just to see if passed to
+the DStream it is still serializable. In other words there are two andThen and compose methods now
