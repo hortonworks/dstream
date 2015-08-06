@@ -6,13 +6,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.function.SerializableFunctionConverters.Function;
-import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
-import org.apache.dstream.instrument.TupleEnhancer;
-import org.apache.dstream.support.Tuple7;
+import org.apache.dstream.function.SerializableFunctionConverters.SerFunction;
+import org.apache.dstream.function.SerializableFunctionConverters.SerPredicate;
 import org.apache.dstream.utils.Tuples.Tuple2;
 import org.apache.dstream.utils.Tuples.Tuple4;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class StreamJoinerFunctionTests {
@@ -22,10 +19,10 @@ public class StreamJoinerFunctionTests {
 	List<String> lc = Arrays.asList(new String[]{"C-foo", "C-bar", "C-baz", "C-abc"});
 	List<String> ld = Arrays.asList(new String[]{"D-foo", "D-bar", "D-baz", "D-abc"});
 	
-	@BeforeClass
-	public static void beforeClass(){
-		TupleEnhancer.enhance();
-	}
+//	@BeforeClass
+//	public static void beforeClass(){
+//		TupleEnhancer.enhance();
+//	}
 	
 	@Test(expected=IllegalStateException.class)
 	public void failWithLessThenTwoStreams(){
@@ -70,7 +67,7 @@ public class StreamJoinerFunctionTests {
 		Stream<Stream<?>> streams = Stream.of(la.stream(), lb.stream());
 		StreamJoinerFunction joiner = new StreamJoinerFunction();
 		
-		Predicate<Tuple2<String, String>> p = tuple2 -> tuple2._1().endsWith(tuple2._2().substring(1));
+		SerPredicate<Tuple2<String, String>> p = tuple2 -> tuple2._1().endsWith(tuple2._2().substring(1));
 		joiner.addCheckPoint(1);
 		joiner.addTransformationOrPredicate("filter", p);
 		Stream<?> mergedStream = joiner.apply(streams);
@@ -102,7 +99,7 @@ public class StreamJoinerFunctionTests {
 		Stream<Stream<?>> streams = Stream.of(la.stream(), lb.stream(), lc.stream(), ld.stream());
 		StreamJoinerFunction joiner = new StreamJoinerFunction();
 		
-		Predicate<Tuple4<String, String, String, String>> p = tuple4 -> 
+		SerPredicate<Tuple4<String, String, String, String>> p = tuple4 -> 
 			tuple4._1().endsWith(tuple4._2().substring(1)) &&
 			tuple4._2().endsWith(tuple4._3().substring(1)) &&
 			tuple4._3().endsWith(tuple4._4().substring(1));
@@ -124,25 +121,25 @@ public class StreamJoinerFunctionTests {
 		StreamJoinerFunction joiner = new StreamJoinerFunction();
 		
 		// First 2
-		Predicate<Tuple2<String, String>> p = tuple2 -> tuple2._1().endsWith(tuple2._2().substring(1));	
+		SerPredicate<Tuple2<String, String>> p = tuple2 -> tuple2._1().endsWith(tuple2._2().substring(1));	
 		joiner.addCheckPoint(1);
 		joiner.addTransformationOrPredicate("filter", p);
 		
-		Function<?,?> f1 = tuple2 -> tuple2.toString().toUpperCase();
+		SerFunction<?,?> f1 = tuple2 -> tuple2.toString().toUpperCase();
 		joiner.addTransformationOrPredicate("map", f1);
 		// =======
 		
 		// 3
-		Predicate<Tuple2<String, String>> p2 = tuple2 -> tuple2._2().equals("C-baz");
+		SerPredicate<Tuple2<String, String>> p2 = tuple2 -> tuple2._2().equals("C-baz");
 		joiner.addCheckPoint(1);
 		joiner.addTransformationOrPredicate("filter", p2);
 		
 		// 4
-		Predicate<Tuple4<String, String, String, String>> p3 = tuple4 -> tuple4._3().endsWith(tuple4._2().substring(1));
+		SerPredicate<Tuple4<String, String, String, String>> p3 = tuple4 -> tuple4._3().endsWith(tuple4._2().substring(1));
 		joiner.addCheckPoint(2);
 		joiner.addTransformationOrPredicate("filter", p3);
 		
-		Function<?,?> m2 = tuple3 -> tuple3.toString();
+		SerFunction<?,?> m2 = tuple3 -> tuple3.toString();
 		joiner.addTransformationOrPredicate("map", m2);
 	
 		Stream<?> mergedStream = joiner.apply(streams);
@@ -162,19 +159,19 @@ public class StreamJoinerFunctionTests {
 		// First 2
 		joiner.addCheckPoint(1);
 		
-		Function<?,?> f1 = tuple2 -> tuple2.toString().toUpperCase();
+		SerFunction<?,?> f1 = tuple2 -> tuple2.toString().toUpperCase();
 		joiner.addTransformationOrPredicate("map", f1);
 		// =======
 		
 		// 3
-		Predicate<Tuple2<String, String>> p2 = tuple2 -> tuple2._2().equals("C-baz");
+		SerPredicate<Tuple2<String, String>> p2 = tuple2 -> tuple2._2().equals("C-baz");
 		joiner.addCheckPoint(1);
 		joiner.addTransformationOrPredicate("filter", p2);
 		
 		// 4
 		joiner.addCheckPoint(2);
 		
-		Function<?,?> m2 = tuple3 -> tuple3.toString();
+		SerFunction<?,?> m2 = tuple3 -> tuple3.toString();
 		joiner.addTransformationOrPredicate("map", m2);
 	
 		Stream<?> mergedStream = joiner.apply(streams);

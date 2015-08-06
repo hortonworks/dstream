@@ -6,16 +6,16 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.function.SerializableFunctionConverters.Supplier;
+import org.apache.dstream.function.SerializableFunctionConverters.SerSupplier;
 import org.apache.dstream.utils.Assert;
 
 
 /**
- * Specialized definition of {@link Supplier} to return an array of sources of type T
+ * Specialized definition of {@link SerSupplier} to return an array of sources of type T
  *
  * @param <T>
  */
-public interface SourceSupplier<T> extends Supplier<T[]> {
+public interface SourceSupplier<T> extends SerSupplier<T[]> {
 	/**
 	 * 
 	 * @param source

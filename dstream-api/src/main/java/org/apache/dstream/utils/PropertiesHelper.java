@@ -5,39 +5,29 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
+/**
+ * Helper class to load properties from files which supports 
+ * property place-holders to System properties (e.g., propName =file:${user.dir}/src/test);
+ */
 public class PropertiesHelper {
-	
-//	/**
-//	 * 
-//	 * @param executionName
-//	 * @return
-//	 */
-//	public static Properties loadExecutionConfig(String executionName){
-//		try {
-//			return loadConfig(executionName + ".cfg");
-//		} 
-//		catch (Exception e) {
-//			String message = e.getMessage();
-//			throw new IllegalStateException(message + ". Possible reason: Configuration file for execution '" 
-//					+ executionName + "' is not provided at the root of the classpath.", e);
-//		}
-//	}
 	
 	/**
 	 * 
+	 * @param propertyFilePath
+	 * @return
 	 */
-	public static Properties loadProperties(String configName){
+	public static Properties loadProperties(String propertyFilePath){
 		Properties prop = new Properties();
 		InputStream is = null;
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();
 		try {
-			is = cl.getResourceAsStream(configName);
-			Assert.notNull(is, "Failed to obtain InputStream for " + configName);
+			is = cl.getResourceAsStream(propertyFilePath);
+			Assert.notNull(is, "Failed to obtain InputStream for " + propertyFilePath);
 			prop.load(is);
 			resolveSystemPropertyPlaceholders(prop);
 		} 
 		catch (Exception e) {
-			throw new IllegalStateException("Failed to load configuration properties: " + configName, e);
+			throw new IllegalStateException("Failed to load configuration properties: " + propertyFilePath, e);
 		} 
 		finally {
 			try {

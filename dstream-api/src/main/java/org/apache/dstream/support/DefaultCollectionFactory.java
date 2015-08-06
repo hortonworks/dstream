@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class DefaultCollectionFactory implements CollectionFactory {
+class DefaultCollectionFactory implements CollectionFactory {
 
 	@Override
 	public <T> List<T> newList() {

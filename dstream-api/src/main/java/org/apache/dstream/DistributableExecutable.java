@@ -3,8 +3,6 @@ package org.apache.dstream;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
-import org.apache.dstream.utils.TypeUtils;
-
 /**
  * Base strategy for defining execution strategies that can support Stream-like 
  * sequential and parallel aggregate operation in the distributable environment. 

@@ -7,7 +7,7 @@ import java.io.ObjectOutputStream;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
-import org.apache.dstream.function.SerializableFunctionConverters.Function;
+import org.apache.dstream.function.SerializableFunctionConverters.SerFunction;
 import org.apache.dstream.utils.KVUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -19,10 +19,10 @@ public class FunctionCompositionAndSerializationTests {
 	public void validateCompositionAndSerialization(){
 		Stream<Entry<Long, String>> sourceStream = Stream.of(KVUtils.kv(0L, "Hello"));
 		
-		Function<Stream<String>, ?> rootFunction = inStream -> inStream.map(word -> word.toUpperCase()).toArray()[0];
-		Function<Stream<Entry>, ?> entryFunction = inStream -> inStream.map(entry -> entry.getValue());
+		SerFunction<Stream<String>, ?> rootFunction = inStream -> inStream.map(word -> word.toUpperCase()).toArray()[0];
+		SerFunction<Stream<Entry>, ?> entryFunction = inStream -> inStream.map(entry -> entry.getValue());
 		
-		Function deTypedRootFunction = rootFunction;
+		SerFunction deTypedRootFunction = rootFunction;
 		
 		deTypedRootFunction = deTypedRootFunction.compose(entryFunction);
 		
@@ -37,10 +37,10 @@ public class FunctionCompositionAndSerializationTests {
 	public void validateAndThenAndSerialization(){
 		Stream<Entry<Long, String>> sourceStream = Stream.of(KVUtils.kv(0L, "Hello"));
 		
-		Function<Stream<String>, ?> rootFunction = inStream -> inStream.map(word -> word.toUpperCase()).toArray()[0];
-		Function<Stream<Entry>, ?> entryFunction = inStream -> inStream.map(entry -> entry.getValue());
+		SerFunction<Stream<String>, ?> rootFunction = inStream -> inStream.map(word -> word.toUpperCase()).toArray()[0];
+		SerFunction<Stream<Entry>, ?> entryFunction = inStream -> inStream.map(entry -> entry.getValue());
 		
-		Function deTypedRootFunction = rootFunction;
+		SerFunction deTypedRootFunction = rootFunction;
 		
 		deTypedRootFunction = entryFunction.andThen(deTypedRootFunction);
 		
@@ -51,7 +51,7 @@ public class FunctionCompositionAndSerializationTests {
 	}
 	
 	@SuppressWarnings("rawtypes")
-	private Function serializeDeserialize(Function function){
+	private SerFunction serializeDeserialize(SerFunction function){
 		try {
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutputStream oos = new ObjectOutputStream(bos);
@@ -60,7 +60,7 @@ public class FunctionCompositionAndSerializationTests {
 			byte[] arr = bos.toByteArray();
 			
 			ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(arr));
-			function = (org.apache.dstream.function.SerializableFunctionConverters.Function) ois.readObject();
+			function = (org.apache.dstream.function.SerializableFunctionConverters.SerFunction) ois.readObject();
 			return function;
 		} catch (Exception e) {
 			throw new RuntimeException(e);

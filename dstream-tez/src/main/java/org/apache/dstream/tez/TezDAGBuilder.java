@@ -8,7 +8,7 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.function.SerializableFunctionConverters.Supplier;
+import org.apache.dstream.function.SerializableFunctionConverters.SerSupplier;
 import org.apache.dstream.support.SourceSupplier;
 import org.apache.dstream.tez.io.KeyWritable;
 import org.apache.dstream.tez.io.TezDelegatingPartitioner;
@@ -93,7 +93,7 @@ public class TezDAGBuilder {
 		this.dag.addVertex(vertex);
 		
 		if (taskDescriptor.getId() == 0){	
-			Supplier<?> sourceSupplier = taskDescriptor.getSourceSupplier();
+			SerSupplier<?> sourceSupplier = taskDescriptor.getSourceSupplier();
 			
 			if (sourceSupplier instanceof SourceSupplier){
 				Object[] sources = ((SourceSupplier<?>)sourceSupplier).get();

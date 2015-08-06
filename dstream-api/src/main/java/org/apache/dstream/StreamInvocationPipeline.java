@@ -8,7 +8,7 @@ import java.util.List;
  * 
  *
  */
-public final class StreamInvocationChain {
+public final class StreamInvocationPipeline {
 
 	private final List<APIInvocation> invocations;
 
@@ -22,8 +22,9 @@ public final class StreamInvocationChain {
 	 * 
 	 * @param sourceElementType
 	 * @param sourceIdentifier
+	 * @param streamType
 	 */
-	protected StreamInvocationChain(Class<?> sourceElementType, String sourceIdentifier, Class<?> streamType){
+	protected StreamInvocationPipeline(Class<?> sourceElementType, String sourceIdentifier, Class<?> streamType){
 		this.sourceElementType = sourceElementType;
 		this.sourceIdentifier = sourceIdentifier;
 		this.invocations = new ArrayList<>();

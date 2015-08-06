@@ -11,7 +11,7 @@ import java.util.stream.Stream;
 import junit.framework.Assert;
 
 import org.apache.dstream.function.KeyValueMappingFunction;
-import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
+import org.apache.dstream.function.SerializableFunctionConverters.SerBinaryOperator;
 import org.apache.dstream.support.Aggregators;
 import org.apache.dstream.utils.KVUtils;
 import org.junit.Test;
@@ -38,7 +38,7 @@ public class KeyValueMappingFunctionTests {
 	@Test
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void validateKVMapperWithValuesGrouper(){	
-		KeyValueMappingFunction<String, String, Object> kvFunc = new KeyValueMappingFunction<String, String, Object>(s -> s, s -> 1, (BinaryOperator)Aggregators::aggregateFlatten);
+		KeyValueMappingFunction<String, String, Object> kvFunc = new KeyValueMappingFunction<String, String, Object>(s -> s, s -> 1, (SerBinaryOperator)Aggregators::aggregateFlatten);
 		List<Entry<String, Object>> result = kvFunc.apply(Stream.of("hello", "bye", "hello")).collect(Collectors.toList());
 		Assert.assertEquals(2, result.size());
 		
