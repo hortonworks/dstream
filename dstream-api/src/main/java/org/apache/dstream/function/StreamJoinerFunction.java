@@ -12,16 +12,12 @@ import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
 import org.apache.dstream.support.CollectionFactory;
 import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.Tuples.Tuple;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 public class StreamJoinerFunction implements Function<Stream<Stream<?>>, Stream<?>> {
 	private static final long serialVersionUID = -3615487628958776468L;
-	
-	private final Logger logger = LoggerFactory.getLogger(StreamJoinerFunction.class);
 	
 	private CollectionFactory collectionFactory;
 	
@@ -99,11 +95,9 @@ public class StreamJoinerFunction implements Function<Stream<Stream<?>>, Stream<
 			if (this.collectionFactory == null){
 				throw new IllegalStateException("Failed to find '" + CollectionFactory.class.getName() + "' provider.");
 			}
-			else {
-				if (logger.isInfoEnabled()){
-					logger.info("Loaded CollectionFactory: " + this.collectionFactory.getClass().getName());
-				}
-			}
+//			else {
+//				logger.info("Loaded CollectionFactory: " + this.collectionFactory.getClass().getName());
+//			}
 		}
 		
 		return this.join(streamsList);

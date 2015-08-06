@@ -1,5 +1,8 @@
-package org.apache.dstream.support;
+package org.apache.dstream;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -7,24 +10,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
-import org.aopalliance.intercept.MethodInterceptor;
-import org.aopalliance.intercept.MethodInvocation;
-import org.apache.dstream.StreamExecutionDelegate;
-import org.apache.dstream.StreamInvocationChain;
-import org.apache.dstream.utils.JvmUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * 
  * @param <T>
  */
 public abstract class AbstractStreamExecutionDelegate<T> implements StreamExecutionDelegate<T> {
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
-	
 	@Override
 	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, StreamInvocationChain... invocationChains) {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
+		
 		try {
 			Future<Stream<Stream<?>>> resultFuture = executor.submit(new Callable<Stream<Stream<?>>>() {
 				@SuppressWarnings("unchecked")
@@ -39,7 +33,8 @@ public abstract class AbstractStreamExecutionDelegate<T> implements StreamExecut
 											AbstractStreamExecutionDelegate.this.getCloseHandler().run();
 										} 
 										catch (Exception e) {
-											logger.error("Failed during execution of close handler", e);
+											e.printStackTrace();
+											throw new IllegalStateException("Failed during execution of close handler", e);
 										} 
 										finally {
 											executor.shutdownNow();
@@ -78,17 +73,18 @@ public abstract class AbstractStreamExecutionDelegate<T> implements StreamExecut
 	 */
 	private Stream<?> mixinWithCloseHandler(Stream<?> resultStream, Runnable closeHandler){
 		resultStream.onClose(closeHandler);
-		MethodInterceptor advice = new MethodInterceptor() {	
+		InvocationHandler ih = new InvocationHandler() {
 			@Override
-			public Object invoke(MethodInvocation invocation) throws Throwable {
-				Object result = invocation.proceed();
-				if (Stream.class.isAssignableFrom(invocation.getMethod().getReturnType())){
+			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+				Object result = method.invoke(resultStream, args);
+				if (Stream.class.isAssignableFrom(method.getReturnType())){
 					Stream<?> stream = (Stream<?>) result;
 					result = mixinWithCloseHandler(stream, closeHandler);
 				}
 				return result;
 			}
 		};
-		return JvmUtils.proxy(resultStream, advice);
+		
+		return (Stream<?>) Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class[]{Stream.class}, ih);
 	}
 }

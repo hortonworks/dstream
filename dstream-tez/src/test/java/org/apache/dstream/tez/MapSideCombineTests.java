@@ -1,7 +1,7 @@
 package org.apache.dstream.tez;
 
-import static org.junit.Assert.assertEquals;
 import static org.apache.dstream.utils.KVUtils.kv;
+import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 import java.util.Map.Entry;
@@ -14,7 +14,6 @@ import junit.framework.Assert;
 
 import org.apache.dstream.DStream;
 import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
-import org.apache.dstream.utils.JvmUtils;
 import org.apache.dstream.utils.KVUtils;
 import org.junit.After;
 import org.junit.Test;
@@ -23,7 +22,7 @@ public class MapSideCombineTests extends BaseTezTests {
 	
 	private final String applicationName = this.getClass().getSimpleName();
 	
-	private final TestCombiner bo = new TestCombiner(JvmUtils.getUnsafe().allocateMemory(4));
+	private final TestCombiner bo = new TestCombiner(getUnsafe().allocateMemory(4));
 	
 	@After
 	public void after(){
@@ -144,18 +143,18 @@ public class MapSideCombineTests extends BaseTezTests {
 		}
 		
 		public int getTotalInvocations(){
-			return JvmUtils.getUnsafe().getInt(this.pointer);
+			return getUnsafe().getInt(this.pointer);
 		}
 		
 		public void reset(){
-			JvmUtils.getUnsafe().putInt(this.pointer, 0);
+			getUnsafe().putInt(this.pointer, 0);
 		}
 
 		@Override
 		public Integer apply(Integer t, Integer u) {
 			if (!this.invoked){
-				int invocations = JvmUtils.getUnsafe().getInt(this.pointer)+1;
-				JvmUtils.getUnsafe().putInt(this.pointer, invocations);
+				int invocations = getUnsafe().getInt(this.pointer)+1;
+				getUnsafe().putInt(this.pointer, invocations);
 				this.invoked = true;
 			}
 			return t + u;

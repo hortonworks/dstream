@@ -1,10 +1,9 @@
 package org.apache.dstream.utils;
 
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-
-import org.apache.dstream.utils.TypeAwareStreams.TypeAwareObjectInputStream;
-import org.apache.dstream.utils.TypeAwareStreams.TypeAwareObjectOutputStream;
 
 /**
  * Serialization utility
@@ -13,9 +12,9 @@ import org.apache.dstream.utils.TypeAwareStreams.TypeAwareObjectOutputStream;
 public class SerializationUtils {
 
 	public static void serialize(Object value, OutputStream targetOutputStream) {
-		TypeAwareObjectOutputStream taos = null;
+		ObjectOutputStream taos = null;
 		try {
-			taos = new TypeAwareObjectOutputStream(targetOutputStream);
+			taos = new ObjectOutputStream(targetOutputStream);
 			taos.writeObject(value);
 		} catch (Exception e) {
 			throw new IllegalStateException(e);
@@ -30,9 +29,9 @@ public class SerializationUtils {
 
 	@SuppressWarnings("unchecked")
 	public static <T> T deserialize(InputStream sourceInputStream, Class<T> objectType) {
-		TypeAwareObjectInputStream tais = null;
+		ObjectInputStream tais = null;
 		try {
-			tais = new TypeAwareObjectInputStream(sourceInputStream);
+			tais = new ObjectInputStream(sourceInputStream);
 			T result = (T) tais.readObject();
 			return result;
 		} catch (Exception e) {
