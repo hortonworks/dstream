@@ -1,5 +1,8 @@
 package org.apache.dstream;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -9,20 +12,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import org.aopalliance.intercept.MethodInterceptor;
-import org.aopalliance.intercept.MethodInvocation;
-import org.apache.dstream.DStreamOperationsCollector.ProxyInternalsAccessor;
-import org.apache.dstream.utils.JvmUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 /**
  * Implementation of {@link StreamExecutionDelegate}.
  * Primary use is testing.
  */
 public class ValidationDelegate implements StreamExecutionDelegate<StreamInvocationChain> {
-	
-	private final Logger logger = LoggerFactory.getLogger(ValidationDelegate.class);
 	
 	@Override
 	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, StreamInvocationChain... invocationChains) {
@@ -34,7 +28,7 @@ public class ValidationDelegate implements StreamExecutionDelegate<StreamInvocat
 			public Stream<Stream<?>> call() throws Exception {
 				try {	
 					Stream<?>[] results = Stream.of(invocationChains)
-							.map(v -> proxy(v))
+//							.map(v -> proxy(v))
 							.map(v -> invocationChains.length > 1 ? Stream.of(Stream.of(v)) : Stream.of(v))
 							.collect(Collectors.toList()).toArray(new Stream[]{});
 					
@@ -45,7 +39,8 @@ public class ValidationDelegate implements StreamExecutionDelegate<StreamInvocat
 								getCloseHandler().run();
 							} 
 							catch (Exception e) {
-								logger.error("Failed during execution of close handler", e);
+								e.printStackTrace();
+//								logger.severe("Failed during execution of close handler");
 							}
 						}
 					});
@@ -76,19 +71,6 @@ public class ValidationDelegate implements StreamExecutionDelegate<StreamInvocat
 		
 		return result;
 	}
-	
-	/**
-	 * Wraps it into ProxyInternalsAccessor for testing
-	 */
-	private Object proxy(Object o) {
-		return JvmUtils.proxy(this, new MethodInterceptor() {		
-			@Override
-			public Object invoke(MethodInvocation invocation) throws Throwable {
-				return invocation.getMethod().getName().equals("get") 
-						? o : invocation.proceed();
-			}
-		}, ProxyInternalsAccessor.class);
-	}
 
 	/**
 	 * 
@@ -98,29 +80,24 @@ public class ValidationDelegate implements StreamExecutionDelegate<StreamInvocat
 		return new Runnable() {
 			@Override
 			public void run() {
-				logger.info("Executing close handler");
+//				logger.info("Executing close handler");
 			}
 		};
 	}
 	
-	/**
-	 * Creates proxy over the result Stream to ensures that close() call is always delegated to
-	 * the close handler provided by the target ExecutionDelegate.
-	 */
-	private Stream<?> mixinWithCloseHandler(Stream<Stream<?>> resultStream, Runnable closeHandler){
+	private Stream<?> mixinWithCloseHandler(Stream<?> resultStream, Runnable closeHandler){
 		resultStream.onClose(closeHandler);
-		MethodInterceptor advice = new MethodInterceptor() {	
-			@SuppressWarnings("unchecked")
+		InvocationHandler ih = new InvocationHandler() {
 			@Override
-			public Object invoke(MethodInvocation invocation) throws Throwable {
-				Object result = invocation.proceed();
-				if (Stream.class.isAssignableFrom(invocation.getMethod().getReturnType())){
-					Stream<Stream<?>> stream = (Stream<Stream<?>>) result;
+			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+				Object result = method.invoke(resultStream, args);
+				if (Stream.class.isAssignableFrom(method.getReturnType())){
+					Stream<?> stream = (Stream<?>) result;
 					result = mixinWithCloseHandler(stream, closeHandler);
 				}
 				return result;
 			}
 		};
-		return JvmUtils.proxy(resultStream, advice);
+		return (Stream<?>) Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class[]{Stream.class}, ih);
 	}
 }

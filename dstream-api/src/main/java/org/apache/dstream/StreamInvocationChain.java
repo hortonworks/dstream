@@ -4,15 +4,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.aopalliance.intercept.MethodInvocation;
-
 /**
  * 
  *
  */
 public final class StreamInvocationChain {
 
-	private final List<MethodInvocation> invocations;
+	private final List<APIInvocation> invocations;
 
 	private final Class<?> sourceElementType;
 	
@@ -44,7 +42,7 @@ public final class StreamInvocationChain {
 	 * 
 	 * @return
 	 */
-	public List<MethodInvocation> getInvocations() {
+	public List<APIInvocation> getInvocations() {
 		return Collections.unmodifiableList(this.invocations);
 	}
 
@@ -68,7 +66,7 @@ public final class StreamInvocationChain {
 	 * 
 	 * @param invocation
 	 */
-	protected void addInvocation(MethodInvocation invocation){
+	protected void addInvocation(APIInvocation invocation){
 		this.invocations.add(invocation);
 	}
 	
@@ -76,7 +74,7 @@ public final class StreamInvocationChain {
 	 * 
 	 * @param invocation
 	 */
-	protected void addAllInvocations(List<MethodInvocation> invocations){
+	protected void addAllInvocations(List<APIInvocation> invocations){
 		this.invocations.addAll(invocations);
 	}
 }

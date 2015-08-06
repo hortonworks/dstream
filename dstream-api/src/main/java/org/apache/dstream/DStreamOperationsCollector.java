@@ -1,30 +1,25 @@
 package org.apache.dstream;
 
-import java.util.ArrayList;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import org.aopalliance.intercept.MethodInterceptor;
-import org.aopalliance.intercept.MethodInvocation;
 import org.apache.dstream.utils.Assert;
-import org.apache.dstream.utils.JvmUtils;
 import org.apache.dstream.utils.PropertiesHelper;
 import org.apache.dstream.utils.ReflectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.aop.framework.ReflectiveMethodInvocation;
 
 /**
  * 
  * @param <T>
  * @param <R>
  */
-final class DStreamOperationsCollector<T,R> implements MethodInterceptor {
+final class DStreamOperationsCollector<T,R> {
 
-	private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
-	
 	private final R targetStream;
 	
 	private final StreamInvocationChain invocationChain;
@@ -42,6 +37,7 @@ final class DStreamOperationsCollector<T,R> implements MethodInterceptor {
 	 * @return
 	 */
 	static <T,R> R as(Class<T> sourceElementType, String sourceIdentifier, Class<R> streamType) {
+		@SuppressWarnings("unchecked")
 		DStreamOperationsCollector<T,R> builder = new DStreamOperationsCollector<T,R>(sourceElementType, sourceIdentifier, streamType);
 		return builder.targetStream;
 	}
@@ -49,59 +45,15 @@ final class DStreamOperationsCollector<T,R> implements MethodInterceptor {
 	/**
 	 * 
 	 */
-	private DStreamOperationsCollector(Class<?> sourceElementType, String sourceIdentifier, Class<R> streamType) {
-		this.currentStreamType = streamType;
+	@SuppressWarnings("unchecked")
+	private DStreamOperationsCollector(Class<?> sourceElementType, String sourceIdentifier, Class<R>... streamType) {
+		this.currentStreamType = streamType[0];
 		this.targetStream =  this.generateStreamProxy(streamType);
-		this.invocationChain = new StreamInvocationChain(sourceElementType, sourceIdentifier, streamType);
-		this.streamOperationNames = ReflectionUtils.findAllVisibleMethodOnInterface(streamType);
+		this.invocationChain = new StreamInvocationChain(sourceElementType, sourceIdentifier, streamType[0]);
+		this.streamOperationNames = ReflectionUtils.findAllVisibleMethodOnInterface(streamType[0]);
 		this.streamOperationNames.remove("ofType");
 		this.streamOperationNames.remove("executeAs");
-	}
-	
-	/**
-	 * 
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
-	public Object invoke(MethodInvocation invocation) throws Throwable {
-		String operationName = invocation.getMethod().getName();
-		Object result;
-		if (this.streamOperationNames.contains(operationName)){
-			if (logger.isDebugEnabled()){
-				logger.debug("OPERATION: " + operationName + " - " + invocation.getMethod().getReturnType());
-			}
-			result = this.cloneTargetDistributable(invocation);
-		}
-		else if (operationName.equals("getSourceIdentifier")){
-			result = this.invocationChain.getSourceIdentifier();
-		}
-		else if (operationName.equals("get")){
-			result = this.invocationChain;
-		}
-		else if (operationName.equals("executeAs")){
-			StreamNameMonitor.reset();
-			String executionName = (String) invocation.getArguments()[0];
-			Assert.notEmpty(executionName, "'executionName' must not be null or empty");
-	
-			Properties executionConfig = PropertiesHelper.loadProperties(executionName + ".cfg");
-			String executionDelegateClassName = executionConfig.getProperty(DistributableConstants.DELEGATE);
-			Assert.notEmpty(executionDelegateClassName, "Execution delegate property is not provided in '" + executionName + 
-					".cfg' (e.g., dstream.delegate=foo.bar.SomePipelineDelegate)");
-			
-			if (logger.isInfoEnabled()) {
-				logger.info("Execution delegate: " + executionDelegateClassName);
-			}
-			
-			StreamExecutionDelegate<List<MethodInvocation>> executionDelegate = (StreamExecutionDelegate<List<MethodInvocation>>) ReflectionUtils
-					.newDefaultInstance(Class.forName(executionDelegateClassName, true, Thread.currentThread().getContextClassLoader()));
-			
-			result = executionDelegate.execute(executionName, executionConfig, this.invocationChain);
-		}
-		else {
-			result = invocation.proceed();
-		}
-		
-		return result;
+		this.streamOperationNames.remove("getSourceIdentifier");
 	}
 	
 	/**
@@ -117,41 +69,84 @@ final class DStreamOperationsCollector<T,R> implements MethodInterceptor {
 	 * 
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private R cloneTargetDistributable(MethodInvocation invocation){
-		String operationName = invocation.getMethod().getName();
+	private R cloneTargetDistributable(Method method, Object[] arguments){
+		String operationName = method.getName();
 
 		if (operationName.equals("join") || operationName.startsWith("union")){
-			ProxyInternalsAccessor<StreamInvocationChain> invocationChainAccessor = (ProxyInternalsAccessor<StreamInvocationChain>) invocation.getArguments()[0];
-			StreamInvocationChain dependentInvocationChain = invocationChainAccessor.get();
-			((ReflectiveMethodInvocation)invocation).setArguments(new Object[]{dependentInvocationChain});
+			StreamInvocationChainSupplier s =  (StreamInvocationChainSupplier) arguments[0];
+			arguments = new Object[]{s.get()};
 		}
 
 		DStreamOperationsCollector clonedDistributable = new DStreamOperationsCollector(this.invocationChain.getSourceElementType(), this.invocationChain.getSourceIdentifier(), 
-				invocation.getMethod().getReturnType().isInterface() ? invocation.getMethod().getReturnType() : this.currentStreamType);	
+				method.getReturnType().isInterface() ? method.getReturnType() : this.currentStreamType);	
 		clonedDistributable.invocationChain.addAllInvocations(this.invocationChain.getInvocations());	
-		clonedDistributable.invocationChain.addInvocation(invocation);
+		clonedDistributable.invocationChain.addInvocation(new APIInvocation(method, arguments));
 		return (R) clonedDistributable.targetStream;
 	}
 	
 	/**
 	 * 
 	 */
-	private R generateStreamProxy(Class<?> proxyType){	
-		List<Class<?>> interfaces = new ArrayList<Class<?>>();
-		interfaces.add(proxyType);
-		interfaces.add(ProxyInternalsAccessor.class);
-
-		R streamProxy = JvmUtils.proxy(this, this, interfaces.toArray(new Class[]{}));
-		if (logger.isDebugEnabled()){
-			logger.debug("Constructed builder proxy for " + interfaces);
+	@SuppressWarnings("unchecked")
+	private R generateStreamProxy(Class<?>... proxyTypes){	
+		List<Class<?>> interfaces = Stream.of(proxyTypes).collect(Collectors.toList());
+		interfaces.add(StreamInvocationChainSupplier.class);
+		return (R) Proxy.newProxyInstance(this.getClass().getClassLoader(), interfaces.toArray(new Class[]{}), new StreamInvocationHandler());
+	}
+	
+	@SuppressWarnings("unchecked")
+	private Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+		String operationName = method.getName();
+		Object result;
+		if (this.streamOperationNames.contains(operationName)){
+//			logger.info("OPERATION: " + operationName + " - " + method.getReturnType());
+			result = this.cloneTargetDistributable(method, args == null ? new Object[]{} : args);
 		}
-		return streamProxy;
+		else if (operationName.equals("getSourceIdentifier")){
+			result = this.invocationChain.getSourceIdentifier();
+		}
+		else if (operationName.equals("get")){
+			result = this.invocationChain;
+		}
+		else if (operationName.equals("executeAs")){
+			StreamNameMonitor.reset();
+			String executionName = (String) args[0];
+			Assert.notEmpty(executionName, "'executionName' must not be null or empty");
+	
+			Properties executionConfig = PropertiesHelper.loadProperties(executionName + ".cfg");
+			String executionDelegateClassName = executionConfig.getProperty(DistributableConstants.DELEGATE);
+			Assert.notEmpty(executionDelegateClassName, "Execution delegate property is not provided in '" + executionName + 
+					".cfg' (e.g., dstream.delegate=foo.bar.SomePipelineDelegate)");
+			
+//			logger.info("Execution delegate: " + executionDelegateClassName);
+			
+			StreamExecutionDelegate<List<APIInvocation>> executionDelegate = (StreamExecutionDelegate<List<APIInvocation>>) ReflectionUtils
+					.newDefaultInstance(Class.forName(executionDelegateClassName, true, Thread.currentThread().getContextClassLoader()));
+			
+			result = executionDelegate.execute(executionName, executionConfig, this.invocationChain);
+		}
+		else {
+			result = method.invoke(this, args);
+		}
+		
+		return result;
 	}
 	
 	/**
-	 * @param <T>
 	 */
-	protected interface ProxyInternalsAccessor<T>{
-		T get();
+	private static interface StreamInvocationChainSupplier {
+		StreamInvocationChain get();
+	}
+	
+	/**
+	 *
+	 */
+	private class StreamInvocationHandler implements InvocationHandler{
+
+		@Override
+		public Object invoke(Object proxy, Method method, Object[] args)
+				throws Throwable {
+			return DStreamOperationsCollector.this.invoke(proxy, method, args);
+		}
 	}
 }

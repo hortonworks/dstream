@@ -34,7 +34,7 @@ public class StreamAPIUnionTests extends BaseTezTests {
 				.union(two)
 				.executeAs(this.applicationName);
 		
-		Stream<Stream<String>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
+		Stream<Stream<String>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
 		
 		List<Stream<String>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());

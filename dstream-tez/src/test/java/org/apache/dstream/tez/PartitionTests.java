@@ -35,7 +35,7 @@ public class PartitionTests extends BaseTezTests {
 				.partition()
 				.executeAs(this.applicationName + "-default");
 		
-		Stream<Stream<String>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
+		Stream<Stream<String>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
 		List<Stream<String>> resultStreams = result.collect(Collectors.toList());
 		resultStreams.get(0).forEach(System.out::println);
 		Assert.assertEquals(1, resultStreams.size());

@@ -1,24 +1,27 @@
 package org.apache.dstream.tez;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import org.aopalliance.intercept.MethodInvocation;
+import org.apache.dstream.APIInvocation;
 import org.apache.dstream.DistributableConstants;
 import org.apache.dstream.StreamInvocationChain;
 import org.apache.dstream.function.BiFunctionToBinaryOperatorAdapter;
 import org.apache.dstream.function.DStreamToStreamAdapterFunction;
 import org.apache.dstream.function.KeyValueMappingFunction;
-import org.apache.dstream.function.StreamUnionFunction;
 import org.apache.dstream.function.SerializableFunctionConverters.BiFunction;
 import org.apache.dstream.function.SerializableFunctionConverters.BinaryOperator;
 import org.apache.dstream.function.SerializableFunctionConverters.Function;
 import org.apache.dstream.function.SerializableFunctionConverters.Predicate;
 import org.apache.dstream.function.StreamJoinerFunction;
+import org.apache.dstream.function.StreamUnionFunction;
 import org.apache.dstream.function.ValuesGroupingFunction;
 import org.apache.dstream.function.ValuesReducingFunction;
 import org.apache.dstream.support.Aggregators;
@@ -58,7 +61,7 @@ class TaskDescriptorChainBuilder {
 	 * @return
 	 */
 	public List<TaskDescriptor> build(){
-		List<MethodInvocation> invocations = this.invocationChain.getInvocations();
+		List<APIInvocation> invocations = this.invocationChain.getInvocations();
 		
 		if (invocations.size() == 0){
 			TaskDescriptor td = this.createTaskDescriptor("map");
@@ -68,7 +71,7 @@ class TaskDescriptorChainBuilder {
 			this.taskChain.add(td);
 		}
 		else {
-			for (MethodInvocation invocation : invocations) {
+			for (APIInvocation invocation : invocations) {
 				String operationName = invocation.getMethod().getName();	
 				this.addInitialTaskDescriptorIfNecessary(operationName);
 				
@@ -101,7 +104,7 @@ class TaskDescriptorChainBuilder {
 	 * 
 	 */
 	@SuppressWarnings("unchecked")
-	private void processIntermediateOperation(MethodInvocation invocation){	
+	private void processIntermediateOperation(APIInvocation invocation){	
 		Function<Stream<?>, Stream<?>> function = invocation.getMethod().getName().equals("compute") 
 				? (Function<Stream<?>, Stream<?>>) invocation.getArguments()[0]
 						: new DStreamToStreamAdapterFunction(invocation.getMethod().getName(), invocation.getArguments()[0]);
@@ -125,7 +128,7 @@ class TaskDescriptorChainBuilder {
 	 * 
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private void processShuffleOperation(MethodInvocation invocation){
+	private void processShuffleOperation(APIInvocation invocation){
 		String operationName = invocation.getMethod().getName();
 		Object[] arguments = invocation.getArguments();
 
