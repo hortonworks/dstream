@@ -2,7 +2,7 @@ package org.apache.dstream.tez;
 
 import java.io.File;
 
-import org.apache.dstream.function.HashPartitionerFunction;
+import dstream.function.HashPartitionerFunction;
 
 public class TestPartitioner extends HashPartitionerFunction<Object>{
 	private static final long serialVersionUID = -1677894725281384687L;

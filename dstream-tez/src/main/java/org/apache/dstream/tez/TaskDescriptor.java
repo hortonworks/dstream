@@ -5,13 +5,14 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Stream;
 
-import org.apache.dstream.DStreamConstants;
-import org.apache.dstream.function.HashPartitionerFunction;
-import org.apache.dstream.function.PartitionerFunction;
-import org.apache.dstream.function.SerializableFunctionConverters.SerFunction;
-import org.apache.dstream.function.SerializableFunctionConverters.SerSupplier;
-import org.apache.dstream.utils.ReflectionUtils;
 import org.apache.tez.dag.api.Vertex;
+
+import dstream.DStreamConstants;
+import dstream.function.HashPartitionerFunction;
+import dstream.function.PartitionerFunction;
+import dstream.function.SerializableFunctionConverters.SerFunction;
+import dstream.function.SerializableFunctionConverters.SerSupplier;
+import dstream.utils.ReflectionUtils;
 
 /**
  * 

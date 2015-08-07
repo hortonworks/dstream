@@ -9,9 +9,10 @@ import java.util.stream.StreamSupport;
 
 import org.apache.dstream.tez.io.KeyWritable;
 import org.apache.dstream.tez.io.ValueWritable;
-import org.apache.dstream.utils.KVUtils;
 import org.apache.tez.runtime.library.api.KeyValueReader;
 import org.apache.tez.runtime.library.api.KeyValuesReader;
+
+import dstream.utils.KVUtils;
 /**
  * 
  */

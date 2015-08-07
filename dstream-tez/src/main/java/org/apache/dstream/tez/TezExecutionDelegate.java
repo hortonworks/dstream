@@ -7,9 +7,6 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.AbstractDStreamExecutionDelegate;
-import org.apache.dstream.DStreamConstants;
-import org.apache.dstream.DStreamInvocationPipeline;
 import org.apache.dstream.tez.utils.HadoopUtils;
 import org.apache.dstream.tez.utils.SequenceFileOutputStreamsBuilder;
 import org.apache.hadoop.conf.Configuration;
@@ -19,6 +16,10 @@ import org.apache.hadoop.yarn.api.records.LocalResource;
 import org.apache.tez.dag.api.TezConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import dstream.AbstractDStreamExecutionDelegate;
+import dstream.DStreamConstants;
+import dstream.DStreamInvocationPipeline;
 
 /**
  * Implementation of {@link StreamExecutionDelegate} for Apache Tez.

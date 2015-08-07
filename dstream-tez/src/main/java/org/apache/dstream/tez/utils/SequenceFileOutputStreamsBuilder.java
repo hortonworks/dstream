@@ -12,11 +12,12 @@ import java.util.stream.StreamSupport;
 import org.apache.dstream.tez.OutputStreamsBuilder;
 import org.apache.dstream.tez.io.KeyWritable;
 import org.apache.dstream.tez.io.ValueWritable;
-import org.apache.dstream.utils.KVUtils;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.tez.dag.api.TezConfiguration;
+
+import dstream.utils.KVUtils;
 
 public class SequenceFileOutputStreamsBuilder<T> implements OutputStreamsBuilder<T> {
 

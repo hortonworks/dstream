@@ -6,10 +6,11 @@ import java.lang.reflect.Type;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
-import org.apache.dstream.function.PartitionerFunction;
-import org.apache.dstream.function.SerializableFunctionConverters.SerFunction;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
+
+import dstream.function.PartitionerFunction;
+import dstream.function.SerializableFunctionConverters.SerFunction;
 
 final class Task implements Serializable {
 	private static final long serialVersionUID = -1800812882885490376L;

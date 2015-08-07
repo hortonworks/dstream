@@ -14,11 +14,12 @@ import java.util.stream.Stream;
 
 import junit.framework.Assert;
 
-import org.apache.dstream.DStream;
-import org.apache.dstream.utils.KVUtils;
-import org.apache.dstream.utils.Tuples.Tuple2;
 import org.junit.After;
 import org.junit.Test;
+
+import dstream.DStream;
+import dstream.utils.KVUtils;
+import dstream.utils.Tuples.Tuple2;
 
 public class PartitionTests extends BaseTezTests {
 	

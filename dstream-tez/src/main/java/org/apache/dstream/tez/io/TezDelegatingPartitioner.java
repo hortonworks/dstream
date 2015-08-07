@@ -1,7 +1,8 @@
 package org.apache.dstream.tez.io;
 
-import org.apache.dstream.function.PartitionerFunction;
 import org.apache.tez.runtime.library.partitioner.HashPartitioner;
+
+import dstream.function.PartitionerFunction;
 
 public class TezDelegatingPartitioner extends HashPartitioner {
 	

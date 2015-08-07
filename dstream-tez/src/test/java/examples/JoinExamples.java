@@ -5,10 +5,11 @@ import java.util.Map.Entry;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
-import org.apache.dstream.DStream;
-import org.apache.dstream.support.Aggregators;
 import org.apache.dstream.tez.BaseTezTests;
-import org.apache.dstream.utils.Tuples.Tuple2;
+
+import dstream.DStream;
+import dstream.support.Aggregators;
+import dstream.utils.Tuples.Tuple2;
 
 public class JoinExamples {
 	

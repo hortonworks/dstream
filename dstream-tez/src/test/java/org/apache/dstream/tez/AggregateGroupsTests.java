@@ -1,7 +1,7 @@
 package org.apache.dstream.tez;
 
 import static org.junit.Assert.assertEquals;
-import static org.apache.dstream.utils.KVUtils.kv;
+import static dstream.utils.KVUtils.kv;
 
 import java.util.List;
 import java.util.Map.Entry;
@@ -13,10 +13,11 @@ import java.util.stream.StreamSupport;
 
 import junit.framework.Assert;
 
-import org.apache.dstream.DStream;
-import org.apache.dstream.support.Aggregators;
 import org.junit.After;
 import org.junit.Test;
+
+import dstream.DStream;
+import dstream.support.Aggregators;
 
 public class AggregateGroupsTests extends BaseTezTests {
 	
