@@ -16,14 +16,23 @@ import org.apache.dstream.function.SerializableFunctionConverters.SerBinaryOpera
  * @param <K> key type
  * @param <V> value type
  */
-public class ValuesGroupingFunction<K,V,T> extends  ValuesReducingFunction<K, V, T> {
+public class ValuesAggregatingFunction<K,V,T> extends  ValuesReducingFunction<K, V, T> {
 	private static final long serialVersionUID = 5774838692658472433L;
 	
+	/**
+	 * Constructs this function.
+	 * 
+	 * @param aggregator an aggregate function, used to resolve collisions between
+     *                      values associated with the same key.
+	 */
 	@SuppressWarnings("rawtypes")
-	public ValuesGroupingFunction(SerBinaryOperator combiner) {
-		super(combiner);
+	public ValuesAggregatingFunction(SerBinaryOperator aggregator) {
+		super(aggregator);
 	}
 	
+	/**
+	 * 
+	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	protected Object buildValue(Stream<V> valuesStream){

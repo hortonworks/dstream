@@ -10,7 +10,8 @@ import org.apache.dstream.utils.Assert;
 import org.apache.dstream.utils.KVUtils;
 
 /**
- * Implementation of {@link SerFunction} to create {@link Stream} of Key/Value pairs from another {@link Stream}.
+ * Implementation of {@link SerFunction} to produce {@link Stream} of Key/Value pairs 
+ * from another {@link Stream}.<br>
  * Key/Value pairs represented as {@link Entry} 
  * <br>
  * Key/Values are created using <i>keyExtractor</i> and <i>valueExtractor</i> provided 
@@ -30,19 +31,22 @@ public class KeyValueMappingFunction<T,K,V> implements SerFunction<Stream<T>, St
 	private final BinaryOperator<V> combiner;
 	
 	/**
+	 * Constructs this function.
 	 * 
-	 * @param keyExtractor
-	 * @param valueExtractor
+	 * @param keyExtractor a mapping function to produce keys
+	 * @param valueExtractor a mapping function to produce values
 	 */
 	public KeyValueMappingFunction(SerFunction<T, K> keyExtractor, SerFunction<T, V> valueExtractor) {
 		this(keyExtractor, valueExtractor, null);
 	}
 	
 	/**
+	 * Constructs this function.
 	 * 
-	 * @param keyExtractor
-	 * @param valueExtractor
-	 * @param combiner
+	 * @param keyExtractor a mapping function to produce keys
+	 * @param valueExtractor a mapping function to produce values
+	 * @param combiner a combine function, used to resolve collisions between
+     *                      values associated with the same key.
 	 */
 	public KeyValueMappingFunction(SerFunction<T, K> keyExtractor, SerFunction<T, V> valueExtractor, BinaryOperator<V> combiner) {
 		Assert.notNull(keyExtractor, "'keyExtractor' must not be null");

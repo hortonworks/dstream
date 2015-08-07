@@ -4,7 +4,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Properties;
 
-import org.apache.dstream.DistributableConstants;
+import org.apache.dstream.DStreamConstants;
 import org.apache.dstream.utils.PropertiesHelper;
 import org.junit.Test;
 
@@ -18,7 +18,7 @@ public class PropertiesHelperTests {
 	@Test
 	public void validConfiguration() {
 		Properties prop = PropertiesHelper.loadProperties("DStreamOperationsCollectorTests.cfg");
-		assertTrue(prop.containsKey(DistributableConstants.DELEGATE));
-		assertTrue(prop.containsKey(DistributableConstants.SOURCE + "foo"));
+		assertTrue(prop.containsKey(DStreamConstants.DELEGATE));
+		assertTrue(prop.containsKey(DStreamConstants.SOURCE + "foo"));
 	}
 }

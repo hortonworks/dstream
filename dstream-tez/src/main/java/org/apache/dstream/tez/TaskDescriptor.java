@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Stream;
 
-import org.apache.dstream.DistributableConstants;
+import org.apache.dstream.DStreamConstants;
 import org.apache.dstream.function.HashPartitionerFunction;
 import org.apache.dstream.function.PartitionerFunction;
 import org.apache.dstream.function.SerializableFunctionConverters.SerFunction;
@@ -66,8 +66,8 @@ public class TaskDescriptor {
 		this.id = id;
 		this.operationName = operationName;
 		this.previousTaskDescriptor = previousTaskDescriptor;
-		String parallelizmProp = executionConfig.getProperty(DistributableConstants.PARALLELISM);
-		String partitionerProp = executionConfig.getProperty(DistributableConstants.PARTITIONER);
+		String parallelizmProp = executionConfig.getProperty(DStreamConstants.PARALLELISM);
+		String partitionerProp = executionConfig.getProperty(DStreamConstants.PARTITIONER);
 		
 		if (parallelizmProp != null){
 			this.parallelism = Integer.parseInt(parallelizmProp);

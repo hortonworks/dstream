@@ -8,17 +8,25 @@ import org.apache.dstream.function.SerializableFunctionConverters.SerFunction;
 /**
  * Implementation of {@link SerFunction} which will union multiple streams
  * while applying user functionality at check points (see this{@link #addCheckPoint(int)}.
- *
  */
 public class StreamUnionFunction extends AbstractMultiStreamProcessingFunction {
 	private static final long serialVersionUID = -2955908820407886806L;
 	
 	private final boolean distinct;
 	
+	/**
+	 * Constructs this function.
+	 * 
+	 * @param distinct boolean signaling if union results should be distinct, 
+	 *  essentially supporting the standard <i>union</i> and <i>unionAll</i> semantics.
+	 */
 	public StreamUnionFunction(boolean distinct){
 		this.distinct = distinct;
 	}
 
+	/**
+	 * 
+	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public Stream<?> apply(Stream<Stream<?>> streams) {	

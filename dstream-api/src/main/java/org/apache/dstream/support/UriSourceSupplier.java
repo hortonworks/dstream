@@ -6,7 +6,7 @@ import java.util.Arrays;
 import org.apache.dstream.utils.Assert;
 
 /**
- *
+ * {@link URI}-based implementation of the {@link SourceSupplier}
  */
 public class UriSourceSupplier implements SourceSupplier<URI> {
 	private static final long serialVersionUID = -4643164807046654114L;
