@@ -9,9 +9,10 @@ import java.util.stream.Stream;
 
 import junit.framework.Assert;
 
-import org.apache.dstream.DStream;
 import org.junit.After;
 import org.junit.Test;
+
+import dstream.DStream;
 
 public class StreamAPITests extends BaseTezTests {
 	

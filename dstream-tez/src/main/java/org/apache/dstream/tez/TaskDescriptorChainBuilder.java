@@ -7,23 +7,23 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.stream.Stream;
 
-import org.apache.dstream.DStreamConstants;
-import org.apache.dstream.DStreamInvocation;
-import org.apache.dstream.DStreamInvocationPipeline;
-import org.apache.dstream.function.BiFunctionToBinaryOperatorAdapter;
-import org.apache.dstream.function.DStreamToStreamAdapterFunction;
-import org.apache.dstream.function.KeyValueMappingFunction;
-import org.apache.dstream.function.SerializableFunctionConverters.SerBiFunction;
-import org.apache.dstream.function.SerializableFunctionConverters.SerBinaryOperator;
-import org.apache.dstream.function.SerializableFunctionConverters.SerFunction;
-import org.apache.dstream.function.SerializableFunctionConverters.SerPredicate;
-import org.apache.dstream.function.StreamJoinerFunction;
-import org.apache.dstream.function.StreamUnionFunction;
-import org.apache.dstream.function.ValuesAggregatingFunction;
-import org.apache.dstream.function.ValuesReducingFunction;
-import org.apache.dstream.support.Aggregators;
-import org.apache.dstream.support.SourceSupplier;
-import org.apache.dstream.utils.Assert;
+import dstream.DStreamConstants;
+import dstream.DStreamInvocation;
+import dstream.DStreamInvocationPipeline;
+import dstream.function.BiFunctionToBinaryOperatorAdapter;
+import dstream.function.DStreamToStreamAdapterFunction;
+import dstream.function.KeyValueMappingFunction;
+import dstream.function.SerializableFunctionConverters.SerBiFunction;
+import dstream.function.SerializableFunctionConverters.SerBinaryOperator;
+import dstream.function.SerializableFunctionConverters.SerFunction;
+import dstream.function.SerializableFunctionConverters.SerPredicate;
+import dstream.function.StreamJoinerFunction;
+import dstream.function.StreamUnionFunction;
+import dstream.function.ValuesAggregatingFunction;
+import dstream.function.ValuesReducingFunction;
+import dstream.support.Aggregators;
+import dstream.support.SourceSupplier;
+import dstream.utils.Assert;
 
 /**
  * 

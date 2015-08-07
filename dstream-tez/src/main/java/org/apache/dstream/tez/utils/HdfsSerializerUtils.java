@@ -3,10 +3,11 @@ package org.apache.dstream.tez.utils;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.apache.dstream.utils.Assert;
-import org.apache.dstream.utils.SerializationUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+
+import dstream.utils.Assert;
+import dstream.utils.SerializationUtils;
 
 public class HdfsSerializerUtils {
 	

@@ -4,8 +4,9 @@ import java.util.Map.Entry;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
-import org.apache.dstream.DStream;
 import org.apache.dstream.tez.BaseTezTests;
+
+import dstream.DStream;
 
 /**
  * A rudimentary WordCount

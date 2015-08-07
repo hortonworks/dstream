@@ -1,9 +1,9 @@
 package org.apache.dstream.tez;
 
-import static org.apache.dstream.utils.KVUtils.kv;
-import static org.apache.dstream.utils.Tuples.Tuple2.tuple2;
-import static org.apache.dstream.utils.Tuples.Tuple3.tuple3;
 import static org.junit.Assert.assertEquals;
+import static dstream.utils.Tuples.Tuple2.tuple2;
+import static dstream.utils.Tuples.Tuple3.tuple3;
+import static dstream.utils.KVUtils.kv;
 
 import java.util.List;
 import java.util.Map.Entry;
@@ -14,12 +14,13 @@ import java.util.stream.Stream;
 
 import junit.framework.Assert;
 
-import org.apache.dstream.DStream;
-import org.apache.dstream.function.SerializableFunctionConverters.SerPredicate;
-import org.apache.dstream.utils.Tuples.Tuple2;
-import org.apache.dstream.utils.Tuples.Tuple3;
 import org.junit.After;
 import org.junit.Test;
+
+import dstream.DStream;
+import dstream.function.SerializableFunctionConverters.SerPredicate;
+import dstream.utils.Tuples.Tuple2;
+import dstream.utils.Tuples.Tuple3;
 
 public class StreamAPIJoinTests extends BaseTezTests {
 	

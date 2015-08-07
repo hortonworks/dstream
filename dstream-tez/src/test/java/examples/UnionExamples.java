@@ -4,9 +4,10 @@ import java.util.Map.Entry;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
-import org.apache.dstream.DStream;
 import org.apache.dstream.tez.BaseTezTests;
-import org.apache.dstream.utils.KVUtils;
+
+import dstream.DStream;
+import dstream.utils.KVUtils;
 
 public class UnionExamples {
 	

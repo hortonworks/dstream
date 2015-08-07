@@ -4,7 +4,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
-import org.apache.dstream.function.StreamJoinerFunction;
+import dstream.function.StreamJoinerFunction;
 
 class TezJoiner extends StreamJoinerFunction {
 	private static final long serialVersionUID = -2554454163443511159L;
