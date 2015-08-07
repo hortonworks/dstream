@@ -5,7 +5,7 @@ import java.net.URI;
 /**
  * Constant values used by the framework 
  */
-public interface DistributableConstants {
+public interface DStreamConstants {
 
 	public static String DSTR_PREFIX = "dstream.";
 	
@@ -30,9 +30,7 @@ public interface DistributableConstants {
 	public static String OUTPUT = DSTR_PREFIX + "output";
 
 	/**
-	 * {@link #STAGE} related configuration.<br>
-	 * Identifies stage parallelism (e.g., <i>dstream.stage.parallelizm.1_hash=3</i>)<br>
-	 * In the above '1_hash' identifies combination of 'stage id' + "_" + 'pipeline name' 
+	 * Identifies execution parallelism (e.g., <i>dstream.parallelizm=3</i>)<br>
 	 */
 	public static String PARALLELISM = DSTR_PREFIX + "parallelizm";
 	

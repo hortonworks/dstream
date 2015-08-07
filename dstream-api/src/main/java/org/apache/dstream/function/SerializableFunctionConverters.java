@@ -3,7 +3,8 @@ package org.apache.dstream.function;
 import java.io.Serializable;
 import java.util.Objects;
 /**
- * Defines {@link Serializable} equivalents strategies defined in java.util.function package.
+ * Defines {@link Serializable} equivalents to strategies defined in java.util.function package
+ * that are used by this framework.
  */
 public interface SerializableFunctionConverters {
 	

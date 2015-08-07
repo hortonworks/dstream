@@ -12,11 +12,11 @@ public class HashPartitionerTests {
 		new HashPartitionerFunction<>(0);
 	}
 	
-	@Test(expected=IllegalStateException.class)
-	public void failWithLessThenOnePartitionSizeUpdate(){
-		HashPartitionerFunction<String> hp = new HashPartitionerFunction<>(1);
-		hp.updatePartitionSize(0);
-	}
+//	@Test(expected=IllegalStateException.class)
+//	public void failWithLessThenOnePartitionSizeUpdate(){
+//		HashPartitionerFunction<String> hp = new HashPartitionerFunction<>(1);
+//		hp.updatePartitionSize(0);
+//	}
 	
 	@Test
 	public void validatePartitioner(){

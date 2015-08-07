@@ -7,9 +7,9 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.stream.Stream;
 
-import org.apache.dstream.APIInvocation;
-import org.apache.dstream.DistributableConstants;
-import org.apache.dstream.StreamInvocationPipeline;
+import org.apache.dstream.DStreamConstants;
+import org.apache.dstream.DStreamInvocation;
+import org.apache.dstream.DStreamInvocationPipeline;
 import org.apache.dstream.function.BiFunctionToBinaryOperatorAdapter;
 import org.apache.dstream.function.DStreamToStreamAdapterFunction;
 import org.apache.dstream.function.KeyValueMappingFunction;
@@ -19,7 +19,7 @@ import org.apache.dstream.function.SerializableFunctionConverters.SerFunction;
 import org.apache.dstream.function.SerializableFunctionConverters.SerPredicate;
 import org.apache.dstream.function.StreamJoinerFunction;
 import org.apache.dstream.function.StreamUnionFunction;
-import org.apache.dstream.function.ValuesGroupingFunction;
+import org.apache.dstream.function.ValuesAggregatingFunction;
 import org.apache.dstream.function.ValuesReducingFunction;
 import org.apache.dstream.support.Aggregators;
 import org.apache.dstream.support.SourceSupplier;
@@ -32,7 +32,7 @@ class TaskDescriptorChainBuilder {
 	
 	private final List<TaskDescriptor> taskChain;
 	
-	private final StreamInvocationPipeline invocationChain;
+	private final DStreamInvocationPipeline invocationChain;
 	
 	private final String executionName;
 	
@@ -46,7 +46,7 @@ class TaskDescriptorChainBuilder {
 	 * @param invocationChain
 	 * @param executionConfig
 	 */
-	public TaskDescriptorChainBuilder(String executionName, StreamInvocationPipeline invocationChain, Properties executionConfig){
+	public TaskDescriptorChainBuilder(String executionName, DStreamInvocationPipeline invocationChain, Properties executionConfig){
 		this.taskChain = new ArrayList<>();
 		this.invocationChain = invocationChain;
 		this.executionName = executionName;
@@ -58,7 +58,7 @@ class TaskDescriptorChainBuilder {
 	 * @return
 	 */
 	public List<TaskDescriptor> build(){
-		List<APIInvocation> invocations = this.invocationChain.getInvocations();
+		List<DStreamInvocation> invocations = this.invocationChain.getInvocations();
 		
 		if (invocations.size() == 0){
 			TaskDescriptor td = this.createTaskDescriptor("map");
@@ -68,7 +68,7 @@ class TaskDescriptorChainBuilder {
 			this.taskChain.add(td);
 		}
 		else {
-			for (APIInvocation invocation : invocations) {
+			for (DStreamInvocation invocation : invocations) {
 				String operationName = invocation.getMethod().getName();	
 				this.addInitialTaskDescriptorIfNecessary(operationName);
 				
@@ -101,7 +101,7 @@ class TaskDescriptorChainBuilder {
 	 * 
 	 */
 	@SuppressWarnings("unchecked")
-	private void processIntermediateOperation(APIInvocation invocation){	
+	private void processIntermediateOperation(DStreamInvocation invocation){	
 		SerFunction<Stream<?>, Stream<?>> function = invocation.getMethod().getName().equals("compute") 
 				? (SerFunction<Stream<?>, Stream<?>>) invocation.getArguments()[0]
 						: new DStreamToStreamAdapterFunction(invocation.getMethod().getName(), invocation.getArguments()[0]);
@@ -125,13 +125,13 @@ class TaskDescriptorChainBuilder {
 	 * 
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private void processShuffleOperation(APIInvocation invocation){
+	private void processShuffleOperation(DStreamInvocation invocation){
 		String operationName = invocation.getMethod().getName();
 		Object[] arguments = invocation.getArguments();
 
 		if (operationName.equals("reduceGroups")) {
 			TaskDescriptor currentTask = this.getCurrentTask();
-			String propertyName = DistributableConstants.MAP_SIDE_COMBINE + currentTask.getId() + "_" + currentTask.getName();
+			String propertyName = DStreamConstants.MAP_SIDE_COMBINE + currentTask.getId() + "_" + currentTask.getName();
 			boolean mapSideCombine = Boolean.parseBoolean((String)this.executionConfig.getOrDefault(propertyName, "false"));
 			SerBinaryOperator aggregator = mapSideCombine ? (SerBinaryOperator)arguments[2] : null;
 			SerFunction keyMapper = (SerFunction)arguments[0];
@@ -146,7 +146,7 @@ class TaskDescriptorChainBuilder {
 		}
 		else if (operationName.equals("aggregateGroups")) {
 			TaskDescriptor currentTask = this.getCurrentTask();
-			String propertyName = DistributableConstants.MAP_SIDE_COMBINE + currentTask.getId() + "_" + currentTask.getName();
+			String propertyName = DStreamConstants.MAP_SIDE_COMBINE + currentTask.getId() + "_" + currentTask.getName();
 			
 			SerBinaryOperator aggregator = arguments.length == 3 
 					? new BiFunctionToBinaryOperatorAdapter((SerBiFunction)arguments[2]) 
@@ -161,10 +161,10 @@ class TaskDescriptorChainBuilder {
 			// common
 			TaskDescriptor newTaskDescriptor = this.createTaskDescriptor(operationName);
 			this.taskChain.add(newTaskDescriptor);
-			newTaskDescriptor.compose(new ValuesGroupingFunction(aggregator));	
+			newTaskDescriptor.compose(new ValuesAggregatingFunction(aggregator));	
 		}
 		else if (operationName.equals("join")) {
-			StreamInvocationPipeline dependentInvocationChain = (StreamInvocationPipeline) arguments[0];
+			DStreamInvocationPipeline dependentInvocationChain = (DStreamInvocationPipeline) arguments[0];
 			TaskDescriptorChainBuilder dependentBuilder = new TaskDescriptorChainBuilder(this.executionName, dependentInvocationChain, this.executionConfig);
 			List<TaskDescriptor> dependentTasks = dependentBuilder.build();
 
@@ -192,7 +192,7 @@ class TaskDescriptorChainBuilder {
 			joiner.addCheckPoint(joiningStreamsSize);
 		}
 		else if (operationName.startsWith("union")) {
-			StreamInvocationPipeline dependentInvocationChain = (StreamInvocationPipeline) arguments[0];
+			DStreamInvocationPipeline dependentInvocationChain = (DStreamInvocationPipeline) arguments[0];
 			TaskDescriptorChainBuilder dependentBuilder = new TaskDescriptorChainBuilder(this.executionName, dependentInvocationChain, this.executionConfig);
 			List<TaskDescriptor> dependentTasks = dependentBuilder.build();
 
@@ -252,8 +252,8 @@ class TaskDescriptorChainBuilder {
 	 */
 	private void decorateTask(TaskDescriptor td){
 		if (td.getId() == 0 && td.getSourceSupplier() == null){
-			String sourceProperty = executionConfig.getProperty(DistributableConstants.SOURCE + this.invocationChain.getSourceIdentifier());
-			Assert.notEmpty(sourceProperty, DistributableConstants.SOURCE + this.invocationChain.getSourceIdentifier() +  "' property can not be found in " + 
+			String sourceProperty = executionConfig.getProperty(DStreamConstants.SOURCE + this.invocationChain.getSourceIdentifier());
+			Assert.notEmpty(sourceProperty, DStreamConstants.SOURCE + this.invocationChain.getSourceIdentifier() +  "' property can not be found in " + 
 					this.executionName + ".cfg configuration file.");
 			SourceSupplier<?> sourceSupplier = SourceSupplier.create(sourceProperty, null);
 			td.setSourceSupplier(sourceSupplier);

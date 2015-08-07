@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 
+ * Definition of Tuple structures. 
  */
 public interface Tuples {
 	

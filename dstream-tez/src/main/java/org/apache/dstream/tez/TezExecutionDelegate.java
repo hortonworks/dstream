@@ -7,10 +7,9 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.dstream.AbstractStreamExecutionDelegate;
-import org.apache.dstream.DistributableConstants;
-import org.apache.dstream.StreamExecutionDelegate;
-import org.apache.dstream.StreamInvocationPipeline;
+import org.apache.dstream.AbstractDStreamExecutionDelegate;
+import org.apache.dstream.DStreamConstants;
+import org.apache.dstream.DStreamInvocationPipeline;
 import org.apache.dstream.tez.utils.HadoopUtils;
 import org.apache.dstream.tez.utils.SequenceFileOutputStreamsBuilder;
 import org.apache.hadoop.conf.Configuration;
@@ -25,7 +24,7 @@ import org.slf4j.LoggerFactory;
  * Implementation of {@link StreamExecutionDelegate} for Apache Tez.
  *
  */
-public class TezExecutionDelegate extends AbstractStreamExecutionDelegate<StreamInvocationPipeline> {
+public class TezExecutionDelegate extends AbstractDStreamExecutionDelegate<DStreamInvocationPipeline> {
 	
 	private final Logger logger = LoggerFactory.getLogger(TezExecutionDelegate.class);
 	
@@ -65,8 +64,8 @@ public class TezExecutionDelegate extends AbstractStreamExecutionDelegate<Stream
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	protected Stream<Stream<?>> doExecute(String executionName, Properties executionConfig, StreamInvocationPipeline... invocationPipelines) {		
-		for (StreamInvocationPipeline invocationPipeline : invocationPipelines) {
+	protected Stream<Stream<?>> doExecute(String executionName, Properties executionConfig, DStreamInvocationPipeline... invocationPipelines) {		
+		for (DStreamInvocationPipeline invocationPipeline : invocationPipelines) {
 			TaskDescriptorChainBuilder builder = new TaskDescriptorChainBuilder(executionName, invocationPipeline, executionConfig);
 			List<TaskDescriptor> taskDescriptors = builder.build();
 			this.taskChains.add(taskDescriptors);
@@ -82,7 +81,7 @@ public class TezExecutionDelegate extends AbstractStreamExecutionDelegate<Stream
 		TezDAGBuilder dagBuilder = new TezDAGBuilder(executionName, this.tezClient, executionConfig);
 		List<String> outputURIs  = new ArrayList<String>();
 		
-		String output = (String) executionConfig.getOrDefault(DistributableConstants.OUTPUT, this.tezClient.getClientName() + "/out/");
+		String output = (String) executionConfig.getOrDefault(DStreamConstants.OUTPUT, this.tezClient.getClientName() + "/out/");
 		for (int i = 0; i < this.taskChains.size(); i++) {
 			List<TaskDescriptor> taskChain = this.taskChains.get(i);
 			taskChain.forEach(task -> dagBuilder.addTask(task));

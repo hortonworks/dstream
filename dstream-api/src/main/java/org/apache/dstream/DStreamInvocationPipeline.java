@@ -8,9 +8,9 @@ import java.util.List;
  * 
  *
  */
-public final class StreamInvocationPipeline {
+public final class DStreamInvocationPipeline {
 
-	private final List<APIInvocation> invocations;
+	private final List<DStreamInvocation> invocations;
 
 	private final Class<?> sourceElementType;
 	
@@ -24,7 +24,7 @@ public final class StreamInvocationPipeline {
 	 * @param sourceIdentifier
 	 * @param streamType
 	 */
-	protected StreamInvocationPipeline(Class<?> sourceElementType, String sourceIdentifier, Class<?> streamType){
+	protected DStreamInvocationPipeline(Class<?> sourceElementType, String sourceIdentifier, Class<?> streamType){
 		this.sourceElementType = sourceElementType;
 		this.sourceIdentifier = sourceIdentifier;
 		this.invocations = new ArrayList<>();
@@ -43,7 +43,7 @@ public final class StreamInvocationPipeline {
 	 * 
 	 * @return
 	 */
-	public List<APIInvocation> getInvocations() {
+	public List<DStreamInvocation> getInvocations() {
 		return Collections.unmodifiableList(this.invocations);
 	}
 
@@ -67,7 +67,7 @@ public final class StreamInvocationPipeline {
 	 * 
 	 * @param invocation
 	 */
-	protected void addInvocation(APIInvocation invocation){
+	protected void addInvocation(DStreamInvocation invocation){
 		this.invocations.add(invocation);
 	}
 	
@@ -75,7 +75,7 @@ public final class StreamInvocationPipeline {
 	 * 
 	 * @param invocation
 	 */
-	protected void addAllInvocations(List<APIInvocation> invocations){
+	protected void addAllInvocations(List<DStreamInvocation> invocations){
 		this.invocations.addAll(invocations);
 	}
 }

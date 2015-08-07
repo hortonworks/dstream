@@ -14,9 +14,9 @@ import java.util.stream.Stream;
  * 
  * @param <T>
  */
-public abstract class AbstractStreamExecutionDelegate<T> implements StreamExecutionDelegate<T> {
+public abstract class AbstractDStreamExecutionDelegate<T> implements DStreamExecutionDelegate<T> {
 	@Override
-	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, StreamInvocationPipeline... invocationChains) {
+	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, DStreamInvocationPipeline... invocationChains) {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 		
 		try {
@@ -30,7 +30,7 @@ public abstract class AbstractStreamExecutionDelegate<T> implements StreamExecut
 									@Override
 									public void run() {
 										try {
-											AbstractStreamExecutionDelegate.this.getCloseHandler().run();
+											AbstractDStreamExecutionDelegate.this.getCloseHandler().run();
 										} 
 										catch (Exception e) {
 											e.printStackTrace();
@@ -65,7 +65,7 @@ public abstract class AbstractStreamExecutionDelegate<T> implements StreamExecut
 	 * @param invocationChains
 	 * @return
 	 */
-	protected abstract Stream<Stream<?>> doExecute(String executionName, Properties executionConfig, StreamInvocationPipeline... invocationChains);
+	protected abstract Stream<Stream<?>> doExecute(String executionName, Properties executionConfig, DStreamInvocationPipeline... invocationChains);
 	
 	/**
 	 * Creates proxy over the result Stream to ensures that close() call is always delegated to

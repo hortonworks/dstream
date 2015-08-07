@@ -13,13 +13,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 /**
- * Implementation of {@link StreamExecutionDelegate}.
+ * Implementation of {@link DStreamExecutionDelegate}.
  * Primary use is testing.
  */
-public class ValidationDelegate implements StreamExecutionDelegate<StreamInvocationPipeline> {
+public class ValidationDelegate implements DStreamExecutionDelegate<DStreamInvocationPipeline> {
 	
 	@Override
-	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, StreamInvocationPipeline... invocationChains) {
+	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, DStreamInvocationPipeline... invocationChains) {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 		CountDownLatch latch = new CountDownLatch(1);
 		Future<Stream<Stream<?>>> result = executor.submit(new Callable<Stream<Stream<?>>>() {

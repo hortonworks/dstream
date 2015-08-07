@@ -29,8 +29,8 @@ public class ValuesGroupingFunctionTests {
 		
 		Stream<Entry<String,Iterator<Integer>>> sourceStream = keyValuesList.stream();
 		// the above stream would be generated from reader provided by the target execution environment (e.g., Tez)
-		ValuesGroupingFunction<String, Integer, Entry<String, List<Integer>>> kvsStream = 
-				new ValuesGroupingFunction<String, Integer, Entry<String, List<Integer>>>(Aggregators::aggregateFlatten);
+		ValuesAggregatingFunction<String, Integer, Entry<String, List<Integer>>> kvsStream = 
+				new ValuesAggregatingFunction<String, Integer, Entry<String, List<Integer>>>(Aggregators::aggregateFlatten);
 		List<Entry<String, List<Integer>>> result = kvsStream.apply(sourceStream).collect(Collectors.toList());
 		Assert.assertEquals(4, result.size());
 		

@@ -23,15 +23,17 @@ public class ValuesReducingFunction<K,V,T> implements SerFunction<Stream<Entry<K
 	private static final long serialVersionUID = 1133920289646508908L;
 	
 	@SuppressWarnings("rawtypes")
-	private final SerBinaryOperator combiner;
+	private final SerBinaryOperator reducer;
 	
 	/**
+	 * Constructs this function.
 	 * 
-	 * @param aggregationOperator
+	 * @param reducer a reduce function, used to resolve collisions between
+     *                      values associated with the same key.
 	 */
 	@SuppressWarnings("rawtypes")
-	public ValuesReducingFunction(SerBinaryOperator combiner) {
-		this.combiner = combiner;
+	public ValuesReducingFunction(SerBinaryOperator reducer) {
+		this.reducer = reducer;
 	}
 
 	/**
@@ -49,7 +51,7 @@ public class ValuesReducingFunction<K,V,T> implements SerFunction<Stream<Entry<K
 	 */
 	@SuppressWarnings("unchecked")
 	protected Object buildValue(Stream<V> valuesStream){
-		return valuesStream.reduce((java.util.function.BinaryOperator<V>) this.combiner).get();
+		return valuesStream.reduce((java.util.function.BinaryOperator<V>) this.reducer).get();
 	}
 
 	/**
@@ -58,7 +60,7 @@ public class ValuesReducingFunction<K,V,T> implements SerFunction<Stream<Entry<K
 	@SuppressWarnings("unchecked")
 	private T mergeValuesForCurrentKey(Entry<K, Iterator<V>> currentEntry){
 		Stream<V> valuesStream = (Stream<V>) StreamSupport.stream(Spliterators.spliteratorUnknownSize(currentEntry.getValue(), Spliterator.ORDERED), false);
-		Object value = this.combiner == null ? valuesStream.findFirst().get() : KVUtils.kv(currentEntry.getKey(), this.buildValue(valuesStream));
+		Object value = this.reducer == null ? valuesStream.findFirst().get() : KVUtils.kv(currentEntry.getKey(), this.buildValue(valuesStream));
 		return (T) value;
 	}
 }
