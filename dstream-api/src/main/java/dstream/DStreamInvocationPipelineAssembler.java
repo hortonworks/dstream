@@ -126,6 +126,7 @@ final class DStreamInvocationPipelineAssembler<T,R> {
 	 */
 	private Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		String operationName = method.getName();
+		
 		Object result;
 		if (this.streamOperationNames.contains(operationName)){
 			logger.info("Invoking OPERATION: " + operationName);
@@ -179,6 +180,9 @@ final class DStreamInvocationPipelineAssembler<T,R> {
 		}
 	}
 	
+	/**
+	 * 
+	 */
 	static class StreamNameMonitor {
 		private final static ThreadLocal<Set<String>> tl = ThreadLocal.withInitial(() -> new HashSet<String>());
 		

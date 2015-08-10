@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
-import dstream.function.PartitionerFunction;
+import dstream.function.GroupingFunction;
 import dstream.function.SerializableFunctionConverters.SerFunction;
 
 final class Task implements Serializable {
@@ -17,7 +17,7 @@ final class Task implements Serializable {
 
 	private final SerFunction<Stream<?>, Stream<?>> function;
 
-	private final PartitionerFunction<Object> partitioner;
+	private final GroupingFunction grouper;
 	
 	private final String name;
 	
@@ -30,10 +30,10 @@ final class Task implements Serializable {
 	 * @param partitioner
 	 * @param function
 	 */
-	private Task(int id, String name, PartitionerFunction<Object> partitioner, SerFunction<Stream<?>, Stream<?>> function){
+	private Task(int id, String name, GroupingFunction grouper, SerFunction<Stream<?>, Stream<?>> function){
 		this.id = id;
 		this.name = name;
-		this.partitioner = partitioner;
+		this.grouper = grouper;
 		this.function = function;
 	}
 	
@@ -44,7 +44,7 @@ final class Task implements Serializable {
 	 */
 	static Task build(TaskDescriptor taskDescriptor) {
 		SerFunction<Stream<?>, Stream<?>> taskFunction = adjustTaskFunction(taskDescriptor);
-		Task task = new Task(taskDescriptor.getId(), taskDescriptor.getName(), taskDescriptor.getPartitioner(), taskFunction);
+		Task task = new Task(taskDescriptor.getId(), taskDescriptor.getName(), taskDescriptor.getGrouper(), taskFunction);
 		return task;
 	}
 	
@@ -60,8 +60,8 @@ final class Task implements Serializable {
 	 * 
 	 * @return
 	 */
-	public PartitionerFunction<Object> getPartitioner() {
-		return partitioner;
+	public GroupingFunction getGrouper() {
+		return this.grouper;
 	}
 
 	/**

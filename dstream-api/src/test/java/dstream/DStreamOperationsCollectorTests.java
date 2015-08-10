@@ -159,9 +159,9 @@ public class DStreamOperationsCollectorTests {
 	}
 	
 	@Test
-	public void validatePartitioning() throws Exception {
+	public void validateGrouping() throws Exception {
 		DStream<Object> stream = DStream.ofType(Object.class, "validatePartitioning");
-		DStream<Object> partitioned = stream.partition();
+		DStream<Object> partitioned = stream.group(s -> s);
 		
 		Future<Stream<Stream<Object>>> resultFuture = partitioned.executeAs(this.streamName);
 		Stream<Stream<Object>> result = resultFuture.get(1000, TimeUnit.MILLISECONDS);
@@ -173,20 +173,22 @@ public class DStreamOperationsCollectorTests {
 
 		DStreamInvocationPipeline context = (DStreamInvocationPipeline) partitionStreams.get(0);
 		assertEquals(1, context.getInvocations().size());
-		assertEquals("partition", context.getInvocations().get(0).getMethod().getName());
+		assertEquals("group", context.getInvocations().get(0).getMethod().getName());
 	}
 	
 	@Test
-	public void validatePartitioningAfterJoin() throws Exception {
+	public void validateGroupingAfterJoin() throws Exception {
 		DStream<Object> streamA = DStream.ofType(Object.class, "validatePartitioningAfterJoin");
 		DStream<Object> streamB = streamA.filter(s -> true).map(s -> s).flatMap(s -> Stream.of(s));
 		
 		DStream<Tuple2<Object, Object>> joinedStream = streamA.join(streamB).on(s -> true).map(s -> s);
-		DStream<Entry<Tuple2<Object, Object>, Integer>> partitionedReduced = joinedStream.partition().reduceGroups(s -> s, s -> 1, (a,b) -> a);
+		DStream<Entry<Tuple2<Object, Object>, List<Integer>>> partitionedReduced = joinedStream
+				.group(s -> s)
+				.aggregateValues(s -> s, s -> 1);
 		
-		Future<Stream<Stream<Entry<Tuple2<Object, Object>, Integer>>>> resultFuture = partitionedReduced.executeAs(this.streamName);
-		Stream<Stream<Entry<Tuple2<Object, Object>, Integer>>> result = resultFuture.get(1000, TimeUnit.MILLISECONDS);
-		List<Stream<Entry<Tuple2<Object, Object>, Integer>>> resultStreams = result.collect(Collectors.toList());
+		Future<Stream<Stream<Entry<Tuple2<Object, Object>, List<Integer>>>>> resultFuture = partitionedReduced.executeAs(this.streamName);
+		Stream<Stream<Entry<Tuple2<Object, Object>, List<Integer>>>> result = resultFuture.get(1000, TimeUnit.MILLISECONDS);
+		List<Stream<Entry<Tuple2<Object, Object>, List<Integer>>>> resultStreams = result.collect(Collectors.toList());
 		assertEquals(1, resultStreams.size());
 		
 		List<Object> partitionStreams = resultStreams.get(0).collect(Collectors.toList());
@@ -197,7 +199,7 @@ public class DStreamOperationsCollectorTests {
 		assertEquals("join", context.getInvocations().get(0).getMethod().getName());
 		assertNotNull(context.getInvocations().get(0).getSupplementaryOperation());
 		assertEquals("map", context.getInvocations().get(1).getMethod().getName());
-		assertEquals("partition", context.getInvocations().get(2).getMethod().getName());
-		assertEquals("reduceGroups", context.getInvocations().get(3).getMethod().getName());
+		assertEquals("group", context.getInvocations().get(2).getMethod().getName());
+		assertEquals("aggregateValues", context.getInvocations().get(3).getMethod().getName());
 	}
 }

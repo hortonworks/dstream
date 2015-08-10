@@ -7,7 +7,6 @@ import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
 import dstream.DStream;
-import dstream.support.Aggregators;
 import dstream.utils.Tuples.Tuple2;
 
 /**
@@ -53,7 +52,7 @@ public class BasicTransformationAndShuffles {
 		public static void main(String... args) throws Exception {
 			Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DStream.ofType(String.class, "wc")
 					.flatMap(line -> Stream.of(line.split("\\s+")))
-					.reduceGroups(word -> word, word -> 1, Integer::sum)
+					.reduceValues(word -> word, word -> 1, Integer::sum)
 				.executeAs(EXECUTION_NAME);
 			
 			// each stream within a stream represents a partition essentially giving you access to each result partition
@@ -66,7 +65,7 @@ public class BasicTransformationAndShuffles {
 		public static void main(String... args) throws Exception {
 			Future<Stream<Stream<Entry<Integer, List<String>>>>> resultFuture = DStream.ofType(String.class, "wc")
 					.flatMap(line -> Stream.of(line.split("\\s+")))
-					.aggregateGroups(word -> word.length(), word -> word, Aggregators::aggregateFlatten)
+					.aggregateValues(word -> word.length(), word -> word)
 				.executeAs(EXECUTION_NAME);
 			
 			Stream<Stream<Entry<Integer, List<String>>>> resultPartitionsStream = resultFuture.get();
@@ -79,9 +78,9 @@ public class BasicTransformationAndShuffles {
 			Future<Stream<Stream<Entry<Integer, List<Tuple2<String, Integer>>>>>> resultFuture = DStream.ofType(String.class, "wc")
 					.flatMap(line -> Stream.of(line.split("\\s+")))
 					.filter(word -> word.length() > 4)
-					.reduceGroups(word -> word, word -> 1, Integer::sum)
+					.reduceValues(word -> word, word -> 1, Integer::sum)
 					.map(entry -> tuple2(entry.getKey(), entry.getValue()))
-					.aggregateGroups(s -> s._1().length(), s -> s, Aggregators::aggregateFlatten)
+					.aggregateValues(s -> s._1().length(), s -> s)
 				.executeAs(EXECUTION_NAME);
 			
 			// each stream within a stream represents a partition essentially giving you access to each result partition

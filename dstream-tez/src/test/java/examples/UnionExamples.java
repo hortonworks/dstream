@@ -74,7 +74,7 @@ public class UnionExamples {
 			Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = one
 					.union(two)
 					.map(line -> line.toUpperCase())
-					.reduceGroups(s -> s, s -> 1, Integer::sum)
+					.reduceValues(s -> s, s -> 1, Integer::sum)
 					.union(three.map(s -> KVUtils.kv(s.toUpperCase(), 1)))
 					.executeAs(EXECUTION_NAME);
 			

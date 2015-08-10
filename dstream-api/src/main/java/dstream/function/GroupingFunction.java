@@ -26,28 +26,28 @@ import dstream.utils.Assert;
  * @param <T> the type of the element that will be sent to a target partitioner
  * to determine partition id.
  */
-public abstract class PartitionerFunction<T> implements SerFunction<T, Integer> {
+public abstract class GroupingFunction implements SerFunction<Object, Integer> {
 	private static final long serialVersionUID = -250807397502312547L;
 	
-	private final int partitionSize;
+	private final int groupSize;
 	
-	private SerFunction<? super T, ?> classifier;
+	private SerFunction<Object, ?> classifier;
 
 	/**
 	 * Constructs this function.
 	 * 
 	 * @param partitionSize the size of partitions
 	 */
-	public PartitionerFunction(int partitionSize) {
-		Assert.isTrue(partitionSize > 0, "'partitionSize' must be > 0");
-		this.partitionSize = partitionSize;
+	public GroupingFunction(int groupSize) {
+		Assert.isTrue(groupSize > 0, "'groupSize' must be > 0");
+		this.groupSize = groupSize;
 	}
 
 	/**
 	 * @return the size of partitions
 	 */
-	public int getPartitionSize(){
-		return this.partitionSize;
+	public int getGroupSize(){
+		return this.groupSize;
 	}
 	
 	/**
@@ -56,7 +56,7 @@ public abstract class PartitionerFunction<T> implements SerFunction<T, Integer> 
 	 * 
 	 * @param classifier function to extract value used by a target partitioner.
 	 */
-	public void setClassifier(SerFunction<? super T, ?> classifier) {
+	public void setClassifier(SerFunction<Object, ?> classifier) {
 		this.classifier = classifier;
 	}
 	
@@ -66,7 +66,7 @@ public abstract class PartitionerFunction<T> implements SerFunction<T, Integer> 
 	 * 
 	 * @return function to extract value used by a target partitioner.
 	 */
-	public SerFunction<? super T, ?> getClassifier() {
+	public SerFunction<Object, ?> getClassifier() {
 		return this.classifier;
 	}
 	
@@ -75,6 +75,6 @@ public abstract class PartitionerFunction<T> implements SerFunction<T, Integer> 
 	 */
 	@Override
 	public String toString(){
-		return this.getClass().getSimpleName() + ":" + this.partitionSize;
+		return this.getClass().getSimpleName() + ":" + this.groupSize;
 	}
 }

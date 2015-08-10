@@ -57,7 +57,7 @@ public class ShuffleHelper {
 		if (v2 instanceof Entry){
 			aggregatedValues = (T) toMap(v1);
 			Entry<Object, Object> entry = (Entry<Object, Object>) v2;
-			((Map<Object, Object>)aggregatedValues).merge(entry.getKey(), entry.getValue(), Aggregators::aggregateFlatten);
+			((Map<Object, Object>)aggregatedValues).merge(entry.getKey(), entry.getValue(), Aggregators::aggregateToList);
 		}
 		else {
 			aggregatedValues = (T)toList(v1);

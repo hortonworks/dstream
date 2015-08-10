@@ -40,16 +40,16 @@ import dstream.DStreamInvocation;
 import dstream.DStreamInvocationPipeline;
 import dstream.function.BiFunctionToBinaryOperatorAdapter;
 import dstream.function.DStreamToStreamAdapterFunction;
-import dstream.function.HashPartitionerFunction;
+import dstream.function.GroupingFunction;
+import dstream.function.HashGroupingFunction;
 import dstream.function.KeyValueMappingFunction;
-import dstream.function.PartitionerFunction;
-import dstream.function.SerializableFunctionConverters.SerBiFunction;
 import dstream.function.SerializableFunctionConverters.SerBinaryOperator;
 import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.function.StreamJoinerFunction;
 import dstream.function.ValuesAggregatingFunction;
 import dstream.function.ValuesReducingFunction;
 import dstream.local.ri.ShuffleHelper.RefHolder;
+import dstream.support.Aggregators;
 import dstream.support.SourceSupplier;
 import dstream.utils.Assert;
 import dstream.utils.KVUtils;
@@ -67,7 +67,7 @@ public class ExecutableStreamBuilder {
 	
 	private final Properties executionConfig;
 	
-	private final PartitionerFunction<Object> partitioner;
+	private final GroupingFunction grouper;
 	
 	private Stream<?> sourceStream;
 	
@@ -77,7 +77,7 @@ public class ExecutableStreamBuilder {
 		this.executionName = executionName;
 		this.invocationPipeline = invocationPipeline;
 		this.executionConfig = executionConfig;
-		this.partitioner = this.determinePartitioner();
+		this.grouper = this.determineGrouper();
 		
 		this.sourceStream = this.createInitialStream();
 	}
@@ -104,13 +104,13 @@ public class ExecutableStreamBuilder {
 				if (operationName.equals("reduceGroups") || operationName.equals("aggregateGroups")){	
 					SerFunction keyMapper = (SerFunction) invocation.getArguments()[0];
 					SerFunction valueMapper = (SerFunction) invocation.getArguments()[1];
-					SerBinaryOperator reducer = operationName.equals("reduceGroups") 
+					SerBinaryOperator aggregator = operationName.equals("reduceGroups") 
 							? (SerBinaryOperator) invocation.getArguments()[2]
-									: new BiFunctionToBinaryOperatorAdapter((SerBiFunction)invocation.getArguments()[2]);
-											
+									: new BiFunctionToBinaryOperatorAdapter(Aggregators::aggregateToList);
+							
 					ValuesReducingFunction<Object, Object, Object> aggregatingFunction = operationName.equals("reduceGroups") 
-							? new ValuesReducingFunction<>(reducer)
-									: new ValuesAggregatingFunction<>(reducer);							
+							? new ValuesReducingFunction<>(aggregator)
+									: new ValuesAggregatingFunction<>(aggregator);							
 					KeyValueMappingFunction keyValueMappingFunction = new KeyValueMappingFunction<>(keyMapper, valueMapper);
 					
 					Stream<Entry<Object, Object>> keyValuesStream = keyValueMappingFunction.apply(this.sourceStream);
@@ -236,7 +236,7 @@ public class ExecutableStreamBuilder {
 		
 		// Partitions elements
 		Stream<Tuple2<Integer, Object>> partitionedStream = streamToShuffle
-			.map(element -> tuple2(this.partitioner.apply(element), element)); 
+			.map(element -> tuple2(this.grouper.apply(element), element)); 
 
 		/*
 		 * Groups elements for each partition using ShuffleHelper
@@ -283,15 +283,15 @@ public class ExecutableStreamBuilder {
 	/**
 	 * 
 	 */
-	private PartitionerFunction<Object> determinePartitioner(){
+	private GroupingFunction determineGrouper(){
 		String parallelizmProp = this.executionConfig.getProperty(DStreamConstants.PARALLELISM);
-		String partitionerProp = this.executionConfig.getProperty(DStreamConstants.PARTITIONER);
+		String partitionerProp = this.executionConfig.getProperty(DStreamConstants.GROUPER);
 		
 		int parallelism = parallelizmProp == null ? 1 : Integer.parseInt(parallelizmProp);
 	
 		return partitionerProp != null 
 				? ReflectionUtils.newInstance(partitionerProp, new Class[]{int.class}, new Object[]{parallelism}) 
-						: new HashPartitionerFunction<>(parallelism);
+						: new HashGroupingFunction(parallelism);
 	}
 	
 	/**

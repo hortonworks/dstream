@@ -23,6 +23,7 @@ import dstream.DStream.DStream2.DStream2WithPredicate;
 import dstream.DStream.DStream3.DStream3WithPredicate;
 import dstream.DStream.DStream4.DStream4WithPredicate;
 import dstream.DStream.DStream5.DStream5WithPredicate;
+import dstream.DStream.DStream6.DStream6WithPredicate;
 import dstream.function.SerializableFunctionConverters.SerPredicate;
 import dstream.utils.Assert;
 
@@ -63,7 +64,7 @@ import dstream.utils.Assert;
  *    </li>
  * <ol>
  * <br>
- * @param <A> the type of the stream elements
+ * @param <A> the type of the stream element
  */
 public interface DStream<A> extends BaseDStream<A, DStream<A>> {
 		
@@ -152,6 +153,22 @@ public interface DStream<A> extends BaseDStream<A, DStream<A>> {
 	 */
 	<_A,_B,_C,_D> DStream5WithPredicate<A,_A,_B,_C,_D> join(DStream4<_A,_B,_C,_D> ds);
 	
+	/**
+	 * Will join {@link DStream} with {@link DStream5} returning an instance of {@link DStream6}. 
+	 * <br>
+	 * The actual instance of returned {@link DStream6} will be {@link DStream6WithPredicate}
+	 * allowing predicate to be provided via {@link DStream6WithPredicate#on(SerPredicate)} operation.<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
+	 * <br>
+	 * This is a <i>composable-shuffle</i> operation.
+	 * 
+	 * @param <_A,_B,_C,_D,_E> the type of the {@link DStream5} elements that are joined with this stream
+	 * @param ds stream that is joined with this stream
+	 * @return new {@link DStream6&lt;A,_A,_B,_C,_D,_E&gt;} representing the result of the join.
+	 */
+	<_A,_B,_C,_D,_E> DStream6WithPredicate<A,_A,_B,_C,_D,_E> join(DStream5<_A,_B,_C,_D,_E> ds);
+	
 	
 	/**
 	 * Strategy which defines the type of {@link DStream} that contains two types of elements.
@@ -218,6 +235,22 @@ public interface DStream<A> extends BaseDStream<A, DStream<A>> {
 		 * @return new {@link DStream5&lt;A,B,_A,_B,_C&gt;} representing the result of the join.
 		 */
 		<_A,_B,_C> DStream5WithPredicate<A,B,_A,_B,_C> join(DStream3<_A,_B,_C> ds);
+		
+		/**
+		 * Will join {@link DStream2} with {@link DStream4} returning an instance of {@link DStream6}. 
+		 * <br>
+		 * The actual instance of returned {@link DStream6} will be {@link DStream6WithPredicate}
+		 * allowing predicate to be provided via {@link DStream6WithPredicate#on(SerPredicate)} operation.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * <br>
+		 * This is a <i>composable-shuffle</i> operation.
+		 * 
+		 * @param <_A,_B,_C,_D> the type of the {@link DStream4} elements that are joined with this stream
+		 * @param ds stream that is joined with this stream
+		 * @return new {@link DStream6&lt;A,B,_A,_B,_C,_D&gt;} representing the result of the join.
+		 */
+		<_A,_B,_C,_D> DStream6WithPredicate<A,B,_A,_B,_C,_D> join(DStream4<_A,_B,_C,_D> ds);
 	}
 	
 	/**
@@ -271,6 +304,22 @@ public interface DStream<A> extends BaseDStream<A, DStream<A>> {
 		 * @return new {@link DStream5&lt;A,B,C,_A,_B&gt;} representing the result of the join.
 		 */
 		<_A,_B> DStream5WithPredicate<A,B,C,_A,_B> join(DStream2<_A,_B> ds);
+		
+		/**
+		 * Will join {@link DStream3} with {@link DStream3} returning an instance of {@link DStream6}. 
+		 * <br>
+		 * The actual instance of returned {@link DStream6} will be {@link DStream6WithPredicate}
+		 * allowing predicate to be provided via {@link DStream6WithPredicate#on(SerPredicate)} operation.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * <br>
+		 * This is a <i>composable-shuffle</i> operation.
+		 * 
+		 * @param <_A,_B,_C> the type of the {@link DStream3} elements that are joined with this stream.
+		 * @param ds stream that is joined with this stream
+		 * @return new {@link DStream6&lt;A,B,C,_A,_B,_C&gt;} representing the result of the join.
+		 */
+		<_A,_B,_C> DStream6WithPredicate<A,B,C,_A,_B,_C> join(DStream3<_A,_B,_C> ds);
 	}
 	
 	/**
@@ -279,7 +328,7 @@ public interface DStream<A> extends BaseDStream<A, DStream<A>> {
 	 * @param <A> - first element type
 	 * @param <B> - second element type
 	 * @param <C> - third element type
-	 * @param <D> - third element type
+	 * @param <D> - fourth element type
 	 */
 	interface DStream4<A,B,C,D> extends BaseDStream<dstream.utils.Tuples.Tuple4<A,B,C,D>, DStream4<A,B,C,D>> {
 	
@@ -289,7 +338,7 @@ public interface DStream<A> extends BaseDStream<A, DStream<A>> {
 		 * @param <A> - first element type
 		 * @param <B> - second element type
 		 * @param <C> - third element type
-		 * @param <D> - third element type
+		 * @param <D> - fourth element type
 		 */
 		interface DStream4WithPredicate<A,B,C,D> extends DStream4<A,B,C,D>{
 			DStream4<A,B,C,D> on(SerPredicate<? super dstream.utils.Tuples.Tuple4<A,B,C,D>> predicate);	
@@ -305,11 +354,27 @@ public interface DStream<A> extends BaseDStream<A, DStream<A>> {
 		 * <br>
 		 * This is a <i>composable-shuffle</i> operation.
 		 * 
-		 * @param <_A,_B> the type of the {@link DStream} element that is joined with this stream.
+		 * @param <_A> the type of the {@link DStream} element that is joined with this stream.
 		 * @param ds stream that is joined with this stream
-		 * @return new {@link DStream5&lt;A,B,C,_A,_B&gt;} representing the result of the join.
+		 * @return new {@link DStream5&lt;A,B,C,D,_A&gt;} representing the result of the join.
 		 */
 		<_A> DStream5WithPredicate<A,B,C,D,_A> join(DStream<_A> ds);
+		
+		/**
+		 * Will join {@link DStream4} with {@link DStream2} returning an instance of {@link DStream6}. 
+		 * <br>
+		 * The actual instance of returned {@link DStream6} will be {@link DStream6WithPredicate}
+		 * allowing predicate to be provided via {@link DStream6WithPredicate#on(SerPredicate)} operation.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * <br>
+		 * This is a <i>composable-shuffle</i> operation.
+		 * 
+		 * @param <_A,_B> the type of the {@link DStream} element that is joined with this stream.
+		 * @param ds stream that is joined with this stream
+		 * @return new {@link DStream6&lt;A,B,C,D,_A,_B&gt;} representing the result of the join.
+		 */
+		<_A,_B> DStream6WithPredicate<A,B,C,D,_A,_B> join(DStream2<_A,_B> ds);
 	}
 	
 	/**
@@ -318,8 +383,8 @@ public interface DStream<A> extends BaseDStream<A, DStream<A>> {
 	 * @param <A> - first element type
 	 * @param <B> - second element type
 	 * @param <C> - third element type
-	 * @param <D> - third element type
-	 * @param <E> - third element type
+	 * @param <D> - fourth element type
+	 * @param <E> - fifth element type
 	 */
 	interface DStream5<A,B,C,D,E> extends BaseDStream<dstream.utils.Tuples.Tuple5<A,B,C,D,E>, DStream5<A,B,C,D,E>> {
 		/**
@@ -328,11 +393,55 @@ public interface DStream<A> extends BaseDStream<A, DStream<A>> {
 		 * @param <A> - first element type
 		 * @param <B> - second element type
 		 * @param <C> - third element type
-		 * @param <D> - third element type
-		 * @param <E> - third element type
+		 * @param <D> - fourth element type
+		 * @param <E> - fifth element type
 		 */
 		interface DStream5WithPredicate<A,B,C,D,E> extends DStream5<A,B,C,D,E>{
 			DStream5<A,B,C,D,E> on(SerPredicate<? super dstream.utils.Tuples.Tuple5<A,B,C,D,E>> predicate);	
+		}
+		
+		/**
+		 * Will join {@link DStream5} with {@link DStream} returning an instance of {@link DStream6}. 
+		 * <br>
+		 * The actual instance of returned {@link DStream6} will be {@link DStream6WithPredicate}
+		 * allowing predicate to be provided via {@link DStream6WithPredicate#on(SerPredicate)} operation.<br>
+		 * <br>
+		 * This is an <i>intermediate</i> operation.
+		 * <br>
+		 * This is a <i>composable-shuffle</i> operation.
+		 * 
+		 * @param <_A> the type of the {@link DStream} element that is joined with this stream.
+		 * @param ds stream that is joined with this stream
+		 * @return new {@link DStream6&lt;A,B,C,D,E,_A&gt;} representing the result of the join.
+		 */
+		<_A> DStream6WithPredicate<A,B,C,D,E,_A> join(DStream<_A> ds);
+	}
+	
+	/**
+	 * Strategy which defines the type of {@link DStream} that contains six
+	 * types of elements.
+	 * 
+	 * @param <A> - first element type
+	 * @param <B> - second element type
+	 * @param <C> - third element type
+	 * @param <D> - fourth element type
+	 * @param <E> - fifth element type
+	 * @param <F> - sixth element type
+	 */
+	interface DStream6<A,B,C,D,E,F> extends BaseDStream<dstream.utils.Tuples.Tuple6<A,B,C,D,E,F>, DStream6<A,B,C,D,E,F>> {
+		
+		/**
+		 * Strategy which defines the type of {@link DStream5} that allows for predicate to be applied.
+		 * 
+		 * @param <A> - first element type
+		 * @param <B> - second element type
+		 * @param <C> - third element type
+		 * @param <D> - fourth element type
+		 * @param <E> - fifth element type
+		 * @param <F> - sixth element type
+		 */
+		interface DStream6WithPredicate<A,B,C,D,E,F> extends DStream6<A,B,C,D,E,F>{
+			DStream6<A,B,C,D,E,F> on(SerPredicate<? super dstream.utils.Tuples.Tuple6<A,B,C,D,E,F>> predicate);	
 		}
 	}
 }
