@@ -47,6 +47,12 @@ public final class DStreamInvocationPipeline {
 		this.streamType = streamType;
 	}
 	
+	@Override
+	public String toString(){
+		return "SOURCE_ID:" + sourceIdentifier + 
+				", INVOCATIONS:" + invocations;
+	}
+	
 	/**
 	 * 
 	 * @return
@@ -93,5 +99,16 @@ public final class DStreamInvocationPipeline {
 	 */
 	protected void addAllInvocations(List<DStreamInvocation> invocations){
 		this.invocations.addAll(invocations);
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	protected DStreamInvocation getLastInvocation(){
+		if (this.invocations.size() == 0){
+			return null;
+		}
+		return this.invocations.get(this.invocations.size()-1);
 	}
 }

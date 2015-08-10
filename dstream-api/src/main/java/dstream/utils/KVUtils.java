@@ -44,7 +44,7 @@ public class KVUtils {
 	 * @param <K> - key type
 	 * @param <V> - value type
 	 */
-	static class SerializableEntry<K,V> implements Entry<K, V>, Serializable {
+	static class SerializableEntry<K,V> implements Entry<K, V>, Serializable, Comparable<Entry<K, V>>{
 		private static final long serialVersionUID = 6756792191753240475L;
 
 		private final K key;
@@ -111,5 +111,14 @@ public class KVUtils {
 			} 
 			return false;
 	    }
+
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		@Override
+		public int compareTo(Entry<K, V> that) {
+			Assert.isTrue(this.getKey() instanceof Comparable && that.getKey() instanceof Comparable, 
+					"Failed to compare Entries since one or both of their keys are not Comparable. this:='" 
+							+ this.getKey() + "', that:='" + that.getKey() + "'");
+			return ((Comparable)this.getKey()).compareTo((Comparable)that.getKey());
+		}
 	}
 }

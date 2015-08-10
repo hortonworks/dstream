@@ -94,7 +94,6 @@ final class DStreamInvocationPipelineBuilder<T,R> {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private R cloneTargetDistributable(Method method, Object[] arguments){
 		String operationName = method.getName();
-
 		if (operationName.equals("join") || operationName.startsWith("union")){
 			StreamInvocationChainSupplier s =  (StreamInvocationChainSupplier) arguments[0];
 			arguments = new Object[]{s.get()};
@@ -103,7 +102,12 @@ final class DStreamInvocationPipelineBuilder<T,R> {
 		DStreamInvocationPipelineBuilder clonedDistributable = new DStreamInvocationPipelineBuilder(this.invocatioinPipeline.getSourceElementType(), this.invocatioinPipeline.getSourceIdentifier(), 
 				method.getReturnType().isInterface() ? method.getReturnType() : this.currentStreamType);	
 		clonedDistributable.invocatioinPipeline.addAllInvocations(this.invocatioinPipeline.getInvocations());	
-		clonedDistributable.invocatioinPipeline.addInvocation(new DStreamInvocation(method, arguments));
+		if (operationName.equals("on")){
+			clonedDistributable.invocatioinPipeline.getLastInvocation().setSupplementaryOperation(arguments[0]);
+		}
+		else {
+			clonedDistributable.invocatioinPipeline.addInvocation(new DStreamInvocation(method, arguments));
+		}
 		return (R) clonedDistributable.targetStream;
 	}
 	
@@ -117,6 +121,9 @@ final class DStreamInvocationPipelineBuilder<T,R> {
 		return (R) Proxy.newProxyInstance(this.getClass().getClassLoader(), interfaces.toArray(new Class[]{}), new StreamInvocationHandler());
 	}
 	
+	/**
+	 * 
+	 */
 	@SuppressWarnings("unchecked")
 	private Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		String operationName = method.getName();

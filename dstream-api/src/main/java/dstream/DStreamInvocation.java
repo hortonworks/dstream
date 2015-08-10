@@ -18,6 +18,7 @@
 package dstream;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 /**
  * A representation of an invocation of a {@link DStream} operation.<br>
  * Holds to a {@link Method} and arguments of the actual invocation.
@@ -27,6 +28,8 @@ public final class DStreamInvocation {
 	private final Method method;
 
 	private final Object[] arguments;
+	
+	private Object supplementaryOperation;
 
 	/**
 	 * Constructs this invocation.
@@ -53,5 +56,31 @@ public final class DStreamInvocation {
 	 */
 	public Object[] getArguments() {
 		return arguments;
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public <T> T getSupplementaryOperation(){
+		return (T) this.supplementaryOperation;
+	}
+	
+	/**
+	 * 
+	 * @param operation
+	 */
+	protected void setSupplementaryOperation(Object supplementaryOperation) {
+		this.supplementaryOperation = supplementaryOperation;
+	}
+	
+	/**
+	 * 
+	 */
+	@Override
+	public String toString(){
+		return "{OP:" + this.method.getName() + ", ARG:" + 
+				Arrays.asList(this.arguments) + ", SUP:" + this.supplementaryOperation + "}";
 	}
 }

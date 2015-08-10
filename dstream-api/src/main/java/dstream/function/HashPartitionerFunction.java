@@ -44,7 +44,7 @@ public class HashPartitionerFunction<T> extends PartitionerFunction<T> {
 		if (this.getClassifier() != null){
 			hashValue = this.getClassifier().apply(input);
 		}
-		int ret = (hashValue.hashCode() & Integer.MAX_VALUE) % this.getPartitionSize();
-		return ret;
+		int partitionId = (hashValue.hashCode() & Integer.MAX_VALUE) % this.getPartitionSize();
+		return partitionId;
 	}
 }
