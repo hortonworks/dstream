@@ -64,7 +64,7 @@ public class StreamAPIJoinTests extends BaseTezTests {
 		DStream<String> probe = DStream.ofType(String.class, "probe").map(line -> {
 					String[] split = line.trim().split("\\s+");
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
-	    }).reduceGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b)
+	    }).reduceValues(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b)
 	      .map(entry -> entry.toString());
 		
 		SerPredicate<Tuple2<String, String>> p =  tuple2 -> Integer.parseInt(tuple2._1().substring(0, tuple2._1().indexOf(" ")).trim()) == Integer.parseInt(tuple2._2().split("=")[0].trim());
@@ -94,7 +94,7 @@ public class StreamAPIJoinTests extends BaseTezTests {
 		DStream<Entry<Integer, String>> probe = DStream.ofType(String.class, "probe").map(line -> {
 					String[] split = line.trim().split("\\s+");
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
-	    }).reduceGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
+	    }).reduceValues(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
 
 		SerPredicate<Tuple2<String, Entry<Integer, String>>> p =  tuple2 -> Integer.parseInt(tuple2._1().substring(0, tuple2._1().indexOf(" ")).trim()) == tuple2._2().getKey();
 		
@@ -125,7 +125,7 @@ public class StreamAPIJoinTests extends BaseTezTests {
 		DStream<Entry<Integer, String>> probe = DStream.ofType(String.class, "probe").map(line -> {
 					String[] split = line.trim().split("\\s+");
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
-	    }).reduceGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
+	    }).reduceValues(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
 
 		SerPredicate<Tuple2<Entry<Integer, String>, Entry<Integer, String>>> p =  tuple2 -> tuple2._1().getKey() == tuple2._2().getKey();
 		
@@ -156,7 +156,7 @@ public class StreamAPIJoinTests extends BaseTezTests {
 		DStream<Entry<Integer, String>> probe = DStream.ofType(String.class, "probe").map(line -> {
 					String[] split = line.trim().split("\\s+");
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
-	    }).reduceGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b);
+	    }).reduceValues(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a.concat(", " + b));
 
 		Future<Stream<Stream<Entry<Integer, Tuple2<String, String>>>>> resultFuture = hash
 			.join(probe)
@@ -193,7 +193,7 @@ public class StreamAPIJoinTests extends BaseTezTests {
 		DStream<String> probe = probeStream.map(line -> {
 					String[] split = line.trim().split("\\s+");
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
-	    }).reduceGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b)
+	    }).reduceValues(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b)
 	      .map(entry -> entry.toString());
 
 		Future<Stream<Stream<Tuple3<String, String, Tuple2<String, Integer>>>>> resultFuture = hash
@@ -232,7 +232,7 @@ public class StreamAPIJoinTests extends BaseTezTests {
 		DStream<String> probe = probeStream.map(line -> {
 					String[] split = line.trim().split("\\s+");
 					return kv(Integer.parseInt(split[2]), split[0] + " " + split[1]);
-	    }).reduceGroups(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b)
+	    }).reduceValues(keyVal -> keyVal.getKey(), keyVal -> keyVal.getValue(), (a, b) -> a + ", " + b)
 	      .map(entry -> entry.toString());
 
 		Future<Stream<Stream<Tuple3<String, String, Tuple2<String, Integer>>>>> resultFuture = hash

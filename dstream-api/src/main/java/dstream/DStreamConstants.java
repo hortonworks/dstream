@@ -19,6 +19,8 @@ package dstream;
 
 import java.net.URI;
 
+import dstream.function.GroupingFunction;
+
 /**
  * Constant values used by the framework 
  */
@@ -51,7 +53,10 @@ public interface DStreamConstants {
 	 */
 	public static String PARALLELISM = DSTR_PREFIX + "parallelism";
 	
-	public static String PARTITIONER = DSTR_PREFIX + "patitioner";
+	/**
+	 * Identifies the implementation of the {@link GroupingFunction} (e.g., <i>dstream.grouper=dstream.function.</i>)<br>
+	 */
+	public static String GROUPER = DSTR_PREFIX + "grouper";
 	
 	/**
 	 * {@link #STAGE} related configuration.<br>

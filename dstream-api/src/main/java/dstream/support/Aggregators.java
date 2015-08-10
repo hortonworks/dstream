@@ -22,34 +22,12 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 import dstream.function.SerializableFunctionConverters.SerBinaryOperator;
-import dstream.utils.Assert;
 
 /**
  * Strategy which provides implementations of common aggregation functionality 
  *
  */
 public abstract class Aggregators {
-	
-	/**
-	 * Aggregation operation which collects single (non-{@link List}) values into a {@link List}.<br>
-	 * If left value (v1) is not {@link List}, the new (accumulating) {@link List} will be created and 
-	 * left value added to it, otherwise left value is treated as accumulating {@link List}.
-	 * The right value (v2) is then added to the accumulating list following this rule:<br>
-	 * If right value (v2) is of type {@link List} the {@link IllegalArgumentException} is thrown, otherwise the 
-	 * value is added to the accumulating list<br>
-	 * <br>
-	 * It could be used as {@link BiFunction} or {@link SerBinaryOperator} (e.g., Aggregators::aggregateSingleObjects)
-	 * 
-	 * @param v1 first value which on each subsequent invocation is of type {@link List}
-	 * @param v2 second value which must not be of type {@link List}
-	 * @return aggregated values as {@link List}
-	 */
-	public static <T> List<T> aggregateSingleObjects(Object v1, T v2) {
-		Assert.isFalse(v2 instanceof List, "'v2' must not be a List when using this operation");
-		List<T> aggregatedValues = toList(v1);
-		aggregatedValues.add(v2);
-		return aggregatedValues;
-	}
 	
 	/**
 	 * Aggregation operation which collects values into a {@link List}.<br>
@@ -68,15 +46,9 @@ public abstract class Aggregators {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> List<T> aggregateFlatten(Object v1, T v2) {
+	public static <T> List<T> aggregateToList(Object v1, T v2) {
 		List<Object> aggregatedValues = toList(v1);
-		if (v2 instanceof List){
-//			aggregatedValues.addAll((List<T>)v2);
-			throw new IllegalStateException("foooooo");
-		}
-		else {
-			aggregatedValues.add(v2);
-		}
+		aggregatedValues.add(v2);
 		return (List<T>) aggregatedValues;
 	}
 	

@@ -17,16 +17,26 @@
  */
 package dstream.support;
 
-import dstream.utils.Tuples.Tuple;
-import dstream.utils.Tuples.Tuple6;
+import static org.junit.Assert.assertEquals;
 
-public interface Tuple7<A,B,C,D,E,F,G> extends Tuple6<A, B, C, D, E, F> {
-	@SuppressWarnings("unchecked")
-	public static <A,B,C,D,E,F,G> Tuple7<A,B,C,D,E,F,G> tuple7(A _1, B _2, C _3, D _4, E _5, F _6, G _7) {
-		return (Tuple7<A,B,C,D,E,F,G>) new Tuple(_1, _2, _3, _4, _5, _6, _7);
+import org.junit.Test;
+
+import dstream.function.HashGroupingFunction;
+
+public class HashGroupingTests {
+
+	@Test(expected=IllegalStateException.class)
+	public void failWithLessThenOnePartitionSize(){
+		new HashGroupingFunction(0);
 	}
 	
-	default A _7() {
-		return ((Tuple)this).get(6);
+	@Test
+	public void validateHashGrouper(){
+		HashGroupingFunction hp = new HashGroupingFunction(4);
+		assertEquals(4, hp.getGroupSize());
+		assertEquals((Integer)1, hp.apply("a"));
+		assertEquals((Integer)2, hp.apply("b"));
+		assertEquals((Integer)3, hp.apply("c"));
+		assertEquals((Integer)0, hp.apply("d"));
 	}
 }

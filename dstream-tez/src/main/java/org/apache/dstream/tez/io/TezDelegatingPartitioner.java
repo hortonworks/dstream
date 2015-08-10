@@ -2,13 +2,13 @@ package org.apache.dstream.tez.io;
 
 import org.apache.tez.runtime.library.partitioner.HashPartitioner;
 
-import dstream.function.PartitionerFunction;
+import dstream.function.GroupingFunction;
 
 public class TezDelegatingPartitioner extends HashPartitioner {
 	
-	private static PartitionerFunction<Object> delegatorPartitioner;
+	private static GroupingFunction delegatorPartitioner;
 	
-	public static void setDelegator(PartitionerFunction<Object> partitioner){
+	public static void setDelegator(GroupingFunction partitioner){
 		delegatorPartitioner = partitioner;
 	}
 

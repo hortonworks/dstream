@@ -56,7 +56,7 @@ public class KeyValueMappingFunctionTests {
 	@Test
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void validateKVMapperWithValuesGrouper(){	
-		KeyValueMappingFunction<String, String, Object> kvFunc = new KeyValueMappingFunction<String, String, Object>(s -> s, s -> 1, (SerBinaryOperator)Aggregators::aggregateFlatten);
+		KeyValueMappingFunction<String, String, Object> kvFunc = new KeyValueMappingFunction<String, String, Object>(s -> s, s -> 1, (SerBinaryOperator)Aggregators::aggregateToList);
 		List<Entry<String, Object>> result = kvFunc.apply(Stream.of("hello", "bye", "hello")).collect(Collectors.toList());
 		Assert.assertEquals(2, result.size());
 		

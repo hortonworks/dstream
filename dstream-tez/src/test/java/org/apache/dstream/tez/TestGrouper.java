@@ -2,12 +2,12 @@ package org.apache.dstream.tez;
 
 import java.io.File;
 
-import dstream.function.HashPartitionerFunction;
+import dstream.function.HashGroupingFunction;
 
-public class TestPartitioner extends HashPartitionerFunction<Object>{
+public class TestGrouper extends HashGroupingFunction{
 	private static final long serialVersionUID = -1677894725281384687L;
 	
-	public TestPartitioner(int partitionSize) {
+	public TestGrouper(int partitionSize) {
 		super(partitionSize);
 		try {
 			File file = new File("TestPartitioner");

@@ -119,7 +119,7 @@ class TaskDescriptorChainBuilder {
 		String operationName = invocation.getMethod().getName();
 		Object[] arguments = invocation.getArguments();
 
-		if (operationName.equals("reduceGroups")) {
+		if (operationName.equals("reduceValues")) {
 			TaskDescriptor currentTask = this.getCurrentTask();
 			String propertyName = DStreamConstants.MAP_SIDE_COMBINE + currentTask.getId() + "_" + currentTask.getName();
 			boolean mapSideCombine = Boolean.parseBoolean((String)this.executionConfig.getOrDefault(propertyName, "false"));
@@ -134,13 +134,13 @@ class TaskDescriptorChainBuilder {
 			this.taskChain.add(newTaskDescriptor);
 			newTaskDescriptor.compose(new ValuesReducingFunction((SerBinaryOperator)arguments[2]));
 		}
-		else if (operationName.equals("aggregateGroups")) {
+		else if (operationName.equals("aggregateValues")) {
 			TaskDescriptor currentTask = this.getCurrentTask();
 			String propertyName = DStreamConstants.MAP_SIDE_COMBINE + currentTask.getId() + "_" + currentTask.getName();
 			
 			SerBinaryOperator aggregator = arguments.length == 3 
 					? new BiFunctionToBinaryOperatorAdapter((SerBiFunction)arguments[2]) 
-						: Aggregators::aggregateFlatten;
+						: Aggregators::aggregateToList;
 					
 			boolean mapSideCombine = Boolean.parseBoolean((String)this.executionConfig.getOrDefault(propertyName, "false"));
 			
@@ -212,12 +212,12 @@ class TaskDescriptorChainBuilder {
 			int joiningStreamsSize = dependentInvocationChain.getStreamType().getTypeParameters().length;
 			joiner.addCheckPoint(joiningStreamsSize);
 		}
-		else if (operationName.equals("partition")) {
+		else if (operationName.equals("group")) {
 			this.taskChain.add(this.createTaskDescriptor(operationName));
 			this.getCurrentTask().andThen(stream -> KeyValuesNormalizer.normalize((Stream<Entry<Object, Iterator<Object>>>) stream));
 			if (invocation.getArguments().length == 1){
 				TaskDescriptor previousTaskDescriptor = this.getCurrentTask().getPreviousTaskDescriptor();
-				previousTaskDescriptor.getPartitioner().setClassifier((SerFunction<? super Object, ?>) invocation.getArguments()[0]);
+				previousTaskDescriptor.getGrouper().setClassifier((SerFunction<? super Object, ?>) invocation.getArguments()[0]);
 			}
 		}
 		else {
@@ -268,12 +268,12 @@ class TaskDescriptorChainBuilder {
 	 * 
 	 */
 	private boolean isShuffle(String operationName){
-		return operationName.equals("reduceGroups") ||
-			   operationName.equals("aggregateGroups") ||
+		return operationName.equals("aggregateValues") ||
+			   operationName.equals("reduceValues") ||
 			   operationName.equals("join") ||
 			   operationName.equals("union") ||
 			   operationName.equals("unionAll") ||
-			   operationName.equals("partition");
+			   operationName.equals("group");
 	}
 	
 	/**

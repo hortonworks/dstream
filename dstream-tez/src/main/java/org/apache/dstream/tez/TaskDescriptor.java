@@ -8,8 +8,8 @@ import java.util.stream.Stream;
 import org.apache.tez.dag.api.Vertex;
 
 import dstream.DStreamConstants;
-import dstream.function.HashPartitionerFunction;
-import dstream.function.PartitionerFunction;
+import dstream.function.GroupingFunction;
+import dstream.function.HashGroupingFunction;
 import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.function.SerializableFunctionConverters.SerSupplier;
 import dstream.utils.ReflectionUtils;
@@ -31,7 +31,7 @@ public class TaskDescriptor {
 	
 	private SerFunction<Stream<?>, Stream<?>> function;
 
-	private PartitionerFunction<Object> partitioner;
+	private GroupingFunction grouper;
 	
 	private int parallelism = 1;
 
@@ -68,15 +68,15 @@ public class TaskDescriptor {
 		this.operationName = operationName;
 		this.previousTaskDescriptor = previousTaskDescriptor;
 		String parallelizmProp = executionConfig.getProperty(DStreamConstants.PARALLELISM);
-		String partitionerProp = executionConfig.getProperty(DStreamConstants.PARTITIONER);
+		String grouperProp = executionConfig.getProperty(DStreamConstants.GROUPER);
 		
 		if (parallelizmProp != null){
 			this.parallelism = Integer.parseInt(parallelizmProp);
 		}
-		PartitionerFunction<Object> partitioner = partitionerProp != null 
-				? ReflectionUtils.newInstance(partitionerProp, new Class[]{int.class}, new Object[]{this.parallelism}) 
-						: new HashPartitionerFunction<>(this.parallelism);
-		this.setPartitioner(partitioner);
+		GroupingFunction grouper = grouperProp != null 
+				? ReflectionUtils.newInstance(grouperProp, new Class[]{int.class}, new Object[]{this.parallelism}) 
+						: new HashGroupingFunction(this.parallelism);
+		this.setGrouper(grouper);
 	}
 	
 	/**
@@ -158,8 +158,8 @@ public class TaskDescriptor {
 	 * 
 	 * @return
 	 */
-	public PartitionerFunction<Object> getPartitioner() {
-		return this.partitioner;
+	public GroupingFunction getGrouper() {
+		return this.grouper;
 	}
 	
 	/**
@@ -222,8 +222,8 @@ public class TaskDescriptor {
 	/**
 	 * 
 	 */
-	void setPartitioner(PartitionerFunction<Object> partitioner) {
-		this.partitioner = partitioner;
+	void setGrouper(GroupingFunction grouper) {
+		this.grouper = grouper;
 	}
 	
 	/**

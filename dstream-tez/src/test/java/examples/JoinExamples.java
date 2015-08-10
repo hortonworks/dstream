@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 import org.apache.dstream.tez.BaseTezTests;
 
 import dstream.DStream;
-import dstream.support.Aggregators;
 import dstream.utils.Tuples.Tuple2;
 
 public class JoinExamples {
@@ -71,7 +70,7 @@ public class JoinExamples {
 			
 			Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = hash
 					.join(probe).on(tuple2 -> tuple2._1().substring(0, 1).equals(tuple2._2().substring(tuple2._2().length()-1)))
-					.reduceGroups(s -> s._1(), s -> 1, Integer::sum)
+					.reduceValues(s -> s._1(), s -> 1, Integer::sum)
 					.executeAs(EXECUTION_NAME);
 			
 			Stream<Stream<Entry<String, Integer>>> result = resultFuture.get();
@@ -91,7 +90,7 @@ public class JoinExamples {
 			
 			Future<Stream<Stream<Entry<String, List<String>>>>> resultFuture = hash
 					.join(probe).on(tuple2 -> tuple2._1().substring(0, 1).equals(tuple2._2().substring(tuple2._2().length()-1)))
-					.aggregateGroups(s -> s._1(), s -> s._2(), Aggregators::aggregateFlatten)
+					.aggregateValues(s -> s._1(), s -> s._2())
 					.executeAs(EXECUTION_NAME);
 			
 			Stream<Stream<Entry<String, List<String>>>> result = resultFuture.get();

@@ -17,7 +17,7 @@ public class WordCount {
 	public static void main(String[] args) throws Exception {
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DStream.ofType(String.class, "wc")
 				.flatMap(line -> Stream.of(line.split("\\s+")))
-				.reduceGroups(word -> word, word -> 1, Integer::sum)
+				.reduceValues(word -> word, word -> 1, Integer::sum)
 			.executeAs("WordCount");
 		
 		// each stream within a stream represents a partition essentially giving you access to each result partition

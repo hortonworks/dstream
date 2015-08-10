@@ -68,7 +68,7 @@ public class ValuesReducingFunction<K,V,T> implements SerFunction<Stream<Entry<K
 	 */
 	@SuppressWarnings("unchecked")
 	protected Object buildValue(Stream<V> valuesStream){
-		return valuesStream.reduce((java.util.function.BinaryOperator<V>) this.reducer).get();
+		return valuesStream.reduce(this.reducer).get();
 	}
 
 	/**

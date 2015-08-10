@@ -38,11 +38,6 @@ public class StreamJoinerFunctionTests {
 	List<String> lc = Arrays.asList(new String[]{"C-foo", "C-bar", "C-baz", "C-abc"});
 	List<String> ld = Arrays.asList(new String[]{"D-foo", "D-bar", "D-baz", "D-abc"});
 	
-//	@BeforeClass
-//	public static void beforeClass(){
-//		TupleEnhancer.enhance();
-//	}
-	
 	@Test(expected=IllegalStateException.class)
 	public void failWithLessThenTwoStreams(){
 		Stream<Stream<?>> streams = Stream.of(la.stream());
@@ -202,30 +197,4 @@ public class StreamJoinerFunctionTests {
 		assertEquals("[[A-BAR, B-FOO], C-baz, D-baz, hello]", result.get(10));
 		assertEquals("[[A-BAZ, B-FOO], C-baz, D-bar, hello]", result.get(17));
 	}
-	
-//	@Test
-//	public void withDynamicTuple(){ // 7 way but only have 6
-//		Stream<String> le = Stream.of("E-foo", "E-bar");
-//		Stream<String> lf = Stream.of("F-foo");
-//		Stream<String> lg = Stream.of("G-foo", "G-bar");
-//		Stream<Stream<?>> streams = Stream.of(la.stream(), lb.stream(), lc.stream(), ld.stream(), le, lf, lg);
-//		
-//		StreamJoinerFunction joiner = new StreamJoinerFunction();
-//		
-//		Predicate<Tuple7<String, String, String, String, String, String, String>> p = tuple7 -> 
-//			tuple7._1().endsWith(tuple7._2().substring(1)) &&
-//			tuple7._2().endsWith(tuple7._3().substring(1)) &&
-//			tuple7._3().endsWith(tuple7._4().substring(1)) &&
-//			tuple7._4().endsWith(tuple7._5().substring(1)) &&
-//			tuple7._5().endsWith(tuple7._6().substring(1)) &&
-//			tuple7._6().endsWith(tuple7._7().substring(1));
-//			
-//		joiner.addCheckPoint(6);
-//		joiner.addTransformationOrPredicate("filter", p);
-//		
-//		Stream<?> mergedStream = joiner.apply(streams);
-//		List<String> result = mergedStream.map(s -> s.toString()).peek(System.out::println).collect(Collectors.toList());
-//		assertEquals(1, result.size());
-//		assertEquals("[A-foo, B-foo, C-foo, D-foo, E-foo, F-foo, G-foo]", result.get(0));
-//	}
 }

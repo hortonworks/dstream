@@ -18,12 +18,10 @@
 package dstream.function;
 
 /**
- * Implementation of the {@link PartitionerFunction} for hash based partitioning.
+ * Implementation of the {@link GroupingFunction} for hash based grouping (partitioning).
  *
- * @param <T> the type of the element that will be sent to a target partitioner
- * to determine partition id.
  */
-public class HashPartitionerFunction<T> extends PartitionerFunction<T> {
+public class HashGroupingFunction extends GroupingFunction {
 	private static final long serialVersionUID = -3799649258371438298L;
 	
 	/**
@@ -31,20 +29,20 @@ public class HashPartitionerFunction<T> extends PartitionerFunction<T> {
 	 * 
 	 * @param partitionSize the size of partitions
 	 */
-	public HashPartitionerFunction(int partitionSize){
-		super(partitionSize);
+	public HashGroupingFunction(int groupSize){
+		super(groupSize);
 	}
 
 	/**
 	 * 
 	 */
 	@Override
-	public Integer apply(T input) {
+	public Integer apply(Object input) {
 		Object hashValue = input;
 		if (this.getClassifier() != null){
 			hashValue = this.getClassifier().apply(input);
 		}
-		int partitionId = (hashValue.hashCode() & Integer.MAX_VALUE) % this.getPartitionSize();
-		return partitionId;
+		int groupId = (hashValue.hashCode() & Integer.MAX_VALUE) % this.getGroupSize();
+		return groupId;
 	}
 }

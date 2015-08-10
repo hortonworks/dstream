@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
-import dstream.function.PartitionerFunction;
-import dstream.function.SerializableFunctionConverters.SerBiFunction;
+import dstream.function.GroupingFunction;
+import dstream.function.HashGroupingFunction;
 import dstream.function.SerializableFunctionConverters.SerBinaryOperator;
 import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.function.SerializableFunctionConverters.SerPredicate;
@@ -93,33 +93,56 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
 	T filter(SerPredicate<? super A> predicate);
 	
 	/**
-	 * Returns an equivalent {@link DStream} that is partitioned. 
-	 * Typically used as a signal to a target execution environment to 
-	 * partition the stream using the entire value of each element of the stream.<br>
-	 * <br>
-	 * Partition size is configurable externally via {@link DStreamConstants#PARALLELISM}
-	 * property.<br>
-	 * Custom partitioner can also be provided as an instance of {@link PartitionerFunction}
-	 * via {@link DStreamConstants#PARTITIONER} property.<br>
-	 * <br>
-	 * This is an <i>intermediate</i> operation.
-	 * <br>
-	 * This is a <i>shuffle</i> operation.
+	 * Returns an equivalent {@link DStream} where elements are grouped
+	 * by a {@link GroupingFunction} on values provided by the given <i>classifier</i>.<br>
+	 * Default implementation of {@link GroupingFunction} is {@link HashGroupingFunction},
+	 * however specialized implementation could be configured via {@link DStreamConstants#GROUPER}
+	 * configuration property.<br>
+	 * For example:
+	 * <pre>
+	 * // Suppose you have a text file with the following contents:
+	 * foo bar foo bar foo
+	 * bar foo bar foo
 	 * 
-	 * @return new {@link DStream}
-	 */
-	T partition();
-	
-	/**
-	 * Returns an equivalent {@link DStream} that is partitioned. 
-	 * Typically used as a signal to a target execution environment to 
-	 * partition the stream using the value extracted by <i>classifier</i>
-	 * function.<br>
+	 * // Your pipeline
+	 * DStream.ofType(String.class, "wc")
+	 *     .flatMap(record -> Stream.of(record.split("\\s+")))
+	 *     .group(word -> word)
+	 * 
+	 * // Your GroupingFunction is configured as 'dstream.grouper=FooBarGrouper' 
+	 * // Its implementation looks like this:
+	 * 
+	 * class FooBarGrouper extends GroupingFunction {
+	 *     public Integer apply(Object input) {
+	 *         return input.equals("bar") ? 1 : 0;
+	 *     }
+	 * }
+	 * </pre>
+	 * The above would result in {@link DStream} which represent two groups:<br>
+	 * Group-1 - bar bar bar bar<br>
+	 * Group-2 - foo foo foo foo foo<br>
+	 * Even though it would look continuous to you 
+	 * (i.e., bar bar bar bar foo foo foo foo foo).<br>
 	 * <br>
-	 * Partition size is configurable externally via {@link DStreamConstants#PARALLELISM}
-	 * property.<br>
-	 * Custom partitioner can also be provided as an instance of {@link PartitionerFunction}
-	 * via {@link DStreamConstants#PARTITIONER} property.<br>
+	 * In the "distributable" reality, this often implies data <i>partitioning</i>, since 
+	 * {@link GroupingFunction} is compliant with the general semantics of partitioners
+	 * by returning an {@link Integer} representing the partition ID.<br>
+	 * <br>
+	 * However, the actual <b><i>data partitioning</i></b> is the function of the system and 
+	 * exist primarily to facilitate greater parallelisation when it comes to actual data processing. 
+	 * <b><i>Data grouping</i></b> on the other hand, is the function of the application deriving its 
+	 * requirement from the use case at hand (e.g., group all 'foo's and 'bar's together).<br>
+	 * So, it is important to separate the two, since it is quite conceivable that to facilitate greater 
+	 * parallelisation in the truly distributed environment the groups
+	 * could be further partitioned (e.g., 2 groups into 8 partitions).<br>
+	 * <br>
+	 * Another configuration property relevant to this and every other <i>shuffle</i>-style operation
+	 * is {@link DStreamConstants#PARALLELISM} which allows you to provide a hint as to the level of
+	 * parallelisation you may want to accomplish and is typically sent as one of the constructor arguments
+	 * to the instance of {@link GroupingFunction}, but it could also be used by the target execution 
+	 * environment to configure its partitioner if the two concerns are different (i.e., partition
+	 * however many groups into the amount of partitions specified by the {@link DStreamConstants#PARALLELISM}
+	 * configuration property).<br>
 	 * <br>
 	 * This is an <i>intermediate</i> operation.
 	 * <br>
@@ -128,7 +151,7 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
 	 * @param classifier function to extract value used by a target partitioner.
 	 * @return
 	 */
-	T partition(SerFunction<? super A, ?> classifier);
+	T group(SerFunction<? super A, ?> classifier);
 	
 	/**
 	 * Returns a {@link DStream} consisting of the results of replacing each element of
@@ -181,8 +204,8 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
 	
 	/**
 	 * Returns a {@link DStream} of Key/Value pairs, where values mapped from the individual 
-	 * elements of this stream are grouped on the given <i>groupClassifier</i> (e.g., key) and reduced by the 
-	 * given <i>valueReducer</i>.<br>
+	 * elements of this stream are grouped on the given <i>groupClassifier</i> (e.g., key) and 
+	 * reduced by the given <i>valueReducer</i>.<br>
 	 * <br> 
 	 * This operation is similar to <i>Stream.collect(Collectors.toMap(Function, Function, BinaryOperator))</i>, 
 	 * yet it is not terminal.<br>
@@ -199,7 +222,7 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
      *                      values associated with the same key.
 	 * @return new {@link DStream} of Key/Value pairs represented as {@link Entry}&lt;K,V&gt;
 	 */
-	<K,V> DStream<Entry<K,V>> reduceGroups(SerFunction<? super A, ? extends K> groupClassifier, 
+	<K,V> DStream<Entry<K,V>> reduceValues(SerFunction<? super A, ? extends K> groupClassifier, 
 			SerFunction<? super A, ? extends V> valueMapper,
 			SerBinaryOperator<V> valueReducer);
 	
@@ -218,29 +241,7 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
 	 * @param valueMapper a mapping function to produce values
 	 * @return new {@link DStream} of Key/Value pairs represented as {@link Entry}&lt;K,List&lt;V&gt;&gt; 
 	 */
-	<K,V> DStream<Entry<K,List<V>>> aggregateGroups(SerFunction<? super A, ? extends K> groupClassifier, 
+	<K,V> DStream<Entry<K,List<V>>> aggregateValues(SerFunction<? super A, ? extends K> groupClassifier, 
 			SerFunction<? super A, ? extends V> valueMapper);
-	
-	/**
-	 * Returns a {@link DStream} of Key/Value pairs, where values mapped from the individual 
-	 * elements of this stream are grouped on the given <i>groupClassifier</i> (e.g., key) and 
-	 * aggregated into value of type F by the given <i>valueAggregator</i>.<br>
-	 * <br>
-	 * This is an <i>intermediate</i> operation.
-	 * <br>
-	 * This is a <i>shuffle</i> operation.
-	 * 
-	 * @param <K> The element type of the key
-	 * @param <V> The element type of the value
-	 * @param <F> The element type of the aggregated values.
-	 * @param groupClassifier a mapping function to produce keys
-	 * @param valueMapper a mapping function to produce values
-	 * @param valueAggregator an aggregate function, used to resolve collisions between
-     *                      values associated with the same key.
-	 * @return new {@link DStream} of Key/Value pairs represented as {@link Entry}&lt;K,F&gt; 
-	 */
-	<K,V,F> DStream<Entry<K,F>> aggregateGroups(SerFunction<? super A, ? extends K> groupClassifier, 
-			SerFunction<? super A, ? extends V> valueMapper,
-			SerBiFunction<?,V,F> valueAggregator);
 	
 }

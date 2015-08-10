@@ -1,7 +1,7 @@
 package org.apache.dstream.tez;
 
-import static org.junit.Assert.assertEquals;
 import static dstream.utils.KVUtils.kv;
+import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 import java.util.Map.Entry;
@@ -17,9 +17,8 @@ import org.junit.After;
 import org.junit.Test;
 
 import dstream.DStream;
-import dstream.support.Aggregators;
 
-public class AggregateGroupsTests extends BaseTezTests {
+public class AggregateValuesTests extends BaseTezTests {
 	
 	private final String applicationName = this.getClass().getSimpleName();
 	
@@ -34,7 +33,7 @@ public class AggregateGroupsTests extends BaseTezTests {
 		
 		Future<Stream<Stream<Entry<String, List<Integer>>>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))	
-				.aggregateGroups(s -> s, s -> 1)
+				.aggregateValues(s -> s, s -> 1)
 			 .executeAs(this.applicationName);
 		
 		Stream<Stream<Entry<String, List<Integer>>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
@@ -66,7 +65,7 @@ public class AggregateGroupsTests extends BaseTezTests {
 		
 		Future<Stream<Stream<Entry<String, List<Integer>>>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))	
-				.aggregateGroups(s -> s, s -> 1, Aggregators::aggregateFlatten)
+				.aggregateValues(s -> s, s -> 1)
 			 .executeAs(this.applicationName);
 		
 		Stream<Stream<Entry<String, List<Integer>>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
@@ -99,7 +98,7 @@ public class AggregateGroupsTests extends BaseTezTests {
 		Future<Stream<Stream<Entry<String, List<Integer>>>>> resultFuture = sourceStream
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.map(word -> kv(word, 1))
-				.aggregateGroups(s -> s.getKey(), s -> s.getValue(), Aggregators::aggregateFlatten)
+				.aggregateValues(s -> s.getKey(), s -> s.getValue())
 			 .executeAs(this.applicationName);
 		
 		Stream<Stream<Entry<String, List<Integer>>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
