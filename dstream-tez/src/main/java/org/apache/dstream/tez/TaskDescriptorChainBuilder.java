@@ -16,7 +16,6 @@ import dstream.function.KeyValueMappingFunction;
 import dstream.function.SerializableFunctionConverters.SerBiFunction;
 import dstream.function.SerializableFunctionConverters.SerBinaryOperator;
 import dstream.function.SerializableFunctionConverters.SerFunction;
-import dstream.function.SerializableFunctionConverters.SerPredicate;
 import dstream.function.StreamJoinerFunction;
 import dstream.function.StreamUnionFunction;
 import dstream.function.ValuesAggregatingFunction;
@@ -79,23 +78,14 @@ class TaskDescriptorChainBuilder {
 					this.processShuffleOperation(invocation);
 				}
 				else {
-					if (operationName.equals("on")){
-						SerFunction<?,?> f = this.getCurrentTask().getFunction();
-						StreamJoinerFunction joiner = (StreamJoinerFunction) f;
-						SerPredicate<?> p = (SerPredicate<?>) invocation.getArguments()[0];
-						joiner.addTransformationOrPredicate("filter", p);
-					}
-					else {
-						// Should never get here since checks will be performed in core. So, this is to complete IF statement only.
-						throw new UnsupportedOperationException(operationName);
-					}
+					// Should never get here since checks will be performed in core. So, this is to complete IF statement only.
+					throw new UnsupportedOperationException(operationName);
 				}
 			}
 		}
 		
 		return this.taskChain;
 	}
-	
 	
 	/**
 	 * 
@@ -190,6 +180,9 @@ class TaskDescriptorChainBuilder {
 			StreamJoinerFunction joiner = (StreamJoinerFunction) function;
 			int joiningStreamsSize = dependentInvocationChain.getStreamType().getTypeParameters().length;
 			joiner.addCheckPoint(joiningStreamsSize);
+			if (invocation.getSupplementaryOperation() != null){
+				joiner.addTransformationOrPredicate("filter", invocation.getSupplementaryOperation());
+			}
 		}
 		else if (operationName.startsWith("union")) {
 			DStreamInvocationPipeline dependentInvocationChain = (DStreamInvocationPipeline) arguments[0];

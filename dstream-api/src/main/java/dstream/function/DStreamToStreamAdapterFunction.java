@@ -69,7 +69,7 @@ public class DStreamToStreamAdapterFunction implements SerFunction<Stream<?>, St
 	public Stream<?> apply(Stream<?> streamIn) {
 		try {
 			Method m = supportedOperations.get(this.streamOperationName);
-			return (Stream<?>) m.invoke(streamIn, this.streamOperation);
+			return ((Stream<?>) m.invoke(streamIn, this.streamOperation));
 		} 
 		catch (Exception e) {
 			throw new IllegalStateException("Operation '" + this.streamOperationName + "' is not supported.", e);

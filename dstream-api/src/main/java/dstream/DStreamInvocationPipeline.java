@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * A sequence of {@link DStreamInvocation}s produced by the {@link DStreamInvocationPipelineBuilder}.
+ * A sequence of {@link DStreamInvocation}s produced by the {@link DStreamInvocationPipelineAssembler}.
  */
 public final class DStreamInvocationPipeline {
 
@@ -45,6 +45,12 @@ public final class DStreamInvocationPipeline {
 		this.sourceIdentifier = sourceIdentifier;
 		this.invocations = new ArrayList<>();
 		this.streamType = streamType;
+	}
+	
+	@Override
+	public String toString(){
+		return "SOURCE_ID:" + sourceIdentifier + 
+				", INVOCATIONS:" + invocations;
 	}
 	
 	/**
@@ -93,5 +99,16 @@ public final class DStreamInvocationPipeline {
 	 */
 	protected void addAllInvocations(List<DStreamInvocation> invocations){
 		this.invocations.addAll(invocations);
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	protected DStreamInvocation getLastInvocation(){
+		if (this.invocations.size() == 0){
+			return null;
+		}
+		return this.invocations.get(this.invocations.size()-1);
 	}
 }

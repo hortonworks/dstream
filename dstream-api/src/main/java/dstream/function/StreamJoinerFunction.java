@@ -54,6 +54,7 @@ public class StreamJoinerFunction extends AbstractMultiStreamProcessingFunction 
 	 */
 	@Override
 	public Stream<?> apply(Stream<Stream<?>> streams) {	
+//		System.out.println("JOINING!!!!!!!");
 		Assert.notNull(streams, "'streams' must not be null");
 		List<Stream<?>> streamsList = streams.map(this::preProcessStream).collect(Collectors.toList());
 		Assert.isTrue(streamsList.size() >= 2, "There must be 2+ streams available to perform join. Was " + streamsList.size());
@@ -101,6 +102,7 @@ public class StreamJoinerFunction extends AbstractMultiStreamProcessingFunction 
 					if (!cached){
 						joiningStreamCache.add(rVal);
 					}
+//					System.out.println("Joining " + lVal + " and " + rVal);
 					return this.mergeValues(lVal, rVal);
 				});
 			} catch (Exception e) {

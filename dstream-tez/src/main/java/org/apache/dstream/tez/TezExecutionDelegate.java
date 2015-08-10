@@ -25,7 +25,7 @@ import dstream.DStreamInvocationPipeline;
  * Implementation of {@link StreamExecutionDelegate} for Apache Tez.
  *
  */
-public class TezExecutionDelegate extends AbstractDStreamExecutionDelegate<DStreamInvocationPipeline> {
+public class TezExecutionDelegate extends AbstractDStreamExecutionDelegate {
 	
 	private final Logger logger = LoggerFactory.getLogger(TezExecutionDelegate.class);
 	

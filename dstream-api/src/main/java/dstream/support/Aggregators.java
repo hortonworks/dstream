@@ -71,7 +71,8 @@ public abstract class Aggregators {
 	public static <T> List<T> aggregateFlatten(Object v1, T v2) {
 		List<Object> aggregatedValues = toList(v1);
 		if (v2 instanceof List){
-			aggregatedValues.addAll((List<T>)v2);
+//			aggregatedValues.addAll((List<T>)v2);
+			throw new IllegalStateException("foooooo");
 		}
 		else {
 			aggregatedValues.add(v2);

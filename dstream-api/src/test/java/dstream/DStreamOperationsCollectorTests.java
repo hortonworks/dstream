@@ -18,6 +18,7 @@
 package dstream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.util.List;
 import java.util.Map.Entry;
@@ -126,8 +127,9 @@ public class DStreamOperationsCollectorTests {
 		assertEquals(1, partitionStreams.size());
 
 		DStreamInvocationPipeline context = (DStreamInvocationPipeline) partitionStreams.get(0);
-		assertEquals(2, context.getInvocations().size());
+		assertEquals(1, context.getInvocations().size());
 		assertEquals("join", context.getInvocations().get(0).getMethod().getName());
+		assertNotNull(context.getInvocations().get(0).getSupplementaryOperation());
 		
 		result.close();
 	}
@@ -148,10 +150,10 @@ public class DStreamOperationsCollectorTests {
 		assertEquals(1, partitionStreams.size());
 		
 		DStreamInvocationPipeline context = (DStreamInvocationPipeline) partitionStreams.get(0);
-		assertEquals(3, context.getInvocations().size());
+		assertEquals(2, context.getInvocations().size());
 		assertEquals("join", context.getInvocations().get(0).getMethod().getName());
-		assertEquals("on", context.getInvocations().get(1).getMethod().getName());
-		assertEquals("map", context.getInvocations().get(2).getMethod().getName());
+		assertEquals("map", context.getInvocations().get(1).getMethod().getName());
+		assertNotNull(context.getInvocations().get(0).getSupplementaryOperation());
 		
 		result.close();
 	}
@@ -191,11 +193,11 @@ public class DStreamOperationsCollectorTests {
 		assertEquals(1, partitionStreams.size());
 		
 		DStreamInvocationPipeline context = (DStreamInvocationPipeline) partitionStreams.get(0);
-		assertEquals(5, context.getInvocations().size());
+		assertEquals(4, context.getInvocations().size());
 		assertEquals("join", context.getInvocations().get(0).getMethod().getName());
-		assertEquals("on", context.getInvocations().get(1).getMethod().getName());
-		assertEquals("map", context.getInvocations().get(2).getMethod().getName());
-		assertEquals("partition", context.getInvocations().get(3).getMethod().getName());
-		assertEquals("reduceGroups", context.getInvocations().get(4).getMethod().getName());
+		assertNotNull(context.getInvocations().get(0).getSupplementaryOperation());
+		assertEquals("map", context.getInvocations().get(1).getMethod().getName());
+		assertEquals("partition", context.getInvocations().get(2).getMethod().getName());
+		assertEquals("reduceGroups", context.getInvocations().get(3).getMethod().getName());
 	}
 }

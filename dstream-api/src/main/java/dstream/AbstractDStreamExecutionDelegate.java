@@ -31,7 +31,7 @@ import java.util.stream.Stream;
  * 
  * @param <T>
  */
-public abstract class AbstractDStreamExecutionDelegate<T> implements DStreamExecutionDelegate<T> {
+public abstract class AbstractDStreamExecutionDelegate implements DStreamExecutionDelegate {
 	@Override
 	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, DStreamInvocationPipeline... invocationChains) {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
