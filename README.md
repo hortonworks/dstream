@@ -1,6 +1,6 @@
 ### Distributable Streams
 ==========
-> IMPORTANT: At the moment this is a Lab project with the primary goal of investigating the feasability of the approach.
+> IMPORTANT: At the moment this is a research project with the primary goal of investigating the feasability of the approach.
 
 _Java 8 Streams_ and _lambdas_ introduced several abstractions that greatly simplify data processing by exposing a set of well-known _collection 
 processing patterns_ (e.g., map, group, join etc.) together with _functional programming paradigms_. 
@@ -19,7 +19,7 @@ _**DistributableStream**_
 ```java
 Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DStream.ofType(String.class, "wc")
     .flatMap(line -> Stream.of(line.split("\\s+")))
-    .reduceGroups(word -> word, word -> 1, Integer::sum)
+    .reduceValues(word -> word, word -> 1, Integer::sum)
   .executeAs("WordCount");
 
 // each stream within a stream represents a partition essentially giving you access 
