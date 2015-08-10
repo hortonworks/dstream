@@ -10,7 +10,7 @@ and _**data distribution**_, allowing data processing applications to benefit fr
 [Streams API](http://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html) (in-memory processing, parallelization etc.), while 
 unobtrusively adding functionality **only** to address _**data distribution**_ concerns. 
 
-While this approach greatly simplifies design, development and testing of the data processing applications that may be dealing with distributed data, it also allows standard [Streams API](http://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html)to evolve naturally and in isolation.
+While this approach greatly simplifies design, development and testing of the data processing applications that may be dealing with distributed data, it also allows standard [Streams API](http://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html) to evolve naturally and in isolation. For more details please see the [Vision](https://github.com/hortonworks/dstream/wiki/Vision) document.
 
 
 The following code snippet shows a quintessential _WordCount_:
