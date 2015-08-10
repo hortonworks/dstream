@@ -85,7 +85,7 @@ public interface DStream<A> extends BaseDStream<A, DStream<A>> {
 	public static <A> DStream<A> ofType(Class<A> sourceElementType, String sourceIdentifier) {	
 		Assert.notNull(sourceElementType, "'sourceElementType' must not be null");
 		Assert.notEmpty(sourceIdentifier, "'sourceIdentifier' must not be null or empty");
-		return DStreamInvocationPipelineBuilder.as(sourceElementType, sourceIdentifier, DStream.class);
+		return DStreamInvocationPipelineAssembler.as(sourceElementType, sourceIdentifier, DStream.class);
 	}
 	
 	/**

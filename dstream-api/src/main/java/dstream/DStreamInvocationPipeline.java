@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * A sequence of {@link DStreamInvocation}s produced by the {@link DStreamInvocationPipelineBuilder}.
+ * A sequence of {@link DStreamInvocation}s produced by the {@link DStreamInvocationPipelineAssembler}.
  */
 public final class DStreamInvocationPipeline {
 

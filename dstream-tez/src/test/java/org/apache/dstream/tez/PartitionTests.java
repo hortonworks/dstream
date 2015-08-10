@@ -1,7 +1,6 @@
 package org.apache.dstream.tez;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -87,7 +86,7 @@ public class PartitionTests extends BaseTezTests {
 
 	@Test
 	public void partitionSetSizeAndPartitioner() throws Exception {	
-		assertFalse(new File("TestPartitioner").exists());
+		new File("TestPartitioner").delete();
 		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "partitionSetSizeAndPartitioner")
 				.partition()
 				.executeAs(this.applicationName + "-partitioner");
@@ -135,10 +134,6 @@ public class PartitionTests extends BaseTezTests {
 	
 	@Test
 	public void partitionAfterJoinSizeAndPartitioner() throws Exception {	
-//		assertFalse(new File("TestPartitioner").exists());
-		
-		
-		
 		DStream<String> s1 = DStream.ofType(String.class, "hash");
 		DStream<String> s2 = DStream.ofType(String.class, "probe");
 		
@@ -175,7 +170,6 @@ public class PartitionTests extends BaseTezTests {
 		assertEquals("[3 Hortonworks, Larry Ellison 1]=1", rValues.get(0));
 		
 		result.close();	
-//		assertTrue(new File("TestPartitioner").exists());
 	}
 	
 	

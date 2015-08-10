@@ -37,7 +37,7 @@ import dstream.utils.ReflectionUtils;
  * @param <T>
  * @param <R>
  */
-final class DStreamInvocationPipelineBuilder<T,R> {
+final class DStreamInvocationPipelineAssembler<T,R> {
 	
 	private final Logger logger  = Logger.getLogger(this.getClass().getName());
 
@@ -60,7 +60,7 @@ final class DStreamInvocationPipelineBuilder<T,R> {
 	static <T,R> R as(Class<T> sourceElementType, String sourceIdentifier, Class<R> streamType) {
 		StreamNameMonitor.add(sourceIdentifier);
 		@SuppressWarnings("unchecked")
-		DStreamInvocationPipelineBuilder<T,R> builder = new DStreamInvocationPipelineBuilder<T,R>(sourceElementType, sourceIdentifier, streamType);
+		DStreamInvocationPipelineAssembler<T,R> builder = new DStreamInvocationPipelineAssembler<T,R>(sourceElementType, sourceIdentifier, streamType);
 		return builder.targetStream;
 	}
 	
@@ -68,7 +68,7 @@ final class DStreamInvocationPipelineBuilder<T,R> {
 	 * 
 	 */
 	@SuppressWarnings("unchecked")
-	private DStreamInvocationPipelineBuilder(Class<?> sourceElementType, String sourceIdentifier, Class<R>... streamType) {
+	private DStreamInvocationPipelineAssembler(Class<?> sourceElementType, String sourceIdentifier, Class<R>... streamType) {
 		
 		this.currentStreamType = streamType[0];
 		this.targetStream =  this.generateStreamProxy(streamType);
@@ -99,7 +99,7 @@ final class DStreamInvocationPipelineBuilder<T,R> {
 			arguments = new Object[]{s.get()};
 		}
 
-		DStreamInvocationPipelineBuilder clonedDistributable = new DStreamInvocationPipelineBuilder(this.invocatioinPipeline.getSourceElementType(), this.invocatioinPipeline.getSourceIdentifier(), 
+		DStreamInvocationPipelineAssembler clonedDistributable = new DStreamInvocationPipelineAssembler(this.invocatioinPipeline.getSourceElementType(), this.invocatioinPipeline.getSourceIdentifier(), 
 				method.getReturnType().isInterface() ? method.getReturnType() : this.currentStreamType);	
 		clonedDistributable.invocatioinPipeline.addAllInvocations(this.invocatioinPipeline.getInvocations());	
 		if (operationName.equals("on")){
@@ -124,7 +124,6 @@ final class DStreamInvocationPipelineBuilder<T,R> {
 	/**
 	 * 
 	 */
-	@SuppressWarnings("unchecked")
 	private Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		String operationName = method.getName();
 		Object result;
@@ -150,7 +149,7 @@ final class DStreamInvocationPipelineBuilder<T,R> {
 			
 			logger.info("Delegating execution to: " + executionDelegateClassName);
 			
-			DStreamExecutionDelegate<List<DStreamInvocation>> executionDelegate = (DStreamExecutionDelegate<List<DStreamInvocation>>) ReflectionUtils
+			DStreamExecutionDelegate executionDelegate = (DStreamExecutionDelegate) ReflectionUtils
 					.newDefaultInstance(Class.forName(executionDelegateClassName, true, Thread.currentThread().getContextClassLoader()));
 			
 			result = executionDelegate.execute(executionName, executionConfig, this.invocatioinPipeline);
@@ -176,7 +175,7 @@ final class DStreamInvocationPipelineBuilder<T,R> {
 		@Override
 		public Object invoke(Object proxy, Method method, Object[] args)
 				throws Throwable {
-			return DStreamInvocationPipelineBuilder.this.invoke(proxy, method, args);
+			return DStreamInvocationPipelineAssembler.this.invoke(proxy, method, args);
 		}
 	}
 	

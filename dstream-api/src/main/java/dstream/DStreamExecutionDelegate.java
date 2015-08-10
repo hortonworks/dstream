@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 /**
  * Strategy to implement delegates to execute {@link DistributableStream} operations
  */
-public interface DStreamExecutionDelegate<T> {
+public interface DStreamExecutionDelegate {
 
 	/**
 	 * Main delegation operation to pass an array of {@link ExecutionSpec}s to 

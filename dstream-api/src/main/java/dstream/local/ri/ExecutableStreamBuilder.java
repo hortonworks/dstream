@@ -1,4 +1,22 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package dstream.local.ri;
+
 import static dstream.utils.Tuples.Tuple2.tuple2;
 
 import java.net.URI;
@@ -11,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -30,7 +49,7 @@ import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.function.StreamJoinerFunction;
 import dstream.function.ValuesAggregatingFunction;
 import dstream.function.ValuesReducingFunction;
-import dstream.local.ri.PartitionGrouper.RefHolder;
+import dstream.local.ri.ShuffleHelper.RefHolder;
 import dstream.support.SourceSupplier;
 import dstream.utils.Assert;
 import dstream.utils.KVUtils;
@@ -41,7 +60,7 @@ import dstream.utils.Tuples.Tuple2;
  * 
  *
  */
-public class StreamBuilder {
+public class ExecutableStreamBuilder {
 	private final String executionName;
 	
 	private final DStreamInvocationPipeline invocationPipeline;
@@ -54,7 +73,7 @@ public class StreamBuilder {
 	
 	private boolean shuffled;
 	
-	public StreamBuilder(String executionName, DStreamInvocationPipeline invocationPipeline, Properties executionConfig){
+	public ExecutableStreamBuilder(String executionName, DStreamInvocationPipeline invocationPipeline, Properties executionConfig){
 		this.executionName = executionName;
 		this.invocationPipeline = invocationPipeline;
 		this.executionConfig = executionConfig;
@@ -96,7 +115,7 @@ public class StreamBuilder {
 					
 					Stream<Entry<Object, Object>> keyValuesStream = keyValueMappingFunction.apply(this.sourceStream);
 
-					Stream<Entry<Integer, Stream<?>>> shuffledPartitionStream = this.shuffleStream(keyValuesStream);
+					Stream<Entry<Integer, Stream>> shuffledPartitionStream = this.shuffleStream(keyValuesStream);
 					if (mapPartitions){
 						throw new IllegalStateException("Currently not supported");
 					}
@@ -109,10 +128,13 @@ public class StreamBuilder {
 					DStreamInvocationPipeline dependentInvocationChain = (DStreamInvocationPipeline) invocation.getArguments()[0];
 					
 					int joiningStreamsSize = dependentInvocationChain.getStreamType().getTypeParameters().length;
-					StreamBuilder dependentBuilder = new StreamBuilder(this.executionName, dependentInvocationChain, this.executionConfig);
+					ExecutableStreamBuilder dependentBuilder = new ExecutableStreamBuilder(this.executionName, dependentInvocationChain, this.executionConfig);
 
-					Stream<?> thatStream = ((Stream<Stream<?>>)dependentBuilder.build()).reduce(Stream::concat).get();
-					Stream<?> thisStream = (this.shuffleStream(this.sourceStream).map(entry -> entry.getValue())).reduce(Stream::concat).get();
+					Optional<Stream<?>> oThat = ((Stream<Stream<?>>)dependentBuilder.build()).reduce(Stream::concat);
+					Optional<Stream> oThis = (this.shuffleStream(this.sourceStream).map(entry -> entry.getValue())).reduce(Stream::concat);
+					
+					Stream<?> thisStream = oThis.get();
+					Stream<?> thatStream = oThat.get();
 							
 					StreamJoinerFunction streamJoiner = new StreamJoinerFunction();
 					streamJoiner.addCheckPoint(joiningStreamsSize);
@@ -122,7 +144,7 @@ public class StreamBuilder {
 					
 					Stream<?> joinedStream = streamJoiner.apply(Stream.of(thisStream, thatStream));
 					
-					Stream<Entry<Integer, Stream<?>>> shuffledPartitionStream = this.shuffleStream(joinedStream);
+					Stream<Entry<Integer, Stream>> shuffledPartitionStream = this.shuffleStream(joinedStream);
 					
 					if (mapPartitions){
 						throw new IllegalStateException("Currently not supported");
@@ -132,13 +154,13 @@ public class StreamBuilder {
 					}
 				}
 				else {
-					throw new IllegalStateException("Operation is not supported: " + operationName);
+					throw new IllegalStateException("Operation is not supported at the moment: " + operationName);
 				}
 			}
 		}
 		
-		if (!shuffled){
-			Stream<Entry<Integer, Stream<?>>> shuffledPartitionedStream = this.shuffleStream(this.sourceStream);
+		if (!this.shuffled){
+			Stream<Entry<Integer, Stream>> shuffledPartitionedStream = this.shuffleStream(this.sourceStream);
 			if (mapPartitions){
 				this.sourceStream = shuffledPartitionedStream;
 				throw new IllegalStateException("Currently not supported");
@@ -208,40 +230,26 @@ public class StreamBuilder {
 	
 	/**
 	 * 
-	 * @param groupedData
-	 * @param mapPartitions
-	 * @return
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-//	private Stream<?> shuffleStream(Stream<Entry<Object, Object>> streamToShuffle, boolean mapPartitions){
-	private Stream<Entry<Integer, Stream<?>>> shuffleStream(Stream<?> streamToShuffle){
+	private Stream<Entry<Integer, Stream>> shuffleStream(Stream<?> streamToShuffle){
 		
+		// Partitions elements
 		Stream<Tuple2<Integer, Object>> partitionedStream = streamToShuffle
-			.map(element -> tuple2(this.partitioner.apply(element), element)); // partition elements
+			.map(element -> tuple2(this.partitioner.apply(element), element)); 
 
-		//Collections.singletonMap("foo", "bar")
-		//KVUtils.kv("Hortonworks", "Oleg")
-//		partitionedStream = Stream.of( tuple2(1, KVUtils.kv("Hortonworks", "Oleg")) );
-		
-		// s -> new RefHolder(s._2())
-		
+		/*
+		 * Groups elements for each partition using ShuffleHelper
+		 * If an element is a Key/Value Entry, then ShuffleHelper will group it as Key/List[Values]
+		 * 		The resulting partition entry will look like this: {0={key1=[v,v,v,v],key2=[v,v,v]}}
+		 * If an element is not a Key/Value Entry,then values will be grouped into a List - List[Values]
+		 * 		The resulting partition entry will look like this: {0=[v1,v2,v1,v3],[v4,v6,v0]}
+		 */
 		Stream<Map<Integer, Object>> groupedValuesStream = Stream.of(partitionedStream)
-				.map(stream -> stream.collect(Collectors.toMap((Tuple2<Integer, Object> s) -> s._1(), s -> new RefHolder(s._2()), PartitionGrouper::group)));		
+				.map(stream -> stream.collect(Collectors.toMap((Tuple2<Integer, Object> s) -> s._1(), s -> new RefHolder(s._2()), ShuffleHelper::group)));		
 		
-//		Map<Integer, Object> groupedValues = partitionedStream.collect(Collectors.toMap(s -> s._1(), s -> new RefHolder(s._2()), PartitionGrouper::group));
-		
-		
-		//{0=OLEG} 				- {0=[OLEG]}
-		//{1=Hortonworks=Oleg} 	- {1={Hortonworks=[Oleg]}}
-		
-		//{1={Hortonworks=[Oleg, Tom]}}
-		//{0=[OLEG, NASTIA]}
-
-//		Stream<Entry<Integer, Stream<?>>> normalizedPartitionStream = groupedValues.entrySet().stream().map(entry -> {
-		Stream<Entry<Integer, Stream<?>>> normalizedPartitionStream = groupedValuesStream.flatMap(map -> map.entrySet().stream()).map(entry -> {
+		Stream<Entry<Integer, Stream>> normalizedPartitionStream = groupedValuesStream.flatMap(map -> map.entrySet().stream()).map(entry -> {
 			Object value = entry.getValue();
-			
-//			System.out.println("ENTRY: " + entry);
 			
 			if (value instanceof RefHolder){
 				Object realValue = ((RefHolder) value).ref;
@@ -256,7 +264,7 @@ public class StreamBuilder {
 				}
 			}
 			
-			Entry<Integer, Stream<?>> normalizedEntry;
+			Entry<Integer, Stream> normalizedEntry;
 			if (value instanceof Map){
 				Map<Object, Object> vMap = (Map<Object, Object>) value;
 				vMap.forEach((k,v) -> vMap.replace(k, v instanceof List ? ((List)v).iterator() : new SingleValueIterator(v) ));
@@ -279,7 +287,7 @@ public class StreamBuilder {
 		String parallelizmProp = this.executionConfig.getProperty(DStreamConstants.PARALLELISM);
 		String partitionerProp = this.executionConfig.getProperty(DStreamConstants.PARTITIONER);
 		
-		int parallelism = parallelizmProp == null ? 4 : Integer.parseInt(parallelizmProp);
+		int parallelism = parallelizmProp == null ? 1 : Integer.parseInt(parallelizmProp);
 	
 		return partitionerProp != null 
 				? ReflectionUtils.newInstance(partitionerProp, new Class[]{int.class}, new Object[]{parallelism}) 

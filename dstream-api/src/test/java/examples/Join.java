@@ -22,25 +22,21 @@ public class Join {
 		ThreeWayJoinWithPredicateAndReduce.main();
 	}
 	
-	public static class TwoWayCrossJoin {
+	public static class TwoWayCrossJoin extends SampleBase {
 		public static void main(String... args) throws Exception {
 			DStream<String> one = DStream.ofType(String.class, "one");
 			DStream<String> two = DStream.ofType(String.class, "two");
 			
 			Future<Stream<Stream<Tuple2<String, String>>>> resultFuture = one
 					.join(two)
-					.executeAs(EXECUTION_NAME);
+				.executeAs(EXECUTION_NAME);
 			
-			Stream<Stream<Tuple2<String, String>>> result = resultFuture.get();
-			result.forEach(resultPartitionStream -> {
-				System.out.println("PARTITOIN");
-				resultPartitionStream.forEach(System.out::println);
-			});
-			result.close();
+			Stream<Stream<Tuple2<String, String>>> resultPartitionsStream = resultFuture.get();
+			printResults(resultPartitionsStream);
 		}
 	}
 	
-	public static class TwoWayJoinWithPredicate {
+	public static class TwoWayJoinWithPredicate extends SampleBase {
 		public static void main(String... args) throws Exception {
 			DStream<String> one = DStream.ofType(String.class, "one");
 			DStream<String> two = DStream.ofType(String.class, "two");
@@ -49,16 +45,12 @@ public class Join {
 					.join(two).on(tuple2 -> tuple2._1().substring(0, 1).equals(tuple2._2().substring(tuple2._2().length()-1)))
 					.executeAs(EXECUTION_NAME);
 			
-			Stream<Stream<Tuple2<String, String>>> result = resultFuture.get();
-			result.forEach(resultPartitionStream -> {
-				System.out.println("PARTITOIN");
-				resultPartitionStream.forEach(System.out::println);
-			});
-			result.close();
+			Stream<Stream<Tuple2<String, String>>> resultPartitionsStream = resultFuture.get();
+			printResults(resultPartitionsStream);
 		}
 	}
 	
-	public static class TwoWayJoinWithPredicateAndReduce {
+	public static class TwoWayJoinWithPredicateAndReduce extends SampleBase {
 		public static void main(String... args) throws Exception {
 			DStream<String> one = DStream.ofType(String.class, "one");
 			DStream<String> two = DStream.ofType(String.class, "two");
@@ -68,15 +60,12 @@ public class Join {
 					.reduceGroups(s -> s._1(), s -> 1, Integer::sum)
 					.executeAs(EXECUTION_NAME);
 			
-			Stream<Stream<Entry<String, Integer>>> result = resultFuture.get();
-			result.forEach(resultPartitionStream -> {
-				resultPartitionStream.forEach(System.out::println);
-			});
-			result.close();
+			Stream<Stream<Entry<String, Integer>>> resultPartitionsStream = resultFuture.get();
+			printResults(resultPartitionsStream);
 		}
 	}
 	
-	public static class TwoWayJoinWithPredicateAndGroup {
+	public static class TwoWayJoinWithPredicateAndGroup extends SampleBase {
 		public static void main(String... args) throws Exception {
 			DStream<String> one = DStream.ofType(String.class, "one");
 			DStream<String> two = DStream.ofType(String.class, "two");
@@ -86,15 +75,12 @@ public class Join {
 					.aggregateGroups(s -> s._1(), s -> s._2(), Aggregators::aggregateFlatten)
 					.executeAs(EXECUTION_NAME);
 			
-			Stream<Stream<Entry<String, List<String>>>> result = resultFuture.get();
-			result.forEach(resultPartitionStream -> {
-				resultPartitionStream.forEach(System.out::println);
-			});
-			result.close();
+			Stream<Stream<Entry<String, List<String>>>> resultPartitionsStream = resultFuture.get();
+			printResults(resultPartitionsStream);
 		}
 	}
 	
-	public static class ThreeWayJoinWithPredicateAndReduce {
+	public static class ThreeWayJoinWithPredicateAndReduce extends SampleBase {
 		public static void main(String... args) throws Exception {
 			DStream<String> one = DStream.ofType(String.class, "one");
 			DStream<String> two = DStream.ofType(String.class, "two");
@@ -108,11 +94,8 @@ public class Join {
 					.aggregateGroups(s -> s._1(), s -> s._2(), Aggregators::aggregateFlatten)
 					.executeAs(EXECUTION_NAME);
 			
-			Stream<Stream<Entry<String, List<String>>>> result = resultFuture.get();
-			result.forEach(resultPartitionStream -> {
-				resultPartitionStream.forEach(System.out::println);
-			});
-			result.close();
+			Stream<Stream<Entry<String, List<String>>>> resultPartitionsStream = resultFuture.get();
+			printResults(resultPartitionsStream);
 		}
 	}
 }

@@ -47,9 +47,9 @@ public interface DStreamConstants {
 	public static String OUTPUT = DSTR_PREFIX + "output";
 
 	/**
-	 * Identifies execution parallelism (e.g., <i>dstream.parallelizm=3</i>)<br>
+	 * Identifies execution parallelism (e.g., <i>dstream.parallelism=3</i>)<br>
 	 */
-	public static String PARALLELISM = DSTR_PREFIX + "parallelizm";
+	public static String PARALLELISM = DSTR_PREFIX + "parallelism";
 	
 	public static String PARTITIONER = DSTR_PREFIX + "patitioner";
 	

@@ -36,7 +36,7 @@ import dstream.DStreamInvocationPipeline;
  * Implementation of {@link DStreamExecutionDelegate}.
  * Primary use is testing.
  */
-public class ValidationDelegate implements DStreamExecutionDelegate<DStreamInvocationPipeline> {
+public class ValidationDelegate implements DStreamExecutionDelegate {
 	
 	@Override
 	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, DStreamInvocationPipeline... invocationChains) {
