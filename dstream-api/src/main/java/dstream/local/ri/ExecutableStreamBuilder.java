@@ -101,14 +101,14 @@ public class ExecutableStreamBuilder {
 				this.sourceStream = new DStreamToStreamAdapterFunction(operationName, invocation.getArguments()[0]).apply(this.sourceStream);
 			}
 			else if (this.isShuffle(operationName)){
-				if (operationName.equals("reduceGroups") || operationName.equals("aggregateGroups")){	
+				if (operationName.equals("reduceValues") || operationName.equals("aggregateValues")){	
 					SerFunction keyMapper = (SerFunction) invocation.getArguments()[0];
 					SerFunction valueMapper = (SerFunction) invocation.getArguments()[1];
-					SerBinaryOperator aggregator = operationName.equals("reduceGroups") 
+					SerBinaryOperator aggregator = operationName.equals("reduceValues") 
 							? (SerBinaryOperator) invocation.getArguments()[2]
 									: new BiFunctionToBinaryOperatorAdapter(Aggregators::aggregateToList);
 							
-					ValuesReducingFunction<Object, Object, Object> aggregatingFunction = operationName.equals("reduceGroups") 
+					ValuesReducingFunction<Object, Object, Object> aggregatingFunction = operationName.equals("reduceValues") 
 							? new ValuesReducingFunction<>(aggregator)
 									: new ValuesAggregatingFunction<>(aggregator);							
 					KeyValueMappingFunction keyValueMappingFunction = new KeyValueMappingFunction<>(keyMapper, valueMapper);
@@ -156,6 +156,9 @@ public class ExecutableStreamBuilder {
 				else {
 					throw new IllegalStateException("Operation is not supported at the moment: " + operationName);
 				}
+			}
+			else {
+				throw new IllegalStateException("Operation is not supported at the moment: " + operationName);
 			}
 		}
 		
@@ -220,8 +223,8 @@ public class ExecutableStreamBuilder {
 	 * 
 	 */
 	private boolean isShuffle(String operationName){
-		return operationName.equals("reduceGroups") ||
-			   operationName.equals("aggregateGroups") ||
+		return operationName.equals("reduceValues") ||
+			   operationName.equals("aggregateValues") ||
 			   operationName.equals("join") ||
 			   operationName.equals("union") ||
 			   operationName.equals("unionAll") ||

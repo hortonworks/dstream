@@ -1,4 +1,4 @@
-package examples;
+package dstream.examples;
 import static dstream.utils.Tuples.Tuple2.tuple2;
 
 import java.util.List;
@@ -7,6 +7,7 @@ import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
 import dstream.DStream;
+import dstream.utils.ExecutionResultUtils;
 import dstream.utils.Tuples.Tuple2;
 
 /**
@@ -26,17 +27,17 @@ public class BasicTransformationAndShuffles {
 		CombinationOfTransformationAndShuffles.main();
 	}
 	
-	public static class NoTransformationNoShuffles extends SampleBase {
+	public static class NoTransformationNoShuffles {
 		public static void main(String... args) throws Exception {
 			Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "wc")
 				.executeAs(EXECUTION_NAME);
 
 			Stream<Stream<String>> resultPartitionsStream = resultFuture.get();
-			printResults(resultPartitionsStream);
+			ExecutionResultUtils.printResults(resultPartitionsStream, true);
 		}
 	}
 	
-	public static class TransformationNoShuffles extends SampleBase {
+	public static class TransformationNoShuffles {
 		public static void main(String... args) throws Exception {
 			Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "wc")
 					.flatMap(line -> Stream.of(line.split("\\s+")))
@@ -44,11 +45,11 @@ public class BasicTransformationAndShuffles {
 				.executeAs(EXECUTION_NAME);
 
 			Stream<Stream<String>> resultPartitionsStream = resultFuture.get();
-			printResults(resultPartitionsStream);
+			ExecutionResultUtils.printResults(resultPartitionsStream, true);
 		}
 	}
 	
-	public static class TransformationAndReduceShuffle extends SampleBase {
+	public static class TransformationAndReduceShuffle {
 		public static void main(String... args) throws Exception {
 			Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DStream.ofType(String.class, "wc")
 					.flatMap(line -> Stream.of(line.split("\\s+")))
@@ -57,11 +58,11 @@ public class BasicTransformationAndShuffles {
 			
 			// each stream within a stream represents a partition essentially giving you access to each result partition
 			Stream<Stream<Entry<String, Integer>>> resultPartitionsStream = resultFuture.get();
-			printResults(resultPartitionsStream);
+			ExecutionResultUtils.printResults(resultPartitionsStream, true);
 		}
 	}
 	
-	public static class TransformationAndAggregateShuffle extends SampleBase {
+	public static class TransformationAndAggregateShuffle {
 		public static void main(String... args) throws Exception {
 			Future<Stream<Stream<Entry<Integer, List<String>>>>> resultFuture = DStream.ofType(String.class, "wc")
 					.flatMap(line -> Stream.of(line.split("\\s+")))
@@ -69,11 +70,11 @@ public class BasicTransformationAndShuffles {
 				.executeAs(EXECUTION_NAME);
 			
 			Stream<Stream<Entry<Integer, List<String>>>> resultPartitionsStream = resultFuture.get();
-			printResults(resultPartitionsStream);
+			ExecutionResultUtils.printResults(resultPartitionsStream, true);
 		}
 	}
 	
-	public static class CombinationOfTransformationAndShuffles extends SampleBase {
+	public static class CombinationOfTransformationAndShuffles  {
 		public static void main(String... args) throws Exception {
 			Future<Stream<Stream<Entry<Integer, List<Tuple2<String, Integer>>>>>> resultFuture = DStream.ofType(String.class, "wc")
 					.flatMap(line -> Stream.of(line.split("\\s+")))
@@ -85,7 +86,7 @@ public class BasicTransformationAndShuffles {
 			
 			// each stream within a stream represents a partition essentially giving you access to each result partition
 			Stream<Stream<Entry<Integer, List<Tuple2<String, Integer>>>>> resultPartitionsStream = resultFuture.get();
-			printResults(resultPartitionsStream);
+			ExecutionResultUtils.printResults(resultPartitionsStream, true);
 		}
 	}
 }

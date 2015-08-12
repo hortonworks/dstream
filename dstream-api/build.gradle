@@ -23,6 +23,9 @@ repositories {
 	mavenLocal();
 }
 
+sourceSets.main.java.srcDir 'src/main/examples'
+
+
 dependencies {
 	testCompile ("junit:junit:4.8.2") {
 		exclude group: 'org.hamcrest'
