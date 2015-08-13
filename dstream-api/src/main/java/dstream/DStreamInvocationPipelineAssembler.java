@@ -43,7 +43,7 @@ final class DStreamInvocationPipelineAssembler<T,R> {
 
 	private final R targetStream;
 	
-	private final DStreamInvocationPipeline invocatioinPipeline;
+	private final DStreamInvocationPipeline invocationPipeline;
 	
 	private final Set<String> streamOperationNames;
 	
@@ -72,7 +72,7 @@ final class DStreamInvocationPipelineAssembler<T,R> {
 		
 		this.currentStreamType = streamType[0];
 		this.targetStream =  this.generateStreamProxy(streamType);
-		this.invocatioinPipeline = new DStreamInvocationPipeline(sourceElementType, sourceIdentifier, streamType[0]);
+		this.invocationPipeline = new DStreamInvocationPipeline(sourceElementType, sourceIdentifier, streamType[0]);
 		this.streamOperationNames = ReflectionUtils.findAllVisibleMethodOnInterface(streamType[0]);
 		this.streamOperationNames.remove("ofType");
 		this.streamOperationNames.remove("executeAs");
@@ -84,8 +84,8 @@ final class DStreamInvocationPipelineAssembler<T,R> {
 	 */
 	@Override
 	public String toString(){
-		return this.invocatioinPipeline.getSourceIdentifier() + ":" + 
-				this.invocatioinPipeline.getInvocations().stream().map(s -> s.getMethod().getName()).collect(Collectors.toList());
+		return this.invocationPipeline.getSourceIdentifier() + ":" + 
+				this.invocationPipeline.getInvocations().stream().map(s -> s.getMethod().getName()).collect(Collectors.toList());
 	}
 
 	/**
@@ -99,14 +99,14 @@ final class DStreamInvocationPipelineAssembler<T,R> {
 			arguments = new Object[]{s.get()};
 		}
 
-		DStreamInvocationPipelineAssembler clonedDistributable = new DStreamInvocationPipelineAssembler(this.invocatioinPipeline.getSourceElementType(), this.invocatioinPipeline.getSourceIdentifier(), 
+		DStreamInvocationPipelineAssembler clonedDistributable = new DStreamInvocationPipelineAssembler(this.invocationPipeline.getSourceElementType(), this.invocationPipeline.getSourceIdentifier(), 
 				method.getReturnType().isInterface() ? method.getReturnType() : this.currentStreamType);	
-		clonedDistributable.invocatioinPipeline.addAllInvocations(this.invocatioinPipeline.getInvocations());	
+		clonedDistributable.invocationPipeline.addAllInvocations(this.invocationPipeline.getInvocations());	
 		if (operationName.equals("on")){
-			clonedDistributable.invocatioinPipeline.getLastInvocation().setSupplementaryOperation(arguments[0]);
+			clonedDistributable.invocationPipeline.getLastInvocation().setSupplementaryOperation(arguments[0]);
 		}
 		else {
-			clonedDistributable.invocatioinPipeline.addInvocation(new DStreamInvocation(method, arguments));
+			clonedDistributable.invocationPipeline.addInvocation(new DStreamInvocation(method, arguments));
 		}
 		return (R) clonedDistributable.targetStream;
 	}
@@ -133,10 +133,10 @@ final class DStreamInvocationPipelineAssembler<T,R> {
 			result = this.cloneTargetDistributable(method, args == null ? new Object[]{} : args);
 		}
 		else if (operationName.equals("getSourceIdentifier")){
-			result = this.invocatioinPipeline.getSourceIdentifier();
+			result = this.invocationPipeline.getSourceIdentifier();
 		}
 		else if (operationName.equals("get")){
-			result = this.invocatioinPipeline;
+			result = this.invocationPipeline;
 		}
 		else if (operationName.equals("executeAs")){
 			StreamNameMonitor.reset();
@@ -149,11 +149,15 @@ final class DStreamInvocationPipelineAssembler<T,R> {
 					".cfg' (e.g., dstream.delegate=foo.bar.SomePipelineDelegate)");
 			
 			logger.info("Delegating execution to: " + executionDelegateClassName);
+					
+			StreamOperationBuilder builder = new StreamOperationBuilder(this.invocationPipeline, executionConfig);
+			
+			StreamOperations operations = builder.build();
 			
 			DStreamExecutionDelegate executionDelegate = (DStreamExecutionDelegate) ReflectionUtils
 					.newDefaultInstance(Class.forName(executionDelegateClassName, true, Thread.currentThread().getContextClassLoader()));
 			
-			result = executionDelegate.execute(executionName, executionConfig, this.invocatioinPipeline);
+			result = executionDelegate.execute(executionName, executionConfig, operations);
 		}
 		else {
 			result = method.invoke(this, args);

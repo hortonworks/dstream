@@ -22,24 +22,23 @@ import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
 /**
- * Strategy to implement delegates to execute {@link DistributableStream} operations
+ * Strategy to implement delegates to execute {@link DStream}s.
  */
 public interface DStreamExecutionDelegate {
 
 	/**
-	 * Main delegation operation to pass an array of {@link ExecutionSpec}s to 
-	 * target execution environment.
+	 * Executes {@link StreamOperations} group returning a {@link Future} of the results.
 	 * 
 	 * @param executionName the name of this execution
-	 * @param executionSpecs and array of {@link ExecutionSpec}s
+	 * @param executionConfig execution configuration properties
+	 * @param operationsGroups array of {@link StreamOperations} to execute
 	 * @return an array of {@link Stream}&lt;{@link Stream}&lt;?&gt;&gt; where each outer 
 	 * {@link Stream} represents the result of execution of individual {@link ExecutionSpec}.<br>
 	 * 
-	 *  See {@link ExecutableDStream} for more details on the different result structures.
 	 */
 	// add comment that while signature allows for async invocation, the actual style could still be controlled by the implementation
-	Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, DStreamInvocationPipeline... invocationChains);
-
+	Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, StreamOperations... operationsGroups);
+	
 	/**
 	 * Returns {@link Runnable} which contains logic relevant to closing of the result {@link Stream}.
 	 * The returned {@link Runnable} will be executed when resulting {@link Stream#close()} is called.

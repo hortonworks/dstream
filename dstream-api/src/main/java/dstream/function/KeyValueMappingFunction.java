@@ -45,7 +45,7 @@ public class KeyValueMappingFunction<T,K,V> implements SerFunction<Stream<T>, St
 	
 	private final SerFunction<T, V> valueExtractor;
 	
-	private final BinaryOperator<V> combiner;
+	private final BinaryOperator<V> aggregator;
 	
 	/**
 	 * Constructs this function.
@@ -65,13 +65,13 @@ public class KeyValueMappingFunction<T,K,V> implements SerFunction<Stream<T>, St
 	 * @param combiner a combine function, used to resolve collisions between
      *                      values associated with the same key.
 	 */
-	public KeyValueMappingFunction(SerFunction<T, K> keyExtractor, SerFunction<T, V> valueExtractor, BinaryOperator<V> combiner) {
+	public KeyValueMappingFunction(SerFunction<T, K> keyExtractor, SerFunction<T, V> valueExtractor, BinaryOperator<V> aggregator) {
 		Assert.notNull(keyExtractor, "'keyExtractor' must not be null");
 		Assert.notNull(valueExtractor, "'valueExtractor' must not be null");
 		
 		this.keyExtractor = keyExtractor;
 		this.valueExtractor = valueExtractor;
-		this.combiner = combiner;
+		this.aggregator = aggregator;
 	}
 
 	/**
@@ -80,11 +80,19 @@ public class KeyValueMappingFunction<T,K,V> implements SerFunction<Stream<T>, St
 	@Override
 	public Stream<Entry<K, V>> apply(Stream<T> streamIn) {	
 		Assert.notNull(streamIn, "'streamIn' must not be null");
-		if (this.combiner != null){
-			return streamIn.collect(Collectors.toMap(this.keyExtractor, this.valueExtractor, this.combiner)).entrySet().stream();
+		if (this.aggregator != null){
+			return streamIn.collect(Collectors.toMap(this.keyExtractor, this.valueExtractor, this.aggregator)).entrySet().stream();
 		}
 		else {
 			return streamIn.map(val -> KVUtils.kv(this.keyExtractor.apply(val), this.valueExtractor.apply(val)));
 		}
+	}
+	
+	/**
+	 * Returns true is this function will aggregate values
+	 * @return
+	 */
+	public boolean aggregatesValues(){
+		return this.aggregator != null;
 	}
 }

@@ -17,13 +17,13 @@
  */
 package dstream.local.ri;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import dstream.AbstractDStreamExecutionDelegate;
-import dstream.DStreamInvocationPipeline;
+import dstream.StreamOperations;
 import dstream.utils.Assert;
 
 /**
@@ -42,30 +42,27 @@ public class LocalDStreamExecutionDelegate<T> extends AbstractDStreamExecutionDe
 		};
 	}
 
-	@SuppressWarnings("unchecked")
+	/**
+	 * 
+	 */
 	@Override
-	protected Stream<Stream<?>> doExecute(String executionName, Properties executionConfig, DStreamInvocationPipeline... invocationPipelines) {
-		Assert.notEmpty(invocationPipelines, "'invocationPipelines' must not be null or empty");
-		Assert.isTrue(invocationPipelines.length == 1, "Execution of DStreamInvocationPipeline groups is not supported at the moment");
-
-		/*
-		 * Assembles the list of executable Streams by applying user defined functionality 
-		 */
-		Stream<?> executableStreams = Stream.of(invocationPipelines)
-			.map(pipeline -> new ExecutableStreamBuilder(executionName, pipeline, executionConfig).build());
+	protected List<Stream<Stream<?>>> doExecute(String executionName, Properties executionConfig, StreamOperations... operationsGroups) {
+		Assert.notEmpty(executionName, "'executionName' must not be null or empty");
+		Assert.notNull(executionConfig, "'executionConfig' must not be null");
+		Assert.notEmpty(operationsGroups, "'operationsGroups' must not be null or empty");
+		Assert.isTrue(operationsGroups.length == 1, "Execution of StreamOperations groups is not supported at the moment");
+			
+		LocalDStreamExecutionEngine executionEngine = new LocalDStreamExecutionEngine();
 		
-		/*
-		 * Executes assembled Streams producing the List of partitioned results
-		 * The amount of elements (Streams) in the result list equals the amount of 
-		 * result partitions.
-		 */
-		List<Stream<?>> results = executableStreams
-				.collect(Collectors.toList()) 
-				.stream()
-				.flatMap(stream -> ((Stream<Stream<?>>) stream))
-				.map(stream -> stream.collect(Collectors.toList()).stream())
-				.collect(Collectors.toList());
-	
-		return results.stream();
+		List<Stream<Stream<?>>> results = new ArrayList<>();
+		
+		for (StreamOperations operations : operationsGroups) {
+			ExecutableStreamBuilder executionBuilder = new ExecutableStreamBuilder(executionName, operations, executionConfig);
+			Stream<?> executableStream = executionBuilder.build();
+			Stream<Stream<?>> result = executionEngine.execute(executableStream);
+			results.add(result);
+		}
+		
+		return results;
 	}
 }
