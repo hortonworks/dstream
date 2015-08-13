@@ -20,6 +20,7 @@ package dstream;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -32,17 +33,23 @@ import java.util.stream.Stream;
  * @param <T>
  */
 public abstract class AbstractDStreamExecutionDelegate implements DStreamExecutionDelegate {
+	@SuppressWarnings("unchecked")
 	@Override
-	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, DStreamInvocationPipeline... invocationChains) {
+	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, StreamOperations... operationsGroups) {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 		
 		try {
 			Future<Stream<Stream<?>>> resultFuture = executor.submit(new Callable<Stream<Stream<?>>>() {
-				@SuppressWarnings("unchecked")
 				@Override
 				public Stream<Stream<?>> call() throws Exception {
 					try {
-						Stream<Stream<?>> resultStreams = doExecute(executionName, executionConfig, invocationChains);
+						List<Stream<Stream<?>>> resultStreamsList = doExecute(executionName, executionConfig, operationsGroups);
+						
+						@SuppressWarnings("rawtypes")
+						Stream resultStreams = resultStreamsList.size() == 1
+								? resultStreamsList.get(0)
+										: resultStreamsList.stream();	
+						
 						return (Stream<Stream<?>>) mixinWithCloseHandler(resultStreams, new Runnable() {
 									@Override
 									public void run() {
@@ -82,7 +89,7 @@ public abstract class AbstractDStreamExecutionDelegate implements DStreamExecuti
 	 * @param invocationChains
 	 * @return
 	 */
-	protected abstract Stream<Stream<?>> doExecute(String executionName, Properties executionConfig, DStreamInvocationPipeline... invocationChains);
+	protected abstract List<Stream<Stream<?>>> doExecute(String executionName, Properties executionConfig, StreamOperations... operationsGroup);
 	
 	/**
 	 * Creates proxy over the result Stream to ensures that close() call is always delegated to

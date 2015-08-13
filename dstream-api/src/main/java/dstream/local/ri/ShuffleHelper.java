@@ -24,10 +24,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import dstream.support.Aggregators;
-
-public class ShuffleHelper {
+/**
+ * 
+ *
+ */
+class ShuffleHelper {
 	
-	protected static class RefHolder {
+	/**
+	 * 
+	 */
+	static class RefHolder {
 		public final Object ref;
 		public RefHolder(Object ref){
 			this.ref = ref;
@@ -48,8 +54,14 @@ public class ShuffleHelper {
 		}
 	}
 
+	/**
+	 * 
+	 * @param v1
+	 * @param v2
+	 * @return
+	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static <T> T group(Object v1, Object v2) {
+	static <T> T group(Object v1, Object v2) {
 		RefHolder refHolder = (RefHolder) v2;
 		v2 = refHolder.ref;
 		
@@ -67,6 +79,9 @@ public class ShuffleHelper {
 		return aggregatedValues;
 	}
 	
+	/**
+	 * 
+	 */
 	@SuppressWarnings("unchecked")
 	private static <K,V> Map<K,V> toMap(Object value) {
 		if (value instanceof RefHolder){

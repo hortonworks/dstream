@@ -55,7 +55,7 @@ public class DStreamToStreamAdapterFunction implements SerFunction<Stream<?>, St
 		Assert.notNull(streamOperation, "'streamOperation' must not be null");
 
 		if (!supportedOperations.containsKey(streamOperationName)){
-			throw new IllegalArgumentException("Operation 'streamOperationName' is not supported");
+			throw new IllegalArgumentException("Operation '" + streamOperationName + "' is not supported");
 		}
 		
 		this.streamOperation = streamOperation;

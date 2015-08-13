@@ -29,9 +29,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import dstream.DStreamExecutionDelegate;
-import dstream.DStreamInvocationPipeline;
 /**
  * Implementation of {@link DStreamExecutionDelegate}.
  * Primary use is testing.
@@ -39,7 +36,7 @@ import dstream.DStreamInvocationPipeline;
 public class ValidationDelegate implements DStreamExecutionDelegate {
 	
 	@Override
-	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, DStreamInvocationPipeline... invocationChains) {
+	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, StreamOperations... operationsGroups) {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 		CountDownLatch latch = new CountDownLatch(1);
 		Future<Stream<Stream<?>>> result = executor.submit(new Callable<Stream<Stream<?>>>() {
@@ -47,9 +44,8 @@ public class ValidationDelegate implements DStreamExecutionDelegate {
 			@Override
 			public Stream<Stream<?>> call() throws Exception {
 				try {	
-					Stream<?>[] results = Stream.of(invocationChains)
-//							.map(v -> proxy(v))
-							.map(v -> invocationChains.length > 1 ? Stream.of(Stream.of(v)) : Stream.of(v))
+					Stream<?>[] results = Stream.of(operationsGroups)
+							.map(v -> operationsGroups.length > 1 ? Stream.of(Stream.of(v)) : Stream.of(v))
 							.collect(Collectors.toList()).toArray(new Stream[]{});
 					
 					Stream<Stream<?>> streamOfResults = (Stream<Stream<?>>) mixinWithCloseHandler(Stream.of(results), new Runnable() {

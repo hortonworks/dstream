@@ -22,6 +22,7 @@ import static dstream.utils.Tuples.Tuple2.tuple2;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,27 +30,18 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import dstream.DStreamConstants;
-import dstream.DStreamInvocation;
-import dstream.DStreamInvocationPipeline;
-import dstream.function.BiFunctionToBinaryOperatorAdapter;
-import dstream.function.DStreamToStreamAdapterFunction;
+import dstream.StreamOperation;
+import dstream.StreamOperations;
 import dstream.function.GroupingFunction;
 import dstream.function.HashGroupingFunction;
-import dstream.function.KeyValueMappingFunction;
-import dstream.function.SerializableFunctionConverters.SerBinaryOperator;
 import dstream.function.SerializableFunctionConverters.SerFunction;
-import dstream.function.StreamJoinerFunction;
-import dstream.function.ValuesAggregatingFunction;
-import dstream.function.ValuesReducingFunction;
 import dstream.local.ri.ShuffleHelper.RefHolder;
-import dstream.support.Aggregators;
 import dstream.support.SourceSupplier;
 import dstream.utils.Assert;
 import dstream.utils.KVUtils;
@@ -60,140 +52,120 @@ import dstream.utils.Tuples.Tuple2;
  * 
  *
  */
-public class ExecutableStreamBuilder {
-	private final String executionName;
+final class ExecutableStreamBuilder {
 	
-	private final DStreamInvocationPipeline invocationPipeline;
+	private final StreamOperations streamOperations;
 	
 	private final Properties executionConfig;
 	
+	private final String executionName;
+	
+	private Stream<?> executionStream;
+	
 	private final GroupingFunction grouper;
 	
-	private Stream<?> sourceStream;
-	
-	private boolean shuffled;
-	
-	public ExecutableStreamBuilder(String executionName, DStreamInvocationPipeline invocationPipeline, Properties executionConfig){
-		this.executionName = executionName;
-		this.invocationPipeline = invocationPipeline;
+	public ExecutableStreamBuilder(String executionName, StreamOperations streamOperations, Properties executionConfig){
+		this.streamOperations = streamOperations;
 		this.executionConfig = executionConfig;
+		this.executionName = executionName;
 		this.grouper = this.determineGrouper();
-		
-		this.sourceStream = this.createInitialStream();
 	}
-	
-	/**
-	 * 
-	 * @return
-	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+
+	@SuppressWarnings("rawtypes")
 	public Stream<?> build(){
-//		boolean mapPartitions = invocation.isMapPartition();
-		boolean mapPartitions = false;
 		
-		for (DStreamInvocation invocation : invocationPipeline.getInvocations()) {
-			String operationName = invocation.getMethod().getName();
-			if (this.shuffled){
-				this.sourceStream = ((Stream<Stream<?>>)this.sourceStream).reduce(Stream::concat).get();
-				this.shuffled = false;
-			}
-			if (this.isTransformation(operationName)){
-				this.sourceStream = new DStreamToStreamAdapterFunction(operationName, invocation.getArguments()[0]).apply(this.sourceStream);
-			}
-			else if (this.isShuffle(operationName)){
-				if (operationName.equals("reduceValues") || operationName.equals("aggregateValues")){	
-					SerFunction keyMapper = (SerFunction) invocation.getArguments()[0];
-					SerFunction valueMapper = (SerFunction) invocation.getArguments()[1];
-					SerBinaryOperator aggregator = operationName.equals("reduceValues") 
-							? (SerBinaryOperator) invocation.getArguments()[2]
-									: new BiFunctionToBinaryOperatorAdapter(Aggregators::aggregateToList);
-							
-					ValuesReducingFunction<Object, Object, Object> aggregatingFunction = operationName.equals("reduceValues") 
-							? new ValuesReducingFunction<>(aggregator)
-									: new ValuesAggregatingFunction<>(aggregator);							
-					KeyValueMappingFunction keyValueMappingFunction = new KeyValueMappingFunction<>(keyMapper, valueMapper);
-					
-					Stream<Entry<Object, Object>> keyValuesStream = keyValueMappingFunction.apply(this.sourceStream);
 
-					Stream<Entry<Integer, Stream>> shuffledPartitionStream = this.shuffleStream(keyValuesStream);
-					if (mapPartitions){
-						throw new IllegalStateException("Currently not supported");
-					}
-					else {
-						this.sourceStream = shuffledPartitionStream.map(entry -> 
-							aggregatingFunction.apply(	(Stream<Entry<Object, Iterator<Object>>>) entry.getValue()	).sorted());
-					}
-				}
-				else if (operationName.equals("join") || operationName.equals("union")) {
-					DStreamInvocationPipeline dependentInvocationChain = (DStreamInvocationPipeline) invocation.getArguments()[0];
-					
-					int joiningStreamsSize = dependentInvocationChain.getStreamType().getTypeParameters().length;
-					ExecutableStreamBuilder dependentBuilder = new ExecutableStreamBuilder(this.executionName, dependentInvocationChain, this.executionConfig);
-
-					Optional<Stream<?>> oThat = ((Stream<Stream<?>>)dependentBuilder.build()).reduce(Stream::concat);
-					Optional<Stream> oThis = (this.shuffleStream(this.sourceStream).map(entry -> entry.getValue())).reduce(Stream::concat);
-					
-					Stream<?> thisStream = oThis.get();
-					Stream<?> thatStream = oThat.get();
-							
-					StreamJoinerFunction streamJoiner = new StreamJoinerFunction();
-					streamJoiner.addCheckPoint(joiningStreamsSize);
-					if (invocation.getSupplementaryOperation() != null){
-						streamJoiner.addTransformationOrPredicate("filter", invocation.getSupplementaryOperation());
-					}
-					
-					Stream<?> joinedStream = streamJoiner.apply(Stream.of(thisStream, thatStream));
-					
-					Stream<Entry<Integer, Stream>> shuffledPartitionStream = this.shuffleStream(joinedStream);
-					
-					if (mapPartitions){
-						throw new IllegalStateException("Currently not supported");
-					}
-					else {
-						this.sourceStream = shuffledPartitionStream.map(entry -> entry.getValue());
-					}
-				}
-				else {
-					throw new IllegalStateException("Operation is not supported at the moment: " + operationName);
-				}
-			}
-			else {
-				throw new IllegalStateException("Operation is not supported at the moment: " + operationName);
-			}
-		}
+		this.executionStream = this.createInitialStream(streamOperations.getPipelineName());
 		
-		if (!this.shuffled){
-			Stream<Entry<Integer, Stream>> shuffledPartitionedStream = this.shuffleStream(this.sourceStream);
-			if (mapPartitions){
-				this.sourceStream = shuffledPartitionedStream;
-				throw new IllegalStateException("Currently not supported");
-			}
-			else {
-				this.sourceStream = shuffledPartitionedStream.map(entry -> entry.getValue());
-			}
+		if (streamOperations.getOperations().isEmpty()){
+			Stream<Entry<Integer, Stream>> shuffledPartitionStream = this.partitionStream(this.executionStream);
+			this.executionStream = shuffledPartitionStream;
+			boolean mapPartitions = false; //TODO fix when mapPartition is supported
+			this.applyFuncOnEachPartition(shuffledPartitionStream, mapPartitions, s -> s);
+			return this.executionStream;
 		}
-		
-		return this.sourceStream;
+		else {
+			this.doBuild();
+		}
+		return this.executionStream;
 	}
 	
 	/**
 	 * 
 	 */
-	private Stream<?> buildStreamFromURI(URI uri) {
-		try {
-			return Files.lines(Paths.get(uri));
-		} 
-		catch (Exception e) {
-			throw new IllegalStateException("Failed to create Stream from URI: " + uri, e);
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private void doBuild() {
+		Iterator<StreamOperation> streamOperationsIter = streamOperations.getOperations().iterator();
+		
+		boolean needsPartitioning = false;
+		boolean needsLastPartition = true;
+		while (streamOperationsIter.hasNext()) {
+			StreamOperation streamOperation = (StreamOperation) streamOperationsIter.next();
+			SerFunction streamFunction = streamOperation.getStreamOperationFunction();
+			if (streamOperation.getGroupClassifier() != null){
+				this.grouper.setClassifier((SerFunction<Object, ?>) streamOperation.getGroupClassifier());
+			}
+			if (needsPartitioning){
+				boolean mapPartitions = false;//TODO fix when mapPartition is supported
+				
+				Stream<Entry<Integer, Stream>> shuffledPartitionStream = this.partitionStream(this.executionStream);
+				
+				this.applyFuncOnEachPartition(shuffledPartitionStream, mapPartitions, streamFunction);
+				
+				if (streamOperationsIter.hasNext()) {
+					this.executionStream = ((Stream<Stream<?>>) this.executionStream).reduce(Stream::concat).get();
+				}
+				needsLastPartition = false;
+			}
+			else {
+				if (streamOperation.getLastOperationName().equals("join") || streamOperation.getLastOperationName().equals("union") ){
+					List<StreamOperations> dependentOperations = streamOperation.getDependentStreamOperations();
+
+					List<Stream<?>> dependentStreamsList = new ArrayList<>();
+					dependentStreamsList.add(this.executionStream);
+					for (StreamOperations streamOperations : dependentOperations) {
+						ExecutableStreamBuilder executionBuilder = new ExecutableStreamBuilder(executionName, streamOperations, executionConfig);
+						Stream<?> dependentStream = ((Stream<Stream<?>>)executionBuilder.build()).reduce(Stream::concat).get();	
+						dependentStreamsList.add(dependentStream);
+					}
+					this.executionStream = dependentStreamsList.stream();
+					needsPartitioning = false;
+				}
+				this.executionStream = (Stream<?>) streamFunction.apply(this.executionStream);
+				needsPartitioning = true;		
+			}
+		}
+		
+		if (needsLastPartition){ // for cases where there is no explicit shuffle operations
+			boolean mapPartitions = false;//TODO fix when mapPartition is supported
+			Stream<Entry<Integer, Stream>> shuffledPartitionStream = this.partitionStream(this.executionStream);
+			this.applyFuncOnEachPartition(shuffledPartitionStream, mapPartitions, s -> s);
 		}
 	}
 	
 	/**
 	 * 
+	 * @param shuffledPartitionStream
+	 * @param mapPartitions
+	 * @param partitionFunction
 	 */
-	private Stream<?> createInitialStream(){
-		String sourceProperty = executionConfig.getProperty(DStreamConstants.SOURCE + invocationPipeline.getSourceIdentifier());
-		Assert.notEmpty(sourceProperty, DStreamConstants.SOURCE + invocationPipeline.getSourceIdentifier() +  "' property can not be found in " + 
+	@SuppressWarnings("rawtypes")
+	private void applyFuncOnEachPartition(Stream<Entry<Integer, Stream>> shuffledPartitionStream, boolean mapPartitions, SerFunction<Stream<?>, Stream<?>> partitionFunction) {
+		if (mapPartitions){
+			throw new IllegalStateException("Currently not supported");
+		}
+		else {
+			// essentially creating a lazy shuffle
+			this.executionStream = shuffledPartitionStream.map(partition -> 
+					partitionFunction.apply(partition.getValue()).sorted()).parallel();
+		}
+	}
+	/**
+	 * 
+	 */
+	private Stream<?> createInitialStream(String pipelineName){
+		String sourceProperty = executionConfig.getProperty(DStreamConstants.SOURCE + pipelineName);
+		Assert.notEmpty(sourceProperty, DStreamConstants.SOURCE + pipelineName +  "' property can not be found in " + 
 				executionName + ".cfg configuration file.");
 		
 		SourceSupplier<?> sourceSupplier = SourceSupplier.create(sourceProperty, null);
@@ -212,30 +184,22 @@ public class ExecutableStreamBuilder {
 	/**
 	 * 
 	 */
-	private boolean isTransformation(String operationName){
-		return operationName.equals("flatMap") || 
-			   operationName.equals("map") || 
-			   operationName.equals("filter") ||
-			   operationName.equals("compute");
+	private Stream<?> buildStreamFromURI(URI uri) {
+		try {
+			return Files.lines(Paths.get(uri));
+		} 
+		catch (Exception e) {
+			throw new IllegalStateException("Failed to create Stream from URI: " + uri, e);
+		}
 	}
 	
 	/**
 	 * 
-	 */
-	private boolean isShuffle(String operationName){
-		return operationName.equals("reduceValues") ||
-			   operationName.equals("aggregateValues") ||
-			   operationName.equals("join") ||
-			   operationName.equals("union") ||
-			   operationName.equals("unionAll") ||
-			   operationName.equals("partition");
-	}
-	
-	/**
-	 * 
+	 * @param streamToShuffle
+	 * @return
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private Stream<Entry<Integer, Stream>> shuffleStream(Stream<?> streamToShuffle){
+	private Stream<Entry<Integer, Stream>> partitionStream(Stream<?> streamToShuffle){
 		
 		// Partitions elements
 		Stream<Tuple2<Integer, Object>> partitionedStream = streamToShuffle
@@ -279,7 +243,7 @@ public class ExecutableStreamBuilder {
 			
 			return normalizedEntry;
 		});
-		this.shuffled = true;
+//		this.shuffled = true;
 		return normalizedPartitionStream;
 	}
 	

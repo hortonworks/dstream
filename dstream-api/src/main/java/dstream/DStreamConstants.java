@@ -60,8 +60,8 @@ public interface DStreamConstants {
 	
 	/**
 	 * {@link #STAGE} related configuration.<br>
-	 * Provides a hint if map-side-combine should be attempted in a particular stage (e.g., <i>dstream.stage.ms_combine.0_ms=true</i>)<br>
-	 * In the above '0_ms' identifies combination of 'stage id' + "_" + 'pipeline name' 
+	 * Provides a hint if map-side-combine should be attempted in a particular stage (e.g., <i>dstream.ms_combine.0_wc=true</i>)<br>
+	 * In the above '0_wc' identifies combination of 'stage id' + "_" + 'pipeline name' 
 	 */
 	public static String MAP_SIDE_COMBINE = DSTR_PREFIX + "ms_combine.";
 }
