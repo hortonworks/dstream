@@ -17,26 +17,33 @@
  */
 package dstream.support;
 
-import static org.junit.Assert.assertEquals;
+import java.util.Map.Entry;
 
-import org.junit.Test;
-
-import dstream.function.HashGroupingFunction;
-
-public class HashGroupingTests {
-
-	@Test(expected=IllegalStateException.class)
-	public void failWithLessThenOnePartitionSize(){
-		new HashGroupingFunction(0);
-	}
+/**
+ * Implementation of the {@link Classifier} for hash based grouping (partitioning).
+ *
+ */
+public class HashClassifier extends Classifier {
+	private static final long serialVersionUID = -3799649258371438298L;
 	
-	@Test
-	public void validateHashGrouper(){
-		HashGroupingFunction hp = new HashGroupingFunction(4);
-		assertEquals(4, hp.getGroupSize());
-		assertEquals((Integer)1, hp.apply("a"));
-		assertEquals((Integer)2, hp.apply("b"));
-		assertEquals((Integer)3, hp.apply("c"));
-		assertEquals((Integer)0, hp.apply("d"));
+	/**
+	 * Constructs this function.
+	 * 
+	 * @param partitionSize the size of partitions
+	 */
+	public HashClassifier(int groupSize){
+		super(groupSize);
+	}
+
+	/**
+	 * 
+	 */
+	@SuppressWarnings("rawtypes")
+	@Override
+	public int doGetClassificationId(Object input) {
+		Object hashValue = input instanceof Entry ? ((Entry)input).getKey() : input;
+		
+		int groupId = (hashValue.hashCode() & Integer.MAX_VALUE) % this.getGroupSize();
+		return groupId;
 	}
 }

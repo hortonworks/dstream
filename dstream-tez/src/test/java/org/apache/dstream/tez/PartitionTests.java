@@ -17,6 +17,8 @@ import org.junit.After;
 import org.junit.Test;
 
 import dstream.DStream;
+import dstream.DStream.DStream2.DStream2WithPredicate;
+import dstream.utils.ExecutionResultUtils;
 import dstream.utils.KVUtils;
 import dstream.utils.Tuples.Tuple2;
 
@@ -132,19 +134,24 @@ public class PartitionTests extends BaseTezTests {
 //		result.close();	
 //	}
 	
-//	@Test
-//	public void partitionAfterJoinSizeAndPartitioner() throws Exception {	
-//		DStream<String> s1 = DStream.ofType(String.class, "hash");
-//		DStream<String> s2 = DStream.ofType(String.class, "probe");
-//		
-//		Future<Stream<Stream<Entry<Tuple2<String, String>, Integer>>>> resultFuture = s1
-//				.filter(s -> true)
-//				.join(s2)
-//				.map(s -> KVUtils.kv(s, 1))
-//				.partition()
-//				.executeAs(this.applicationName + "-partitioner");
-//		
-//		Stream<Stream<Entry<Tuple2<String, String>, Integer>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
+	@Test
+	public void partitionAfterJoinSizeAndPartitioner() throws Exception {	
+		DStream<String> s1 = DStream.ofType(String.class, "hash");
+		DStream<String> s2 = DStream.ofType(String.class, "probe");
+		
+		 Future<Stream<Stream<Tuple2<Entry<String, String>, Entry<String, String>>>>> resultFuture = s1
+				.map(h -> KVUtils.kv(h.split(" ")[0], h))
+				.join(s2.map(p -> KVUtils.kv(p.split(" ")[2], p))).on(t2 -> t2._1().getKey().equals(t2._2().getKey()))
+//				.map(s -> {
+//					System.out.println("ENTRY");
+//					return  KVUtils.kv(s, 1);})
+//				.group(s -> s)
+				.executeAs(this.applicationName + "-partitioner");
+		
+		Stream result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
+//		kl
+		ExecutionResultUtils.printResults(result, true);
+		
 //		List<Stream<Entry<Tuple2<String, String>, Integer>>> resultStreams = result.collect(Collectors.toList());
 //		Assert.assertEquals(6, resultStreams.size());
 //		
@@ -168,16 +175,16 @@ public class PartitionTests extends BaseTezTests {
 //		rValues = resultStreams.get(5).map(s -> s.toString()).collect(Collectors.toList());
 //		assertEquals(1, rValues.size());
 //		assertEquals("[3 Hortonworks, Larry Ellison 1]=1", rValues.get(0));
-//		
-//		result.close();	
-//	}
+		
+		result.close();	
+	}
 	
 	
 	@Test
 	public void partitionWithClassifierDefault() throws Exception {	
 		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "partitionWithClassifier")
 				.filter(line -> line.length() > 73)
-				.group(s -> s.substring(0, 5))
+				.classify(s -> s.substring(0, 5))
 				.executeAs(this.applicationName + "-default");
 		Stream<Stream<String>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
 		List<Stream<String>> resultStreams = result.collect(Collectors.toList());
@@ -196,9 +203,10 @@ public class PartitionTests extends BaseTezTests {
 	public void partitionWithClassifierSize() throws Exception {	
 		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "partitionWithClassifier")
 				.filter(line -> line.length() > 73)
-				.group(s -> s.substring(0, 5))
+				.classify(s -> s.substring(0, 5))
 				.executeAs(this.applicationName + "-size");
-		Stream<Stream<String>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
+		Stream<Stream<String>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
+		
 		List<Stream<String>> resultStreams = result.collect(Collectors.toList());
 		assertEquals(4, resultStreams.size());
 		

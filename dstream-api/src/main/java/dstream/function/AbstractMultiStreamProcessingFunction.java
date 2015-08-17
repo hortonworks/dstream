@@ -19,10 +19,12 @@ package dstream.function;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.function.SerializableFunctionConverters.SerPredicate;
+import dstream.utils.Assert;
 
 /**
  * Base implementation of {@link SerFunction} for multi-stream processing.
@@ -37,6 +39,31 @@ public abstract class AbstractMultiStreamProcessingFunction implements SerFuncti
 	
 	private int streamCounter = 1;
 	
+	private final SerFunction<Stream<?>, Stream<?>> firstStreamPreProcessingFunction;
+	
+	public AbstractMultiStreamProcessingFunction(SerFunction<Stream<?>, Stream<?>> firstStreamPreProcessingFunction){
+		this.firstStreamPreProcessingFunction = firstStreamPreProcessingFunction;
+	}
+	
+	@Override
+	public Stream<?> apply(Stream<Stream<?>> streams) {	
+		Assert.notNull(streams, "'streams' must not be null");
+		
+		List<Stream<?>> streamsList = streams.collect(Collectors.toList());	
+		
+		Stream<?> firstStream = streamsList.get(0);
+		firstStream = this.firstStreamPreProcessingFunction.apply(firstStream);
+		streamsList.set(0, firstStream);
+		
+//		Stream<?> secondStream = streamsList.get(1);
+//		secondStream = this.firstStreamPreProcessingFunction.apply(secondStream);
+//		streamsList.set(1, secondStream);
+		
+		
+		return this.doApply(streamsList);
+	}
+	
+	protected abstract Stream<?> doApply(List<Stream<?>> streams);
 	/**
 	 * Will add a check point at which additional functionality may be provided before 
 	 * proceeding with the join.<br>
@@ -88,16 +115,5 @@ public abstract class AbstractMultiStreamProcessingFunction implements SerFuncti
 						: transformationOrPredicate.compose((SerFunction) currentProcedure[1]);
 		
 		currentProcedure[1] = func;
-	}
-	
-	/**
-	 * Will allow sub-classes to provide additional logic to be applied on the {@link Stream} before 
-	 * it is sent thru join functionality.
-	 * 
-	 * @param stream
-	 * @return
-	 */
-	protected Stream<?> preProcessStream(Stream<?> stream) {
-		return stream;
 	}
 }

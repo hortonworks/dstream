@@ -116,13 +116,16 @@ public class StreamAPIUnionTests extends BaseTezTests {
 	public void unionDistinctThreeWayWithShuffleInBetween() throws Exception {
 		DStream<String> one = DStream.ofType(String.class, "one");
 		DStream<String> two = DStream.ofType(String.class, "two");
-		DStream<String> three = DStream.ofType(String.class, "three");
+//		DStream<String> three = DStream.ofType(String.class, "three");
+		
+		DStream<Entry<String, Integer>> three = DStream.ofType(String.class, "three").map(s -> KVUtils.kv(s.toUpperCase(), 1));
 		
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = one
 				.union(two)
 				.map(line -> line.toUpperCase())
 				.reduceValues(s -> s, s -> 1, Integer::sum)
-				.union(three.map(s -> KVUtils.kv(s.toUpperCase(), 1)))
+//				.union(three.map(s -> KVUtils.kv(s.toUpperCase(), 1)))
+				.union(three)
 				.executeAs(this.applicationName);
 		
 		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
@@ -151,7 +154,7 @@ public class StreamAPIUnionTests extends BaseTezTests {
 				.unionAll(two)
 				.executeAs(this.applicationName);
 		
-		Stream<Stream<String>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
+		Stream<Stream<String>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
 		
 		List<Stream<String>> resultStreams = result.collect(Collectors.toList());
 		Assert.assertEquals(1, resultStreams.size());

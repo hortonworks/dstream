@@ -23,7 +23,7 @@ import java.util.Arrays;
  * A representation of an invocation of a {@link DStream} operation.<br>
  * Holds to a {@link Method} and arguments of the actual invocation.
  */
-public final class DStreamInvocation {
+final class DStreamInvocation {
 	
 	private final Method method;
 

@@ -36,7 +36,7 @@ public class StreamJoinerFunction extends AbstractMultiStreamProcessingFunction 
 	private static final long serialVersionUID = -3615487628958776468L;
 	
 	private static CollectionFactory collectionFactory;
-	
+
 	static {
 		if (collectionFactory == null){
 			Iterator<CollectionFactory> sl = ServiceLoader
@@ -49,16 +49,28 @@ public class StreamJoinerFunction extends AbstractMultiStreamProcessingFunction 
 		}
 	}
 	
+	public StreamJoinerFunction(SerFunction<Stream<?>, Stream<?>> firstStreamPreProcessingFunction) {
+		super(firstStreamPreProcessingFunction);
+	}
+	
 	/**
 	 * 
 	 */
 	@Override
-	public Stream<?> apply(Stream<Stream<?>> streams) {	
-//		System.out.println("JOINING!!!!!!!");
-		Assert.notNull(streams, "'streams' must not be null");
-		List<Stream<?>> streamsList = streams.map(this::preProcessStream).collect(Collectors.toList());
+	protected Stream<?> doApply(List<Stream<?>> streamsList) {	
+		System.out.println("######### JOINING");
+		Assert.notNull(streamsList, "'streamsList' must not be null");
 		Assert.isTrue(streamsList.size() >= 2, "There must be 2+ streams available to perform join. Was " + streamsList.size());
-		return this.join(streamsList);
+		
+//		List<?> l1 = streamsList.get(0).collect(Collectors.toList());
+//		List<?> l2 = streamsList.get(1).collect(Collectors.toList());
+//		
+//		streamsList.set(0, l1.stream());
+//		streamsList.set(1, l2.stream());
+		
+		Stream<?> result = this.join(streamsList);
+		System.out.println("###### finish joining");
+		return result;
 	}
 	
 	/**
@@ -102,7 +114,6 @@ public class StreamJoinerFunction extends AbstractMultiStreamProcessingFunction 
 					if (!cached){
 						joiningStreamCache.add(rVal);
 					}
-//					System.out.println("Joining " + lVal + " and " + rVal);
 					return this.mergeValues(lVal, rVal);
 				});
 			} catch (Exception e) {

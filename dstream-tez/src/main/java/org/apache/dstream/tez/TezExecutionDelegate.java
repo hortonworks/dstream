@@ -1,6 +1,7 @@
 package org.apache.dstream.tez;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -19,7 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import dstream.AbstractDStreamExecutionDelegate;
 import dstream.DStreamConstants;
-import dstream.DStreamInvocationPipeline;
+import dstream.StreamOperations;
 
 /**
  * Implementation of {@link StreamExecutionDelegate} for Apache Tez.
@@ -65,9 +66,9 @@ public class TezExecutionDelegate extends AbstractDStreamExecutionDelegate {
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	protected Stream<Stream<?>> doExecute(String executionName, Properties executionConfig, DStreamInvocationPipeline... invocationPipelines) {		
-		for (DStreamInvocationPipeline invocationPipeline : invocationPipelines) {
-			TaskDescriptorChainBuilder builder = new TaskDescriptorChainBuilder(executionName, invocationPipeline, executionConfig);
+	protected List<Stream<Stream<?>>>  doExecute(String executionName, Properties executionConfig, StreamOperations... operationsGroups) {		
+		for (StreamOperations operationsGroup : operationsGroups) {
+			TaskDescriptorChainBuilder builder = new TaskDescriptorChainBuilder(executionName, operationsGroup, executionConfig);
 			List<TaskDescriptor> taskDescriptors = builder.build();
 			this.taskChains.add(taskDescriptors);
 		}
@@ -100,12 +101,13 @@ public class TezExecutionDelegate extends AbstractDStreamExecutionDelegate {
 				return Stream.of(ob.build());
 			}).collect(Collectors.toList()).toArray(new Stream[]{});
 			
-			if (resultStreams.length == 1){
-				return resultStreams[0];
-			}
-			else {
-				return Stream.of(resultStreams);
-			}
+//			if (resultStreams.length == 1){
+//				return resultStreams[0];
+//			}
+//			else {
+//				return Stream.of(resultStreams);
+//			}
+			return Arrays.asList(resultStreams);
 		} 
 		catch (Exception e) {
 			throw new IllegalStateException("Failed to execute DAG for " + executionName, e);

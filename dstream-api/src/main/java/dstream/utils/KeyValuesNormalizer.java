@@ -1,4 +1,4 @@
-package org.apache.dstream.tez;
+package dstream.utils;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -10,29 +10,40 @@ import java.util.stream.StreamSupport;
 import dstream.utils.KVUtils;
 
 public interface KeyValuesNormalizer {
-	
+
 	/**
 	 * 
 	 * @param stream
 	 * @return
 	 */
-	public static Stream<Object> normalize(Stream<Entry<Object, Iterator<Object>>> stream) {
+	public static Stream<?> normalizeStream(Stream<?> stream) {
 	
 		return stream.flatMap(s -> {
 			Iterator<Object> iter = new Iterator<Object>(){
-
+				boolean hasNext = true;
 				@Override
 				public boolean hasNext() {
-					return s.getValue().hasNext();
+					if (s instanceof Entry){
+						Entry<Object, Iterator<Object>> entry = (Entry) s;
+						return entry.getValue().hasNext();
+					}
+					return hasNext;
 				}
 
 				@Override
 				public Object next() {
-					if (s.getKey() == null){
-						return  s.getValue().next();
+					if (s instanceof Entry){
+						Entry<Object, Iterator<Object>> entry = (Entry) s;
+						if (entry.getKey() == null){
+							return  entry.getValue().next();
+						}
+						else {
+							return KVUtils.kv(entry.getKey(), entry.getValue().next());
+						}
 					}
 					else {
-						return KVUtils.kv(s.getKey(), s.getValue().next());
+						hasNext = false;
+						return s;
 					}
 				}
 				

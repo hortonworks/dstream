@@ -70,7 +70,9 @@ public class DStreamOperationsCollectorTests {
 		assertEquals(1, partitionStreams.size());
 
 		StreamOperations chainAccessor = (StreamOperations) partitionStreams.get(0);
-		assertEquals(0, chainAccessor.getOperations().size());
+		assertEquals(2, chainAccessor.getOperations().size());
+		assertEquals("extract", chainAccessor.getOperations().get(0).getLastOperationName());
+		assertEquals("transform", chainAccessor.getOperations().get(1).getLastOperationName());
 		result.close();
 	}
 	
@@ -90,7 +92,9 @@ public class DStreamOperationsCollectorTests {
 		assertEquals(1, partitionStreamsA.size());
 
 		StreamOperations contextA = (StreamOperations) partitionStreamsA.get(0);
-		assertEquals(0, contextA.getOperations().size());
+		assertEquals(2, contextA.getOperations().size());
+		assertEquals("extract", contextA.getOperations().get(0).getLastOperationName());
+		assertEquals("transform", contextA.getOperations().get(1).getLastOperationName());
 		resultA.close();
 		
 		//B
@@ -102,7 +106,9 @@ public class DStreamOperationsCollectorTests {
 		assertEquals(1, partitionStreamsB.size());
 
 		StreamOperations contextB = (StreamOperations) partitionStreamsB.get(0);
-		assertEquals(1, contextB.getOperations().size());
+		assertEquals(2, contextB.getOperations().size());
+		assertEquals("flatMap", contextB.getOperations().get(0).getLastOperationName());
+		assertEquals("transform", contextB.getOperations().get(1).getLastOperationName());
 		
 		resultB.close();
 	}
@@ -123,8 +129,9 @@ public class DStreamOperationsCollectorTests {
 		assertEquals(1, partitionStreams.size());
 
 		StreamOperations context = (StreamOperations) partitionStreams.get(0);
-		assertEquals(1, context.getOperations().size());
-		assertEquals("join", context.getOperations().get(0).getLastOperationName());
+		assertEquals(2, context.getOperations().size());
+		assertEquals("extract", context.getOperations().get(0).getLastOperationName());
+		assertEquals("join", context.getOperations().get(1).getLastOperationName());
 		
 		result.close();
 	}
@@ -145,8 +152,9 @@ public class DStreamOperationsCollectorTests {
 		assertEquals(1, partitionStreams.size());
 		
 		StreamOperations context = (StreamOperations) partitionStreams.get(0);
-		assertEquals(1, context.getOperations().size());
-		assertEquals("map", context.getOperations().get(0).getLastOperationName());
+		assertEquals(2, context.getOperations().size());
+		assertEquals("extract", context.getOperations().get(0).getLastOperationName());
+		assertEquals("join", context.getOperations().get(1).getLastOperationName());
 		
 		result.close();
 	}
@@ -154,7 +162,7 @@ public class DStreamOperationsCollectorTests {
 	@Test
 	public void validateGrouping() throws Exception {
 		DStream<Object> stream = DStream.ofType(Object.class, "validatePartitioning");
-		DStream<Object> partitioned = stream.group(s -> s);
+		DStream<Object> partitioned = stream.classify(s -> s);
 		
 		Future<Stream<Stream<Object>>> resultFuture = partitioned.executeAs(this.streamName);
 		Stream<Stream<Object>> result = resultFuture.get(1000, TimeUnit.MILLISECONDS);
@@ -165,8 +173,9 @@ public class DStreamOperationsCollectorTests {
 		assertEquals(1, partitionStreams.size());
 
 		StreamOperations context = (StreamOperations) partitionStreams.get(0);
-		assertEquals(1, context.getOperations().size());
-		assertEquals("map", context.getOperations().get(0).getLastOperationName());
+		assertEquals(2, context.getOperations().size());
+		assertEquals("mapKeyValues", context.getOperations().get(0).getLastOperationName());
+		assertEquals("mapEntryValue", context.getOperations().get(1).getLastOperationName());
 	}
 	
 	@Test
@@ -176,7 +185,7 @@ public class DStreamOperationsCollectorTests {
 		
 		DStream<Tuple2<Object, Object>> joinedStream = streamA.join(streamB).on(s -> true).map(s -> s);
 		DStream<Entry<Tuple2<Object, Object>, List<Integer>>> partitionedReduced = joinedStream
-				.group(s -> s)
+				.classify(s -> s)
 				.aggregateValues(s -> s, s -> 1);
 		
 		Future<Stream<Stream<Entry<Tuple2<Object, Object>, List<Integer>>>>> resultFuture = partitionedReduced.executeAs(this.streamName);
@@ -188,8 +197,10 @@ public class DStreamOperationsCollectorTests {
 		assertEquals(1, partitionStreams.size());
 		
 		StreamOperations context = (StreamOperations) partitionStreams.get(0);
-		assertEquals(2, context.getOperations().size());
-		assertEquals("mapKeyValues", context.getOperations().get(0).getLastOperationName());
-		assertEquals("aggregateValues", context.getOperations().get(1).getLastOperationName());
+		assertEquals(4, context.getOperations().size());
+		assertEquals("extract", context.getOperations().get(0).getLastOperationName());
+		assertEquals("mapKeyValues", context.getOperations().get(1).getLastOperationName());
+		assertEquals("mapKeyValues", context.getOperations().get(2).getLastOperationName());
+		assertEquals("aggregateValues", context.getOperations().get(3).getLastOperationName());
 	}
 }

@@ -15,7 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dstream.function;
+package dstream.support;
+
+import java.io.Serializable;
 
 import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.utils.Assert;
@@ -26,22 +28,30 @@ import dstream.utils.Assert;
  * @param <T> the type of the element that will be sent to a target partitioner
  * to determine partition id.
  */
-public abstract class GroupingFunction implements SerFunction<Object, Integer> {
+public abstract class Classifier implements Serializable {
 	private static final long serialVersionUID = -250807397502312547L;
 	
 	private final int groupSize;
 	
-	private SerFunction<Object, ?> classifier;
+	private SerFunction<Object, ?> classificationValueMapper;
 
 	/**
 	 * Constructs this function.
 	 * 
 	 * @param partitionSize the size of partitions
 	 */
-	public GroupingFunction(int groupSize) {
+	public Classifier(int groupSize) {
 		Assert.isTrue(groupSize > 0, "'groupSize' must be > 0");
 		this.groupSize = groupSize;
 	}
+	
+	
+	public Integer getClassificationId(Object input) {
+		int partId = this.doGetClassificationId(input);
+		return partId;
+	}
+	
+	protected abstract int doGetClassificationId(Object input);
 
 	/**
 	 * @return the size of partitions
@@ -56,8 +66,8 @@ public abstract class GroupingFunction implements SerFunction<Object, Integer> {
 	 * 
 	 * @param classifier function to extract value used by a target partitioner.
 	 */
-	public void setClassifier(SerFunction<Object, ?> classifier) {
-		this.classifier = classifier;
+	public void setClassificationValueMapper(SerFunction<Object, ?> classificationValueMapper) {
+		this.classificationValueMapper = classificationValueMapper;
 	}
 	
 	/**
@@ -66,8 +76,8 @@ public abstract class GroupingFunction implements SerFunction<Object, Integer> {
 	 * 
 	 * @return function to extract value used by a target partitioner.
 	 */
-	public SerFunction<Object, ?> getClassifier() {
-		return this.classifier;
+	public SerFunction<Object, ?> getClassificationValueMapper() {
+		return this.classificationValueMapper;
 	}
 	
 	/**

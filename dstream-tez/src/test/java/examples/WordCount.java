@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import org.apache.dstream.tez.BaseTezTests;
 
 import dstream.DStream;
+import dstream.utils.KVUtils;
 
 /**
  * A rudimentary WordCount

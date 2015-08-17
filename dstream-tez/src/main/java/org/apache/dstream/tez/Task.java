@@ -9,15 +9,15 @@ import java.util.stream.Stream;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
-import dstream.function.GroupingFunction;
 import dstream.function.SerializableFunctionConverters.SerFunction;
+import dstream.support.Classifier;
 
 final class Task implements Serializable {
 	private static final long serialVersionUID = -1800812882885490376L;
 
 	private final SerFunction<Stream<?>, Stream<?>> function;
 
-	private final GroupingFunction grouper;
+	private final Classifier classifier;
 	
 	private final String name;
 	
@@ -30,10 +30,10 @@ final class Task implements Serializable {
 	 * @param partitioner
 	 * @param function
 	 */
-	private Task(int id, String name, GroupingFunction grouper, SerFunction<Stream<?>, Stream<?>> function){
+	private Task(int id, String name, Classifier classifier, SerFunction<Stream<?>, Stream<?>> function){
 		this.id = id;
 		this.name = name;
-		this.grouper = grouper;
+		this.classifier = classifier;
 		this.function = function;
 	}
 	
@@ -44,7 +44,7 @@ final class Task implements Serializable {
 	 */
 	static Task build(TaskDescriptor taskDescriptor) {
 		SerFunction<Stream<?>, Stream<?>> taskFunction = adjustTaskFunction(taskDescriptor);
-		Task task = new Task(taskDescriptor.getId(), taskDescriptor.getName(), taskDescriptor.getGrouper(), taskFunction);
+		Task task = new Task(taskDescriptor.getId(), taskDescriptor.getName(), taskDescriptor.getClassifier(), taskFunction);
 		return task;
 	}
 	
@@ -60,8 +60,8 @@ final class Task implements Serializable {
 	 * 
 	 * @return
 	 */
-	public GroupingFunction getGrouper() {
-		return this.grouper;
+	public Classifier getClassifier() {
+		return this.classifier;
 	}
 
 	/**

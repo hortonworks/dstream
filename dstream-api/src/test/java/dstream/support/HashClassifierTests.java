@@ -15,34 +15,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dstream.function;
+package dstream.support;
 
-/**
- * Implementation of the {@link GroupingFunction} for hash based grouping (partitioning).
- *
- */
-public class HashGroupingFunction extends GroupingFunction {
-	private static final long serialVersionUID = -3799649258371438298L;
-	
-	/**
-	 * Constructs this function.
-	 * 
-	 * @param partitionSize the size of partitions
-	 */
-	public HashGroupingFunction(int groupSize){
-		super(groupSize);
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
+
+public class HashClassifierTests {
+
+	@Test(expected=IllegalStateException.class)
+	public void failWithLessThenOnePartitionSize(){
+		new HashClassifier(0);
 	}
-
-	/**
-	 * 
-	 */
-	@Override
-	public Integer apply(Object input) {
-		Object hashValue = input;
-		if (this.getClassifier() != null){
-			hashValue = this.getClassifier().apply(input);
-		}
-		int groupId = (hashValue.hashCode() & Integer.MAX_VALUE) % this.getGroupSize();
-		return groupId;
+	
+	@Test
+	public void validateHashGrouper(){
+		HashClassifier hp = new HashClassifier(4);
+		assertEquals(4, hp.getGroupSize());
+		assertEquals((Integer)1, hp.getClassificationId("a"));
+		assertEquals((Integer)2, hp.getClassificationId("b"));
+		assertEquals((Integer)3, hp.getClassificationId("c"));
+		assertEquals((Integer)0, hp.getClassificationId("d"));
 	}
 }

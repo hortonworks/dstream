@@ -20,9 +20,14 @@ package dstream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import dstream.function.AbstractMultiStreamProcessingFunction;
 import dstream.function.BiFunctionToBinaryOperatorAdapter;
@@ -49,6 +54,11 @@ final class StreamOperationBuilder {
 	
 	private int operationIdCounter;
 	
+	private boolean inMulti;
+	
+	
+
+	
 	/**
 	 */
 	StreamOperationBuilder(DStreamInvocationPipeline invocationPipeline, Properties executionConfig){
@@ -64,14 +74,23 @@ final class StreamOperationBuilder {
 			this.addInvocation(invocation);
 		}
 		
-		StreamOperation parent = this.currentStreamOperation;	
-		List<StreamOperation> operationList = new ArrayList<>();
-		if (parent != null){
-			do {
-				operationList.add(parent);
-				parent = parent.getParent();
-			} while (parent != null);
+		if (this.currentStreamOperation == null){
+			this.createInitialStreamOperation();
+			this.currentStreamOperation = new StreamOperation(this.operationIdCounter++, this.currentStreamOperation);
+			this.currentStreamOperation.addStreamOperationFunction("transform", s -> s);
 		}
+//		else if (this.currentStreamOperation.getParent() == null){
+//			this.currentStreamOperation = new StreamOperation(this.operationIdCounter++, this.currentStreamOperation);
+//			this.currentStreamOperation.addStreamOperationFunction("transform", s -> s);
+//		}
+		
+		StreamOperation parent = this.currentStreamOperation;	
+		
+		List<StreamOperation> operationList = new ArrayList<>();
+		do {
+			operationList.add(parent);
+			parent = parent.getParent();
+		} while (parent != null);
 		
 		Collections.reverse(operationList);
 				
@@ -87,43 +106,64 @@ final class StreamOperationBuilder {
 	/**
 	 * 
 	 */
+	private void createInitialStreamOperation(){
+		this.currentStreamOperation = new StreamOperation(this.operationIdCounter++);
+		this.currentStreamOperation.addStreamOperationFunction("extract", s -> s);
+	}
+	
+	/**
+	 * 
+	 */
 	private void addInvocation(DStreamInvocation invocation) {
 		String operationName = invocation.getMethod().getName();
 		if (this.isTransformation(operationName)){
 			this.addTransformationOperation(invocation);
 		}
 		else if (this.isShuffle(operationName)){
-			if (operationName.equals("join") || operationName.equals("union")){
-				this.addStreamCombineOperation(invocation);
+			if (operationName.equals("join") || operationName.startsWith("union")){
+				this.inMulti = true;
+				this.addStreamsCombineOperation(invocation);
 			}
 			else {
+				if (this.inMulti) {
+					this.inMulti = false;
+				}
+				
 				if (operationName.equals("reduceValues") || operationName.equals("aggregateValues")){
 					this.addAggregationOperation(invocation);
 				}
-				else if (operationName.equals("group")){
-					this.addGroupOperation(invocation);
+				else if (operationName.equals("classify")){
+					this.addClassifyOperation(invocation);
 				}
 			}
 		}
 	}
 	
-	@SuppressWarnings("rawtypes")
-	private void addGroupOperation(DStreamInvocation invocation) {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private void addClassifyOperation(DStreamInvocation invocation) {
 		Object[] arguments = invocation.getArguments();
-
 		SerFunction classifier = (SerFunction) arguments[0];
+		SerFunction kvMapper = new KeyValueMappingFunction<>(classifier, s -> s, null);
 		
 		if (this.currentStreamOperation == null){
-			this.currentStreamOperation = new StreamOperation(this.operationIdCounter++);
-			this.currentStreamOperation.addStreamOperationFunction("map", s -> s);
+			this.currentStreamOperation = new StreamOperation(this.operationIdCounter++, this.currentStreamOperation);
 		}
-		this.currentStreamOperation.setGroupClassifier(classifier);
+		
+		this.currentStreamOperation.addStreamOperationFunction("classify", kvMapper);
+		
+//		StreamOperation newStreamOperation = new StreamOperation(this.operationIdCounter++, this.currentStreamOperation);
+//		
+//		SerFunction<Stream<Entry<Object, Object>>, Stream<Object>> f = stream -> stream
+//				.flatMap(entry -> StreamSupport.stream(Spliterators.spliteratorUnknownSize((Iterator<Object>)entry.getValue(), Spliterator.ORDERED), false));
+//
+//		newStreamOperation.addStreamOperationFunction("mapEntryValue", f);
+//		this.currentStreamOperation = newStreamOperation;
 	}
 	
 	/**
 	 * 
 	 */
-	private void addStreamCombineOperation(DStreamInvocation invocation){
+	private void addStreamsCombineOperation(DStreamInvocation invocation){
 		Method method = invocation.getMethod();
 		Object[] arguments = invocation.getArguments();
 		String operationName = method.getName();
@@ -133,41 +173,36 @@ final class StreamOperationBuilder {
 		StreamOperations dependentOperations = dependentBuilder.build();
 		int joiningStreamsSize = dependentPipeline.getStreamType().getTypeParameters().length;
 		
+		AbstractMultiStreamProcessingFunction streamsCombiner = null;
 		if (this.currentStreamOperation == null){
-			this.createStreamCombiningOperation(operationName);
+			this.createInitialStreamOperation();
+			StreamOperation newStreamOperation = new StreamOperation(this.operationIdCounter++, this.currentStreamOperation);
+			streamsCombiner = this.createStreamCombiner(operationName, this.currentStreamOperation.getStreamOperationFunction());
+			this.currentStreamOperation = newStreamOperation;
 		}
-		else if (!"join".equals(this.currentStreamOperation.getLastOperationName()) && !"union".equals(this.currentStreamOperation.getLastOperationName())){
-			this.createStreamCombiningOperation(operationName);
+		else if (this.currentStreamOperation.isStreamsCombiner()) {
+			streamsCombiner = this.currentStreamOperation.getStreamsCombiner();
+		}
+		else {
+			streamsCombiner = this.createStreamCombiner(operationName, this.currentStreamOperation.getStreamOperationFunction());
 		}
 		
-		@SuppressWarnings("rawtypes")
-		SerFunction f = this.currentStreamOperation.getStreamOperationFunction();
-		AbstractMultiStreamProcessingFunction streamJoiner = (AbstractMultiStreamProcessingFunction) f;
-		this.currentStreamOperation.addDependentStreamOperations(dependentOperations);
-		streamJoiner.addCheckPoint(joiningStreamsSize);
+		this.currentStreamOperation.setStreamsCombiner(streamsCombiner);
+		this.currentStreamOperation.addDependentStreamOperations(dependentOperations); // should it be set instead of add?
+		streamsCombiner.addCheckPoint(joiningStreamsSize);
 		if (invocation.getSupplementaryOperation() != null){
-			streamJoiner.addTransformationOrPredicate("filter", invocation.getSupplementaryOperation());
+			streamsCombiner.addTransformationOrPredicate("filter", invocation.getSupplementaryOperation());
 		}
 	}
 	
 	/**
 	 * 
 	 */
-	@SuppressWarnings("rawtypes")
-	private void createStreamCombiningOperation(String operationName){
-		StreamOperation newStreamOperation = new StreamOperation(this.operationIdCounter++, this.currentStreamOperation);
-		SerFunction streamCombiner = this.createStreamCombiner(operationName);
-		newStreamOperation.addStreamOperationFunction(operationName, streamCombiner);
-		this.currentStreamOperation = newStreamOperation;
-	}
-	
-	/**
-	 * 
-	 */
-	private AbstractMultiStreamProcessingFunction createStreamCombiner(String operationName) {
+	@SuppressWarnings({"unchecked", "rawtypes" })
+	private AbstractMultiStreamProcessingFunction createStreamCombiner(String operationName, SerFunction firstStreamPreProcessingFunction) {
 		return operationName.equals("join")
-				? new StreamJoinerFunction()
-					: new StreamUnionFunction(operationName.equals("union"));
+				? new StreamJoinerFunction(firstStreamPreProcessingFunction)
+					: new StreamUnionFunction(operationName.equals("union"), firstStreamPreProcessingFunction);
 	}
 	
 	/**
@@ -183,10 +218,17 @@ final class StreamOperationBuilder {
 				? (SerFunction<Stream<?>, Stream<?>>) arguments[0]
 						: new DStreamToStreamAdapterFunction(operationName, arguments[0]);
 				
-		if (this.currentStreamOperation == null){
-			this.currentStreamOperation = new StreamOperation(this.operationIdCounter++);
+		if (this.inMulti){
+			SerFunction f = this.currentStreamOperation.getStreamOperationFunction();
+			AbstractMultiStreamProcessingFunction joiner = (AbstractMultiStreamProcessingFunction) f;
+			joiner.addTransformationOrPredicate(currentStreamFunction);
 		}
-		this.currentStreamOperation.addStreamOperationFunction(operationName, currentStreamFunction);
+		else {
+			if (this.currentStreamOperation == null){
+				this.currentStreamOperation = new StreamOperation(this.operationIdCounter++);
+			}
+			this.currentStreamOperation.addStreamOperationFunction(operationName, currentStreamFunction);
+		}
 	}
 	
 	/**
@@ -214,7 +256,7 @@ final class StreamOperationBuilder {
 			this.currentStreamOperation = new StreamOperation(this.operationIdCounter++);
 		}
 		this.currentStreamOperation.addStreamOperationFunction("mapKeyValues", kvMapper);
-		
+
 		StreamOperation newStreamOperation = new StreamOperation(this.operationIdCounter++, this.currentStreamOperation);
 		SerFunction newStreamFunction = operationName.equals("reduceValues") 
 				? new ValuesReducingFunction<>(valueAggregator)
@@ -242,6 +284,6 @@ final class StreamOperationBuilder {
 			   operationName.equals("join") ||
 			   operationName.equals("union") ||
 			   operationName.equals("unionAll") ||
-			   operationName.equals("group");
+			   operationName.equals("classify");
 	}
 }

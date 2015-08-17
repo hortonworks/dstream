@@ -30,7 +30,7 @@ import dstream.utils.Assert;
  * 
  * @param <T>
  */
-public class LocalDStreamExecutionDelegate<T> extends AbstractDStreamExecutionDelegate {
+class LocalDStreamExecutionDelegate<T> extends AbstractDStreamExecutionDelegate {
 	
 	@Override
 	public Runnable getCloseHandler() {
@@ -46,21 +46,18 @@ public class LocalDStreamExecutionDelegate<T> extends AbstractDStreamExecutionDe
 	 * 
 	 */
 	@Override
-	protected List<Stream<Stream<?>>> doExecute(String executionName, Properties executionConfig, StreamOperations... operationsGroups) {
+	protected List<Stream<Stream<?>>> doExecute(String executionName, Properties executionConfig, StreamOperations... executionPipelines) {
 		Assert.notEmpty(executionName, "'executionName' must not be null or empty");
 		Assert.notNull(executionConfig, "'executionConfig' must not be null");
-		Assert.notEmpty(operationsGroups, "'operationsGroups' must not be null or empty");
-		Assert.isTrue(operationsGroups.length == 1, "Execution of StreamOperations groups is not supported at the moment");
+		Assert.notEmpty(executionPipelines, "'executionPipelines' must not be null or empty");
+		Assert.isTrue(executionPipelines.length == 1, "Execution of StreamOperations pipelines is not supported at the moment");
 			
-		LocalDStreamExecutionEngine executionEngine = new LocalDStreamExecutionEngine();
+		LocalDStreamExecutionEngine executionEngine = new LocalDStreamExecutionEngine(executionName, executionConfig);
 		
 		List<Stream<Stream<?>>> results = new ArrayList<>();
 		
-		for (StreamOperations operations : operationsGroups) {
-			ExecutableStreamBuilder executionBuilder = new ExecutableStreamBuilder(executionName, operations, executionConfig);
-			Stream<?> executableStream = executionBuilder.build();
-			Stream<Stream<?>> result = executionEngine.execute(executableStream);
-			results.add(result);
+		for (StreamOperations executionPipeline : executionPipelines) {
+			results.add(executionEngine.execute(executionPipeline));
 		}
 		
 		return results;

@@ -17,36 +17,32 @@
  */
 package dstream.local.ri;
 
-import static dstream.utils.Tuples.Tuple2.tuple2;
-
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import dstream.DStreamConstants;
 import dstream.StreamOperation;
 import dstream.StreamOperations;
-import dstream.function.GroupingFunction;
-import dstream.function.HashGroupingFunction;
 import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.local.ri.ShuffleHelper.RefHolder;
+import dstream.support.Classifier;
+import dstream.support.HashClassifier;
 import dstream.support.SourceSupplier;
 import dstream.utils.Assert;
 import dstream.utils.KVUtils;
 import dstream.utils.ReflectionUtils;
-import dstream.utils.Tuples.Tuple2;
 
 /**
  * 
@@ -54,7 +50,7 @@ import dstream.utils.Tuples.Tuple2;
  */
 final class ExecutableStreamBuilder {
 	
-	private final StreamOperations streamOperations;
+//	private final StreamOperations streamOperations;
 	
 	private final Properties executionConfig;
 	
@@ -62,31 +58,25 @@ final class ExecutableStreamBuilder {
 	
 	private Stream<?> executionStream;
 	
-	private final GroupingFunction grouper;
+	private final Classifier classifier;
 	
-	public ExecutableStreamBuilder(String executionName, StreamOperations streamOperations, Properties executionConfig){
-		this.streamOperations = streamOperations;
+	private List<Stream<Entry<Integer, List<Object>>>> partitionedStreams = new ArrayList<>();
+	
+	public ExecutableStreamBuilder(String executionName, String pipelineName, Properties executionConfig){
+//		this.streamOperations = streamOperations;
+		this.executionStream = this.createInitialStream(pipelineName);
 		this.executionConfig = executionConfig;
 		this.executionName = executionName;
-		this.grouper = this.determineGrouper();
+		this.classifier = this.determineClassifier();
 	}
 
-	@SuppressWarnings("rawtypes")
-	public Stream<?> build(){
-		
-
-		this.executionStream = this.createInitialStream(streamOperations.getPipelineName());
-		
-		if (streamOperations.getOperations().isEmpty()){
-			Stream<Entry<Integer, Stream>> shuffledPartitionStream = this.partitionStream(this.executionStream);
-			this.executionStream = shuffledPartitionStream;
-			boolean mapPartitions = false; //TODO fix when mapPartition is supported
-			this.applyFuncOnEachPartition(shuffledPartitionStream, mapPartitions, s -> s);
-			return this.executionStream;
-		}
-		else {
-			this.doBuild();
-		}
+	/**
+	 * 
+	 * @return
+	 */
+	public Stream<?> build(StreamOperation operation){
+//		this.executionStream = this.createInitialStream(this.streamOperations.getPipelineName());
+//		this.doBuild(this.streamOperations.getOperations().iterator());
 		return this.executionStream;
 	}
 	
@@ -94,54 +84,92 @@ final class ExecutableStreamBuilder {
 	 * 
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private void doBuild() {
-		Iterator<StreamOperation> streamOperationsIter = streamOperations.getOperations().iterator();
-		
+	private void doBuild(Iterator<StreamOperation> streamOperationsIter) {
 		boolean needsPartitioning = false;
-		boolean needsLastPartition = true;
-		while (streamOperationsIter.hasNext()) {
-			StreamOperation streamOperation = (StreamOperation) streamOperationsIter.next();
-			SerFunction streamFunction = streamOperation.getStreamOperationFunction();
-			if (streamOperation.getGroupClassifier() != null){
-				this.grouper.setClassifier((SerFunction<Object, ?>) streamOperation.getGroupClassifier());
-			}
-			if (needsPartitioning){
-				boolean mapPartitions = false;//TODO fix when mapPartition is supported
-				
-				Stream<Entry<Integer, Stream>> shuffledPartitionStream = this.partitionStream(this.executionStream);
-				
-				this.applyFuncOnEachPartition(shuffledPartitionStream, mapPartitions, streamFunction);
-				
-				if (streamOperationsIter.hasNext()) {
-					this.executionStream = ((Stream<Stream<?>>) this.executionStream).reduce(Stream::concat).get();
-				}
-				needsLastPartition = false;
-			}
-			else {
-				if (streamOperation.getLastOperationName().equals("join") || streamOperation.getLastOperationName().equals("union") ){
-					List<StreamOperations> dependentOperations = streamOperation.getDependentStreamOperations();
-
-					List<Stream<?>> dependentStreamsList = new ArrayList<>();
-					dependentStreamsList.add(this.executionStream);
-					for (StreamOperations streamOperations : dependentOperations) {
-						ExecutableStreamBuilder executionBuilder = new ExecutableStreamBuilder(executionName, streamOperations, executionConfig);
-						Stream<?> dependentStream = ((Stream<Stream<?>>)executionBuilder.build()).reduce(Stream::concat).get();	
-						dependentStreamsList.add(dependentStream);
-					}
-					this.executionStream = dependentStreamsList.stream();
-					needsPartitioning = false;
-				}
-				this.executionStream = (Stream<?>) streamFunction.apply(this.executionStream);
-				needsPartitioning = true;		
-			}
-		}
-		
-		if (needsLastPartition){ // for cases where there is no explicit shuffle operations
-			boolean mapPartitions = false;//TODO fix when mapPartition is supported
-			Stream<Entry<Integer, Stream>> shuffledPartitionStream = this.partitionStream(this.executionStream);
-			this.applyFuncOnEachPartition(shuffledPartitionStream, mapPartitions, s -> s);
-		}
+//		while (streamOperationsIter.hasNext()) {
+//			StreamOperation streamOperation = (StreamOperation) streamOperationsIter.next();
+//			SerFunction streamFunction = streamOperation.getStreamOperationFunction();
+//			
+//			if (needsPartitioning){
+//				boolean mapPartitions = false;//TODO fix when mapPartition is supported			
+//				Stream<Entry<Integer, List<Object>>> shuffledPartitionStream = this.partitionStream(this.executionStream.sequential());
+//				partitionedStreams.add(shuffledPartitionStream);
+//				
+//				if (streamOperation.getDependentStreamOperations().size() > 0){
+//					List<Stream<?>> dependentStreamsList = new ArrayList<>();
+//					List<StreamOperations> dependentOperations = streamOperation.getDependentStreamOperations();
+//					for (StreamOperations streamOperations : dependentOperations) {
+//						ExecutableStreamBuilder executionBuilder = new ExecutableStreamBuilder(this.executionName, streamOperations, this.executionConfig);
+//						
+//						Stream<?> dependentStream = ((Stream<Stream<?>>)executionBuilder.build()).reduce(Stream::concat).get();	
+//						dependentStreamsList.add(dependentStream);
+//					}
+////					
+////					
+////					
+////					
+////					
+////					Stream<?> postProcessedShuffledStream = this.postProcessPartitions(shuffledPartitionStream, mapPartitions);				
+//////	
+////					Stream<?> streamsToCombine = this.gatherStreamsToCombine(streamOperation, postProcessedShuffledStream);
+//////					
+//////					Stream<?> combinedStreams = (Stream<?>) streamFunction.apply(streamsToCombine); // join/union
+//////
+//////					shuffledPartitionStream = this.partitionStream(combinedStreams);
+//////					this.executionStream = this.postProcessPartitions(shuffledPartitionStream, mapPartitions);
+//				}
+//				else {
+////					if (!mapPartitions){
+////						Stream<Stream<?>> partitionsNoId = this.unmapPartitions(shuffledPartitionStream, mapPartitions);
+////						this.executionStream = partitionsNoId.map(stream -> streamFunction.apply(stream));
+////					}
+////					else {
+////						throw new IllegalStateException("Not supported at the moment");
+////					}
+//				}
+//				
+////				if (streamOperationsIter.hasNext()) {
+////					this.executionStream = ((Stream<Stream<?>>) this.executionStream).reduce(Stream::concat).get();
+////				}			
+//			}
+//			else {
+//				this.executionStream = (Stream<?>) streamFunction.apply(this.executionStream.parallel());
+//				needsPartitioning = true;		
+//			}
+//		}
+//		if (this.partitionedStreams.size() > 0){
+//			
+//		}
 	}
+	
+	/**
+	 * 
+	 * @param streamOperation
+	 * @return
+	 */
+//	@SuppressWarnings("unchecked")
+//	private Stream<?> gatherStreamsToCombine(StreamOperation streamOperation, Stream<?> thisStream){	
+//		// merge partitions
+//		thisStream = ((Stream<Stream<?>>) thisStream).reduce(Stream::concat).get();
+//		List<Stream<?>> dependentStreamsList = new ArrayList<>();
+//		dependentStreamsList.add(thisStream);
+//		
+//		List<StreamOperations> dependentOperations = streamOperation.getDependentStreamOperations();
+//		for (StreamOperations streamOperations : dependentOperations) {
+//			ExecutableStreamBuilder executionBuilder = new ExecutableStreamBuilder(this.executionName, streamOperations, this.executionConfig);
+//			
+//			Stream<?> dependentStream = ((Stream<Stream<?>>)executionBuilder.build()).reduce(Stream::concat).get();	
+//			dependentStreamsList.add(dependentStream);
+//		}
+//		return dependentStreamsList.stream();
+//	}
+	
+//	/**
+//	 * 
+//	 */
+//	private Stream<?> postProcessPartitions(Stream<Entry<Integer, List<Object>>> shuffledPartitionStream, boolean mapPartitions) {
+//		return this.postProcessPartitions(shuffledPartitionStream, mapPartitions, null);
+//	}
 	
 	/**
 	 * 
@@ -149,16 +177,22 @@ final class ExecutableStreamBuilder {
 	 * @param mapPartitions
 	 * @param partitionFunction
 	 */
-	@SuppressWarnings("rawtypes")
-	private void applyFuncOnEachPartition(Stream<Entry<Integer, Stream>> shuffledPartitionStream, boolean mapPartitions, SerFunction<Stream<?>, Stream<?>> partitionFunction) {
-		if (mapPartitions){
-			throw new IllegalStateException("Currently not supported");
-		}
-		else {
-			// essentially creating a lazy shuffle
-			this.executionStream = shuffledPartitionStream.map(partition -> 
-					partitionFunction.apply(partition.getValue()).sorted()).parallel();
-		}
+	@SuppressWarnings("unchecked")
+	private Stream<Stream<?>> unmapPartitions(Stream<Entry<Integer, List<Object>>> shuffledPartitionStream, boolean mapPartitions) {
+//		if (mapPartitions){
+//			throw new IllegalStateException("Currently not supported");
+//		}
+//		else {
+//			// essentially creating a lazy shuffle
+			return shuffledPartitionStream
+					.map(entry -> entry.getValue().stream());
+//					.map(stream -> {
+//						if (postPartitionFunction != null){
+//							stream = (Stream<Object>) postPartitionFunction.apply(stream);
+//						}
+//						return stream.sorted();
+//					});
+//		}
 	}
 	/**
 	 * 
@@ -199,66 +233,68 @@ final class ExecutableStreamBuilder {
 	 * @return
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private Stream<Entry<Integer, Stream>> partitionStream(Stream<?> streamToShuffle){
-		
-		// Partitions elements
-		Stream<Tuple2<Integer, Object>> partitionedStream = streamToShuffle
-			.map(element -> tuple2(this.grouper.apply(element), element)); 
+	private Stream<Entry<Integer, List<Object>>> partitionStream(Stream<?> streamToShuffle){
 
+		// Partitions elements
+		Stream<Entry<Integer, Object>> partitionedStream = streamToShuffle
+			.map(element -> KVUtils.kv(this.classifier.getClassificationId(element), element)); 
+		
 		/*
 		 * Groups elements for each partition using ShuffleHelper
 		 * If an element is a Key/Value Entry, then ShuffleHelper will group it as Key/List[Values]
-		 * 		The resulting partition entry will look like this: {0={key1=[v,v,v,v],key2=[v,v,v]}}
+		 * 		The resulting partition entry will look like this: {0={key1=[v,v,v,v],key2=v}}
 		 * If an element is not a Key/Value Entry,then values will be grouped into a List - List[Values]
-		 * 		The resulting partition entry will look like this: {0=[v1,v2,v1,v3],[v4,v6,v0]}
+		 * 		The resulting partition entry will look like this: {0=[v1,v2,v1,v3],v4}
 		 */
-		Stream<Map<Integer, Object>> groupedValuesStream = Stream.of(partitionedStream)
-				.map(stream -> stream.collect(Collectors.toMap((Tuple2<Integer, Object> s) -> s._1(), s -> new RefHolder(s._2()), ShuffleHelper::group)));		
+		Stream<Map<Integer, Object>> groupedPartitionsStream = Stream.of(partitionedStream)
+				.map(stream -> stream.collect(Collectors.toMap((Entry<Integer, Object> s) -> s.getKey(), s -> new RefHolder(s.getValue()), ShuffleHelper::group)));
 		
-		Stream<Entry<Integer, Stream>> normalizedPartitionStream = groupedValuesStream.flatMap(map -> map.entrySet().stream()).map(entry -> {
-			Object value = entry.getValue();
+//		Map<Integer, Object> groupedPartitions = partitionedStream
+//				.collect(Collectors.toMap((Entry<Integer, Object> s) -> s.getKey(), s -> new RefHolder(s.getValue()), ShuffleHelper::group));
+//		
+//		Stream<Map<Integer, Object>> groupedPartitionsStream = Stream.of(groupedPartitions);
+	
+		Stream<Entry<Integer, List<Object>>> normalizedPartitionStream = groupedPartitionsStream.flatMap(map -> map.entrySet().stream()).map(entry -> {
+			Object value = entry.getValue();		
+			Entry<Integer, List<Object>> normalizedEntry = null;
 			
 			if (value instanceof RefHolder){
 				Object realValue = ((RefHolder) value).ref;
 				if (realValue instanceof Entry){
-					Entry e = (Entry) realValue;
-					Map m = new HashMap<>();
-					m.put(e.getKey(), Collections.singletonList(e.getValue()));
-					value = m;
+					value = Stream.of((Entry) realValue).collect(Collectors.toMap(e -> e.getKey(), e -> Collections.singletonList(e.getValue())));
 				}
 				else {
-					value = Arrays.asList(new Object[]{realValue});
+					value = Stream.of(realValue).collect(Collectors.toList());
 				}
 			}
-			
-			Entry<Integer, Stream> normalizedEntry;
+		  
 			if (value instanceof Map){
-				Map<Object, Object> vMap = (Map<Object, Object>) value;
+				Map vMap = (Map) value;
 				vMap.forEach((k,v) -> vMap.replace(k, v instanceof List ? ((List)v).iterator() : new SingleValueIterator(v) ));
-				normalizedEntry = KVUtils.kv(entry.getKey(), vMap.entrySet().stream());
+				TreeMap<Object, Object> sortedMap = new TreeMap<>(vMap);
+				normalizedEntry = KVUtils.kv(entry.getKey(), new ArrayList<>(sortedMap.entrySet()));
 			}
 			else {
-				normalizedEntry = KVUtils.kv(entry.getKey(), StreamSupport.stream( ((Iterable<?>)value).spliterator(), false));
+				normalizedEntry = KVUtils.kv(entry.getKey(), (List)value);
 			}
 			
 			return normalizedEntry;
 		});
-//		this.shuffled = true;
 		return normalizedPartitionStream;
 	}
 	
 	/**
 	 * 
 	 */
-	private GroupingFunction determineGrouper(){
+	private Classifier determineClassifier(){
 		String parallelizmProp = this.executionConfig.getProperty(DStreamConstants.PARALLELISM);
-		String partitionerProp = this.executionConfig.getProperty(DStreamConstants.GROUPER);
+		String partitionerProp = this.executionConfig.getProperty(DStreamConstants.CLASSIFIER);
 		
 		int parallelism = parallelizmProp == null ? 1 : Integer.parseInt(parallelizmProp);
 	
 		return partitionerProp != null 
 				? ReflectionUtils.newInstance(partitionerProp, new Class[]{int.class}, new Object[]{parallelism}) 
-						: new HashGroupingFunction(parallelism);
+						: new HashClassifier(parallelism);
 	}
 	
 	/**

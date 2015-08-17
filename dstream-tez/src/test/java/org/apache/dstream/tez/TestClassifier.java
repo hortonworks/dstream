@@ -2,12 +2,12 @@ package org.apache.dstream.tez;
 
 import java.io.File;
 
-import dstream.function.HashGroupingFunction;
+import dstream.support.HashClassifier;
 
-public class TestGrouper extends HashGroupingFunction{
+public class TestClassifier extends HashClassifier{
 	private static final long serialVersionUID = -1677894725281384687L;
 	
-	public TestGrouper(int partitionSize) {
+	public TestClassifier(int partitionSize) {
 		super(partitionSize);
 		try {
 			File file = new File("TestPartitioner");
@@ -19,9 +19,10 @@ public class TestGrouper extends HashGroupingFunction{
 	}
 	
 	@Override
-	public Integer apply(Object input) {
+	public int doGetClassificationId(Object input) {
 		try {
-			if (this.getClassifier() != null){
+
+			if (this.getClassificationValueMapper() != null){
 				File file = new File("TestPartitionerWithClassifier");
 				file.createNewFile();
 				file.deleteOnExit();
@@ -29,6 +30,6 @@ public class TestGrouper extends HashGroupingFunction{
 		} catch (Exception e) {
 			throw new IllegalStateException(e);
 		}
-		return super.apply(input);
+		return super.doGetClassificationId(input);
 	}
 }

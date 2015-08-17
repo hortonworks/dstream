@@ -21,11 +21,11 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
-import dstream.function.GroupingFunction;
-import dstream.function.HashGroupingFunction;
 import dstream.function.SerializableFunctionConverters.SerBinaryOperator;
 import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.function.SerializableFunctionConverters.SerPredicate;
+import dstream.support.Classifier;
+import dstream.support.HashClassifier;
 /**
  * Base strategy for {@link DStream} which contains all common operations.
  * 
@@ -93,10 +93,11 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
 	T filter(SerPredicate<? super A> predicate);
 	
 	/**
-	 * Returns an equivalent {@link DStream} where elements are grouped
-	 * by a {@link GroupingFunction} on values provided by the given <i>classifier</i>.<br>
-	 * Default implementation of {@link GroupingFunction} is {@link HashGroupingFunction},
-	 * however specialized implementation could be configured via {@link DStreamConstants#GROUPER}
+	 * Returns an equivalent {@link DStream} where elements are classified
+	 * on values provided by the given <i>classifier</i>.<br>
+	 * Classification is performed via implementation of {@link Classifier}.
+	 * Default implementation of the {@link Classifier} is {@link HashClassifier},
+	 * however specialized implementation could be configured via {@link DStreamConstants#CLASSIFIER}
 	 * configuration property.<br>
 	 * For example:
 	 * <pre>
@@ -125,7 +126,7 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
 	 * (i.e., bar bar bar bar foo foo foo foo foo).<br>
 	 * <br>
 	 * In the "distributable" reality, this often implies data <i>partitioning</i>, since 
-	 * {@link GroupingFunction} is compliant with the general semantics of partitioners
+	 * {@link Classifier} is compliant with the general semantics of partitioners
 	 * by returning an {@link Integer} representing the partition ID.<br>
 	 * <br>
 	 * However, the actual <b><i>data partitioning</i></b> is the function of the system and 
@@ -139,7 +140,7 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
 	 * Another configuration property relevant to this and every other <i>shuffle</i>-style operation
 	 * is {@link DStreamConstants#PARALLELISM} which allows you to provide a hint as to the level of
 	 * parallelisation you may want to accomplish and is typically sent as one of the constructor arguments
-	 * to the instance of {@link GroupingFunction}, but it could also be used by the target execution 
+	 * to the instance of {@link Classifier}, but it could also be used by the target execution 
 	 * environment to configure its partitioner if the two concerns are different (i.e., partition
 	 * however many groups into the amount of partitions specified by the {@link DStreamConstants#PARALLELISM}
 	 * configuration property).<br>
@@ -151,7 +152,7 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
 	 * @param classifier function to extract value used by a target partitioner.
 	 * @return
 	 */
-	T group(SerFunction<? super A, ?> classifier);
+	T classify(SerFunction<? super A, ?> classifier);
 	
 	/**
 	 * Returns a {@link DStream} consisting of the results of replacing each element of
