@@ -44,10 +44,7 @@ public class StreamOperation {
 	
 	private String lastOperationName;
 	
-//	private AbstractMultiStreamProcessingFunction streamsCombiner;
-	
 	private boolean streamsCombiner;
-
 	
 
 	/**
@@ -76,7 +73,9 @@ public class StreamOperation {
 		throw new IllegalStateException("THis operation is not streams combiner");
 	}
 
-	void setStreamsCombiner(AbstractMultiStreamProcessingFunction streamsCombiner) {
+	void setStreamsCombiner(String operationName, AbstractMultiStreamProcessingFunction streamsCombiner) {
+		this.operationNames.add(operationName);
+		this.lastOperationName = operationName;
 		this.streamOperationFunction = streamsCombiner;
 		this.streamsCombiner = true;
 	}
@@ -108,13 +107,17 @@ public class StreamOperation {
 		return dependentStreamOperations == null ? Collections.emptyList() : Collections.unmodifiableList(this.dependentStreamOperations);
 	}
 	
-//	public boolean isShuffle(){
-//		if (this.operationNames.size() > 0){
-//			String operationName = this.operationNames.get(0);
-//			return this.isShuffle(operationName);
-//		}
-//		return false;
-//	}
+	public boolean isClassify(){
+		return this.operationNames.contains("classify");
+	}
+	
+	public boolean isShuffle(){
+		if (this.operationNames.size() > 0){
+			String operationName = this.operationNames.get(0);
+			return this.isShuffle(operationName);
+		}
+		return false;
+	}
 	
 	/**
 	 * 
@@ -177,12 +180,13 @@ public class StreamOperation {
 		this.dependentStreamOperations.add(dependentStreamOperations);
 	}
 	
-//	private boolean isShuffle(String operationName){
-//		return operationName.equals("reduceValues") ||
-//			   operationName.equals("aggregateValues") ||
-//			   operationName.equals("join") ||
-//			   operationName.equals("union") ||
-//			   operationName.equals("unionAll") ||
-//			   operationName.equals("group");
-//	}
+	private boolean isShuffle(String operationName){
+		return operationName.equals("reduceValues") ||
+			   operationName.equals("aggregateValues") ||
+			   operationName.equals("join") ||
+			   operationName.equals("union") ||
+			   operationName.equals("unionAll") ||
+			   operationName.equals("classify") ||
+			   operationName.equals("load");
+	}
 }

@@ -56,7 +56,7 @@ public abstract class Classifier implements Serializable {
 	/**
 	 * @return the size of partitions
 	 */
-	public int getGroupSize(){
+	public int getSize(){
 		return this.groupSize;
 	}
 	

@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -45,7 +44,6 @@ import dstream.support.HashClassifier;
 import dstream.support.SourceSupplier;
 import dstream.utils.Assert;
 import dstream.utils.KVUtils;
-import dstream.utils.KeyValuesNormalizer;
 import dstream.utils.ReflectionUtils;
 
 /**
@@ -62,8 +60,6 @@ final class LocalDStreamExecutionEngine {
 	
 	private List<List<?>> realizedStageResults;
 	
-	private String pipelineName;
-	
 	public LocalDStreamExecutionEngine(String executionName, Properties executionConfig){
 		this.executionName = executionName;
 		this.executionConfig = executionConfig;
@@ -71,13 +67,17 @@ final class LocalDStreamExecutionEngine {
 	}
 	
 	public Stream<Stream<?>> execute(StreamOperations pipeline) {
-
-		this.pipelineName = pipeline.getPipelineName();
-		
+		return this.execute(pipeline, false);
+	}
+	
+	/**
+	 * 
+	 */
+	private Stream<Stream<?>> execute(StreamOperations pipeline, boolean partition) {
 		List<StreamOperation> streamOperations = pipeline.getOperations();
 		
-		for (StreamOperation streamOperation : streamOperations) {
-			this.doExecuteStage(streamOperation, false);
+		for (int i = 0; i < streamOperations.size(); i++) {
+			this.doExecuteStage(streamOperations.get(i), partition, pipeline.getPipelineName());
 		}
 		
 		return this.realizedStageResults.stream().map(list -> list.stream());
@@ -88,14 +88,22 @@ final class LocalDStreamExecutionEngine {
 	 * @param streamOperation
 	 * @param mapPartitions
 	 */
-	private void doExecuteStage(StreamOperation streamOperation, boolean mapPartitions){
-		AtomicReference<SerFunction<Stream<?>, Stream<?>>> streamFunctionRef = new AtomicReference<>(streamOperation.getStreamOperationFunction());
+	@SuppressWarnings("unchecked")
+	private void doExecuteStage(StreamOperation streamOperation, boolean partition, String pipelineName){
+		SerFunction<Stream<?>, Stream<?>> streamFunction = streamOperation.getStreamOperationFunction();
 		
 		if (this.realizedStageResults == null){
-			List<List<?>> realizedIntermediateResult = Stream.of(streamFunctionRef.get().apply(this.createInitialStream(this.pipelineName)))
+			List<List<?>> realizedIntermediateResult = Stream.of(streamFunction.apply(this.createInitialStream(pipelineName)))
 					.map(stream -> stream.collect(Collectors.toList()))
 					.collect(Collectors.toList());
 
+			if (partition){
+				Stream<?> mergedStream = realizedIntermediateResult.stream().map(list -> ((Stream<Object>)list.stream())).reduce((a,b) -> Stream.concat(a, b)).get();
+				Stream<Entry<Integer, List<Object>>> partitionedStreamResult = this.partitionStream(mergedStream);
+				Stream<Stream<?>> partitionedStreamResultNoId = this.unmapPartitions(partitionedStreamResult);
+				realizedIntermediateResult = partitionedStreamResultNoId.map(stream -> stream.collect(Collectors.toList())).collect(Collectors.toList());
+			}
+			
 			this.realizedStageResults = realizedIntermediateResult;
 		}
 		else {
@@ -114,17 +122,16 @@ final class LocalDStreamExecutionEngine {
 				List<StreamOperations> dependentPipelines = streamOperation.getDependentStreamOperations();
 				for (StreamOperations dependentPipeline : dependentPipelines) {
 					LocalDStreamExecutionEngine e = new LocalDStreamExecutionEngine(this.executionName, this.executionConfig);
-					Stream<Stream<?>> dependentStream = e.execute(dependentPipeline);
+					Stream<Stream<?>> dependentStream = e.execute(dependentPipeline, true);
 					List<Stream<?>> dependentPartitions = dependentStream.collect(Collectors.toList());
 					for (int i = 0; i < dependentPartitions.size(); i++) {
 						matchedPartitions.merge(i, dependentPartitions.get(i), Aggregators::aggregateToList);
 					}
 				}
-				partitionedStreamResultNoId = matchedPartitions.values().stream().map(list -> ((List)list).stream());
-				System.out.println();
+				partitionedStreamResultNoId = matchedPartitions.values().stream().map(list -> ((List<?>)list).stream());
 			}
 			
-			Stream<Stream<?>> transformedStreams = partitionedStreamResultNoId.map(stream -> streamFunctionRef.get().apply(stream));
+			Stream<Stream<?>> transformedStreams = partitionedStreamResultNoId.map(stream -> streamFunction.apply(stream));
 			List<List<?>> realizedIntermediateResult = transformedStreams.map(stream -> stream.collect(Collectors.toList())).collect(Collectors.toList());
 			this.realizedStageResults = realizedIntermediateResult;
 		}
@@ -216,6 +223,7 @@ final class LocalDStreamExecutionEngine {
 			if (value instanceof Map){
 				Map vMap = (Map) value;
 				vMap.forEach((k,v) -> vMap.replace(k, v instanceof List ? ((List)v).iterator() : new SingleValueIterator(v) ));
+//				vMap.forEach((k,v) -> vMap.replace(k, v instanceof List ? v : Collections.singletonList(v) ));
 				TreeMap<Object, Object> sortedMap = new TreeMap<>(vMap);
 				normalizedEntry = KVUtils.kv(entry.getKey(), new ArrayList<>(sortedMap.entrySet()));
 			}

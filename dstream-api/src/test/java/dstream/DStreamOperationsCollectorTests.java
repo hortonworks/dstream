@@ -108,7 +108,7 @@ public class DStreamOperationsCollectorTests {
 		StreamOperations contextB = (StreamOperations) partitionStreamsB.get(0);
 		assertEquals(2, contextB.getOperations().size());
 		assertEquals("flatMap", contextB.getOperations().get(0).getLastOperationName());
-		assertEquals("transform", contextB.getOperations().get(1).getLastOperationName());
+		assertEquals("load", contextB.getOperations().get(1).getLastOperationName());
 		
 		resultB.close();
 	}
@@ -174,8 +174,8 @@ public class DStreamOperationsCollectorTests {
 
 		StreamOperations context = (StreamOperations) partitionStreams.get(0);
 		assertEquals(2, context.getOperations().size());
-		assertEquals("mapKeyValues", context.getOperations().get(0).getLastOperationName());
-		assertEquals("mapEntryValue", context.getOperations().get(1).getLastOperationName());
+		assertEquals("classify", context.getOperations().get(0).getLastOperationName());
+		assertEquals("load", context.getOperations().get(1).getLastOperationName());
 	}
 	
 	@Test
@@ -199,7 +199,7 @@ public class DStreamOperationsCollectorTests {
 		StreamOperations context = (StreamOperations) partitionStreams.get(0);
 		assertEquals(4, context.getOperations().size());
 		assertEquals("extract", context.getOperations().get(0).getLastOperationName());
-		assertEquals("mapKeyValues", context.getOperations().get(1).getLastOperationName());
+		assertEquals("classify", context.getOperations().get(1).getLastOperationName());
 		assertEquals("mapKeyValues", context.getOperations().get(2).getLastOperationName());
 		assertEquals("aggregateValues", context.getOperations().get(3).getLastOperationName());
 	}

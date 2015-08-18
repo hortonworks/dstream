@@ -31,7 +31,7 @@ public class HashClassifierTests {
 	@Test
 	public void validateHashGrouper(){
 		HashClassifier hp = new HashClassifier(4);
-		assertEquals(4, hp.getGroupSize());
+		assertEquals(4, hp.getSize());
 		assertEquals((Integer)1, hp.getClassificationId("a"));
 		assertEquals((Integer)2, hp.getClassificationId("b"));
 		assertEquals((Integer)3, hp.getClassificationId("c"));

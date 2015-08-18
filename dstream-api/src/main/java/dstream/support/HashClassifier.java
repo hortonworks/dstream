@@ -43,7 +43,7 @@ public class HashClassifier extends Classifier {
 	public int doGetClassificationId(Object input) {
 		Object hashValue = input instanceof Entry ? ((Entry)input).getKey() : input;
 		
-		int groupId = (hashValue.hashCode() & Integer.MAX_VALUE) % this.getGroupSize();
+		int groupId = (hashValue.hashCode() & Integer.MAX_VALUE) % this.getSize();
 		return groupId;
 	}
 }

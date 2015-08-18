@@ -17,6 +17,7 @@
  */
 package dstream.function;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ServiceLoader;
@@ -27,6 +28,7 @@ import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.support.CollectionFactory;
 import dstream.utils.Assert;
 import dstream.utils.Tuples.Tuple;
+import dstream.utils.Tuples.Tuple2;
 
 /**
  * Implementation of {@link SerFunction} which will join multiple streams
@@ -49,8 +51,8 @@ public class StreamJoinerFunction extends AbstractMultiStreamProcessingFunction 
 		}
 	}
 	
-	public StreamJoinerFunction(SerFunction<Stream<?>, Stream<?>> firstStreamPreProcessingFunction) {
-		super(firstStreamPreProcessingFunction);
+	public StreamJoinerFunction(SerFunction<Stream<?>, Stream<?>> streamPreProcessingFunction) {
+		super(streamPreProcessingFunction);
 	}
 	
 	/**
@@ -58,18 +60,10 @@ public class StreamJoinerFunction extends AbstractMultiStreamProcessingFunction 
 	 */
 	@Override
 	protected Stream<?> doApply(List<Stream<?>> streamsList) {	
-		System.out.println("######### JOINING");
 		Assert.notNull(streamsList, "'streamsList' must not be null");
 		Assert.isTrue(streamsList.size() >= 2, "There must be 2+ streams available to perform join. Was " + streamsList.size());
 		
-//		List<?> l1 = streamsList.get(0).collect(Collectors.toList());
-//		List<?> l2 = streamsList.get(1).collect(Collectors.toList());
-//		
-//		streamsList.set(0, l1.stream());
-//		streamsList.set(1, l2.stream());
-		
 		Stream<?> result = this.join(streamsList);
-		System.out.println("###### finish joining");
 		return result;
 	}
 	
@@ -82,15 +76,20 @@ public class StreamJoinerFunction extends AbstractMultiStreamProcessingFunction 
 		
 		int streamCount = 0;
 		int streamProcessedCounter = 2;
-		Object[] postJoinProcedure = null;
+		int procedureCount = 0;
+		Tuple2<Integer, Object> postJoinProcedure = null;
 		do {
 			if (this.checkPointProcedures.size() > 0){
-				postJoinProcedure = this.checkPointProcedures.remove(0);
-				streamCount = (int) postJoinProcedure[0];
+//				postJoinProcedure = this.checkPointProcedures.remove(0);
+//				streamCount = (int) postJoinProcedure[0];
+				if (this.checkPointProcedures.size() > procedureCount){
+					postJoinProcedure = this.checkPointProcedures.get(procedureCount++);
+					streamCount = postJoinProcedure._1();
+				}
 			}
 			joinedStream = this.doJoin(joinedStream, streams.remove(0));
 			if (streamCount == streamProcessedCounter){
-				SerFunction<Stream, Stream> postJoinProcedureFunction = (SerFunction) postJoinProcedure[1];
+				SerFunction<Stream, Stream> postJoinProcedureFunction = (SerFunction) postJoinProcedure._2();
 				if (postJoinProcedureFunction != null){
 					joinedStream = postJoinProcedureFunction.apply(joinedStream);
 				}
@@ -128,9 +127,19 @@ public class StreamJoinerFunction extends AbstractMultiStreamProcessingFunction 
 	 * 
 	 */
 	private Tuple mergeValues(Object left, Object right) {
-		Tuple current = left instanceof Tuple ? (Tuple)left : new Tuple(left);
+//		Tuple current = left instanceof Tuple ? (Tuple)left : new Tuple(left);
+		Tuple current = left instanceof MergableTuple ? (MergableTuple)left : new MergableTuple(left);
 		Tuple cloned = current.size() > 1 ? current.clone() : current;
 		cloned.add(right);
 		return cloned;
+	}
+	
+	/**
+	 * 
+	 */
+	private static class MergableTuple extends Tuple {
+		public MergableTuple(Object... values){
+			super(values);
+		}
 	}
 }

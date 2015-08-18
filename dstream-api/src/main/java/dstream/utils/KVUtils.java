@@ -90,7 +90,7 @@ public class KVUtils {
 		 */
 		@Override
 		public int hashCode(){
-			return this.key.hashCode() & this.value.hashCode();
+			return this.key != null ? this.key.hashCode() & this.value.hashCode() : this.value.hashCode();
 		}
 		
 		/**

@@ -17,14 +17,18 @@
  */
 package dstream.function;
 
+import static dstream.utils.Tuples.Tuple2.tuple2;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.function.SerializableFunctionConverters.SerPredicate;
 import dstream.utils.Assert;
+import dstream.utils.Tuples.Tuple2;
 
 /**
  * Base implementation of {@link SerFunction} for multi-stream processing.
@@ -35,35 +39,34 @@ import dstream.utils.Assert;
 public abstract class AbstractMultiStreamProcessingFunction implements SerFunction<Stream<Stream<?>>, Stream<?>> {
 	private static final long serialVersionUID = -7336517082191905937L;
 
-	protected List<Object[]> checkPointProcedures = new ArrayList<>();
+	protected List<Tuple2<Integer, Object>> checkPointProcedures = new ArrayList<>();
+	
+//	protected Map<Integer, Object> checkPointProcedures = new HashMap<Integer, Object>();
 	
 	private int streamCounter = 1;
 	
-	private final SerFunction<Stream<?>, Stream<?>> firstStreamPreProcessingFunction;
+	private final SerFunction<Stream<?>, Stream<?>> streamPreProcessingFunction;
 	
-	public AbstractMultiStreamProcessingFunction(SerFunction<Stream<?>, Stream<?>> firstStreamPreProcessingFunction){
-		this.firstStreamPreProcessingFunction = firstStreamPreProcessingFunction;
+	public AbstractMultiStreamProcessingFunction(SerFunction<Stream<?>, Stream<?>> streamPreProcessingFunction){
+		this.streamPreProcessingFunction = streamPreProcessingFunction;
 	}
 	
 	@Override
 	public Stream<?> apply(Stream<Stream<?>> streams) {	
 		Assert.notNull(streams, "'streams' must not be null");
-		
-		List<Stream<?>> streamsList = streams.collect(Collectors.toList());	
-		
-		Stream<?> firstStream = streamsList.get(0);
-		firstStream = this.firstStreamPreProcessingFunction.apply(firstStream);
-		streamsList.set(0, firstStream);
-		
-//		Stream<?> secondStream = streamsList.get(1);
-//		secondStream = this.firstStreamPreProcessingFunction.apply(secondStream);
-//		streamsList.set(1, secondStream);
-		
-		
-		return this.doApply(streamsList);
+
+		try {
+			List<Stream<?>> streamsList = streams.map(stream -> streamPreProcessingFunction.apply(stream)).collect(Collectors.toList());
+			return this.doApply(streamsList);
+		} 
+		catch (Exception e) {
+			e.printStackTrace();
+			throw new IllegalStateException("Failed to combine streams", e);
+		}
 	}
 	
 	protected abstract Stream<?> doApply(List<Stream<?>> streams);
+	
 	/**
 	 * Will add a check point at which additional functionality may be provided before 
 	 * proceeding with the join.<br>
@@ -81,9 +84,11 @@ public abstract class AbstractMultiStreamProcessingFunction implements SerFuncti
 	 */
 	public void addCheckPoint(int joiningStreamsCount){
 		this.streamCounter += joiningStreamsCount;
-		Object[] procedure = new Object[2];
-		procedure[0] = this.streamCounter;
-		this.checkPointProcedures.add(procedure);
+		
+//		Object[] procedure = new Object[2];
+//		procedure[0] = this.streamCounter;
+//		this.checkPointProcedures.add(procedure);
+		this.checkPointProcedures.add(tuple2(this.streamCounter, null));
 	}
 	
 	/**
@@ -108,12 +113,17 @@ public abstract class AbstractMultiStreamProcessingFunction implements SerFuncti
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void addTransformationOrPredicate(SerFunction transformationOrPredicate) {
-		Object[] currentProcedure = this.checkPointProcedures.get(this.checkPointProcedures.size()-1);
-		
-		SerFunction func = (SerFunction) currentProcedure[1] == null 
+		Tuple2<Integer, Object> currentProcedure = this.checkPointProcedures.get(this.checkPointProcedures.size()-1);
+		SerFunction func = (SerFunction) currentProcedure._2() == null 
 				? transformationOrPredicate 
-						: transformationOrPredicate.compose((SerFunction) currentProcedure[1]);
-		
-		currentProcedure[1] = func;
+						: transformationOrPredicate.compose((SerFunction) currentProcedure._2());
+		this.checkPointProcedures.set(this.checkPointProcedures.size()-1, tuple2(currentProcedure._1(), func));
+//		Object[] currentProcedure = this.checkPointProcedures.get(this.checkPointProcedures.size()-1);
+//		
+//		SerFunction func = (SerFunction) currentProcedure[1] == null 
+//				? transformationOrPredicate 
+//						: transformationOrPredicate.compose((SerFunction) currentProcedure[1]);
+//		
+//		currentProcedure[1] = func;
 	}
 }

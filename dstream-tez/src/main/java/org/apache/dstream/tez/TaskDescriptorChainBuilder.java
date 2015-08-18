@@ -12,7 +12,6 @@ import dstream.function.DStreamToStreamAdapterFunction;
 import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.support.SourceSupplier;
 import dstream.utils.Assert;
-import dstream.utils.KeyValuesNormalizer;
 
 /**
  * 
@@ -46,62 +45,41 @@ class TaskDescriptorChainBuilder {
 	 * 
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
 	public List<TaskDescriptor> build(){
 		List<StreamOperation> streamOperations = this.operationsGroup.getOperations();
-		
-//		if (streamOperations.size() == 0){
-//			this.createAndAddInitialTaskDescriptor();
-//		}
-//		else {
-			for (StreamOperation streamOperation : streamOperations) {	
-				TaskDescriptor taskDescriptor;
-				if (!streamOperation.getDependentStreamOperations().isEmpty()){
-					taskDescriptor = this.createTaskDescriptorForStreamCombineOperations(streamOperation);
+
+		for (StreamOperation streamOperation : streamOperations) {	
+			TaskDescriptor taskDescriptor;
+			if (streamOperation.getLastOperationName().equals("join") || streamOperation.getLastOperationName().startsWith("union")){
+				String name = this.taskChain.get(this.taskChain.size() - 1).getOperationName();
+				if (!name.contains("classify")){
+					throw new IllegalStateException("Unclassified stream combines (join/union) are not supported at the moment by Tez.");
 				}
-				else {
-					taskDescriptor = this.createTaskDescriptor(streamOperation.getLastOperationName());
-				}
-				
-				taskDescriptor.andThen(streamOperation.getStreamOperationFunction());
-				this.taskChain.add(taskDescriptor);
-				
-//				if (streamOperation.getGroupClassifier() != null) {
-//					if (this.taskChain.size() == 1){
-//						taskDescriptor = this.createTaskDescriptor("group");
-//						this.taskChain.add(taskDescriptor);
-//						taskDescriptor.andThen(stream -> KeyValuesNormalizer.normalizeStream((Stream<Entry<Object, Iterator<Object>>>) stream));
-//						taskDescriptor = this.getCurrentTask().getPreviousTaskDescriptor();
-//					}
-//					taskDescriptor.getGrouper().setClassifier((SerFunction<Object, ?>) streamOperation.getGroupClassifier());
-//				}
 			}
-//		}
-		
+			if (!streamOperation.getDependentStreamOperations().isEmpty()){
+				taskDescriptor = this.createTaskDescriptorForStreamCombineOperations(streamOperation);
+			}
+			else {
+				taskDescriptor = this.createTaskDescriptor(streamOperation.getLastOperationName());
+			}
+			
+			taskDescriptor.andThen(streamOperation.getStreamOperationFunction());
+			this.taskChain.add(taskDescriptor);
+		}
 		return this.taskChain;
 	}
 	
 	/**
 	 * Creates {@link TaskDescriptor} for stream combine operations (i.e., join, union, unionAll)
 	 */
-	@SuppressWarnings("unchecked")
 	private TaskDescriptor createTaskDescriptorForStreamCombineOperations(StreamOperation streamOperation){
-//		if (this.taskChain.size() == 0){
-//			this.createAndAddInitialTaskDescriptor();
-//		}
+
 		TaskDescriptor taskDescriptor = this.createTaskDescriptor(streamOperation.getLastOperationName());
 		for (StreamOperations dependentOps : streamOperation.getDependentStreamOperations()) {
 			TaskDescriptorChainBuilder builder = new TaskDescriptorChainBuilder(executionName, dependentOps, executionConfig);
 			List<TaskDescriptor> dependentDescriptors = builder.build();
 			taskDescriptor.addDependentTasksChain(dependentDescriptors);
 		}
-//		SerFunction<Stream<?>, Stream<?>> normailizer = null;//KeyValuesNormalizer::normalizeStream;
-//		@SuppressWarnings("rawtypes")
-//		SerFunction typeLessNormalizer = normailizer;
-		taskDescriptor.andThen(streamOperation.getStreamOperationFunction().compose(s -> {
-			System.out.println();
-			return s;}));
-//		taskDescriptor.andThen(streamOperation.getStreamOperationFunction().compose(normailizer));
 		return taskDescriptor;
 	}
 	

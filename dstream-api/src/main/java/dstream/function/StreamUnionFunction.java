@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import dstream.function.SerializableFunctionConverters.SerFunction;
+import dstream.utils.Tuples.Tuple2;
 
 /**
  * Implementation of {@link SerFunction} which will union multiple streams
@@ -57,9 +58,9 @@ public class StreamUnionFunction extends AbstractMultiStreamProcessingFunction {
 					Stream<?> newStream = Stream.concat(lStream,rStream);
 					int currentStreamIdx = ctr.getAndIncrement();
 					for (int j = 0; j < checkPointProcedures.size(); j++) {
-						Object[] postProc = checkPointProcedures.get(j);
-						if ((Integer)postProc[0] == currentStreamIdx){
-							SerFunction f = (SerFunction) postProc[1];
+						Tuple2<Integer, Object> postProc = checkPointProcedures.get(j);
+						if ((Integer)postProc._1() == currentStreamIdx){
+							SerFunction f = (SerFunction) postProc._2();
 							if (f != null){
 								newStream = (Stream) f.apply(newStream);
 							}

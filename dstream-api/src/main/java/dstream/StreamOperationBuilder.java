@@ -40,6 +40,7 @@ import dstream.function.StreamUnionFunction;
 import dstream.function.ValuesAggregatingFunction;
 import dstream.function.ValuesReducingFunction;
 import dstream.support.Aggregators;
+import dstream.utils.Assert;
 
 /**
  * 
@@ -56,7 +57,9 @@ final class StreamOperationBuilder {
 	
 	private boolean inMulti;
 	
-	
+	@SuppressWarnings("unchecked")
+	private final SerFunction<Stream<Entry<Object, Object>>, Stream<Object>> unmapFunction = stream -> stream
+			.flatMap(entry -> StreamSupport.stream(Spliterators.spliteratorUnknownSize((Iterator<Object>)entry.getValue(), Spliterator.ORDERED), false).sorted());
 
 	
 	/**
@@ -66,10 +69,15 @@ final class StreamOperationBuilder {
 		this.executionConfig = executionConfig;
 	}
 	
+	protected StreamOperations build(){	
+		return this.doBuild(false);
+	}
+	
 	/**
 	 * 
 	 */
-	public StreamOperations build(){		
+	@SuppressWarnings("rawtypes")
+	private StreamOperations doBuild(boolean dependent){	
 		for (DStreamInvocation invocation : this.invocationPipeline.getInvocations()) {
 			this.addInvocation(invocation);
 		}
@@ -79,10 +87,11 @@ final class StreamOperationBuilder {
 			this.currentStreamOperation = new StreamOperation(this.operationIdCounter++, this.currentStreamOperation);
 			this.currentStreamOperation.addStreamOperationFunction("transform", s -> s);
 		}
-//		else if (this.currentStreamOperation.getParent() == null){
-//			this.currentStreamOperation = new StreamOperation(this.operationIdCounter++, this.currentStreamOperation);
-//			this.currentStreamOperation.addStreamOperationFunction("transform", s -> s);
-//		}
+		else if (this.currentStreamOperation.getParent() == null && !dependent ){
+			SerFunction loadFunc = this.determineUnmapFunction(this.currentStreamOperation.getLastOperationName());
+			this.currentStreamOperation = new StreamOperation(this.operationIdCounter++, this.currentStreamOperation);
+			this.currentStreamOperation.addStreamOperationFunction("load", loadFunc);
+		}
 		
 		StreamOperation parent = this.currentStreamOperation;	
 		
@@ -101,6 +110,11 @@ final class StreamOperationBuilder {
 				Collections.unmodifiableList(operationList));
 		
 		return operations;
+	}
+	
+	@SuppressWarnings("rawtypes")
+	private SerFunction determineUnmapFunction(String lastOperationName){
+		return lastOperationName.equals("classify") ? this.unmapFunction : s -> s; 
 	}
 	
 	/**
@@ -150,44 +164,54 @@ final class StreamOperationBuilder {
 		}
 		
 		this.currentStreamOperation.addStreamOperationFunction("classify", kvMapper);
-		
-//		StreamOperation newStreamOperation = new StreamOperation(this.operationIdCounter++, this.currentStreamOperation);
-//		
-//		SerFunction<Stream<Entry<Object, Object>>, Stream<Object>> f = stream -> stream
-//				.flatMap(entry -> StreamSupport.stream(Spliterators.spliteratorUnknownSize((Iterator<Object>)entry.getValue(), Spliterator.ORDERED), false));
-//
-//		newStreamOperation.addStreamOperationFunction("mapEntryValue", f);
-//		this.currentStreamOperation = newStreamOperation;
+		if (this.currentStreamOperation.isClassify() && this.currentStreamOperation.getParent() != null){
+			this.currentStreamOperation = new StreamOperation(this.operationIdCounter++, this.currentStreamOperation);
+			this.currentStreamOperation.addStreamOperationFunction("load", this.unmapFunction);
+		}
 	}
 	
 	/**
 	 * 
 	 */
 	private void addStreamsCombineOperation(DStreamInvocation invocation){
+		if (this.executionConfig.containsKey(DStreamConstants.PARALLELISM)){
+			int parallelism = Integer.parseInt(this.executionConfig.getProperty(DStreamConstants.PARALLELISM));
+			if (this.currentStreamOperation == null || 
+				(this.currentStreamOperation.getParent() != null && !this.currentStreamOperation.getParent().isClassify()) ||
+				(this.currentStreamOperation.getParent() == null && !this.currentStreamOperation.isClassify())){
+				Assert.isTrue(parallelism == 1, "Combining streams without prior classification is not supported when parallelism is > 0");
+			}
+		}
 		Method method = invocation.getMethod();
 		Object[] arguments = invocation.getArguments();
 		String operationName = method.getName();
 		
-		DStreamInvocationPipeline dependentPipeline = (DStreamInvocationPipeline) arguments[0];
-		StreamOperationBuilder dependentBuilder = new StreamOperationBuilder(dependentPipeline, this.executionConfig);
-		StreamOperations dependentOperations = dependentBuilder.build();
-		int joiningStreamsSize = dependentPipeline.getStreamType().getTypeParameters().length;
-		
-		AbstractMultiStreamProcessingFunction streamsCombiner = null;
+		AbstractMultiStreamProcessingFunction streamsCombiner;
 		if (this.currentStreamOperation == null){
 			this.createInitialStreamOperation();
+			// this condition possible when doing join without classification, so no need to 
+			streamsCombiner = this.createStreamCombiner(operationName, s -> s);
 			StreamOperation newStreamOperation = new StreamOperation(this.operationIdCounter++, this.currentStreamOperation);
-			streamsCombiner = this.createStreamCombiner(operationName, this.currentStreamOperation.getStreamOperationFunction());
+
 			this.currentStreamOperation = newStreamOperation;
+			this.currentStreamOperation.setStreamsCombiner(operationName, streamsCombiner);
 		}
 		else if (this.currentStreamOperation.isStreamsCombiner()) {
 			streamsCombiner = this.currentStreamOperation.getStreamsCombiner();
 		}
 		else {
-			streamsCombiner = this.createStreamCombiner(operationName, this.currentStreamOperation.getStreamOperationFunction());
+			streamsCombiner = this.createStreamCombiner(operationName, this.determineUnmapFunction(this.currentStreamOperation.getLastOperationName()));
+			StreamOperation newStreamOperation = new StreamOperation(this.operationIdCounter++, this.currentStreamOperation);
+
+			this.currentStreamOperation = newStreamOperation;
+			this.currentStreamOperation.setStreamsCombiner(operationName, streamsCombiner);
 		}
 		
-		this.currentStreamOperation.setStreamsCombiner(streamsCombiner);
+		DStreamInvocationPipeline dependentPipeline = (DStreamInvocationPipeline) arguments[0];
+		StreamOperationBuilder dependentBuilder = new StreamOperationBuilder(dependentPipeline, this.executionConfig);
+		StreamOperations dependentOperations = dependentBuilder.doBuild(true);
+		int joiningStreamsSize = dependentPipeline.getStreamType().getTypeParameters().length;
+		
 		this.currentStreamOperation.addDependentStreamOperations(dependentOperations); // should it be set instead of add?
 		streamsCombiner.addCheckPoint(joiningStreamsSize);
 		if (invocation.getSupplementaryOperation() != null){
@@ -219,13 +243,18 @@ final class StreamOperationBuilder {
 						: new DStreamToStreamAdapterFunction(operationName, arguments[0]);
 				
 		if (this.inMulti){
-			SerFunction f = this.currentStreamOperation.getStreamOperationFunction();
-			AbstractMultiStreamProcessingFunction joiner = (AbstractMultiStreamProcessingFunction) f;
+			@SuppressWarnings("rawtypes")
+			SerFunction currentFunction = this.currentStreamOperation.getStreamOperationFunction();
+			AbstractMultiStreamProcessingFunction joiner = (AbstractMultiStreamProcessingFunction) currentFunction;
 			joiner.addTransformationOrPredicate(currentStreamFunction);
 		}
 		else {
 			if (this.currentStreamOperation == null){
 				this.currentStreamOperation = new StreamOperation(this.operationIdCounter++);
+			} 
+			else if (this.currentStreamOperation.getLastOperationName().equals("classify")){
+				this.currentStreamOperation = new StreamOperation(this.operationIdCounter++, this.currentStreamOperation);
+				this.currentStreamOperation.addStreamOperationFunction(operationName, this.unmapFunction);
 			}
 			this.currentStreamOperation.addStreamOperationFunction(operationName, currentStreamFunction);
 		}
@@ -255,6 +284,13 @@ final class StreamOperationBuilder {
 		if (this.currentStreamOperation == null){
 			this.currentStreamOperation = new StreamOperation(this.operationIdCounter++);
 		}
+		
+		if (this.currentStreamOperation.isClassify()){
+			this.currentStreamOperation = new StreamOperation(this.operationIdCounter++, this.currentStreamOperation);
+			SerFunction loadFunc = this.determineUnmapFunction("classify");
+			this.currentStreamOperation.addStreamOperationFunction("load", loadFunc);
+		}
+		
 		this.currentStreamOperation.addStreamOperationFunction("mapKeyValues", kvMapper);
 
 		StreamOperation newStreamOperation = new StreamOperation(this.operationIdCounter++, this.currentStreamOperation);
