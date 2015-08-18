@@ -83,12 +83,9 @@ public class TezDAGBuilder {
 		}
 		UserPayload payload = this.createPayloadFromTaskSerPath(Task.build(taskDescriptor), this.dag.getName());
 		ProcessorDescriptor pd = ProcessorDescriptor.create(TezTaskProcessor.class.getName()).setUserPayload(payload);
-		
-		System.out.println(taskDescriptor.getParallelism());
+	
 		int parallelism = taskDescriptor.getParallelism();
-//		if (taskDescriptor.getOperationName().equals("join")){
-//			parallelism = 2;
-//		}
+
 		// inputOrderCounter needed to maintain the order of inputs for joins
 		Vertex vertex = taskDescriptor.getId() == 0 
 				? Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd) 

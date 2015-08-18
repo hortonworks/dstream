@@ -3,13 +3,10 @@ package org.apache.dstream.tez;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.stream.Stream;
 
 import dstream.DStreamConstants;
 import dstream.StreamOperation;
 import dstream.StreamOperations;
-import dstream.function.DStreamToStreamAdapterFunction;
-import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.support.SourceSupplier;
 import dstream.utils.Assert;
 
@@ -83,15 +80,6 @@ class TaskDescriptorChainBuilder {
 		return taskDescriptor;
 	}
 	
-	/**
-	 * 
-	 */
-	private void createAndAddInitialTaskDescriptor(){
-		TaskDescriptor td = this.createTaskDescriptor("map");
-		SerFunction<Stream<?>, Stream<?>> function = new DStreamToStreamAdapterFunction("map", (SerFunction<?,?>)s -> s);
-		td.andThen(function);
-		this.taskChain.add(td);
-	}
 	/**
 	 * 
 	 * @param td

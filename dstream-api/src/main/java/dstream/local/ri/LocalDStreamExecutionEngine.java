@@ -223,7 +223,6 @@ final class LocalDStreamExecutionEngine {
 			if (value instanceof Map){
 				Map vMap = (Map) value;
 				vMap.forEach((k,v) -> vMap.replace(k, v instanceof List ? ((List)v).iterator() : new SingleValueIterator(v) ));
-//				vMap.forEach((k,v) -> vMap.replace(k, v instanceof List ? v : Collections.singletonList(v) ));
 				TreeMap<Object, Object> sortedMap = new TreeMap<>(vMap);
 				normalizedEntry = KVUtils.kv(entry.getKey(), new ArrayList<>(sortedMap.entrySet()));
 			}

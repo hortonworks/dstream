@@ -17,11 +17,9 @@
  */
 package dstream.function;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ServiceLoader;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import dstream.function.SerializableFunctionConverters.SerFunction;
@@ -80,8 +78,6 @@ public class StreamJoinerFunction extends AbstractMultiStreamProcessingFunction 
 		Tuple2<Integer, Object> postJoinProcedure = null;
 		do {
 			if (this.checkPointProcedures.size() > 0){
-//				postJoinProcedure = this.checkPointProcedures.remove(0);
-//				streamCount = (int) postJoinProcedure[0];
 				if (this.checkPointProcedures.size() > procedureCount){
 					postJoinProcedure = this.checkPointProcedures.get(procedureCount++);
 					streamCount = postJoinProcedure._1();
@@ -127,7 +123,6 @@ public class StreamJoinerFunction extends AbstractMultiStreamProcessingFunction 
 	 * 
 	 */
 	private Tuple mergeValues(Object left, Object right) {
-//		Tuple current = left instanceof Tuple ? (Tuple)left : new Tuple(left);
 		Tuple current = left instanceof MergableTuple ? (MergableTuple)left : new MergableTuple(left);
 		Tuple cloned = current.size() > 1 ? current.clone() : current;
 		cloned.add(right);
@@ -138,7 +133,9 @@ public class StreamJoinerFunction extends AbstractMultiStreamProcessingFunction 
 	 * 
 	 */
 	private static class MergableTuple extends Tuple {
-		public MergableTuple(Object... values){
+		private static final long serialVersionUID = 6081720376172843799L;
+
+		MergableTuple(Object... values){
 			super(values);
 		}
 	}
