@@ -21,13 +21,19 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
+import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.utils.Assert;
 import dstream.utils.PropertiesHelper;
 import dstream.utils.ReflectionUtils;
@@ -151,6 +157,8 @@ final class DStreamInvocationPipelineAssembler<T,R> {
 			logger.info("Delegating execution to: " + executionDelegateClassName);
 					
 			StreamOperationBuilder builder = new StreamOperationBuilder(this.invocationPipeline, executionConfig);
+			
+			
 			
 			StreamOperations operations = builder.build();
 			

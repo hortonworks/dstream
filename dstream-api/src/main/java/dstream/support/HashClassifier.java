@@ -15,13 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dstream.function;
+package dstream.support;
+
+import java.util.Map.Entry;
 
 /**
- * Implementation of the {@link GroupingFunction} for hash based grouping (partitioning).
+ * Implementation of the {@link Classifier} for hash based grouping (partitioning).
  *
  */
-public class HashGroupingFunction extends GroupingFunction {
+public class HashClassifier extends Classifier {
 	private static final long serialVersionUID = -3799649258371438298L;
 	
 	/**
@@ -29,20 +31,19 @@ public class HashGroupingFunction extends GroupingFunction {
 	 * 
 	 * @param partitionSize the size of partitions
 	 */
-	public HashGroupingFunction(int groupSize){
+	public HashClassifier(int groupSize){
 		super(groupSize);
 	}
 
 	/**
 	 * 
 	 */
+	@SuppressWarnings("rawtypes")
 	@Override
-	public Integer apply(Object input) {
-		Object hashValue = input;
-		if (this.getClassifier() != null){
-			hashValue = this.getClassifier().apply(input);
-		}
-		int groupId = (hashValue.hashCode() & Integer.MAX_VALUE) % this.getGroupSize();
+	public int doGetClassificationId(Object input) {
+		Object hashValue = input instanceof Entry ? ((Entry)input).getKey() : input;
+		
+		int groupId = (hashValue.hashCode() & Integer.MAX_VALUE) % this.getSize();
 		return groupId;
 	}
 }

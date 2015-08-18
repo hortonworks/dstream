@@ -50,7 +50,11 @@ public class JoinExamples {
 			DStream<String> probe = DStream.ofType(String.class, "probe");
 			
 			Future<Stream<Stream<Tuple2<String, String>>>> resultFuture = hash
+					.map(s -> s)
+					.filter(s -> true)
 					.join(probe).on(tuple2 -> tuple2._1().substring(0, 1).equals(tuple2._2().substring(tuple2._2().length()-1)))
+					.map(s -> s)
+					.filter(s -> true)
 					.executeAs(EXECUTION_NAME);
 			
 			Stream<Stream<Tuple2<String, String>>> result = resultFuture.get();

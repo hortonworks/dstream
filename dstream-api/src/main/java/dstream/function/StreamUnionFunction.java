@@ -17,10 +17,12 @@
  */
 package dstream.function;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import dstream.function.SerializableFunctionConverters.SerFunction;
+import dstream.utils.Tuples.Tuple2;
 
 /**
  * Implementation of {@link SerFunction} which will union multiple streams
@@ -37,7 +39,8 @@ public class StreamUnionFunction extends AbstractMultiStreamProcessingFunction {
 	 * @param distinct boolean signaling if union results should be distinct, 
 	 *  essentially supporting the standard <i>union</i> and <i>unionAll</i> semantics.
 	 */
-	public StreamUnionFunction(boolean distinct){
+	public StreamUnionFunction(boolean distinct, SerFunction<Stream<?>, Stream<?>> firstStreamPreProcessingFunction){
+		super(firstStreamPreProcessingFunction);
 		this.distinct = distinct;
 	}
 
@@ -46,19 +49,18 @@ public class StreamUnionFunction extends AbstractMultiStreamProcessingFunction {
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public Stream<?> apply(Stream<Stream<?>> streams) {	
+	public Stream<?> doApply(List<Stream<?>> streamsList) {	
 
 		AtomicInteger ctr = new AtomicInteger(2); 
 		
-		Stream<?> unionizedStream = streams
-				.map(this::preProcessStream)
+		Stream<?> unionizedStream = streamsList.stream()
 				.reduce((lStream,rStream) -> {
 					Stream<?> newStream = Stream.concat(lStream,rStream);
 					int currentStreamIdx = ctr.getAndIncrement();
 					for (int j = 0; j < checkPointProcedures.size(); j++) {
-						Object[] postProc = checkPointProcedures.get(j);
-						if ((Integer)postProc[0] == currentStreamIdx){
-							SerFunction f = (SerFunction) postProc[1];
+						Tuple2<Integer, Object> postProc = checkPointProcedures.get(j);
+						if ((Integer)postProc._1() == currentStreamIdx){
+							SerFunction f = (SerFunction) postProc._2();
 							if (f != null){
 								newStream = (Stream) f.apply(newStream);
 							}

@@ -17,10 +17,12 @@ import org.junit.After;
 import org.junit.Test;
 
 import dstream.DStream;
+import dstream.DStream.DStream2.DStream2WithPredicate;
+import dstream.utils.ExecutionResultUtils;
 import dstream.utils.KVUtils;
 import dstream.utils.Tuples.Tuple2;
 
-public class PartitionTests extends BaseTezTests {
+public class ClassificationTests extends BaseTezTests {
 	
 	private final String applicationName = this.getClass().getSimpleName();
 	
@@ -132,74 +134,51 @@ public class PartitionTests extends BaseTezTests {
 //		result.close();	
 //	}
 	
-//	@Test
-//	public void partitionAfterJoinSizeAndPartitioner() throws Exception {	
-//		DStream<String> s1 = DStream.ofType(String.class, "hash");
-//		DStream<String> s2 = DStream.ofType(String.class, "probe");
-//		
-//		Future<Stream<Stream<Entry<Tuple2<String, String>, Integer>>>> resultFuture = s1
-//				.filter(s -> true)
-//				.join(s2)
-//				.map(s -> KVUtils.kv(s, 1))
-//				.partition()
-//				.executeAs(this.applicationName + "-partitioner");
-//		
-//		Stream<Stream<Entry<Tuple2<String, String>, Integer>>> result = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
-//		List<Stream<Entry<Tuple2<String, String>, Integer>>> resultStreams = result.collect(Collectors.toList());
-//		Assert.assertEquals(6, resultStreams.size());
-//		
-//		List<String> rValues = resultStreams.get(0).map(s -> s.toString()).collect(Collectors.toList());
-//		assertEquals(0, rValues.size());
-//		
-//		rValues = resultStreams.get(1).map(s -> s.toString()).collect(Collectors.toList());
-//		assertEquals(0, rValues.size());
-//		
-//		rValues = resultStreams.get(2).map(s -> s.toString()).collect(Collectors.toList());
-//		assertEquals(0, rValues.size());
-//		
-//		rValues = resultStreams.get(3).map(s -> s.toString()).collect(Collectors.toList());
-//		assertEquals(2, rValues.size());
-//		assertEquals("[3 Hortonworks, Jeffrey Blackburn 2]=1", rValues.get(0));
-//		assertEquals("[1 Oracle, Herb Cunitz 3]=1", rValues.get(1));
-//		
-//		rValues = resultStreams.get(4).map(s -> s.toString()).collect(Collectors.toList());
-//		assertEquals(0, rValues.size());
-//		
-//		rValues = resultStreams.get(5).map(s -> s.toString()).collect(Collectors.toList());
-//		assertEquals(1, rValues.size());
-//		assertEquals("[3 Hortonworks, Larry Ellison 1]=1", rValues.get(0));
-//		
-//		result.close();	
-//	}
+	@Test(expected=IllegalStateException.class)
+	public void failJoinWithoutClassification() throws Exception {	
+		DStream<String> s1 = DStream.ofType(String.class, "hash");
+		DStream<String> s2 = DStream.ofType(String.class, "probe");
+		
+		 Future<Stream<Stream<Tuple2<Entry<String, String>, Entry<String, String>>>>> resultFuture = s1
+				.map(h -> KVUtils.kv(h.split(" ")[0], h))
+				.join(s2.map(p -> KVUtils.kv(p.split(" ")[2], p))).on(t2 -> t2._1().getKey().equals(t2._2().getKey()))
+				.executeAs(this.applicationName + "-partitioner");
+		
+		 resultFuture.get(1000, TimeUnit.MILLISECONDS);
+	}
 	
 	
 	@Test
-	public void partitionWithClassifierDefault() throws Exception {	
+	public void classifyWithDefaultClassifier() throws Exception {	
 		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "partitionWithClassifier")
 				.filter(line -> line.length() > 73)
-				.group(s -> s.substring(0, 5))
+				.classify(s -> s.substring(0, 7))
 				.executeAs(this.applicationName + "-default");
-		Stream<Stream<String>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
-		List<Stream<String>> resultStreams = result.collect(Collectors.toList());
+		Stream<Stream<String>> resultPartitionsStream = resultFuture.get(10000, TimeUnit.MILLISECONDS);
+//		ExecutionResultUtils.printResults(resultPartitionsStream, true);
+		List<Stream<String>> resultStreams = resultPartitionsStream.collect(Collectors.toList());
 		assertEquals(1, resultStreams.size());
+		
+		// spot check
 		List<String> rValues = resultStreams.get(0).collect(Collectors.toList());
 		assertEquals(4, rValues.size());
 		assertEquals("Chapter 61. How a Gardener May Get Rid of the Dormice that Eat His Peaches.", rValues.get(0));
-		assertEquals("great d'Aguesseau, [*] M. de Villefort, to come, but have not much hope of", rValues.get(1));
-		assertEquals("I wished to bury it during my whole life in my own bosom, but your brother", rValues.get(2));
-		assertEquals("End of Project Gutenberg's The Count of Monte Cristo, by Alexandre Dumas, Pere", rValues.get(3));
+		assertEquals("great d'Aguesseau, [*] M. de Villefort, to come, but have not much hope of", rValues.get(3));
+		
 
-		result.close();
+		resultPartitionsStream.close();
 	}
 	
 	@Test
-	public void partitionWithClassifierSize() throws Exception {	
+	public void classifyWithClassifierSizeSet() throws Exception {	
 		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "partitionWithClassifier")
 				.filter(line -> line.length() > 73)
-				.group(s -> s.substring(0, 5))
+				.classify(s -> s.substring(0, 5))
 				.executeAs(this.applicationName + "-size");
-		Stream<Stream<String>> result = resultFuture.get(10000, TimeUnit.MILLISECONDS);
-		List<Stream<String>> resultStreams = result.collect(Collectors.toList());
+		Stream<Stream<String>> resultPartitionsStream = resultFuture.get(10000, TimeUnit.MILLISECONDS);
+		
+//		ExecutionResultUtils.printResults(resultPartitionsStream, true);
+		List<Stream<String>> resultStreams = resultPartitionsStream.collect(Collectors.toList());
 		assertEquals(4, resultStreams.size());
 		
 		List<String> rValues = resultStreams.get(0).collect(Collectors.toList());
@@ -212,13 +191,13 @@ public class PartitionTests extends BaseTezTests {
 		
 		rValues = resultStreams.get(2).collect(Collectors.toList());
 		assertEquals(2, rValues.size());
-		assertEquals("I wished to bury it during my whole life in my own bosom, but your brother", rValues.get(0));
-		assertEquals("End of Project Gutenberg's The Count of Monte Cristo, by Alexandre Dumas, Pere", rValues.get(1));
+		assertEquals("I wished to bury it during my whole life in my own bosom, but your brother", rValues.get(1));
+		assertEquals("End of Project Gutenberg's The Count of Monte Cristo, by Alexandre Dumas, Pere", rValues.get(0));
 		
 		rValues = resultStreams.get(3).collect(Collectors.toList());
-		assertEquals(0, rValues.size());
+		assertTrue(rValues.isEmpty());
 		
-		result.close();
+		resultPartitionsStream.close();
 	}
 	
 //	@Test

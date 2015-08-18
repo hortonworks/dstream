@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * A sequence of {@link DStreamInvocation}s produced by the {@link DStreamInvocationPipelineAssembler}.
  */
-public final class DStreamInvocationPipeline {
+final class DStreamInvocationPipeline {
 
 	private final List<DStreamInvocation> invocations;
 

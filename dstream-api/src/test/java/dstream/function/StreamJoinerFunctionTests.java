@@ -25,11 +25,10 @@ import java.util.stream.Stream;
 
 import org.junit.Test;
 
-import dstream.function.StreamJoinerFunction;
 import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.function.SerializableFunctionConverters.SerPredicate;
 import dstream.utils.Tuples.Tuple2;
-import dstream.utils.Tuples.Tuple4;
+import dstream.utils.Tuples.Tuple3;
 
 public class StreamJoinerFunctionTests {
 	
@@ -41,14 +40,14 @@ public class StreamJoinerFunctionTests {
 	@Test(expected=IllegalStateException.class)
 	public void failWithLessThenTwoStreams(){
 		Stream<Stream<?>> streams = Stream.of(la.stream());
-		StreamJoinerFunction joiner = new StreamJoinerFunction();
+		StreamJoinerFunction joiner = new StreamJoinerFunction(s -> s);
 		joiner.apply(streams);
 	}
 	
 	@Test
 	public void twoWayCrossJoin(){
 		Stream<Stream<?>> streams = Stream.of(la.stream(), lb.stream());
-		StreamJoinerFunction joiner = new StreamJoinerFunction();
+		StreamJoinerFunction joiner = new StreamJoinerFunction(s -> s);
 		Stream<?> mergedStream = joiner.apply(streams);
 		List<String> result = mergedStream.map(s -> s.toString()).peek(System.out::println).collect(Collectors.toList());
 		assertEquals(la.size()*lb.size(), result.size());
@@ -63,7 +62,7 @@ public class StreamJoinerFunctionTests {
 	@Test
 	public void twoWayCrossJoinWithTransformatinPointNoFunction(){
 		Stream<Stream<?>> streams = Stream.of(la.stream(), lb.stream());
-		StreamJoinerFunction joiner = new StreamJoinerFunction();
+		StreamJoinerFunction joiner = new StreamJoinerFunction(s -> s);
 		joiner.addCheckPoint(1);
 		Stream<?> mergedStream = joiner.apply(streams);
 		List<String> result = mergedStream.map(s -> s.toString()).peek(System.out::println).collect(Collectors.toList());
@@ -79,7 +78,7 @@ public class StreamJoinerFunctionTests {
 	@Test
 	public void twoWayPredicateJoin(){
 		Stream<Stream<?>> streams = Stream.of(la.stream(), lb.stream());
-		StreamJoinerFunction joiner = new StreamJoinerFunction();
+		StreamJoinerFunction joiner = new StreamJoinerFunction(s -> s);
 		
 		SerPredicate<Tuple2<String, String>> p = tuple2 -> tuple2._1().endsWith(tuple2._2().substring(1));
 		joiner.addCheckPoint(1);
@@ -92,31 +91,32 @@ public class StreamJoinerFunctionTests {
 	}
 	
 	@Test
-	public void starCrossJoin(){ // 4 way
+	public void crossJoin(){ // 4 way
 		Stream<Stream<?>> streams = Stream.of(la.stream(), lb.stream(), lc.stream(), ld.stream());
-		StreamJoinerFunction joiner = new StreamJoinerFunction();
+		StreamJoinerFunction joiner = new StreamJoinerFunction(s -> s);
 		
 		Stream<?> mergedStream = joiner.apply(streams);
 		List<String> result = mergedStream.map(s -> s.toString()).peek(System.out::println).collect(Collectors.toList());
 		assertEquals(la.size()*lb.size()*lc.size()*ld.size(), result.size());
 		//spot check
-		assertEquals("[A-foo, B-foo, C-foo, D-foo]", result.get(0));
-		assertEquals("[A-foo, B-bar, C-foo, D-foo]", result.get(16));
-		assertEquals("[A-foo, B-bar, C-baz, D-abc]", result.get(27));
-		assertEquals("[A-bar, B-foo, C-baz, D-foo]", result.get(40));
-		assertEquals("[A-bar, B-foo, C-abc, D-abc]", result.get(47));
-		assertEquals("[A-baz, B-foo, C-bar, D-baz]", result.get(70));
+		assertEquals("[[A-foo, B-foo, C-foo], D-foo]", result.get(0));
+		assertEquals("[[A-foo, B-bar, C-foo], D-foo]", result.get(16));
+		assertEquals("[[A-foo, B-bar, C-baz], D-abc]", result.get(27));
+		assertEquals("[[A-bar, B-foo, C-baz], D-foo]", result.get(40));
+		assertEquals("[[A-bar, B-foo, C-abc], D-abc]", result.get(47));
+		assertEquals("[[A-baz, B-foo, C-bar], D-baz]", result.get(70));
 	}
 	
 	@Test
 	public void starSinglePredicateAtEndJoin(){ // 4 way
 		Stream<Stream<?>> streams = Stream.of(la.stream(), lb.stream(), lc.stream(), ld.stream());
-		StreamJoinerFunction joiner = new StreamJoinerFunction();
+		StreamJoinerFunction joiner = new StreamJoinerFunction(s -> s);
 		
-		SerPredicate<Tuple4<String, String, String, String>> p = tuple4 -> 
-			tuple4._1().endsWith(tuple4._2().substring(1)) &&
-			tuple4._2().endsWith(tuple4._3().substring(1)) &&
-			tuple4._3().endsWith(tuple4._4().substring(1));
+		SerPredicate<Tuple2<Tuple3<String, String, String>, String>> p = t2 -> {
+			return t2._1()._1().endsWith(t2._1()._2().substring(1)) &&
+				   t2._1()._2().endsWith(t2._1()._3().substring(1)) &&
+				   t2._1()._3().endsWith(t2._2().substring(1));
+		};
 
 		joiner.addCheckPoint(3);
 		joiner.addTransformationOrPredicate("filter", p);
@@ -124,15 +124,15 @@ public class StreamJoinerFunctionTests {
 		Stream<?> mergedStream = joiner.apply(streams);
 		List<String> result = mergedStream.map(s -> s.toString()).peek(System.out::println).collect(Collectors.toList());
 		assertEquals(2, result.size());
-		assertEquals("[A-foo, B-foo, C-foo, D-foo]", result.get(0));
-		assertEquals("[A-bar, B-bar, C-bar, D-bar]", result.get(1));
+		assertEquals("[[A-foo, B-foo, C-foo], D-foo]", result.get(0));
+		assertEquals("[[A-bar, B-bar, C-bar], D-bar]", result.get(1));
 	}
 	
 	@Test
-	public void starMultiPredicatesAndTransformations(){ 
+	public void starMultiPredicatesAndTransformations(){ // 5 way
 		Stream<Stream<?>> streams = Stream.of(la.stream(), lb.stream(), lc.stream(), ld.stream(), Stream.of("hello"));
 		
-		StreamJoinerFunction joiner = new StreamJoinerFunction();
+		StreamJoinerFunction joiner = new StreamJoinerFunction(s -> s);
 		
 		// First 2
 		SerPredicate<Tuple2<String, String>> p = tuple2 -> tuple2._1().endsWith(tuple2._2().substring(1));	
@@ -149,7 +149,9 @@ public class StreamJoinerFunctionTests {
 		joiner.addTransformationOrPredicate("filter", p2);
 		
 		// 4
-		SerPredicate<Tuple4<String, String, String, String>> p3 = tuple4 -> tuple4._3().endsWith(tuple4._2().substring(1));
+		SerPredicate<Tuple2<Tuple3<String, String, String>, String>> p3 = t2 -> {
+			return t2._1()._3().endsWith(t2._1()._2().substring(1));
+		};
 		joiner.addCheckPoint(2);
 		joiner.addTransformationOrPredicate("filter", p3);
 		
@@ -160,15 +162,15 @@ public class StreamJoinerFunctionTests {
 		
 		List<String> result = mergedStream.map(s -> s.toString()).peek(System.out::println).collect(Collectors.toList());
 		assertEquals(2, result.size());
-		assertEquals("[[A-FOO, B-FOO], C-baz, D-baz, hello]", result.get(0));
-		assertEquals("[[A-BAR, B-BAR], C-baz, D-baz, hello]", result.get(1));
+		assertEquals("[[[A-FOO, B-FOO], C-baz, D-baz], hello]", result.get(0));
+		assertEquals("[[[A-BAR, B-BAR], C-baz, D-baz], hello]", result.get(1));
 	}
 	
 	@Test
 	public void starWithTransformationsSomePredicates(){ 
 		Stream<Stream<?>> streams = Stream.of(la.stream(), lb.stream(), lc.stream(), ld.stream(), Stream.of("hello"));
 		
-		StreamJoinerFunction joiner = new StreamJoinerFunction();
+		StreamJoinerFunction joiner = new StreamJoinerFunction(s -> s);
 		
 		// First 2
 		joiner.addCheckPoint(1);
@@ -193,8 +195,8 @@ public class StreamJoinerFunctionTests {
 		List<String> result = mergedStream.map(s -> s.toString()).peek(System.out::println).collect(Collectors.toList());
 		assertEquals(24, result.size());
 		// spot check
-		assertEquals("[[A-FOO, B-FOO], C-baz, D-foo, hello]", result.get(0));
-		assertEquals("[[A-BAR, B-FOO], C-baz, D-baz, hello]", result.get(10));
-		assertEquals("[[A-BAZ, B-FOO], C-baz, D-bar, hello]", result.get(17));
+		assertEquals("[[[A-FOO, B-FOO], C-baz, D-foo], hello]", result.get(0));
+		assertEquals("[[[A-BAR, B-FOO], C-baz, D-baz], hello]", result.get(10));
+		assertEquals("[[[A-BAZ, B-FOO], C-baz, D-bar], hello]", result.get(17));
 	}
 }

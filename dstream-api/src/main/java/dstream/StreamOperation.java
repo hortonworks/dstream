@@ -20,7 +20,9 @@ package dstream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
+import dstream.function.AbstractMultiStreamProcessingFunction;
 import dstream.function.KeyValueMappingFunction;
 import dstream.function.SerializableFunctionConverters.SerFunction;
 
@@ -42,7 +44,8 @@ public class StreamOperation {
 	
 	private String lastOperationName;
 	
-	private SerFunction<?, ?> groupClassifier;
+	private boolean streamsCombiner;
+	
 
 	/**
 	 * 
@@ -61,6 +64,24 @@ public class StreamOperation {
 		this.parent = parent;
 		this.operationNames = new ArrayList<>();
 		this.id = id;
+	}
+	
+	AbstractMultiStreamProcessingFunction getStreamsCombiner() {
+		if (isStreamsCombiner()) {
+			return (AbstractMultiStreamProcessingFunction) this.streamOperationFunction;
+		}
+		throw new IllegalStateException("THis operation is not streams combiner");
+	}
+
+	void setStreamsCombiner(String operationName, AbstractMultiStreamProcessingFunction streamsCombiner) {
+		this.operationNames.add(operationName);
+		this.lastOperationName = operationName;
+		this.streamOperationFunction = streamsCombiner;
+		this.streamsCombiner = true;
+	}
+	
+	public boolean isStreamsCombiner() {
+		return streamsCombiner;
 	}
 	
 	/**
@@ -83,7 +104,19 @@ public class StreamOperation {
 	 * @return
 	 */
 	public List<StreamOperations> getDependentStreamOperations(){
-		return Collections.unmodifiableList(this.dependentStreamOperations);
+		return dependentStreamOperations == null ? Collections.emptyList() : Collections.unmodifiableList(this.dependentStreamOperations);
+	}
+	
+	public boolean isClassify(){
+		return this.operationNames.contains("classify");
+	}
+	
+	public boolean isShuffle(){
+		if (this.operationNames.size() > 0){
+			String operationName = this.operationNames.get(0);
+			return this.isShuffle(operationName);
+		}
+		return false;
 	}
 	
 	/**
@@ -91,7 +124,7 @@ public class StreamOperation {
 	 * @return
 	 */
 	@SuppressWarnings("rawtypes")
-	public SerFunction getStreamOperationFunction() {
+	public SerFunction<Stream<?>, Stream<?>> getStreamOperationFunction() {
 		return streamOperationFunction;
 	}
 	
@@ -101,22 +134,6 @@ public class StreamOperation {
 	 */
 	public String getLastOperationName() {
 		return lastOperationName;
-	}
-	
-	/**
-	 * 
-	 * @return
-	 */
-	public SerFunction<?, ?> getGroupClassifier() {
-		return groupClassifier;
-	}
-
-	/**
-	 * 
-	 * @param groupClassifier
-	 */
-	void setGroupClassifier(SerFunction<?, ?> groupClassifier) {
-		this.groupClassifier = groupClassifier;
 	}
 	
 	/**
@@ -161,5 +178,15 @@ public class StreamOperation {
 			this.dependentStreamOperations = new ArrayList<>();
 		}
 		this.dependentStreamOperations.add(dependentStreamOperations);
+	}
+	
+	private boolean isShuffle(String operationName){
+		return operationName.equals("reduceValues") ||
+			   operationName.equals("aggregateValues") ||
+			   operationName.equals("join") ||
+			   operationName.equals("union") ||
+			   operationName.equals("unionAll") ||
+			   operationName.equals("classify") ||
+			   operationName.equals("load");
 	}
 }

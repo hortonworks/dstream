@@ -21,22 +21,20 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import dstream.function.HashGroupingFunction;
-
-public class HashGroupingTests {
+public class HashClassifierTests {
 
 	@Test(expected=IllegalStateException.class)
 	public void failWithLessThenOnePartitionSize(){
-		new HashGroupingFunction(0);
+		new HashClassifier(0);
 	}
 	
 	@Test
 	public void validateHashGrouper(){
-		HashGroupingFunction hp = new HashGroupingFunction(4);
-		assertEquals(4, hp.getGroupSize());
-		assertEquals((Integer)1, hp.apply("a"));
-		assertEquals((Integer)2, hp.apply("b"));
-		assertEquals((Integer)3, hp.apply("c"));
-		assertEquals((Integer)0, hp.apply("d"));
+		HashClassifier hp = new HashClassifier(4);
+		assertEquals(4, hp.getSize());
+		assertEquals((Integer)1, hp.getClassificationId("a"));
+		assertEquals((Integer)2, hp.getClassificationId("b"));
+		assertEquals((Integer)3, hp.getClassificationId("c"));
+		assertEquals((Integer)0, hp.getClassificationId("d"));
 	}
 }

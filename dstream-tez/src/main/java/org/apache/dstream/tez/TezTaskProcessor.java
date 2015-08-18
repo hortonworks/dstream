@@ -70,6 +70,7 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 		}
 		
 		List<LogicalInput> sortedInputs = this.getOrderedInputs();
+		
 		List<?> listOfStreams = sortedInputs.stream()
 			.map(input -> {
 				try {
@@ -82,6 +83,12 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 				return reader instanceof KeyValueReader ? StreamUtils.toStream((KeyValueReader) reader) 
 						: StreamUtils.toStream((KeyValuesReader) reader);
 			}).collect(Collectors.toList());
+		
+		
+		if (listOfStreams.size() > 1){
+			System.out.println();
+			
+		}
 		
 		Object functionArgument = listOfStreams.get(0);
 		if (listOfStreams.size() > 1){
@@ -149,7 +156,7 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 			String taskPath = new String(payloadBytes);
 			task = HdfsSerializerUtils.deserialize(new Path(taskPath), fs, Task.class);
 			registry.cacheForDAG(this.vertexName, task);	
-			TezDelegatingPartitioner.setDelegator(task.getGrouper());
+			TezDelegatingPartitioner.setDelegator(task.getClassifier());
 		}
 		return task.getFunction();
 	}
@@ -174,6 +181,7 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 		@SuppressWarnings("rawtypes")
 		public void accept(Object input) {
 			try {
+				
 				if (input instanceof Entry){	
 					Entry inEntry = (Entry) input;
 					if (inEntry.getKey() == null){
@@ -187,9 +195,9 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 					else {
 						this.kw.setValue(((Entry<?,?>)input).getKey());
 						this.vw.setValue(((Entry<?,?>)input).getValue());
+						System.out.println("========> " + this.kw.getValue() + " - " + this.vw.getValue());
+						this.kvWriter.write(this.kw, this.vw);
 					}
-					
-					this.kvWriter.write(this.kw, this.vw);
 				}
 				else {
 					this.vw.setValue(input);

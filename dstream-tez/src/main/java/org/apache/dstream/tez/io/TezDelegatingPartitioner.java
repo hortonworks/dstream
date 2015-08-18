@@ -2,14 +2,16 @@ package org.apache.dstream.tez.io;
 
 import org.apache.tez.runtime.library.partitioner.HashPartitioner;
 
-import dstream.function.GroupingFunction;
+import dstream.support.Classifier;
+
+
 
 public class TezDelegatingPartitioner extends HashPartitioner {
 	
-	private static GroupingFunction delegatorPartitioner;
+	private static Classifier delegatingClassifier;
 	
-	public static void setDelegator(GroupingFunction partitioner){
-		delegatorPartitioner = partitioner;
+	public static void setDelegator(Classifier classifier){
+		delegatingClassifier = classifier;
 	}
 
 	/**
@@ -32,8 +34,8 @@ public class TezDelegatingPartitioner extends HashPartitioner {
 		else {
 			valueToUse = key.getValue();
 		}
-		if (delegatorPartitioner != null){
-			partitionId = delegatorPartitioner.apply(valueToUse);
+		if (delegatingClassifier != null){
+			partitionId = delegatingClassifier.getClassificationId(valueToUse);
 		} 
 		else {
 			partitionId = super.getPartition(valueToUse, null, numPartitions);

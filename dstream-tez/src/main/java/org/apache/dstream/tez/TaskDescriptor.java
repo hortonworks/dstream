@@ -8,10 +8,10 @@ import java.util.stream.Stream;
 import org.apache.tez.dag.api.Vertex;
 
 import dstream.DStreamConstants;
-import dstream.function.GroupingFunction;
-import dstream.function.HashGroupingFunction;
 import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.function.SerializableFunctionConverters.SerSupplier;
+import dstream.support.Classifier;
+import dstream.support.HashClassifier;
 import dstream.utils.ReflectionUtils;
 
 /**
@@ -31,7 +31,7 @@ public class TaskDescriptor {
 	
 	private SerFunction<Stream<?>, Stream<?>> function;
 
-	private GroupingFunction grouper;
+	private Classifier classifier;
 	
 	private int parallelism = 1;
 
@@ -68,15 +68,15 @@ public class TaskDescriptor {
 		this.operationName = operationName;
 		this.previousTaskDescriptor = previousTaskDescriptor;
 		String parallelizmProp = executionConfig.getProperty(DStreamConstants.PARALLELISM);
-		String grouperProp = executionConfig.getProperty(DStreamConstants.GROUPER);
+		String grouperProp = executionConfig.getProperty(DStreamConstants.CLASSIFIER);
 		
 		if (parallelizmProp != null){
 			this.parallelism = Integer.parseInt(parallelizmProp);
 		}
-		GroupingFunction grouper = grouperProp != null 
+		Classifier classifier = grouperProp != null 
 				? ReflectionUtils.newInstance(grouperProp, new Class[]{int.class}, new Object[]{this.parallelism}) 
-						: new HashGroupingFunction(this.parallelism);
-		this.setGrouper(grouper);
+						: new HashClassifier(this.parallelism);
+		this.setClassifier(classifier);
 	}
 	
 	/**
@@ -158,8 +158,8 @@ public class TaskDescriptor {
 	 * 
 	 * @return
 	 */
-	public GroupingFunction getGrouper() {
-		return this.grouper;
+	public Classifier getClassifier() {
+		return this.classifier;
 	}
 	
 	/**
@@ -222,8 +222,8 @@ public class TaskDescriptor {
 	/**
 	 * 
 	 */
-	void setGrouper(GroupingFunction grouper) {
-		this.grouper = grouper;
+	void setClassifier(Classifier classifier) {
+		this.classifier = classifier;
 	}
 	
 	/**
