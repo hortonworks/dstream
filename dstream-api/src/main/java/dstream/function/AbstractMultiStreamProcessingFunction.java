@@ -18,10 +18,9 @@
 package dstream.function;
 
 import static dstream.utils.Tuples.Tuple2.tuple2;
+
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -39,18 +38,24 @@ import dstream.utils.Tuples.Tuple2;
 public abstract class AbstractMultiStreamProcessingFunction implements SerFunction<Stream<Stream<?>>, Stream<?>> {
 	private static final long serialVersionUID = -7336517082191905937L;
 
-	protected List<Tuple2<Integer, Object>> checkPointProcedures = new ArrayList<>();
+	private final SerFunction<Stream<?>, Stream<?>> streamPreProcessingFunction;
 	
-//	protected Map<Integer, Object> checkPointProcedures = new HashMap<Integer, Object>();
 	
 	private int streamCounter = 1;
 	
-	private final SerFunction<Stream<?>, Stream<?>> streamPreProcessingFunction;
+	protected List<Tuple2<Integer, Object>> checkPointProcedures = new ArrayList<>();
 	
+	/**
+	 * 
+	 * @param streamPreProcessingFunction
+	 */
 	public AbstractMultiStreamProcessingFunction(SerFunction<Stream<?>, Stream<?>> streamPreProcessingFunction){
 		this.streamPreProcessingFunction = streamPreProcessingFunction;
 	}
 	
+	/**
+	 * 
+	 */
 	@Override
 	public Stream<?> apply(Stream<Stream<?>> streams) {	
 		Assert.notNull(streams, "'streams' must not be null");
@@ -65,6 +70,11 @@ public abstract class AbstractMultiStreamProcessingFunction implements SerFuncti
 		}
 	}
 	
+	/**
+	 * 
+	 * @param streams
+	 * @return
+	 */
 	protected abstract Stream<?> doApply(List<Stream<?>> streams);
 	
 	/**
@@ -84,10 +94,6 @@ public abstract class AbstractMultiStreamProcessingFunction implements SerFuncti
 	 */
 	public void addCheckPoint(int joiningStreamsCount){
 		this.streamCounter += joiningStreamsCount;
-		
-//		Object[] procedure = new Object[2];
-//		procedure[0] = this.streamCounter;
-//		this.checkPointProcedures.add(procedure);
 		this.checkPointProcedures.add(tuple2(this.streamCounter, null));
 	}
 	
@@ -118,12 +124,5 @@ public abstract class AbstractMultiStreamProcessingFunction implements SerFuncti
 				? transformationOrPredicate 
 						: transformationOrPredicate.compose((SerFunction) currentProcedure._2());
 		this.checkPointProcedures.set(this.checkPointProcedures.size()-1, tuple2(currentProcedure._1(), func));
-//		Object[] currentProcedure = this.checkPointProcedures.get(this.checkPointProcedures.size()-1);
-//		
-//		SerFunction func = (SerFunction) currentProcedure[1] == null 
-//				? transformationOrPredicate 
-//						: transformationOrPredicate.compose((SerFunction) currentProcedure[1]);
-//		
-//		currentProcedure[1] = func;
 	}
 }

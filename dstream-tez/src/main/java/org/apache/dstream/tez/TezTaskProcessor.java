@@ -195,7 +195,6 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 					else {
 						this.kw.setValue(((Entry<?,?>)input).getKey());
 						this.vw.setValue(((Entry<?,?>)input).getValue());
-						System.out.println("========> " + this.kw.getValue() + " - " + this.vw.getValue());
 						this.kvWriter.write(this.kw, this.vw);
 					}
 				}
