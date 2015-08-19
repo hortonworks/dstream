@@ -2,7 +2,7 @@
 ==========
 > IMPORTANT: At the moment this is a research project with the primary goal of investigating the feasability of the approach.
 
-_The primary focus of the **DStream API** is to provide a [Stream-based](http://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html) unified programming model to build **ETL-style** processes for distributable data and execute them in compatible target systems. While agnostic to any specific type of target system, the API exposes an extensible integration/delegation model to support a system of choice.
+_The primary focus of the **DStream API** is to provide a [Stream-based](http://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html) unified programming model to build **ETL-style** processes for distributable data and execute them in compatible target systems. While agnostic to any specific type of target system, the API exposes an extensible integration/delegation model to support a system of choice._
 
 The key distinction between [Java 8 Stream](http://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html) and _DStream_ is the notion of _**distributable data**_, which implies that the actual data _may or may not_ be distributed, making _DStream_ somewhat of a universal strategy to build _ETL-style_ processes regardless of the location and/or the type of data as well as the execution system.
 
