@@ -28,15 +28,14 @@ import dstream.function.SerializableFunctionConverters.SerPredicate;
 import dstream.utils.Assert;
 
 /**
- * {@link Stream}-style specialization strategy which exposes distributable data  
- * as the sequence of elements of type A that support sequential and parallel 
- * aggregate operations.<br>
+ * A type-safe {@link Stream}-like strategy that exposes distributable data as the sequence of 
+ * elements that support sequential and parallel aggregate operations.<br>
  * <br>
- * Below is the example of rudimentary <i>Word Count</i> written in this style:<br>
+ * Below is the example of rudimentary <i>Word Count</i> written using this API:<br>
  * <pre>
  * DStream.ofType(String.class, "wc")
  *     .flatMap(line -> Stream.of(line.split("\\s+")))
- *     .reduceGroups(word -> word, word -> 1, Integer::sum)
+ *     .reduceValues(word -> word, word -> 1, Integer::sum)
  *  .executeAs("WordCount");
  * </pre>
  * 
@@ -62,31 +61,31 @@ import dstream.utils.Assert;
  * <i>composable-transformation</i> - an operation that defines a simple transformation (e.g., map, flatMap, filter etc.) and could be composed 
  *    with subsequent operations of the same type.<br>
  *    </li>
- * <ol>
+ * </ol>
  * <br>
  * @param <A> the type of the stream element
  */
 public interface DStream<A> extends BaseDStream<A, DStream<A>> {
 		
 	/**
-	 * Factory method which creates an instance of the {@code DStream} of type T.
+	 * Factory method which creates an instance of the {@code DStream} of type A.
 	 * 
-	 * @param sourceItemType the type of the elements of this pipeline
-	 * @param sourceIdentifier the value which will be used in conjunction with 
-	 *                       {@link DStreamConstants#SOURCE} in configuration 
-	 *                       to point to source of this stream 
-	 *                       (e.g., dstream.source.foo=file://foo.txt where 'foo' is the <i>sourceIdentifier</i>)
-	 *                       <b>Must be unique!</b>. If you simply want to point to the same source, map it 
-	 *                       through configuration (e.g., dstream.source.foo=file://foo.txt, dstream.source.bar=file://foo.txt)
-	 * @return the new {@link DStream} of type T
+	 * @param sourceElementType the type of the elements of this stream
+	 * @param name the value which represents the name of this stream and is also used 
+	 * 			   in configuration to resolve the source of this stream 
+	 *             (e.g., dstream.source.foo=file://foo.txt where 'foo' is the <i>name</i>). 
+	 *             See {@link DStreamConstants#SOURCE} for more details.<br>
+	 *             <b>Must be unique!</b>. If you simply want to point to the same source, map it 
+	 *              through configuration (e.g., dstream.source.foo=file://foo.txt, dstream.source.bar=file://foo.txt)
+	 * @return the new {@link DStream} of type A
 	 * 
-	 * @param <T> the type of pipeline elements
+	 * @param <A> the type of pipeline elements
 	 */
 	@SuppressWarnings("unchecked")
-	public static <A> DStream<A> ofType(Class<A> sourceElementType, String sourceIdentifier) {	
+	public static <A> DStream<A> ofType(Class<A> sourceElementType, String name) {	
 		Assert.notNull(sourceElementType, "'sourceElementType' must not be null");
-		Assert.notEmpty(sourceIdentifier, "'sourceIdentifier' must not be null or empty");
-		return DStreamInvocationPipelineAssembler.as(sourceElementType, sourceIdentifier, DStream.class);
+		Assert.notEmpty(name, "'name' must not be null or empty");
+		return DStreamInvocationChainAssembler.as(sourceElementType, name, DStream.class);
 	}
 	
 	/**

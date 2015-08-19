@@ -27,17 +27,17 @@ import java.util.stream.Stream;
 public interface DStreamExecutionDelegate {
 
 	/**
-	 * Executes {@link StreamOperations} group returning a {@link Future} of the results.
+	 * Executes {@link DStreamOperations} group returning a {@link Future} of the results.
 	 * 
 	 * @param executionName the name of this execution
 	 * @param executionConfig execution configuration properties
-	 * @param operationsGroups array of {@link StreamOperations} to execute
+	 * @param operationsGroups array of {@link DStreamOperations} to execute
 	 * @return an array of {@link Stream}&lt;{@link Stream}&lt;?&gt;&gt; where each outer 
 	 * {@link Stream} represents the result of execution of individual {@link ExecutionSpec}.<br>
 	 * 
 	 */
 	// add comment that while signature allows for async invocation, the actual style could still be controlled by the implementation
-	Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, StreamOperations... operationsGroups);
+	Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, DStreamOperations... operationsGroups);
 	
 	/**
 	 * Returns {@link Runnable} which contains logic relevant to closing of the result {@link Stream}.

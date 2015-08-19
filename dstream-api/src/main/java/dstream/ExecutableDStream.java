@@ -53,9 +53,7 @@ public interface ExecutableDStream<T>{
 	Future<Stream<Stream<T>>> executeAs(String executionName);
 	
 	/**
-	 * Returns the value to be used to identify the source of this stream.
-	 * 
-	 * @return value to be used to identify the source of this stream.
+	 * Returns the name of this stream
 	 */
-	String getSourceIdentifier();
+	String getName();
 }

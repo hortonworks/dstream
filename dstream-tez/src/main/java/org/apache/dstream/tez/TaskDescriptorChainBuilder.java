@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Properties;
 
 import dstream.DStreamConstants;
-import dstream.StreamOperation;
-import dstream.StreamOperations;
+import dstream.DStreamOperation;
+import dstream.DStreamOperations;
 import dstream.support.SourceSupplier;
 import dstream.utils.Assert;
 
@@ -17,7 +17,7 @@ class TaskDescriptorChainBuilder {
 	
 	private final List<TaskDescriptor> taskChain;
 	
-	private final StreamOperations operationsGroup;
+	private final DStreamOperations executionPipeline;
 	
 	private final String executionName;
 	
@@ -31,9 +31,9 @@ class TaskDescriptorChainBuilder {
 	 * @param invocationChain
 	 * @param executionConfig
 	 */
-	public TaskDescriptorChainBuilder(String executionName, StreamOperations operationsGroup, Properties executionConfig){
+	public TaskDescriptorChainBuilder(String executionName, DStreamOperations executionPipeline, Properties executionConfig){
 		this.taskChain = new ArrayList<>();
-		this.operationsGroup = operationsGroup;
+		this.executionPipeline = executionPipeline;
 		this.executionName = executionName;
 		this.executionConfig = executionConfig;
 	}
@@ -43,9 +43,9 @@ class TaskDescriptorChainBuilder {
 	 * @return
 	 */
 	public List<TaskDescriptor> build(){
-		List<StreamOperation> streamOperations = this.operationsGroup.getOperations();
+		List<DStreamOperation> streamOperations = this.executionPipeline.getOperations();
 
-		for (StreamOperation streamOperation : streamOperations) {	
+		for (DStreamOperation streamOperation : streamOperations) {	
 			TaskDescriptor taskDescriptor;
 			if (streamOperation.getLastOperationName().equals("join") || streamOperation.getLastOperationName().startsWith("union")){
 				String name = this.taskChain.get(this.taskChain.size() - 1).getOperationName();
@@ -69,10 +69,10 @@ class TaskDescriptorChainBuilder {
 	/**
 	 * Creates {@link TaskDescriptor} for stream combine operations (i.e., join, union, unionAll)
 	 */
-	private TaskDescriptor createTaskDescriptorForStreamCombineOperations(StreamOperation streamOperation){
+	private TaskDescriptor createTaskDescriptorForStreamCombineOperations(DStreamOperation streamOperation){
 
 		TaskDescriptor taskDescriptor = this.createTaskDescriptor(streamOperation.getLastOperationName());
-		for (StreamOperations dependentOps : streamOperation.getDependentStreamOperations()) {
+		for (DStreamOperations dependentOps : streamOperation.getDependentStreamOperations()) {
 			TaskDescriptorChainBuilder builder = new TaskDescriptorChainBuilder(executionName, dependentOps, executionConfig);
 			List<TaskDescriptor> dependentDescriptors = builder.build();
 			taskDescriptor.addDependentTasksChain(dependentDescriptors);
@@ -86,12 +86,12 @@ class TaskDescriptorChainBuilder {
 	 */
 	private void initializeTaskInputsIfNecessary(TaskDescriptor td){
 		if (td.getId() == 0 && td.getSourceSupplier() == null){
-			String sourceProperty = executionConfig.getProperty(DStreamConstants.SOURCE + this.operationsGroup.getPipelineName());
-			Assert.notEmpty(sourceProperty, DStreamConstants.SOURCE + this.operationsGroup.getPipelineName() +  "' property can not be found in " + 
+			String sourceProperty = executionConfig.getProperty(DStreamConstants.SOURCE + this.executionPipeline.getName());
+			Assert.notEmpty(sourceProperty, DStreamConstants.SOURCE + this.executionPipeline.getName() +  "' property can not be found in " + 
 					this.executionName + ".cfg configuration file.");
 			SourceSupplier<?> sourceSupplier = SourceSupplier.create(sourceProperty, null);
 			td.setSourceSupplier(sourceSupplier);
-			td.setSourceElementType(this.operationsGroup.getSourceElementType());
+			td.setSourceElementType(this.executionPipeline.getSourceElementType());
 		}
 	}
 	
@@ -110,7 +110,7 @@ class TaskDescriptorChainBuilder {
 	 */
 	private TaskDescriptor createTaskDescriptor(String operationName){
 		TaskDescriptor taskDescriptor = new TaskDescriptor(this.sequenceIdCounter++, 
-				this.operationsGroup.getPipelineName(), operationName, this.executionConfig, this.getCurrentTask());
+				this.executionPipeline.getName(), operationName, this.executionConfig, this.getCurrentTask());
 		this.initializeTaskInputsIfNecessary(taskDescriptor);
 		return taskDescriptor;
 	}
