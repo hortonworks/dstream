@@ -34,10 +34,16 @@ public class BiFunctionToBinaryOperatorAdapter implements SerBinaryOperator<Obje
 	
 	private final SerBiFunction bo;
 	
+	/**
+	 * Constructs this function with the given {@link SerBiFunction} as a delegate.
+	 */
 	public BiFunctionToBinaryOperatorAdapter(SerBiFunction bo){
 		this.bo = bo;
 	}
 
+	/**
+	 * 
+	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public Object apply(Object t, Object u) {
