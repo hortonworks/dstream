@@ -6,7 +6,7 @@ _The primary focus of the **DStream API** is to provide a [Stream-based](http://
 
 The key distinction between [Java 8 Stream](http://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html) and _DStream_ is the notion of _**distributable data**_, which implies that the actual data _may or may not_ be distributed, making _DStream_ somewhat of a universal strategy to build _**ETL-style**_ processes regardless of the location and/or the type of data as well as the execution system.
 
-The following code snippet shows an example of quintessential _WordCount_:
+The following code snippet shows an example of a quintessential _WordCount_:
 
 ```java
 Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DStream.ofType(String.class, "wc")
