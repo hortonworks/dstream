@@ -1,21 +1,13 @@
-### Distributable Streams - DStream
+### DStream - Distributable Streams
 ==========
 > IMPORTANT: At the moment this is a research project with the primary goal of investigating the feasability of the approach.
 
-_Java 8 Streams_ and _lambdas_ introduced several abstractions that greatly simplify data processing by exposing a set of well-known _collection 
-processing patterns_ (e.g., map, group, join etc.) together with _functional programming paradigms_. 
+_The primary focus of the **DStream API** is to provide a [Stream-based](http://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html) unified programming model to build **ETL-style** processes for distributable data and execute them in compatible target systems. While agnostic to any specific type of target system, the API exposes an extensible integration/delegation model to support a system of choice.
 
-_The primary focus of the DStream API is to provide a unified programming model to **construct ETL-style data processsing pipelines** in isolation form the target execution environment and to **provide a delegation model** to execute these pipelines in any compatible execution environment._
-
-_DStream_ builds on top of _Java 8 Streams_ and _lambdas_ while maintaining a clear separation of concerns between _**data processing**_
-and _**data distribution**_, allowing data processing applications to benefit from the rich capabilities of the already available 
-[Streams API](http://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html) (in-memory processing, parallelization etc.), while 
-unobtrusively adding functionality **only** to address _**data distribution**_ concerns. 
-
+The key distinction between [Java 8 Stream](http://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html) and _DStream_ is the notion of _**distributable data**_, which implies that the actual data _may or may not_ be distributed, making _DStream_ somewhat of a universal strategy to build _ETL-style_ processes regardless of the location and/or the type of data as well as the execution system.
 
 The following code snippet shows an example of quintessential _WordCount_:
 
-_**DistributableStream**_
 ```java
 Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DStream.ofType(String.class, "wc")
     .flatMap(line -> Stream.of(line.split("\\s+")))
@@ -44,7 +36,9 @@ the=4
 . . .
 ```
 
-To get started please follow [Getting Started](https://github.com/hortonworks/dstream/wiki)
+For features overviewo please follow [**Core Features Overview**](https://github.com/hortonworks/dstream/wiki/Core-Features-Overview)
+
+To get started please follow [**Getting Started**](https://github.com/hortonworks/dstream/wiki)
 
 =======
 

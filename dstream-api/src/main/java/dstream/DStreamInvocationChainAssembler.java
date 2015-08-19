@@ -77,7 +77,6 @@ final class DStreamInvocationChainAssembler<T,R> {
 		this.streamOperationNames.remove("ofType");
 		this.streamOperationNames.remove("executeAs");
 		this.streamOperationNames.remove("getName");
-		this.streamOperationNames.remove("getSourceIdentifier");
 	}
 	
 	/**
@@ -94,8 +93,10 @@ final class DStreamInvocationChainAssembler<T,R> {
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private R cloneTargetDistributable(Method method, Object[] arguments){
-		String operationName = method.getName();
-		if (operationName.equals("join") || operationName.startsWith("union")){
+
+		Ops operation = Ops.valueOf(method.getName());
+		
+		if (operation.equals(Ops.join) || operation.equals(Ops.union) || operation.equals(Ops.unionAll)){
 			StreamInvocationChainSupplier s =  (StreamInvocationChainSupplier) arguments[0];
 			arguments = new Object[]{s.get()};
 		}
@@ -103,7 +104,7 @@ final class DStreamInvocationChainAssembler<T,R> {
 		DStreamInvocationChainAssembler clonedDistributable = new DStreamInvocationChainAssembler(this.invocationPipeline.getSourceElementType(), this.invocationPipeline.getSourceIdentifier(), 
 				method.getReturnType().isInterface() ? method.getReturnType() : this.currentStreamType);	
 		clonedDistributable.invocationPipeline.addAllInvocations(this.invocationPipeline.getInvocations());	
-		if (operationName.equals("on")){
+		if (operation.equals(Ops.on)){
 			clonedDistributable.invocationPipeline.getLastInvocation().setSupplementaryOperation(arguments[0]);
 		}
 		else {
