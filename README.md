@@ -5,7 +5,7 @@
 _Java 8 Streams_ and _lambdas_ introduced several abstractions that greatly simplify data processing by exposing a set of well-known _collection 
 processing patterns_ (e.g., map, group, join etc.) together with _functional programming paradigms_. 
 
-_The primary focus of the _DStream_ API is to provide a unified programming model to **construct ETL-style data processsing pipelines** in isolation form the target execution environment and to **provide a delegation model** to execute these pipelines in the in any compatible execution environment._
+_The primary focus of the DStream API is to provide a unified programming model to **construct ETL-style data processsing pipelines** in isolation form the target execution environment and to **provide a delegation model** to execute these pipelines in any compatible execution environment._
 
 _DStream_ builds on top of _Java 8 Streams_ and _lambdas_ while maintaining a clear separation of concerns between _**data processing**_
 and _**data distribution**_, allowing data processing applications to benefit from the rich capabilities of the already available 
