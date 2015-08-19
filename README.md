@@ -35,6 +35,7 @@ solve=1
 the=4
 . . .
 ```
+======
 
 For features overviewo please follow [**Core Features Overview**](https://github.com/hortonworks/dstream/wiki/Core-Features-Overview)
 
