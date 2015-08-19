@@ -2,7 +2,9 @@
 ==========
 > IMPORTANT: At the moment this is a research project with the primary goal of investigating the feasability of the approach.
 
-This project defines core API and provides Reference Implementation of this API for local data.
+=====
+
+This project defines teh core API and provides Reference Implementation of this API for local execution environment which is also based on [Java 8 Stream](http://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html) .
 
 ======
 
