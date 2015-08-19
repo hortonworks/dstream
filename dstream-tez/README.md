@@ -1,8 +1,8 @@
-### DStream - Apache Tez Reference Implementation of the DStream API.
+### DStream-Tez - Apache Tez Reference Implementation of the DStream API.
 ==========
 > IMPORTANT: At the moment this is a research project with the primary goal of investigating the feasability of the approach.
 
-This project provides Reference Implementation of this API which uses Apache Tez as its target execution system.
+This project provides Reference Implementation of this API which uses [Apache Tez](https://tez.apache.org/) as its target execution system.
 
 ======
 
