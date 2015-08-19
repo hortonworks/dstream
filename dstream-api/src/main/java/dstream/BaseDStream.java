@@ -27,7 +27,7 @@ import dstream.function.SerializableFunctionConverters.SerPredicate;
 import dstream.support.Classifier;
 import dstream.support.HashClassifier;
 /**
- * Base strategy for {@link DStream} which contains all common operations.
+ * Base strategy for all variants of {@link DStream} and defines all common operations.
  * 
  * @param <A> the type of the stream elements
  * @param <T> the actual type of the instance of this {@link BaseDStream}.
@@ -35,15 +35,16 @@ import dstream.support.HashClassifier;
 interface BaseDStream<A, T> extends ExecutableDStream<A> {
 
 	/**
-	 * Will <b>distinctively</b> combine two streams of the same type returning a new {@link DStream} 
-	 * of the same type.
+	 * Will <b>distinctively</b> combine the two streams of the <i><b>same type</b></i> 
+	 * returning a new {@link DStream} of the same type. <br>
+	 * For example:
 	 * <pre>
 	 * DStream&lt;String&gt; d1 = ...
 	 * DStream&lt;String&gt; d2 = ...
-	 * DStream&lt;String&gt; d3 = ...
+	 * DStream&lt;Integer&gt; d3 = ...
 	 * 
-	 * d1.union(d2) - legal
-	 * d1.union(d3) - is illegal and will result in compile error.
+	 * d1.union(d2) - legal because both streams are of the same type
+	 * d1.union(d3) - is illegal and will result in compile error since two streams are of different type (String and Integer)
 	 * </pre>
 	 * <br>
 	 * This is an <i>intermediate</i> operation.
@@ -61,10 +62,10 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
 	 * <pre>
 	 * DStream&lt;String&gt; d1 = ...
 	 * DStream&lt;String&gt; d2 = ...
-	 * DStream&lt;String&gt; d3 = ...
+	 * DStream&lt;Integer&gt; d3 = ...
 	 * 
-	 * d1.union(d2) - legal
-	 * d1.union(d3) - is illegal and will result in compile error.
+	 * d1.unionAll(d2) - legal because both streams are of the same type
+	 * d1.unionAll(d3) - is illegal and will result in compile error since two streams are of different type (String and Integer)
 	 * </pre>
 	 * <br>
 	 * This is an <i>intermediate</i> operation.
@@ -77,7 +78,8 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
 	T unionAll(T stream);
 	
 	/**
-	 * Returns a {@link DStream} consisting of the elements of this stream that match
+	 * Returns a new {@link DStream} consisting of the elements of this stream that were tested 
+	 * true according to the given predicate.
      * the given predicate.<br>
      * <br>
      * Consistent with {@link Stream#filter(java.util.function.Predicate)}.<br>
@@ -88,17 +90,18 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
 	 * 
 	 * @param predicate predicate to apply to each element to determine if it
      *                  should be included
-	 * @return new {@link DStream}
+	 * @return new {@link DStream} of the same type.
 	 */
 	T filter(SerPredicate<? super A> predicate);
 	
 	/**
 	 * Returns an equivalent {@link DStream} where elements are classified
 	 * on values provided by the given <i>classifier</i>.<br>
-	 * Classification is performed via implementation of {@link Classifier}.
+	 * Classification is performed by the {@link Classifier}.
 	 * Default implementation of the {@link Classifier} is {@link HashClassifier},
 	 * however specialized implementation could be configured via {@link DStreamConstants#CLASSIFIER}
 	 * configuration property.<br>
+	 * Classification could be looked at as the process of distributed grouping<br>
 	 * For example:
 	 * <pre>
 	 * // Suppose you have a text file with the following contents:
@@ -108,48 +111,48 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
 	 * // Your pipeline
 	 * DStream.ofType(String.class, "wc")
 	 *     .flatMap(record -> Stream.of(record.split("\\s+")))
-	 *     .group(word -> word)
+	 *     .classify(word -> word)
 	 * 
-	 * // Your GroupingFunction is configured as 'dstream.grouper=FooBarGrouper' 
-	 * // Its implementation looks like this:
+	 *  // Your Classifier is configured as 'dstream.grouper=FooBarClassifier' 
+	 *  // and its implementation looks like this:
 	 * 
-	 * class FooBarGrouper extends GroupingFunction {
+	 * class FooBarClassifier implements Classifier {
 	 *     public Integer apply(Object input) {
 	 *         return input.equals("bar") ? 1 : 0;
 	 *     }
+	 *     . . .
 	 * }
 	 * </pre>
-	 * The above would result in {@link DStream} which represent two groups:<br>
+	 * The above would result in {@link DStream} which represents two classification groups:<br>
 	 * Group-1 - bar bar bar bar<br>
 	 * Group-2 - foo foo foo foo foo<br>
 	 * Even though it would look continuous to you 
 	 * (i.e., bar bar bar bar foo foo foo foo foo).<br>
 	 * <br>
-	 * In the "distributable" reality, this often implies data <i>partitioning</i>, since 
+	 * In the "distributable" reality, this often coincides with data <i>partitioning</i>, since 
 	 * {@link Classifier} is compliant with the general semantics of partitioners
-	 * by returning an {@link Integer} representing the partition ID.<br>
+	 * by returning an {@link Integer} representing classification id, which could be treated by a 
+	 * target partitioner as partition id.<br>
 	 * <br>
 	 * However, the actual <b><i>data partitioning</i></b> is the function of the system and 
 	 * exist primarily to facilitate greater parallelisation when it comes to actual data processing. 
-	 * <b><i>Data grouping</i></b> on the other hand, is the function of the application deriving its 
+	 * <b><i>Data classification</i></b> on the other hand, is the function of the application deriving its 
 	 * requirement from the use case at hand (e.g., group all 'foo's and 'bar's together).<br>
 	 * So, it is important to separate the two, since it is quite conceivable that to facilitate greater 
-	 * parallelisation in the truly distributed environment the groups
+	 * parallelisation in the truly distributed environment classification groups
 	 * could be further partitioned (e.g., 2 groups into 8 partitions).<br>
 	 * <br>
 	 * Another configuration property relevant to this and every other <i>shuffle</i>-style operation
 	 * is {@link DStreamConstants#PARALLELISM} which allows you to provide a hint as to the level of
-	 * parallelisation you may want to accomplish and is typically sent as one of the constructor arguments
+	 * parallelisation you may want to accomplish and is typically passed as one of the constructor arguments
 	 * to the instance of {@link Classifier}, but it could also be used by the target execution 
-	 * environment to configure its partitioner if the two concerns are different (i.e., partition
-	 * however many groups into the amount of partitions specified by the {@link DStreamConstants#PARALLELISM}
-	 * configuration property).<br>
+	 * environment to configure its partitioner.<br>
 	 * <br>
 	 * This is an <i>intermediate</i> operation.
 	 * <br>
 	 * This is a <i>shuffle</i> operation.
 	 * 
-	 * @param classifier function to extract value used by a target partitioner.
+	 * @param classifier function to extract value used by a target classifier to compute classification id.
 	 * @return
 	 */
 	T classify(SerFunction<? super A, ?> classifier);
@@ -189,9 +192,21 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
 	<R> DStream<R> map(SerFunction<? super A, ? extends R> mapper);
 	
 	/**
-	 * Returns a {@link DStream} consisting of the results of applying the given function
-	 * on the entire stream (i.e., partition/split) represented as {@link Stream}.<br>
-	 * This operation essentially allows to fall back on standard {@link Stream} API.<br>
+	 * Returns a {@link DStream} consisting of the results of applying the given
+     * function on the entire {@link Stream} which typically represents a single partition/split
+     * handled by a currently executing task<br>. Essentially this is a gateway to use 
+     * standard {@link Stream} API on a given piece of data represented by this stream.<br>
+	 * Below is the variant of the rudimentary WordCount. Even though the API provides configuration 
+	 * for the implicit map-side combine, here you can see how something like explicit map-side combine
+	 * could be accomplished via <i>compute</i> operation and standard {@link Stream} API.
+	 * <pre>
+     * DStream.ofType(String.class, "wc")
+     *       .compute(stream -> stream
+     *           .flatMap(line -> Stream.of(line.split("\\s+")))
+     *           .collect(Collectors.toMap(word -> word, word -> 1, Integer::sum)).entrySet().stream()
+     *      ).reduceValues(word -> word, word -> 1, Integer::sum)
+     *  .executeAs("WordCount");
+     * </pre>
 	 * <br>
 	 * This is an <i>intermediate</i> operation.
 	 * <br>
@@ -208,8 +223,8 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
 	 * elements of this stream are grouped on the given <i>groupClassifier</i> (e.g., key) and 
 	 * reduced by the given <i>valueReducer</i>.<br>
 	 * <br> 
-	 * This operation is similar to <i>Stream.collect(Collectors.toMap(Function, Function, BinaryOperator))</i>, 
-	 * yet it is not terminal.<br>
+	 * This operation is a non-terminal equivalent of the 
+	 * <i>Stream.collect(Collectors.toMap(Function, Function, BinaryOperator))</i>.<br> 
 	 * <br>
 	 * This is an <i>intermediate</i> operation.
 	 * <br>

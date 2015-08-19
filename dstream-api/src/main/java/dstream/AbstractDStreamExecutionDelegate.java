@@ -35,7 +35,7 @@ import java.util.stream.Stream;
 public abstract class AbstractDStreamExecutionDelegate implements DStreamExecutionDelegate {
 	@SuppressWarnings("unchecked")
 	@Override
-	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, StreamOperations... operationsGroups) {
+	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, DStreamOperations... executionPipelines) {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 		
 		try {
@@ -43,7 +43,7 @@ public abstract class AbstractDStreamExecutionDelegate implements DStreamExecuti
 				@Override
 				public Stream<Stream<?>> call() throws Exception {
 					try {
-						List<Stream<Stream<?>>> resultStreamsList = doExecute(executionName, executionConfig, operationsGroups);
+						List<Stream<Stream<?>>> resultStreamsList = doExecute(executionName, executionConfig, executionPipelines);
 						
 						@SuppressWarnings("rawtypes")
 						Stream resultStreams = resultStreamsList.size() == 1
@@ -89,7 +89,7 @@ public abstract class AbstractDStreamExecutionDelegate implements DStreamExecuti
 	 * @param invocationChains
 	 * @return
 	 */
-	protected abstract List<Stream<Stream<?>>> doExecute(String executionName, Properties executionConfig, StreamOperations... operationsGroup);
+	protected abstract List<Stream<Stream<?>>> doExecute(String executionName, Properties executionConfig, DStreamOperations... executionPipelines);
 	
 	/**
 	 * Creates proxy over the result Stream to ensures that close() call is always delegated to

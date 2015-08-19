@@ -21,19 +21,13 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
-import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.utils.Assert;
 import dstream.utils.PropertiesHelper;
 import dstream.utils.ReflectionUtils;
@@ -43,13 +37,13 @@ import dstream.utils.ReflectionUtils;
  * @param <T>
  * @param <R>
  */
-final class DStreamInvocationPipelineAssembler<T,R> {
+final class DStreamInvocationChainAssembler<T,R> {
 	
 	private final Logger logger  = Logger.getLogger(this.getClass().getName());
 
 	private final R targetStream;
 	
-	private final DStreamInvocationPipeline invocationPipeline;
+	private final DStreamInvocationChain invocationPipeline;
 	
 	private final Set<String> streamOperationNames;
 	
@@ -66,7 +60,7 @@ final class DStreamInvocationPipelineAssembler<T,R> {
 	static <T,R> R as(Class<T> sourceElementType, String sourceIdentifier, Class<R> streamType) {
 		StreamNameMonitor.add(sourceIdentifier);
 		@SuppressWarnings("unchecked")
-		DStreamInvocationPipelineAssembler<T,R> builder = new DStreamInvocationPipelineAssembler<T,R>(sourceElementType, sourceIdentifier, streamType);
+		DStreamInvocationChainAssembler<T,R> builder = new DStreamInvocationChainAssembler<T,R>(sourceElementType, sourceIdentifier, streamType);
 		return builder.targetStream;
 	}
 	
@@ -74,14 +68,15 @@ final class DStreamInvocationPipelineAssembler<T,R> {
 	 * 
 	 */
 	@SuppressWarnings("unchecked")
-	private DStreamInvocationPipelineAssembler(Class<?> sourceElementType, String sourceIdentifier, Class<R>... streamType) {
+	private DStreamInvocationChainAssembler(Class<?> sourceElementType, String sourceIdentifier, Class<R>... streamType) {
 		
 		this.currentStreamType = streamType[0];
 		this.targetStream =  this.generateStreamProxy(streamType);
-		this.invocationPipeline = new DStreamInvocationPipeline(sourceElementType, sourceIdentifier, streamType[0]);
+		this.invocationPipeline = new DStreamInvocationChain(sourceElementType, sourceIdentifier, streamType[0]);
 		this.streamOperationNames = ReflectionUtils.findAllVisibleMethodOnInterface(streamType[0]);
 		this.streamOperationNames.remove("ofType");
 		this.streamOperationNames.remove("executeAs");
+		this.streamOperationNames.remove("getName");
 		this.streamOperationNames.remove("getSourceIdentifier");
 	}
 	
@@ -105,7 +100,7 @@ final class DStreamInvocationPipelineAssembler<T,R> {
 			arguments = new Object[]{s.get()};
 		}
 
-		DStreamInvocationPipelineAssembler clonedDistributable = new DStreamInvocationPipelineAssembler(this.invocationPipeline.getSourceElementType(), this.invocationPipeline.getSourceIdentifier(), 
+		DStreamInvocationChainAssembler clonedDistributable = new DStreamInvocationChainAssembler(this.invocationPipeline.getSourceElementType(), this.invocationPipeline.getSourceIdentifier(), 
 				method.getReturnType().isInterface() ? method.getReturnType() : this.currentStreamType);	
 		clonedDistributable.invocationPipeline.addAllInvocations(this.invocationPipeline.getInvocations());	
 		if (operationName.equals("on")){
@@ -138,7 +133,7 @@ final class DStreamInvocationPipelineAssembler<T,R> {
 			logger.info("Invoking OPERATION: " + operationName);
 			result = this.cloneTargetDistributable(method, args == null ? new Object[]{} : args);
 		}
-		else if (operationName.equals("getSourceIdentifier")){
+		else if (operationName.equals("getName")){
 			result = this.invocationPipeline.getSourceIdentifier();
 		}
 		else if (operationName.equals("get")){
@@ -156,11 +151,11 @@ final class DStreamInvocationPipelineAssembler<T,R> {
 			
 			logger.info("Delegating execution to: " + executionDelegateClassName);
 					
-			StreamOperationBuilder builder = new StreamOperationBuilder(this.invocationPipeline, executionConfig);
+			DStreamOperationsBuilder builder = new DStreamOperationsBuilder(this.invocationPipeline, executionConfig);
 			
 			
 			
-			StreamOperations operations = builder.build();
+			DStreamOperations operations = builder.build();
 			
 			DStreamExecutionDelegate executionDelegate = (DStreamExecutionDelegate) ReflectionUtils
 					.newDefaultInstance(Class.forName(executionDelegateClassName, true, Thread.currentThread().getContextClassLoader()));
@@ -177,7 +172,7 @@ final class DStreamInvocationPipelineAssembler<T,R> {
 	/**
 	 */
 	private static interface StreamInvocationChainSupplier {
-		DStreamInvocationPipeline get();
+		DStreamInvocationChain get();
 	}
 	
 	/**
@@ -188,7 +183,7 @@ final class DStreamInvocationPipelineAssembler<T,R> {
 		@Override
 		public Object invoke(Object proxy, Method method, Object[] args)
 				throws Throwable {
-			return DStreamInvocationPipelineAssembler.this.invoke(proxy, method, args);
+			return DStreamInvocationChainAssembler.this.invoke(proxy, method, args);
 		}
 	}
 	

@@ -19,60 +19,51 @@ package dstream;
 
 import java.util.List;
 
-public final class StreamOperations {
+/**
+ * Represents the <i>execution pipeline</i> built from the invocations on the {@link DStream}.<br>
+ * <b><i>Execution pipeline</i></b> is a sort of an abstract syntax tree (AST) containing finalized 
+ * operations ready to be executed by the target system with minimal to no modifications. <br>
+ * Individual operations are represented by a {@link DStreamOperation}.
+ *
+ */
+public final class DStreamOperations {
 
-	private final List<StreamOperation> operations;
+	private final List<DStreamOperation> operations;
 
 	private final Class<?> sourceElementType;
 
 	private final String pipelineName;
 	
-	private final Class<?> streamType;
-	
 	/**
 	 * 
-	 * @param sourceElementType
-	 * @param pipelineName
-	 * @param streamType
-	 * @param operations
 	 */
-	StreamOperations(Class<?> sourceElementType, String pipelineName, Class<?> streamType, List<StreamOperation> operations){
+	DStreamOperations(Class<?> sourceElementType, String pipelineName, List<DStreamOperation> operations){
 		this.sourceElementType = sourceElementType;
 		this.pipelineName = pipelineName;
 		this.operations = operations;
-		this.streamType = streamType;
 	}
 	
 	/**
-	 * Returns immutable {@link List} of {@link StreamOperation}s.
+	 * Returns immutable {@link List} of {@link DStreamOperation}s.
 	 * @return
 	 */
-	public List<StreamOperation> getOperations() {
-		return operations;
+	public List<DStreamOperation> getOperations() {
+		return this.operations;
 	}
 
 	/**
-	 * 
-	 * @return
+	 * Returns the type of the element the underlying pipeline was constructed with.
 	 */
 	public Class<?> getSourceElementType() {
-		return sourceElementType;
+		return this.sourceElementType;
 	}
 
 	/**
-	 * 
-	 * @return
+	 * Returns the name used during the construction of the {@link DStream} from which this 
+	 * execution pipeline was built.
 	 */
-	public String getPipelineName() {
+	public String getName() {
 		return this.pipelineName;
-	}
-
-	/**
-	 * 
-	 * @return
-	 */
-	public Class<?> getStreamType() {
-		return streamType;
 	}
 	
 	/**

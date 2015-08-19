@@ -17,6 +17,7 @@
  */
 package dstream;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,31 +28,41 @@ import dstream.function.KeyValueMappingFunction;
 import dstream.function.SerializableFunctionConverters.SerFunction;
 
 /**
+ * Represents an assembled and final unit of work which should be used by a target 
+ * execution environment to build a target specific execution (e.g., DAG in Tez or Spark).<br>
  * 
+ * It consists of all attributes required to build a target specific execution. 
+ * The two most important once are:<br>
+ * <ol>
+ * 
+ * <li>
+ *   The {@link Serializable} <i>lambda expression</i> provided by the user (see {@link #getStreamOperationFunction()}). 
+ *    </li>
+ * <li>
+ *   Dependent operations which is a {@link List} of individual stream operations that in essence represents 
+ *   another execution pipeline. Dependent operations can only be present if this operation is performing some
+ *   type of streams combine operation (e.g., join, union, unionAll)
+ *    </li>
+ * </ol>
  */
-public class StreamOperation {
+public final class DStreamOperation {
 
-	private StreamOperation parent;
+	private final int id;
+	
+	private DStreamOperation parent;
 	
 	@SuppressWarnings("rawtypes")
 	private SerFunction streamOperationFunction;
 
 	private List<String> operationNames;
 	
-	private final int id;
+	private List<DStreamOperations> dependentStreamOperations;
 	
-	private List<StreamOperations> dependentStreamOperations;
-	
-	private String lastOperationName;
-	
-	private boolean streamsCombiner;
-	
-
 	/**
 	 * 
 	 * @param id
 	 */
-	StreamOperation(int id){
+	DStreamOperation(int id){
 		this(id, null);
 	}
 	
@@ -60,28 +71,19 @@ public class StreamOperation {
 	 * @param id
 	 * @param parent
 	 */
-	StreamOperation(int id, StreamOperation parent) {
+	DStreamOperation(int id, DStreamOperation parent) {
 		this.parent = parent;
 		this.operationNames = new ArrayList<>();
 		this.id = id;
 	}
 	
-	AbstractMultiStreamProcessingFunction getStreamsCombiner() {
-		if (isStreamsCombiner()) {
-			return (AbstractMultiStreamProcessingFunction) this.streamOperationFunction;
-		}
-		throw new IllegalStateException("THis operation is not streams combiner");
-	}
-
-	void setStreamsCombiner(String operationName, AbstractMultiStreamProcessingFunction streamsCombiner) {
-		this.operationNames.add(operationName);
-		this.lastOperationName = operationName;
-		this.streamOperationFunction = streamsCombiner;
-		this.streamsCombiner = true;
-	}
-	
+	/**
+	 * Returns <i>true</i> if this operation's function is an
+	 * instance of {@link AbstractMultiStreamProcessingFunction}
+	 * @return
+	 */
 	public boolean isStreamsCombiner() {
-		return streamsCombiner;
+		return this.streamOperationFunction instanceof AbstractMultiStreamProcessingFunction;
 	}
 	
 	/**
@@ -103,14 +105,22 @@ public class StreamOperation {
 	 * 
 	 * @return
 	 */
-	public List<StreamOperations> getDependentStreamOperations(){
+	public List<DStreamOperations> getDependentStreamOperations(){
 		return dependentStreamOperations == null ? Collections.emptyList() : Collections.unmodifiableList(this.dependentStreamOperations);
 	}
 	
+	/**
+	 * 
+	 * @return
+	 */
 	public boolean isClassify(){
 		return this.operationNames.contains("classify");
 	}
 	
+	/**
+	 * 
+	 * @return
+	 */
 	public boolean isShuffle(){
 		if (this.operationNames.size() > 0){
 			String operationName = this.operationNames.get(0);
@@ -123,9 +133,9 @@ public class StreamOperation {
 	 * 
 	 * @return
 	 */
-	@SuppressWarnings("rawtypes")
+	@SuppressWarnings("unchecked")
 	public SerFunction<Stream<?>, Stream<?>> getStreamOperationFunction() {
-		return streamOperationFunction;
+		return this.streamOperationFunction;
 	}
 	
 	/**
@@ -133,7 +143,9 @@ public class StreamOperation {
 	 * @return
 	 */
 	public String getLastOperationName() {
-		return lastOperationName;
+		return this.operationNames.size() > 0 
+				? this.operationNames.get(this.operationNames.size()-1)
+						: null;
 	}
 	
 	/**
@@ -143,7 +155,6 @@ public class StreamOperation {
 	 */
 	@SuppressWarnings("unchecked")
 	void addStreamOperationFunction(String operationName, SerFunction<?,?> function){
-		this.lastOperationName = operationName;
 		if (this.streamOperationFunction != null){
 			this.streamOperationFunction = this.streamOperationFunction.andThen(function);
 		}
@@ -162,9 +173,29 @@ public class StreamOperation {
 	
 	/**
 	 * 
+	 */
+	AbstractMultiStreamProcessingFunction getStreamsCombiner() {
+		if (isStreamsCombiner()) {
+			return (AbstractMultiStreamProcessingFunction) this.streamOperationFunction;
+		}
+		throw new IllegalStateException("THis operation is not streams combiner");
+	}
+
+	/**
+	 * 
+	 * @param operationName
+	 * @param streamsCombiner
+	 */
+	void setStreamsCombiner(String operationName, AbstractMultiStreamProcessingFunction streamsCombiner) {
+		this.operationNames.add(operationName);
+		this.streamOperationFunction = streamsCombiner;
+	}
+	
+	/**
+	 * 
 	 * @return
 	 */
-	StreamOperation getParent(){
+	DStreamOperation getParent(){
 		return this.parent;
 	}
 	
@@ -173,7 +204,7 @@ public class StreamOperation {
 	 * 
 	 * @param dependentStreamOperations
 	 */
-	void addDependentStreamOperations(StreamOperations dependentStreamOperations){
+	void addDependentStreamOperations(DStreamOperations dependentStreamOperations){
 		if (this.dependentStreamOperations == null){
 			this.dependentStreamOperations = new ArrayList<>();
 		}

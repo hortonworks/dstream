@@ -34,8 +34,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import dstream.DStreamConstants;
-import dstream.StreamOperation;
-import dstream.StreamOperations;
+import dstream.DStreamOperation;
+import dstream.DStreamOperations;
 import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.local.ri.ShuffleHelper.RefHolder;
 import dstream.support.Aggregators;
@@ -66,18 +66,18 @@ final class LocalDStreamExecutionEngine {
 		this.classifier = this.determineClassifier();
 	}
 	
-	public Stream<Stream<?>> execute(StreamOperations pipeline) {
+	public Stream<Stream<?>> execute(DStreamOperations pipeline) {
 		return this.execute(pipeline, false);
 	}
 	
 	/**
 	 * 
 	 */
-	private Stream<Stream<?>> execute(StreamOperations pipeline, boolean partition) {
-		List<StreamOperation> streamOperations = pipeline.getOperations();
+	private Stream<Stream<?>> execute(DStreamOperations pipeline, boolean partition) {
+		List<DStreamOperation> streamOperations = pipeline.getOperations();
 		
 		for (int i = 0; i < streamOperations.size(); i++) {
-			this.doExecuteStage(streamOperations.get(i), partition, pipeline.getPipelineName());
+			this.doExecuteStage(streamOperations.get(i), partition, pipeline.getName());
 		}
 		
 		return this.realizedStageResults.stream().map(list -> list.stream());
@@ -89,7 +89,7 @@ final class LocalDStreamExecutionEngine {
 	 * @param mapPartitions
 	 */
 	@SuppressWarnings("unchecked")
-	private void doExecuteStage(StreamOperation streamOperation, boolean partition, String pipelineName){
+	private void doExecuteStage(DStreamOperation streamOperation, boolean partition, String pipelineName){
 		SerFunction<Stream<?>, Stream<?>> streamFunction = streamOperation.getStreamOperationFunction();
 		
 		if (this.realizedStageResults == null){
@@ -119,8 +119,8 @@ final class LocalDStreamExecutionEngine {
 					matchedPartitions.merge(i, currentPartitions.get(i), Aggregators::aggregateToList);
 				}
 
-				List<StreamOperations> dependentPipelines = streamOperation.getDependentStreamOperations();
-				for (StreamOperations dependentPipeline : dependentPipelines) {
+				List<DStreamOperations> dependentPipelines = streamOperation.getDependentStreamOperations();
+				for (DStreamOperations dependentPipeline : dependentPipelines) {
 					LocalDStreamExecutionEngine e = new LocalDStreamExecutionEngine(this.executionName, this.executionConfig);
 					Stream<Stream<?>> dependentStream = e.execute(dependentPipeline, true);
 					List<Stream<?>> dependentPartitions = dependentStream.collect(Collectors.toList());
