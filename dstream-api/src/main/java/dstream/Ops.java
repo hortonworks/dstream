@@ -14,6 +14,7 @@ public enum Ops {
 	map,
 	mapKeyValues,
 	on,
+	reduce,
 	reduceValues,
 	union,
 	unionAll;
@@ -31,7 +32,8 @@ public enum Ops {
 	}
 	
 	public static boolean isStreamTerminal(Ops operation){
-		return operation.equals(count);
+		return operation.equals(count) ||
+			   operation.equals(reduce);
 	}
 	
 	public static boolean isTransformation(Ops operation){

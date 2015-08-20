@@ -326,29 +326,39 @@ final class DStreamOperationsBuilder {
 	/**
 	 * 
 	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void addStreamTerminalOperation(DStreamInvocation invocation){
+		SerFunction<Object, Integer> keyMapper = s -> 0;
+		SerFunction valueMapper;
+		SerBinaryOperator valueAggregator;
+		
 		if (invocation.getMethod().getName().equals(Ops.count.name())){
-			SerFunction<Object, Integer> keyMapper = s -> 0;
-			SerFunction<Object, Long> valueMapper = s -> 1L;
-			SerBinaryOperator<Long> valueAggregator = Long::sum;
-			SerFunction<Stream<Object>, Stream<Entry<Integer, Long>>> kvMapper = 
-					new KeyValueMappingFunction<Object, Integer, Long>(keyMapper, valueMapper, valueAggregator);
-			
-			this.adjustCurrentStreamState();
-			
-			this.currentStreamOperation.addStreamOperationFunction(Ops.mapKeyValues.name(), kvMapper);
-
-			SerFunction<Stream<Entry<Integer,Iterator<Long>>>,Stream<Long>> valueReducingFunction = 
-					new ValuesReducingFunction<Integer, Long, Long>(valueAggregator);
-			DStreamOperation valueReducingOperation = new DStreamOperation(this.operationIdCounter++, this.currentStreamOperation);
-				
-			valueReducingOperation.addStreamOperationFunction(Ops.reduceValues.name(), valueReducingFunction);
-			this.currentStreamOperation = valueReducingOperation;
-			
-			DStreamOperation mappingOperation = new DStreamOperation(this.operationIdCounter++, this.currentStreamOperation);
-			mappingOperation.addStreamOperationFunction(Ops.map.name(), this.unmapFunction);
-			this.currentStreamOperation = mappingOperation;
+			valueMapper = s -> 1L;
+			valueAggregator = (a, b) -> ((long)a) + ((long)b);
+		} else if (invocation.getMethod().getName().equals(Ops.reduce.name())) {
+			valueMapper = s -> s;
+			valueAggregator = (SerBinaryOperator) invocation.getArguments()[0];
 		}
+		else {
+			throw new IllegalStateException("Unrecognized or unsupported operation: " + invocation.getMethod().getName());
+		}
+		
+		SerFunction kvMapper = new KeyValueMappingFunction<>(keyMapper, valueMapper, valueAggregator);
+		
+		this.adjustCurrentStreamState();
+		
+		this.currentStreamOperation.addStreamOperationFunction(Ops.mapKeyValues.name(), kvMapper);
+
+		SerFunction<Stream<Entry<Integer,Iterator<Long>>>,Stream<Long>> valueReducingFunction = 
+				new ValuesReducingFunction<Integer, Long, Long>(valueAggregator);
+		DStreamOperation valueReducingOperation = new DStreamOperation(this.operationIdCounter++, this.currentStreamOperation);
+			
+		valueReducingOperation.addStreamOperationFunction(Ops.reduceValues.name(), valueReducingFunction);
+		this.currentStreamOperation = valueReducingOperation;
+		
+		DStreamOperation mappingOperation = new DStreamOperation(this.operationIdCounter++, this.currentStreamOperation);
+		mappingOperation.addStreamOperationFunction(Ops.map.name(), this.unmapFunction);
+		this.currentStreamOperation = mappingOperation;
 	}
 	
 	/**
