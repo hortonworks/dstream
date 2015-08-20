@@ -23,58 +23,60 @@ import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.utils.Assert;
 
 /**
- * Base implementation of the  partitioner to be used by the target system.
- * 
- * @param <T> the type of the element that will be sent to a target partitioner
- * to determine partition id.
+ * Base implementation of the classification functionality.<br>
+ * Classification could be looked at as the process of distributed grouping and 
+ * in the "distributable" reality, often coincides with data <i>partitioning</i>. 
+ * Since {@link Classifier} is compliant with the general semantics of partitioners
+ * by returning an {@link Integer} from {@link #getClassificationId(Object)} method, 
+ * this id could be treated by a target partitioner as partition id.<br>. 
  */
 public abstract class Classifier implements Serializable {
 	private static final long serialVersionUID = -250807397502312547L;
 	
-	private final int groupSize;
+	private final int classificationSize;
 	
 	private SerFunction<Object, ?> classificationValueMapper;
 
 	/**
-	 * Constructs this function.
-	 * 
-	 * @param partitionSize the size of partitions
+	 * Constructs this instance with <i>classificationSize</i>
 	 */
-	public Classifier(int groupSize) {
-		Assert.isTrue(groupSize > 0, "'groupSize' must be > 0");
-		this.groupSize = groupSize;
+	public Classifier(int classificationSize) {
+		Assert.isTrue(classificationSize > 0, "'classificationSize' must be > 0");
+		this.classificationSize = classificationSize;
 	}
 	
-	
+	/**
+	 * Returns classification if computed on the instance of <i>input</i>.
+	 */
 	public Integer getClassificationId(Object input) {
 		int partId = this.doGetClassificationId(input);
 		return partId;
 	}
-	
-	protected abstract int doGetClassificationId(Object input);
 
 	/**
-	 * @return the size of partitions
+	 * Returns the total amount of classifications
 	 */
 	public int getSize(){
-		return this.groupSize;
+		return this.classificationSize;
 	}
 	
 	/**
-	 * Allows to set the classifier {@link SerFunction} function to extract value 
-	 * used to determine partition id.
-	 * 
-	 * @param classifier function to extract value used by a target partitioner.
+	 * Allows to set/reset an instance of the {@link SerFunction} which maps the value to be 
+	 * used to compute classification.
+	 * <pre>
+	 * dstream.classify(str -> str.substring(0, 5))
+	 * </pre>
+	 * Assuming that the value passed to the classify operation is "Hello Washington", the 
+	 * classification will be performed using only "Hello" string based on the 
+	 * given function (str -> str.substring(0, 5)).
 	 */
 	public void setClassificationValueMapper(SerFunction<Object, ?> classificationValueMapper) {
 		this.classificationValueMapper = classificationValueMapper;
 	}
 	
 	/**
-	 * Returns <i>classifier</i> function used by the instance of this partitioner.
-	 * Could be <i>null</i> if not set.
-	 * 
-	 * @return function to extract value used by a target partitioner.
+	 * Returns and instance of the {@link SerFunction} which maps the value to be 
+	 * used to compute classification.
 	 */
 	public SerFunction<Object, ?> getClassificationValueMapper() {
 		return this.classificationValueMapper;
@@ -85,6 +87,12 @@ public abstract class Classifier implements Serializable {
 	 */
 	@Override
 	public String toString(){
-		return this.getClass().getSimpleName() + ":" + this.groupSize;
+		return this.getClass().getSimpleName() + ":" + this.classificationSize;
 	}
+	
+	/**
+	 * An abstract delegate method to be implemented by sub-classes
+	 * which implements the actual classification logic.
+	 */
+	protected abstract int doGetClassificationId(Object input);
 }

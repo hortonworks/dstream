@@ -25,7 +25,7 @@ import dstream.utils.Assert;
 /**
  * {@link URI}-based implementation of the {@link SourceSupplier}
  */
-public class UriSourceSupplier implements SourceSupplier<URI> {
+class UriSourceSupplier implements SourceSupplier<URI> {
 	private static final long serialVersionUID = -4643164807046654114L;
 	
 	private final URI[] uris;
@@ -34,29 +34,30 @@ public class UriSourceSupplier implements SourceSupplier<URI> {
 
 	/**
 	 * 
-	 * @param uris
 	 */
-	public UriSourceSupplier(URI... uris){
+	private UriSourceSupplier(URI... uris){
 		Assert.notEmpty(uris, "'uris' must not be null or empty");
 		this.uris = uris;
 	}
 	
 	/**
-	 * 
-	 * @param uris
-	 * @return
+	 * Factory method which constructs this instance with an array of {@link URI}s.
+	 * The array argument must not be <i>null</i> or empty.
 	 */
 	public static UriSourceSupplier from(URI... uris) {
 		return new UriSourceSupplier(uris);
 	}
 	
+	/**
+	 * 
+	 */
 	public boolean equals(Object obj) {
         return (obj instanceof UriSourceSupplier && 
         		Arrays.equals(((UriSourceSupplier)obj).get(), this.get()));
     }
 	
 	/**
-	 * 
+	 * Returns an array of {@link URI} provided during the construction of this instance.
 	 */
 	@Override
 	public URI[] get() {
@@ -71,11 +72,19 @@ public class UriSourceSupplier implements SourceSupplier<URI> {
 		return ":src" + Arrays.asList(this.uris).toString();
 	}
 
+	/**
+	 * Sets the instance of the {@link SourceFilter} which filters
+	 * the {@link URI}s held by this instance.
+	 */
 	@Override
 	public void setSourceFilter(SourceFilter<URI> sourceFilter) {
 		this.sourceFilter = sourceFilter;
 	}
 
+	/**
+	 * Returns an instance of the {@link SourceFilter} which filters
+	 * the {@link URI}s held by this instance.
+	 */
 	@Override
 	public SourceFilter<URI> getSourceFilter() {
 		return this.sourceFilter;

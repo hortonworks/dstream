@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import dstream.DStreamConstants;
 import dstream.function.SerializableFunctionConverters.SerSupplier;
 import dstream.utils.Assert;
 
@@ -33,10 +34,10 @@ import dstream.utils.Assert;
  * @param <T>
  */
 public interface SourceSupplier<T> extends SerSupplier<T[]> {
+	
 	/**
-	 * 
-	 * @param source
-	 * @return
+	 * Validates that {@link URI} expressed as {@link String} is of proper 
+	 * format and could be converted to an instance of the {@link URI}.
 	 */
 	public static boolean isURI(String source){
 		Pattern pattern = Pattern.compile("^[a-zA-Z0-9\\-_]+:");
@@ -44,9 +45,8 @@ public interface SourceSupplier<T> extends SerSupplier<T[]> {
 	}
 	
 	/**
-	 * 
-	 * @param strURI
-	 * @return
+	 * Converts {@link String} based representation of the {@link URI} to the actual 
+	 * instance of the {@link URI}
 	 */
 	public static URI toURI(String strURI){
 		try {
@@ -58,10 +58,11 @@ public interface SourceSupplier<T> extends SerSupplier<T[]> {
 	}
 	
 	/**
-	 * 
-	 * @param sourceProperty
-	 * @param sourceFilter
-	 * @return
+	 * Factory method that creates an instance of the {@link SourceSupplier} from 
+	 * the {@link DStreamConstants#SOURCE} property.<br>
+	 * The value of the {@link DStreamConstants#SOURCE} property could be either a {@link URI} or
+	 * the fully qualified class name of the {@link SourceSupplier} implementation, essentially 
+	 * providing a mechanism to support multiple types of sources.
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static <T> SourceSupplier<T> create(String sourceProperty, SourceFilter<?> sourceFilter){
@@ -70,7 +71,7 @@ public interface SourceSupplier<T> extends SerSupplier<T[]> {
 			SourceSupplier sourceSupplier;
 			if (isURI(sourceProperty)){
 				 List<URI> uris = Stream.of(sourceProperty.split(";")).map(uriStr -> SourceSupplier.toURI(uriStr)).collect(Collectors.toList());
-				 sourceSupplier = new UriSourceSupplier(uris.toArray(new URI[uris.size()]));
+				 sourceSupplier = UriSourceSupplier.from(uris.toArray(new URI[uris.size()]));
 			}
 			else {
 				sourceSupplier = (SourceSupplier) Class.forName(sourceProperty, false, Thread.currentThread().getContextClassLoader()).newInstance();
@@ -84,8 +85,6 @@ public interface SourceSupplier<T> extends SerSupplier<T[]> {
 	}
 	
 	/**
-	 * 
-	 * @param sourceFilter
 	 */
 	void setSourceFilter(SourceFilter<T> sourceFilter);
 	
