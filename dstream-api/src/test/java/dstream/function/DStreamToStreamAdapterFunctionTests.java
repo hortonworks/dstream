@@ -38,11 +38,6 @@ public class DStreamToStreamAdapterFunctionTests {
 		new DStreamToStreamAdapterFunction("foo", (SerFunction<?,?>)s -> s);
 	}
 	
-	@Test(expected=IllegalArgumentException.class)
-	public void nullOperation(){
-		new DStreamToStreamAdapterFunction("map", null);
-	}
-
 	@Test
 	public void validateMap(){
 		SerFunction<String, String> mapFunction = s -> s.toUpperCase();

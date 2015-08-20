@@ -177,6 +177,9 @@ final class DStreamOperationsBuilder {
 		}
 	}
 	
+	/**
+	 * 
+	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void addClassifyOperation(DStreamInvocation invocation) {
 		Object[] arguments = invocation.getArguments();
@@ -264,7 +267,7 @@ final class DStreamOperationsBuilder {
 		
 		SerFunction<Stream<?>, Stream<?>> currentStreamFunction = operation.equals(Ops.compute) 
 				? (SerFunction<Stream<?>, Stream<?>>) arguments[0]
-						: new DStreamToStreamAdapterFunction(operation.name(), arguments[0]);
+						: new DStreamToStreamAdapterFunction(operation.name(), arguments.length > 0 ? arguments[0] : null);
 				
 		if (this.streamsCombine){
 			@SuppressWarnings("rawtypes")
