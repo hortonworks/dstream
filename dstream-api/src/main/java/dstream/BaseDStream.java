@@ -49,6 +49,21 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
 	T distinct();
 	
 	/**
+	 * Returns a stream containing a single value representing the count of elements in 
+	 * the previous stream.<br>
+	 * 
+	 * This operation is a non-terminal equivalent of the 
+	 * <i>Stream.count()</i>.<br> 
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
+	 * <br>
+	 * This is a <i>composable-transformation</i> operation.
+     * 
+	 * @return new {@link DStream} of type {@link Long}
+	 */
+	DStream<Long> count();
+	
+	/**
 	 * Will <b>distinctively</b> combine the two streams of the <i><b>same type</b></i> 
 	 * returning a new {@link DStream} of the same type. <br>
 	 * For example:
