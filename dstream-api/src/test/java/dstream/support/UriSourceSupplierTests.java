@@ -33,12 +33,12 @@ public class UriSourceSupplierTests {
 
 	@Test(expected=IllegalArgumentException.class)
 	public void failWithEmptyConstructur() throws Exception{
-		new UriSourceSupplier();
+		UriSourceSupplier.from();
 	}
 	
 	@Test
 	public void validateWithoutSourceFilter() throws Exception{
-		UriSourceSupplier supplier = new UriSourceSupplier(new URI("file:/foo"), new URI("http://foo.com"));
+		UriSourceSupplier supplier = UriSourceSupplier.from(new URI("file:/foo"), new URI("http://foo.com"));
 		assertEquals(new URI("file:/foo"), supplier.get()[0]);
 		assertEquals(new URI("http://foo.com"), supplier.get()[1]);
 		assertNull(supplier.getSourceFilter());
@@ -46,7 +46,7 @@ public class UriSourceSupplierTests {
 	
 	@Test
 	public void validateWithSourceFilter() throws Exception{
-		UriSourceSupplier supplier = new UriSourceSupplier(new URI("file:/foo"), new URI("http://foo.com"));
+		UriSourceSupplier supplier = UriSourceSupplier.from(new URI("file:/foo"), new URI("http://foo.com"));
 		SampleURISourceFilter filter = new SampleURISourceFilter();
 		supplier.setSourceFilter(filter);
 		assertEquals(new URI("file:/foo"), supplier.get()[0]);

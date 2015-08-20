@@ -20,23 +20,22 @@ package dstream.support;
 import java.util.Map.Entry;
 
 /**
- * Implementation of the {@link Classifier} for hash based grouping (partitioning).
+ * Implementation of the {@link Classifier} for hash based classifications 
  *
  */
 public class HashClassifier extends Classifier {
 	private static final long serialVersionUID = -3799649258371438298L;
 	
 	/**
-	 * Constructs this function.
-	 * 
-	 * @param partitionSize the size of partitions
+	 * Constructs this instance with <i>classificationSize</i>
 	 */
 	public HashClassifier(int groupSize){
 		super(groupSize);
 	}
 
 	/**
-	 * 
+	 * Returns <i>int</i> representing the result of the hash based classification
+	 * on value <i>input</i>.
 	 */
 	@SuppressWarnings("rawtypes")
 	@Override
