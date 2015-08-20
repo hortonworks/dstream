@@ -4,6 +4,7 @@ public enum Ops {
 	aggregateValues, 
 	classify,
 	compute,
+	distinct,
 	extract,
 	filter,
 	flatMap,
@@ -28,7 +29,8 @@ public enum Ops {
 		return operation.equals(flatMap) ||
 			   operation.equals(map) ||
 			   operation.equals(filter) ||
-			   operation.equals(compute);
+			   operation.equals(compute) ||
+			   operation.equals(distinct);
 	}
 	
 	public static  boolean isShuffle(Ops operation){

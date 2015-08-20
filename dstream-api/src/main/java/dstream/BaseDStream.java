@@ -35,6 +35,20 @@ import dstream.support.HashClassifier;
 interface BaseDStream<A, T> extends ExecutableDStream<A> {
 
 	/**
+	 * Returns a stream consisting of the distinct elements (according to
+     * {@link Object#equals(Object)}) of this stream.
+     * <br>
+     * Consistent with {@link Stream#distinct()}.<br>
+     * <br>
+	 * This is an <i>intermediate</i> operation.
+	 * <br>
+	 * This is a <i>composable-transformation</i> operation.
+     * 
+	 * @return new {@link DStream} of the same type.
+	 */
+	T distinct();
+	
+	/**
 	 * Will <b>distinctively</b> combine the two streams of the <i><b>same type</b></i> 
 	 * returning a new {@link DStream} of the same type. <br>
 	 * For example:

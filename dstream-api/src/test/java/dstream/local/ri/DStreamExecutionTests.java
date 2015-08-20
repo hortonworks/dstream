@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 import org.junit.Test;
 
 import dstream.DStream;
+import dstream.utils.ExecutionResultUtils;
 import dstream.utils.KVUtils;
 import dstream.utils.Tuples.Tuple2;
 import dstream.utils.Tuples.Tuple3;
@@ -322,6 +323,51 @@ public class DStreamExecutionTests {
 		List<Entry<String, Integer>> p2Result = resultPartitionsList.get(1).collect(Collectors.toList());
 		assertEquals(KVUtils.kv("ANOTHER", 1), p2Result.get(0));
 		assertEquals(KVUtils.kv("SEDATELY", 1), p2Result.get(7));
+	}
+	
+	@Test
+	public void distinctSingleStage() throws Exception {
+		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "wc")
+				.flatMap(s -> Stream.of(s.split("\\s+")))
+				.distinct()
+			.executeAs(EXECUTION_NAME);
+		
+		Stream<Stream<String>> resultPartitionsStream = resultFuture.get();
+//		ExecutionResultUtils.printResults(resultPartitionsStream, true);
+		
+		List<Stream<String>> resultPartitionsList = resultPartitionsStream.collect(Collectors.toList());
+		assertEquals(2, resultPartitionsList.size());
+		
+		// spot check
+		List<String> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
+		p1Result.stream().collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)).values().forEach(count -> {
+			if (count > 1){
+				throw new IllegalStateException("value occures more then once");
+			}
+		});
+	}
+	
+	@Test
+	public void distinctAfterShuffle() throws Exception {
+		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "wc")
+				.flatMap(s -> Stream.of(s.split("\\s+")))
+				.classify(word -> word.length())
+				.distinct()
+			.executeAs(EXECUTION_NAME);
+		
+		Stream<Stream<String>> resultPartitionsStream = resultFuture.get();
+//		ExecutionResultUtils.printResults(resultPartitionsStream, true);
+		
+		List<Stream<String>> resultPartitionsList = resultPartitionsStream.collect(Collectors.toList());
+		assertEquals(2, resultPartitionsList.size());
+		
+		// spot check
+		List<String> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
+		p1Result.stream().collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)).values().forEach(count -> {
+			if (count > 1){
+				throw new IllegalStateException("value occures more then once");
+			}
+		});
 	}
 	
 	@Test

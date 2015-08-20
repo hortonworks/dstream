@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import dstream.DStream;
+import dstream.Ops;
 import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.function.SerializableFunctionConverters.SerPredicate;
 import dstream.utils.Assert;
@@ -37,7 +38,11 @@ import dstream.utils.ReflectionUtils;
 public class DStreamToStreamAdapterFunction implements SerFunction<Stream<?>, Stream<?>>{
 	private static final long serialVersionUID = 6836233233261184905L;
 	
-	private static final Map<String, Method> supportedOperations = buildSupportedOperations(Stream.of("flatMap", "filter", "map"));
+	private static final Map<String, Method> supportedOperations = buildSupportedOperations(Stream.of(
+			Ops.flatMap.name(), 
+			Ops.map.name(), 
+			Ops.filter.name(), 
+			Ops.distinct.name()));
 	
 	private final String streamOperationName;
 	
@@ -47,12 +52,12 @@ public class DStreamToStreamAdapterFunction implements SerFunction<Stream<?>, St
 	 * Constructs this function.
 	 * 
 	 * @param streamOperationName the name of the target operation.
-	 * @param streamOperation target operation. The reason why its is Object is because it could be 
+	 * @param streamOperation target operation. The reason why it's an Object is because it could be 
 	 * 		{@link SerFunction} or {@link SerPredicate}.
 	 */
 	public DStreamToStreamAdapterFunction(String streamOperationName, Object streamOperation){
 		Assert.notEmpty(streamOperationName, "'streamOperationName' must not be null or empty");
-		Assert.notNull(streamOperation, "'streamOperation' must not be null");
+//		Assert.notNull(streamOperation, "'streamOperation' must not be null");
 
 		if (!supportedOperations.containsKey(streamOperationName)){
 			throw new IllegalArgumentException("Operation '" + streamOperationName + "' is not supported");
@@ -69,7 +74,14 @@ public class DStreamToStreamAdapterFunction implements SerFunction<Stream<?>, St
 	public Stream<?> apply(Stream<?> streamIn) {
 		try {
 			Method m = supportedOperations.get(this.streamOperationName);
-			return ((Stream<?>) m.invoke(streamIn, this.streamOperation));
+			Stream<?> result;
+			if (m.getName().equals(Ops.distinct.name())){
+				result = ((Stream<?>) m.invoke(streamIn));
+			}
+			else {
+				result = ((Stream<?>) m.invoke(streamIn, this.streamOperation));
+			}
+			return result;
 		} 
 		catch (Exception e) {
 			throw new IllegalStateException("Operation '" + this.streamOperationName + "' is not supported.", e);

@@ -347,6 +347,64 @@ public class DStreamExecutionTests extends BaseTezTests {
 		assertEquals("1=[ANOTHER, APPROACHED, CALASAREIGNE, DOUBLED, FORERUNNER, HAPPENED, IDLERS,, INSTINCT, ISLANDS;, MISFORTUNE, POMEGUE,, SEDATELY, SPANKER,, STRAIT,, TOPSAILS,, VOLCANIC]", p2Result.get(0).toString());
 	}
 	
+	@Test
+	public void distinctSingleStage() throws Exception {
+		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "wc")
+				.flatMap(s -> Stream.of(s.split("\\s+")))
+				.distinct()
+			.executeAs(EXECUTION_NAME);
+		
+		Stream<Stream<String>> resultPartitionsStream = resultFuture.get();
+//		ExecutionResultUtils.printResults(resultPartitionsStream, true);
+		
+		List<Stream<String>> resultPartitionsList = resultPartitionsStream.collect(Collectors.toList());
+		assertEquals(2, resultPartitionsList.size());
+		
+		List<String> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
+		p1Result.stream().collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)).values().forEach(count -> {
+			if (count > 1){
+				throw new IllegalStateException("value occures more then once");
+			}
+		});
+		
+		List<String> p2Result = resultPartitionsList.get(1).collect(Collectors.toList());
+		p2Result.stream().collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)).values().forEach(count -> {
+			if (count > 1){
+				throw new IllegalStateException("value occures more then once");
+			}
+		});
+	}
+	
+	@Test
+	public void distinctAfterShuffle() throws Exception {
+		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "wc")
+				.flatMap(s -> Stream.of(s.split("\\s+")))
+				.classify(word -> word.length())
+				.distinct()
+			.executeAs(EXECUTION_NAME);
+		
+		Stream<Stream<String>> resultPartitionsStream = resultFuture.get();
+//		ExecutionResultUtils.printResults(resultPartitionsStream, true);
+		
+		List<Stream<String>> resultPartitionsList = resultPartitionsStream.collect(Collectors.toList());
+		assertEquals(2, resultPartitionsList.size());
+		
+		// spot check
+		List<String> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
+		p1Result.stream().collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)).values().forEach(count -> {
+			if (count > 1){
+				throw new IllegalStateException("value occures more then once");
+			}
+		});
+		
+		List<String> p2Result = resultPartitionsList.get(1).collect(Collectors.toList());
+		p2Result.stream().collect(Collectors.toMap(s -> s, s -> 1, Integer::sum)).values().forEach(count -> {
+			if (count > 1){
+				throw new IllegalStateException("value occures more then once");
+			}
+		});
+	}
+	
 	@Test(expected=IllegalStateException.class)
 	public void failCrossJoinOnMultiplePartitions() throws Exception {
 		DStream<String> one = DStream.ofType(String.class, "one");
