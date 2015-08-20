@@ -343,6 +343,61 @@ public class DStreamExecutionTests extends BaseTezTests {
 	}
 	
 	@Test
+	public void reduceSource() throws Exception {
+		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "wc")
+				.reduce(String::concat)
+			.executeAs(EXECUTION_NAME);
+		
+		Stream<Stream<String>> resultPartitionsStream = resultFuture.get();
+//		ExecutionResultUtils.printResults(resultPartitionsStream, true);
+		
+		List<Stream<String>> resultPartitionsList = resultPartitionsStream.collect(Collectors.toList());
+		assertEquals(2, resultPartitionsList.size());
+
+		List<String> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
+		assertEquals(1, p1Result.size());
+		assertTrue(p1Result.get(0).startsWith("The ship drew on and had safely passed the strait, which some volcanicshock has made between"));
+	}
+	
+	@Test
+	public void reduceAfterTransformation() throws Exception {
+		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "wc")
+				.flatMap(s -> Stream.of(s.split("\\s+")))
+				.reduce(String::concat)
+			.executeAs(EXECUTION_NAME);
+		
+		Stream<Stream<String>> resultPartitionsStream = resultFuture.get();
+//		ExecutionResultUtils.printResults(resultPartitionsStream, true);
+		
+		List<Stream<String>> resultPartitionsList = resultPartitionsStream.collect(Collectors.toList());
+		assertEquals(2, resultPartitionsList.size());
+
+		List<String> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
+		assertEquals(1, p1Result.size());
+		assertTrue(p1Result.get(0).startsWith("Theshipdrewonandhadsafelypassedthestrait,whichsomevolcanicshockhas"));
+	}
+	
+	@Test
+	public void reduceAfterShuffle() throws Exception {
+		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "wc")
+				.flatMap(s -> Stream.of(s.split("\\s+")))
+				.reduceValues(s -> s, s -> 1, Integer::sum)
+				.map(s -> s.toString())
+				.reduce(String::concat)
+			.executeAs(EXECUTION_NAME);
+		
+		Stream<Stream<String>> resultPartitionsStream = resultFuture.get();
+//		ExecutionResultUtils.printResults(resultPartitionsStream, true);
+		
+		List<Stream<String>> resultPartitionsList = resultPartitionsStream.collect(Collectors.toList());
+		assertEquals(2, resultPartitionsList.size());
+
+		List<String> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
+		assertEquals(1, p1Result.size());
+		assertTrue(p1Result.get(0).startsWith("Pomegue,=1asked=1between=2board.=1drew=1evil,=1forerunner=1harbor"));
+	}
+	
+	@Test
 	public void countSource() throws Exception {
 		Future<Stream<Stream<Long>>> resultFuture = DStream.ofType(String.class, "wc")
 				.count()

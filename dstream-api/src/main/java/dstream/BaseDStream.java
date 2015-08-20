@@ -18,7 +18,9 @@
 package dstream;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Map.Entry;
+import java.util.function.BinaryOperator;
 import java.util.stream.Stream;
 
 import dstream.function.SerializableFunctionConverters.SerBinaryOperator;
@@ -246,6 +248,8 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
 	 * @return new {@link DStream}
 	 */
 	<R> DStream<R> compute(SerFunction<? super Stream<A>, ? extends Stream<? extends R>> computeFunction);
+	
+	DStream<A> reduce(SerBinaryOperator<A> accumulator);
 	
 	/**
 	 * Returns a {@link DStream} of Key/Value pairs, where values mapped from the individual 
