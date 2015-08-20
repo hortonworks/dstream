@@ -175,6 +175,9 @@ final class DStreamOperationsBuilder {
 				}
 			}
 		}
+		else if (Ops.isStreamTerminal(operation)){
+			this.addStreamTerminalOperation(invocation);
+		}
 	}
 	
 	/**
@@ -308,14 +311,7 @@ final class DStreamOperationsBuilder {
 		
 		SerFunction kvMapper = new KeyValueMappingFunction<>(keyMapper, valueMapper, mapSideCombine ? valueAggregator : null);
 		
-		if (this.currentStreamOperation == null){
-			this.currentStreamOperation = new DStreamOperation(this.operationIdCounter++);
-		}
-		
-		if (this.currentStreamOperation.isClassify()){
-			this.currentStreamOperation = new DStreamOperation(this.operationIdCounter++, this.currentStreamOperation);
-			this.currentStreamOperation.addStreamOperationFunction(Ops.load.name(), this.unmapFunction);
-		}
+		this.adjustCurrentStreamState();
 		
 		this.currentStreamOperation.addStreamOperationFunction(Ops.mapKeyValues.name(), kvMapper);
 
@@ -325,5 +321,47 @@ final class DStreamOperationsBuilder {
 						: new ValuesAggregatingFunction<>(valueAggregator);
 		newStreamOperation.addStreamOperationFunction(operation.name(), newStreamFunction);
 		this.currentStreamOperation = newStreamOperation;
+	}
+	
+	/**
+	 * 
+	 */
+	private void addStreamTerminalOperation(DStreamInvocation invocation){
+		if (invocation.getMethod().getName().equals(Ops.count.name())){
+			SerFunction<Object, Integer> keyMapper = s -> 0;
+			SerFunction<Object, Long> valueMapper = s -> 1L;
+			SerBinaryOperator<Long> valueAggregator = Long::sum;
+			SerFunction<Stream<Object>, Stream<Entry<Integer, Long>>> kvMapper = 
+					new KeyValueMappingFunction<Object, Integer, Long>(keyMapper, valueMapper, valueAggregator);
+			
+			this.adjustCurrentStreamState();
+			
+			this.currentStreamOperation.addStreamOperationFunction(Ops.mapKeyValues.name(), kvMapper);
+
+			SerFunction<Stream<Entry<Integer,Iterator<Long>>>,Stream<Long>> valueReducingFunction = 
+					new ValuesReducingFunction<Integer, Long, Long>(valueAggregator);
+			DStreamOperation valueReducingOperation = new DStreamOperation(this.operationIdCounter++, this.currentStreamOperation);
+				
+			valueReducingOperation.addStreamOperationFunction(Ops.reduceValues.name(), valueReducingFunction);
+			this.currentStreamOperation = valueReducingOperation;
+			
+			DStreamOperation mappingOperation = new DStreamOperation(this.operationIdCounter++, this.currentStreamOperation);
+			mappingOperation.addStreamOperationFunction(Ops.map.name(), this.unmapFunction);
+			this.currentStreamOperation = mappingOperation;
+		}
+	}
+	
+	/**
+	 * 
+	 */
+	private void adjustCurrentStreamState(){
+		if (this.currentStreamOperation == null){
+			this.currentStreamOperation = new DStreamOperation(this.operationIdCounter++);
+		}
+		
+		if (this.currentStreamOperation.isClassify()){
+			this.currentStreamOperation = new DStreamOperation(this.operationIdCounter++, this.currentStreamOperation);
+			this.currentStreamOperation.addStreamOperationFunction(Ops.load.name(), this.unmapFunction);
+		}
 	}
 }

@@ -326,6 +326,60 @@ public class DStreamExecutionTests {
 	}
 	
 	@Test
+	public void countSource() throws Exception {
+		Future<Stream<Stream<Long>>> resultFuture = DStream.ofType(String.class, "wc")
+				.count()
+			.executeAs(EXECUTION_NAME);
+		
+		Stream<Stream<Long>> resultPartitionsStream = resultFuture.get();
+//		ExecutionResultUtils.printResults(resultPartitionsStream, true);
+		
+		List<Stream<Long>> resultPartitionsList = resultPartitionsStream.collect(Collectors.toList());
+		assertEquals(1, resultPartitionsList.size());
+
+		List<Long> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
+		assertEquals(1, p1Result.size());
+		assertEquals(6L, (long)p1Result.get(0));
+	}
+	
+	@Test
+	public void countAfterTransformation() throws Exception {
+		Future<Stream<Stream<Long>>> resultFuture = DStream.ofType(String.class, "wc")
+				.flatMap(s -> Stream.of(s.split("\\s+")))
+				.count()
+			.executeAs(EXECUTION_NAME);
+		
+		Stream<Stream<Long>> resultPartitionsStream = resultFuture.get();
+//		ExecutionResultUtils.printResults(resultPartitionsStream, true);
+		
+		List<Stream<Long>> resultPartitionsList = resultPartitionsStream.collect(Collectors.toList());
+		assertEquals(1, resultPartitionsList.size());
+
+		List<Long> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
+		assertEquals(1, p1Result.size());
+		assertEquals(62L, (long)p1Result.get(0));
+	}
+	
+	@Test
+	public void countAfterShuffle() throws Exception {
+		Future<Stream<Stream<Long>>> resultFuture = DStream.ofType(String.class, "wc")
+				.flatMap(s -> Stream.of(s.split("\\s+")))
+				.reduceValues(s -> s, s -> 1, Integer::sum)
+				.count()
+			.executeAs(EXECUTION_NAME);
+		
+		Stream<Stream<Long>> resultPartitionsStream = resultFuture.get();
+//		ExecutionResultUtils.printResults(resultPartitionsStream, true);
+		
+		List<Stream<Long>> resultPartitionsList = resultPartitionsStream.collect(Collectors.toList());
+		assertEquals(1, resultPartitionsList.size());
+
+		List<Long> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
+		assertEquals(1, p1Result.size());
+		assertEquals(49L, (long)p1Result.get(0));
+	}
+	
+	@Test
 	public void distinctSingleStage() throws Exception {
 		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "wc")
 				.flatMap(s -> Stream.of(s.split("\\s+")))

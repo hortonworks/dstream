@@ -4,6 +4,7 @@ public enum Ops {
 	aggregateValues, 
 	classify,
 	compute,
+	count,
 	distinct,
 	extract,
 	filter,
@@ -17,12 +18,20 @@ public enum Ops {
 	union,
 	unionAll;
 	
-	public static boolean isTransformation(String operation){
-		return isTransformation(Ops.valueOf(operation));
+	public static boolean isTransformation(String operationName){
+		return isTransformation(Ops.valueOf(operationName));
 	}
 	
-	public static boolean isShuffle(String operation){
-		return isShuffle(Ops.valueOf(operation));
+	public static boolean isShuffle(String operationName){
+		return isShuffle(Ops.valueOf(operationName));
+	}
+	
+	public static boolean isStreamTerminal(String operationName){
+		return isStreamTerminal(Ops.valueOf(operationName));
+	}
+	
+	public static boolean isStreamTerminal(Ops operation){
+		return operation.equals(count);
 	}
 	
 	public static boolean isTransformation(Ops operation){
