@@ -18,7 +18,13 @@
 package dstream.function;
 
 import java.io.Serializable;
+import java.util.Comparator;
 import java.util.Objects;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 /**
  * Defines {@link Serializable} equivalents to strategies defined in java.util.function package
  * that are used by this framework.
@@ -26,9 +32,9 @@ import java.util.Objects;
 public interface SerializableFunctionConverters {
 	
 	/**
-	 * {@link Serializable} version of {@link java.util.function.Function}
+	 * {@link Serializable} version of {@link Function}
 	 */
-	public static interface SerFunction<T,R> extends java.util.function.Function<T, R>, Serializable{
+	public static interface SerFunction<T,R> extends Function<T, R>, Serializable{
 		default <V> SerFunction<V, R> compose(SerFunction<? super V, ? extends T> before) {
 	        Objects.requireNonNull(before);
 	        return new SerFunction<V, R>() {
@@ -53,22 +59,27 @@ public interface SerializableFunctionConverters {
 	}
 	
 	/**
-	 * {@link Serializable} version of {@link java.util.function.BinaryOperator}
+	 * {@link Serializable} version of {@link BinaryOperator}
 	 */
-	public static interface SerBinaryOperator<T> extends java.util.function.BinaryOperator<T>, Serializable {}
+	public static interface SerBinaryOperator<T> extends BinaryOperator<T>, Serializable {}
 	
 	/**
-	 * {@link Serializable} version of {@link java.util.function.Supplier}
+	 * {@link Serializable} version of {@link Supplier}
 	 */
-	public static interface SerSupplier<T> extends java.util.function.Supplier<T>, Serializable{}
+	public static interface SerSupplier<T> extends Supplier<T>, Serializable{}
 	
 	/**
-	 * {@link Serializable} version of {@link java.util.function.BiFunction}
+	 * {@link Serializable} version of {@link BiFunction}
 	 */
-	public static interface SerBiFunction<T, U, R> extends java.util.function.BiFunction<T, U, R>, Serializable{}
+	public static interface SerBiFunction<T, U, R> extends BiFunction<T, U, R>, Serializable{}
 	
 	/**
-	 * {@link Serializable} version of {@link java.util.function.Predicate}
+	 * {@link Serializable} version of {@link Predicate}
 	 */
-	public static interface SerPredicate<T> extends java.util.function.Predicate<T>, Serializable{}
+	public static interface SerPredicate<T> extends Predicate<T>, Serializable{}
+	
+	/**
+	 * {@link Serializable} version of {@link Comparator}
+	 */
+	public static interface SerComparator<T> extends Comparator<T>, Serializable{}
 }

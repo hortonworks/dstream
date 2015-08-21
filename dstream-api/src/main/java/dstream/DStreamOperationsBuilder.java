@@ -34,6 +34,7 @@ import dstream.function.BiFunctionToBinaryOperatorAdapter;
 import dstream.function.DStreamToStreamAdapterFunction;
 import dstream.function.KeyValueMappingFunction;
 import dstream.function.SerializableFunctionConverters.SerBinaryOperator;
+import dstream.function.SerializableFunctionConverters.SerComparator;
 import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.function.StreamJoinerFunction;
 import dstream.function.StreamUnionFunction;
@@ -140,7 +141,7 @@ final class DStreamOperationsBuilder {
 	 */
 	@SuppressWarnings("rawtypes")
 	private SerFunction determineUnmapFunction(String lastOperationName){
-		return lastOperationName.equals(Ops.classify.name()) ? this.unmapFunction : s -> s; 
+		return Ops.classify.name().equals(lastOperationName) ? this.unmapFunction : s -> s; 
 	}
 	
 	/**
@@ -175,8 +176,11 @@ final class DStreamOperationsBuilder {
 				}
 			}
 		}
-		else if (Ops.isStreamTerminal(operation)){
-			this.addStreamTerminalOperation(invocation);
+		else if (Ops.isStreamReduce(operation)){
+			this.addStreamReduceOperation(invocation);
+		}
+		else if (Ops.isStreamComparator(operation)){
+			this.addStreamComparatorOperation(invocation);
 		}
 	}
 	
@@ -194,7 +198,11 @@ final class DStreamOperationsBuilder {
 		}
 		
 		this.currentStreamOperation.addStreamOperationFunction(Ops.classify.name(), kvMapper);
-		if (this.currentStreamOperation.isClassify() && this.currentStreamOperation.getParent() != null){
+//		if (this.currentStreamOperation.isClassify() && this.currentStreamOperation.getParent() != null){
+//			this.currentStreamOperation = new DStreamOperation(this.operationIdCounter++, this.currentStreamOperation);
+//			this.currentStreamOperation.addStreamOperationFunction(Ops.load.name(), this.unmapFunction);
+//		}
+		if (this.currentStreamOperation.getParent() != null){
 			this.currentStreamOperation = new DStreamOperation(this.operationIdCounter++, this.currentStreamOperation);
 			this.currentStreamOperation.addStreamOperationFunction(Ops.load.name(), this.unmapFunction);
 		}
@@ -286,6 +294,7 @@ final class DStreamOperationsBuilder {
 				this.currentStreamOperation = new DStreamOperation(this.operationIdCounter++, this.currentStreamOperation);
 				this.currentStreamOperation.addStreamOperationFunction(operation.name(), this.unmapFunction);
 			}
+				
 			this.currentStreamOperation.addStreamOperationFunction(operation.name(), currentStreamFunction);
 		}
 	}
@@ -325,9 +334,27 @@ final class DStreamOperationsBuilder {
 	
 	/**
 	 * 
+	 * @param invocation
+	 */
+	private void addStreamComparatorOperation(DStreamInvocation invocation){
+		SerComparator<?> comparator = invocation.getArguments().length == 1 ? (SerComparator<?>)invocation.getArguments()[0] : null ;
+		if (this.currentStreamOperation == null){
+			this.currentStreamOperation = new DStreamOperation(this.operationIdCounter++, this.currentStreamOperation);
+		}
+		
+		if (this.currentStreamOperation.isClassify()){
+			this.currentStreamOperation = new DStreamOperation(this.operationIdCounter++, this.currentStreamOperation);
+			this.currentStreamOperation.addStreamOperationFunction(Ops.load.name(), this.unmapFunction);
+		}
+		DStreamToStreamAdapterFunction streamAdaperFunc = new DStreamToStreamAdapterFunction(invocation.getMethod().getName(), comparator);
+		this.currentStreamOperation.addStreamOperationFunction(invocation.getMethod().getName(), streamAdaperFunc);
+	}
+	
+	/**
+	 * 
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private void addStreamTerminalOperation(DStreamInvocation invocation){
+	private void addStreamReduceOperation(DStreamInvocation invocation){	
 		SerFunction<Object, Integer> keyMapper = s -> 0;
 		SerFunction valueMapper;
 		SerBinaryOperator valueAggregator;
@@ -335,7 +362,8 @@ final class DStreamOperationsBuilder {
 		if (invocation.getMethod().getName().equals(Ops.count.name())){
 			valueMapper = s -> 1L;
 			valueAggregator = (a, b) -> ((long)a) + ((long)b);
-		} else if (invocation.getMethod().getName().equals(Ops.reduce.name())) {
+		} 
+		else if (invocation.getMethod().getName().equals(Ops.reduce.name())) {
 			valueMapper = s -> s;
 			valueAggregator = (SerBinaryOperator) invocation.getArguments()[0];
 		}

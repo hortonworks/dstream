@@ -18,12 +18,11 @@
 package dstream;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Map.Entry;
-import java.util.function.BinaryOperator;
 import java.util.stream.Stream;
 
 import dstream.function.SerializableFunctionConverters.SerBinaryOperator;
+import dstream.function.SerializableFunctionConverters.SerComparator;
 import dstream.function.SerializableFunctionConverters.SerFunction;
 import dstream.function.SerializableFunctionConverters.SerPredicate;
 import dstream.support.Classifier;
@@ -245,11 +244,59 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
 	 * 
 	 * @param <R> The element type of the returned {@link DStream}
 	 * @param computeFunction function to apply on the entire {@link Stream}.
-	 * @return new {@link DStream}
+	 * @return new {@link DStream} of type R
 	 */
 	<R> DStream<R> compute(SerFunction<? super Stream<A>, ? extends Stream<? extends R>> computeFunction);
 	
+	/**
+	 * Performs a reduction on the elements of this stream, using an
+     * accumulation function returning a {@link DStream} with a single value 
+     * of the same type as the source stream.<br>
+     * <br>
+     * This operation is a non-terminal equivalent of the 
+	 * <i>Stream.reduce(BinaryOperator)</i>.<br> 
+	 * 
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
+	 * <br>
+	 * This is a <i>composable-transformation</i> operation.
+     * 
+	 * @param accumulator a function for combining two values
+	 * @return new {@link DStream} of the same type
+	 */
 	DStream<A> reduce(SerBinaryOperator<A> accumulator);
+	
+	/**
+	 * Returns a {@link DStream} containing a single element which represents the 
+	 * minimum element of this stream according to the provided {@code SerComparator}.<br>
+	 * <br>
+	 * This operation is a non-terminal equivalent of the 
+	 * <i>Stream.min(Comparator)</i>.<br> 
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
+	 * <br>
+	 * This is a <i>composable-transformation</i> operation.
+     * 
+	 * @param comparator a stateless {@code SerComparator} to compare elements of this stream
+	 * @return new {@link DStream} of the same type
+	 */
+	DStream<A> min(SerComparator<? super A> comparator);
+
+	/**
+	 * Returns a {@link DStream} containing a single element which represents the 
+	 * maximum element of this stream according to the provided {@code SerComparator}.<br>
+	 * <br>
+	 * This operation is a non-terminal equivalent of the 
+	 * <i>Stream.max(Comparator)</i>.<br> 
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
+	 * <br>
+	 * This is a <i>composable-transformation</i> operation.
+     * 
+	 * @param comparator a stateless {@code SerComparator} to compare elements of this stream
+	 * @return new {@link DStream} of the same type
+	 */
+	DStream<A> max(SerComparator<? super A> comparator);
 	
 	/**
 	 * Returns a {@link DStream} of Key/Value pairs, where values mapped from the individual 

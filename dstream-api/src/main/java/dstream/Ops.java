@@ -13,37 +13,88 @@ public enum Ops {
 	load,
 	map,
 	mapKeyValues,
+	max, 
+	min,
 	on,
 	reduce,
 	reduceValues,
 	union,
 	unionAll;
 	
+	/**
+	 * 
+	 * @param operationName
+	 * @return
+	 */
 	public static boolean isTransformation(String operationName){
 		return isTransformation(Ops.valueOf(operationName));
 	}
 	
+	/**
+	 * 
+	 * @param operationName
+	 * @return
+	 */
 	public static boolean isShuffle(String operationName){
 		return isShuffle(Ops.valueOf(operationName));
 	}
 	
-	public static boolean isStreamTerminal(String operationName){
-		return isStreamTerminal(Ops.valueOf(operationName));
+	/**
+	 * 
+	 * @param operationName
+	 * @return
+	 */
+	public static boolean isStreamReduce(String operationName){
+		return isStreamReduce(Ops.valueOf(operationName));
 	}
 	
-	public static boolean isStreamTerminal(Ops operation){
+	/**
+	 * 
+	 * @param operationName
+	 * @return
+	 */
+	public static boolean isStreamComparator(String operationName){
+		return isStreamComparator(Ops.valueOf(operationName));
+	}
+	
+	/**
+	 * 
+	 * @param operation
+	 * @return
+	 */
+	public static boolean isStreamComparator(Ops operation){
+		return operation.equals(min) ||
+			   operation.equals(max) ||
+			   operation.equals(distinct);
+	}
+	
+	/**
+	 * 
+	 * @param operation
+	 * @return
+	 */
+	public static boolean isStreamReduce(Ops operation){
 		return operation.equals(count) ||
 			   operation.equals(reduce);
 	}
 	
+	/**
+	 * 
+	 * @param operation
+	 * @return
+	 */
 	public static boolean isTransformation(Ops operation){
 		return operation.equals(flatMap) ||
 			   operation.equals(map) ||
 			   operation.equals(filter) ||
-			   operation.equals(compute) ||
-			   operation.equals(distinct);
+			   operation.equals(compute);
 	}
 	
+	/**
+	 * 
+	 * @param operation
+	 * @return
+	 */
 	public static  boolean isShuffle(Ops operation){
 		return operation.equals(reduceValues) ||
 			   operation.equals(aggregateValues) ||
