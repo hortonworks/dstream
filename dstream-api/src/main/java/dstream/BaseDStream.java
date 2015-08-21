@@ -17,6 +17,7 @@
  */
 package dstream;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
@@ -297,6 +298,21 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
 	 * @return new {@link DStream} of the same type
 	 */
 	DStream<A> max(SerComparator<? super A> comparator);
+	
+	/**
+	 * Returns a stream consisting of the elements of this stream, sorted
+     * according to the provided {@code SerComparator}.
+     * <br>
+	 * This operation is consistent with 
+	 * <i>Stream.sorted(Comparator)</i>.<br> 
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
+	 * <br>
+	 * This is a <i>composable-transformation</i> operation.
+	 * @param comparator a stateless {@code SerComparator} to be used to compare stream elements
+	 * @return new {@link DStream} of the same type
+	 */
+	DStream<A> sorted(SerComparator<? super A> comparator);
 	
 	/**
 	 * Returns a {@link DStream} of Key/Value pairs, where values mapped from the individual 
