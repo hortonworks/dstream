@@ -17,6 +17,7 @@
  */
 package dstream.local.ri;
 
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -41,6 +42,7 @@ import dstream.local.ri.ShuffleHelper.RefHolder;
 import dstream.support.Aggregators;
 import dstream.support.Classifier;
 import dstream.support.HashClassifier;
+import dstream.support.PartitionIdHelper;
 import dstream.support.SourceSupplier;
 import dstream.utils.Assert;
 import dstream.utils.KVUtils;
@@ -60,10 +62,20 @@ final class LocalDStreamExecutionEngine {
 	
 	private List<List<?>> realizedStageResults;
 	
+	private final ThreadLocal<Integer> partitionIdHolder;
+	
+	@SuppressWarnings("unchecked")
 	public LocalDStreamExecutionEngine(String executionName, Properties executionConfig){
 		this.executionName = executionName;
 		this.executionConfig = executionConfig;
 		this.classifier = this.determineClassifier();
+		try {
+			Field tl = ReflectionUtils.findField(PartitionIdHelper.class, "partitionIdHolder", ThreadLocal.class);
+			tl.setAccessible(true);
+			this.partitionIdHolder = (ThreadLocal<Integer>) tl.get(null);
+		} catch (Exception e) {
+			throw new IllegalStateException(e);
+		}
 	}
 	
 	public Stream<Stream<?>> execute(DStreamOperations pipeline) {
@@ -143,7 +155,7 @@ final class LocalDStreamExecutionEngine {
 	 * @return
 	 */
 	private Stream<Stream<?>> unmapPartitions(Stream<Entry<Integer, List<Object>>> shuffledPartitionStream) {
-		return shuffledPartitionStream.map(entry -> entry.getValue().stream());
+		return shuffledPartitionStream.map(entry -> entry.getValue().stream().map(val -> { this.partitionIdHolder.set(entry.getKey());  return val;}));
 	}
 	
 	/**

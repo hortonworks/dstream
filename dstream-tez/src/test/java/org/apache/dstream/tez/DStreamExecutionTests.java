@@ -17,9 +17,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import dstream.DStream;
+import dstream.support.PartitionIdHelper;
 import dstream.utils.ExecutionResultUtils;
 import dstream.utils.KVUtils;
-import dstream.utils.StringOps;
+import dstream.utils.StringUtils;
 import dstream.utils.Tuples.Tuple2;
 import dstream.utils.Tuples.Tuple4;
 
@@ -457,19 +458,25 @@ public class DStreamExecutionTests extends BaseTezTests {
 	public void min() throws Exception {	
 		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "wc")
 				.flatMap(s -> Stream.of(s.split("\\s+")))
-//				.classify(word -> word)
-				.min(StringOps::compareLength)
+				.classify(word -> word)
+				.min(StringUtils::compareLength)
 			.executeAs(EXECUTION_NAME);
 		
 		
 		Stream<Stream<String>> resultPartitionsStream = resultFuture.get();
-		ExecutionResultUtils.printResults(resultPartitionsStream, true);
-//		
-//		List<Stream<String>> resultPartitionsList = resultPartitionsStream.collect(Collectors.toList());
-//		assertEquals(2, resultPartitionsList.size());
-//		
-//		// spot check
-//		List<String> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
+//		ExecutionResultUtils.printResults(resultPartitionsStream, true);
+		
+		List<Stream<String>> resultPartitionsList = resultPartitionsStream.collect(Collectors.toList());
+		assertEquals(2, resultPartitionsList.size());
+		
+		// spot check
+		List<String> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
+		assertEquals(1, p1Result.size());
+		assertEquals("is", p1Result.get(0));
+		
+		List<String> p2Result = resultPartitionsList.get(1).collect(Collectors.toList());
+		assertEquals(1, p2Result.size());
+		assertEquals("of", p2Result.get(0));
 	}
 	
 	@Test
@@ -534,7 +541,7 @@ public class DStreamExecutionTests extends BaseTezTests {
 	public void minMaxSingleStage() throws Exception {	
 		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "wc")
 				.flatMap(line -> Stream.of(line.split("\\s+")))
-				.max(StringOps::compareLength)
+				.max(StringUtils::compareLength)
 			.executeAs(EXECUTION_NAME);
 		
 		
@@ -557,7 +564,7 @@ public class DStreamExecutionTests extends BaseTezTests {
 		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "wc")
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.classify(s -> s)
-				.max(StringOps::compareLength)
+				.max(StringUtils::compareLength)
 			.executeAs(EXECUTION_NAME);
 		
 		
