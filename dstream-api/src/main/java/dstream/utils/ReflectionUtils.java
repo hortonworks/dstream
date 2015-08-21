@@ -109,7 +109,7 @@ public class ReflectionUtils {
 				" is not found in object of class " + targetClass);
 	}
 	
-	public static Method findMethod(String name, Class<?> targetClass, Class<?> returnType, Class<?>... inputParams) throws Exception {
+	public static Method findMethod(String name, Class<?> targetClass, Class<?> returnType, Class<?>... inputParams) {
 		Class<?> searchType = targetClass;
 		while (searchType != null) {
 			Method[] methods = (searchType.isInterface() ? searchType.getMethods() : searchType.getDeclaredMethods());

@@ -525,6 +525,56 @@ public class DStreamExecutionTests {
 	}
 	
 	@Test
+	public void sortedSingleStage() throws Exception {	
+		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "wc")
+				.flatMap(line -> Stream.of(line.split("\\s+")))
+				.sorted(StringUtils::compareLength)
+			.executeAs(EXECUTION_NAME);
+		
+		
+		Stream<Stream<String>> resultPartitionsStream = resultFuture.get();
+//		ExecutionResultUtils.printResults(resultPartitionsStream, true);
+		
+		List<Stream<String>> resultPartitionsList = resultPartitionsStream.collect(Collectors.toList());
+		assertEquals(2, resultPartitionsList.size());
+		
+		// spot check
+		List<String> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
+		assertEquals("so", p1Result.get(0));
+		assertEquals("asked", p1Result.get(13));
+		
+		List<String> p2Result = resultPartitionsList.get(1).collect(Collectors.toList());
+		assertEquals("on", p2Result.get(0));
+		assertEquals("jib,", p2Result.get(18));
+		
+	}
+	
+	@Test
+	public void sortedAfterShuffle() throws Exception {	
+		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DStream.ofType(String.class, "wc")
+				.flatMap(line -> Stream.of(line.split("\\s+")))
+				.reduceValues(s -> s, s -> 1, Integer::sum)
+				.sorted((entryA, entryB)  -> StringUtils.compareLength(entryA.getKey(), entryB.getKey()))
+			.executeAs(EXECUTION_NAME);
+		
+		
+		Stream<Stream<Entry<String, Integer>>> resultPartitionsStream = resultFuture.get();
+//		ExecutionResultUtils.printResults(resultPartitionsStream, true);
+		
+		List<Stream<Entry<String, Integer>>> resultPartitionsList = resultPartitionsStream.collect(Collectors.toList());
+		assertEquals(2, resultPartitionsList.size());
+		
+		// spot check
+		List<Entry<String, Integer>> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
+		assertEquals("is=1", p1Result.get(0).toString());
+		assertEquals("under=1", p1Result.get(13).toString());
+		
+		List<Entry<String, Integer>> p2Result = resultPartitionsList.get(1).collect(Collectors.toList());
+		assertEquals("of=1", p2Result.get(0).toString());
+		assertEquals("islands;=1", p2Result.get(18).toString());
+	}
+	
+	@Test
 	public void mapPartitions() throws Exception {	
 		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "wc")
 				.flatMap(line -> Stream.of(line.split("\\s+")))

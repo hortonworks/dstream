@@ -18,6 +18,7 @@ public enum Ops {
 	on,
 	reduce,
 	reduceValues,
+	sorted,
 	union,
 	unionAll;
 	
@@ -65,7 +66,8 @@ public enum Ops {
 	public static boolean isStreamComparator(Ops operation){
 		return operation.equals(min) ||
 			   operation.equals(max) ||
-			   operation.equals(distinct);
+			   operation.equals(distinct) ||
+			   operation.equals(sorted);
 	}
 	
 	/**

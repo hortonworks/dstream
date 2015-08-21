@@ -18,6 +18,7 @@
 package dstream.function;
 
 import java.lang.reflect.Method;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -45,7 +46,8 @@ public class DStreamToStreamAdapterFunction implements SerFunction<Stream<?>, St
 			Ops.filter, 
 			Ops.distinct,
 			Ops.min,
-			Ops.max));
+			Ops.max,
+			Ops.sorted));
 	
 	private final String streamOperationName;
 	
@@ -97,6 +99,13 @@ public class DStreamToStreamAdapterFunction implements SerFunction<Stream<?>, St
 	 */
 	private static Map<Ops, Method> buildSupportedOperations(Stream<Ops> operationsStream){
 		return operationsStream
-				.collect(Collectors.toMap(op -> op, op -> ReflectionUtils.findSingleMethod(op.name(), Stream.class)));
+				.collect(Collectors.toMap(op -> op, op -> {
+					if (op.equals(Ops.sorted)){
+						return ReflectionUtils.findMethod(Ops.sorted.name(), Stream.class, Stream.class, Comparator.class);
+					}
+					else {
+						return ReflectionUtils.findSingleMethod(op.name(), Stream.class);
+					}
+				} ));
 	}
 }
