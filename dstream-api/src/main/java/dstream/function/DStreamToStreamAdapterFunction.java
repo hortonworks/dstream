@@ -19,6 +19,7 @@ package dstream.function;
 
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -38,11 +39,13 @@ import dstream.utils.ReflectionUtils;
 public class DStreamToStreamAdapterFunction implements SerFunction<Stream<?>, Stream<?>>{
 	private static final long serialVersionUID = 6836233233261184905L;
 	
-	private static final Map<String, Method> supportedOperations = buildSupportedOperations(Stream.of(
-			Ops.flatMap.name(), 
-			Ops.map.name(), 
-			Ops.filter.name(), 
-			Ops.distinct.name()));
+	private static final Map<Ops, Method> supportedOperations = buildSupportedOperations(Stream.of(
+			Ops.flatMap, 
+			Ops.map, 
+			Ops.filter, 
+			Ops.distinct,
+			Ops.min,
+			Ops.max));
 	
 	private final String streamOperationName;
 	
@@ -57,9 +60,8 @@ public class DStreamToStreamAdapterFunction implements SerFunction<Stream<?>, St
 	 */
 	public DStreamToStreamAdapterFunction(String streamOperationName, Object streamOperation){
 		Assert.notEmpty(streamOperationName, "'streamOperationName' must not be null or empty");
-//		Assert.notNull(streamOperation, "'streamOperation' must not be null");
 
-		if (!supportedOperations.containsKey(streamOperationName)){
+		if (!supportedOperations.containsKey(Ops.valueOf(streamOperationName))){
 			throw new IllegalArgumentException("Operation '" + streamOperationName + "' is not supported");
 		}
 		
@@ -73,13 +75,15 @@ public class DStreamToStreamAdapterFunction implements SerFunction<Stream<?>, St
 	@Override
 	public Stream<?> apply(Stream<?> streamIn) {
 		try {
-			Method m = supportedOperations.get(this.streamOperationName);
+			Method m = supportedOperations.get(Ops.valueOf(this.streamOperationName));
 			Stream<?> result;
 			if (m.getName().equals(Ops.distinct.name())){
 				result = ((Stream<?>) m.invoke(streamIn));
 			}
 			else {
-				result = ((Stream<?>) m.invoke(streamIn, this.streamOperation));
+				Object tRes = m.invoke(streamIn, this.streamOperation);
+				// min/max will have Optional result
+				result = tRes instanceof Optional ? Stream.of(((Optional<?>)tRes).get()) : (Stream<?>) tRes;
 			}
 			return result;
 		} 
@@ -91,8 +95,8 @@ public class DStreamToStreamAdapterFunction implements SerFunction<Stream<?>, St
 	/**
 	 * 
 	 */
-	private static Map<String, Method> buildSupportedOperations(Stream<String> operationsStream){
+	private static Map<Ops, Method> buildSupportedOperations(Stream<Ops> operationsStream){
 		return operationsStream
-				.collect(Collectors.toMap(name -> name, name -> ReflectionUtils.findSingleMethod(name, Stream.class)));
+				.collect(Collectors.toMap(op -> op, op -> ReflectionUtils.findSingleMethod(op.name(), Stream.class)));
 	}
 }

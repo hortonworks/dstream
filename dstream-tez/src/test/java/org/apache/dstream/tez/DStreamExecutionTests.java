@@ -17,7 +17,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import dstream.DStream;
+import dstream.utils.ExecutionResultUtils;
 import dstream.utils.KVUtils;
+import dstream.utils.StringOps;
 import dstream.utils.Tuples.Tuple2;
 import dstream.utils.Tuples.Tuple4;
 
@@ -452,6 +454,25 @@ public class DStreamExecutionTests extends BaseTezTests {
 	}
 	
 	@Test
+	public void min() throws Exception {	
+		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "wc")
+				.flatMap(s -> Stream.of(s.split("\\s+")))
+//				.classify(word -> word)
+				.min(StringOps::compareLength)
+			.executeAs(EXECUTION_NAME);
+		
+		
+		Stream<Stream<String>> resultPartitionsStream = resultFuture.get();
+		ExecutionResultUtils.printResults(resultPartitionsStream, true);
+//		
+//		List<Stream<String>> resultPartitionsList = resultPartitionsStream.collect(Collectors.toList());
+//		assertEquals(2, resultPartitionsList.size());
+//		
+//		// spot check
+//		List<String> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
+	}
+	
+	@Test
 	public void distinctSingleStage() throws Exception {
 		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "wc")
 				.flatMap(s -> Stream.of(s.split("\\s+")))
@@ -507,6 +528,52 @@ public class DStreamExecutionTests extends BaseTezTests {
 				throw new IllegalStateException("value occures more then once");
 			}
 		});
+	}
+	
+	@Test
+	public void minMaxSingleStage() throws Exception {	
+		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "wc")
+				.flatMap(line -> Stream.of(line.split("\\s+")))
+				.max(StringOps::compareLength)
+			.executeAs(EXECUTION_NAME);
+		
+		
+		Stream<Stream<String>> resultPartitionsStream = resultFuture.get();
+//		ExecutionResultUtils.printResults(resultPartitionsStream, true);
+		
+		List<Stream<String>> resultPartitionsList = resultPartitionsStream.collect(Collectors.toList());
+		assertEquals(2, resultPartitionsList.size());
+		
+		List<String> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
+		assertEquals(0, p1Result.size());
+		
+		List<String> p2Result = resultPartitionsList.get(1).collect(Collectors.toList());
+		assertEquals(1, p2Result.size());
+		assertEquals("Calasareigne", p2Result.get(0));
+	}
+	
+	@Test
+	public void minMaxAfterShuffle() throws Exception {	
+		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "wc")
+				.flatMap(line -> Stream.of(line.split("\\s+")))
+				.classify(s -> s)
+				.max(StringOps::compareLength)
+			.executeAs(EXECUTION_NAME);
+		
+		
+		Stream<Stream<String>> resultPartitionsStream = resultFuture.get();
+//		ExecutionResultUtils.printResults(resultPartitionsStream, true);
+		
+		List<Stream<String>> resultPartitionsList = resultPartitionsStream.collect(Collectors.toList());
+		assertEquals(2, resultPartitionsList.size());
+		
+		List<String> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
+		assertEquals(1, p1Result.size());
+		assertEquals("forerunner", p1Result.get(0));
+		
+		List<String> p2Result = resultPartitionsList.get(1).collect(Collectors.toList());
+		assertEquals(1, p2Result.size());
+		assertEquals("Calasareigne", p2Result.get(0));
 	}
 	
 	@Test(expected=IllegalStateException.class)
