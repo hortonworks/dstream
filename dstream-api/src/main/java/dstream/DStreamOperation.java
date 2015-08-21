@@ -58,6 +58,8 @@ public final class DStreamOperation {
 	
 	private List<DStreamOperations> dependentStreamOperations;
 	
+	private boolean isMapPartition;
+
 	/**
 	 * 
 	 * @param id
@@ -75,6 +77,10 @@ public final class DStreamOperation {
 		this.parent = parent;
 		this.operationNames = new ArrayList<>();
 		this.id = id;
+	}
+	
+	public boolean isMapPartition() {
+		return isMapPartition;
 	}
 	
 	/**
@@ -211,6 +217,19 @@ public final class DStreamOperation {
 		this.dependentStreamOperations.add(dependentStreamOperations);
 	}
 	
+	/**
+	 * 
+	 * @param isMapPartition
+	 */
+	void setMapPartition() {
+		this.isMapPartition = true;
+	}
+	
+	/**
+	 * 
+	 * @param operationName
+	 * @return
+	 */
 	private boolean isShuffle(String operationName){
 		return operationName.equals("reduceValues") ||
 			   operationName.equals("aggregateValues") ||
@@ -220,4 +239,5 @@ public final class DStreamOperation {
 			   operationName.equals("classify") ||
 			   operationName.equals("load");
 	}
+	
 }

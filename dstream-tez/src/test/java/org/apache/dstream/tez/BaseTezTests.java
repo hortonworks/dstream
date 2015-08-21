@@ -10,7 +10,7 @@ import sun.misc.Unsafe;
 @SuppressWarnings("rawtypes")
 public class BaseTezTests {
 	
-private static Unsafe unsafe;
+	private static Unsafe unsafe;
 	
 	static {
 		try {

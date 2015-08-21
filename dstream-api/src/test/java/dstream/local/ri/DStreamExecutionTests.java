@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 import org.junit.Test;
 
 import dstream.DStream;
+import dstream.support.PartitionIdHelper;
 import dstream.utils.ExecutionResultUtils;
 import dstream.utils.KVUtils;
 import dstream.utils.StringUtils;
@@ -521,6 +522,26 @@ public class DStreamExecutionTests {
 		List<String> p2Result = resultPartitionsList.get(1).collect(Collectors.toList());
 		assertEquals(1, p2Result.size());
 		assertEquals("Calasareigne", p2Result.get(0));
+	}
+	
+	@Test
+	public void mapPartitions() throws Exception {	
+		Future<Stream<Stream<String>>> resultFuture = DStream.ofType(String.class, "wc")
+				.flatMap(line -> Stream.of(line.split("\\s+")))
+				.reduceValues(s -> s, s -> 1, Integer::sum)
+				.map(s -> {
+					if (s.getKey().equals("happened")){
+						assertEquals(1, PartitionIdHelper.getPartitionId());
+					}
+					else if (s.getKey().equals("spanker")){
+						assertEquals(0, PartitionIdHelper.getPartitionId());
+					}
+					return s.getKey();
+				})
+			.executeAs(EXECUTION_NAME);
+		
+		Stream<Stream<String>> resultPartitionsStream = resultFuture.get();
+		ExecutionResultUtils.printResults(resultPartitionsStream, true);
 	}
 	
 	@Test

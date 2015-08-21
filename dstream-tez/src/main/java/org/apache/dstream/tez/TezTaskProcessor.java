@@ -1,5 +1,6 @@
 package org.apache.dstream.tez;
 
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -30,6 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dstream.function.SerializableFunctionConverters.SerFunction;
+import dstream.support.PartitionIdHelper;
+import dstream.utils.ReflectionUtils;
 
 /**
  * 
@@ -50,12 +53,21 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 	 * 
 	 * @param context
 	 */
+	@SuppressWarnings("unchecked")
 	public TezTaskProcessor(ProcessorContext context) {
 		super(context);
 		this.dagName = this.getContext().getDAGName();
 		this.taskIndex = this.getContext().getTaskIndex();
 		this.vertexName = this.getContext().getTaskVertexName();
 		this.configuration = new Configuration();
+		try {
+			Field tl = ReflectionUtils.findField(PartitionIdHelper.class, "partitionIdHolder", ThreadLocal.class);
+			tl.setAccessible(true);
+			ThreadLocal<Integer> partitionIdHolder = (ThreadLocal<Integer>) tl.get(null);
+			partitionIdHolder.set(this.taskIndex);
+		} catch (Exception e) {
+			throw new IllegalStateException(e);
+		}
 	}
 
 	/**

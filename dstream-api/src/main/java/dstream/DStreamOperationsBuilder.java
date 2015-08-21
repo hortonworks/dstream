@@ -198,10 +198,7 @@ final class DStreamOperationsBuilder {
 		}
 		
 		this.currentStreamOperation.addStreamOperationFunction(Ops.classify.name(), kvMapper);
-//		if (this.currentStreamOperation.isClassify() && this.currentStreamOperation.getParent() != null){
-//			this.currentStreamOperation = new DStreamOperation(this.operationIdCounter++, this.currentStreamOperation);
-//			this.currentStreamOperation.addStreamOperationFunction(Ops.load.name(), this.unmapFunction);
-//		}
+
 		if (this.currentStreamOperation.getParent() != null){
 			this.currentStreamOperation = new DStreamOperation(this.operationIdCounter++, this.currentStreamOperation);
 			this.currentStreamOperation.addStreamOperationFunction(Ops.load.name(), this.unmapFunction);
@@ -276,10 +273,15 @@ final class DStreamOperationsBuilder {
 		Object[] arguments = invocation.getArguments();
 		Ops operation = Ops.valueOf(method.getName());
 		
-		SerFunction<Stream<?>, Stream<?>> currentStreamFunction = operation.equals(Ops.compute) 
-				? (SerFunction<Stream<?>, Stream<?>>) arguments[0]
-						: new DStreamToStreamAdapterFunction(operation.name(), arguments.length > 0 ? arguments[0] : null);
-				
+		
+		SerFunction<Stream<?>, Stream<?>> currentStreamFunction;
+		if (operation.equals(Ops.compute)){
+			currentStreamFunction = (SerFunction<Stream<?>, Stream<?>>) arguments[0];
+		}
+		else {
+			currentStreamFunction = new DStreamToStreamAdapterFunction(operation.name(), arguments.length > 0 ? arguments[0] : null);
+		}
+		
 		if (this.streamsCombine){
 			@SuppressWarnings("rawtypes")
 			SerFunction currentFunction = this.currentStreamOperation.getStreamOperationFunction();
