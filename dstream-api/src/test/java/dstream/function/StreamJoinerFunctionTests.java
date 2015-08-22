@@ -25,8 +25,8 @@ import java.util.stream.Stream;
 
 import org.junit.Test;
 
-import dstream.function.SerializableFunctionConverters.SerFunction;
-import dstream.function.SerializableFunctionConverters.SerPredicate;
+import dstream.SerializableAssets.SerFunction;
+import dstream.SerializableAssets.SerPredicate;
 import dstream.utils.Tuples.Tuple2;
 import dstream.utils.Tuples.Tuple3;
 

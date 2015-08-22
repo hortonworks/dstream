@@ -1,7 +1,7 @@
 package org.apache.dstream.tez;
 
-import static org.junit.Assert.assertEquals;
 import static dstream.utils.KVUtils.kv;
+import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 import java.util.Map.Entry;
@@ -16,7 +16,7 @@ import org.junit.After;
 import org.junit.Test;
 
 import dstream.DStream;
-import dstream.function.SerializableFunctionConverters.SerBinaryOperator;
+import dstream.SerializableAssets.SerBinaryOperator;
 import dstream.utils.KVUtils;
 
 public class MapSideCombineTests extends BaseTezTests {

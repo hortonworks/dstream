@@ -72,7 +72,7 @@ public class DStreamOperationsCollectorTests {
 		DStreamOperations chainAccessor = (DStreamOperations) partitionStreams.get(0);
 		assertEquals(2, chainAccessor.getOperations().size());
 		assertEquals("extract", chainAccessor.getOperations().get(0).getLastOperationName());
-		assertEquals("map", chainAccessor.getOperations().get(1).getLastOperationName());
+		assertEquals("load", chainAccessor.getOperations().get(1).getLastOperationName());
 		result.close();
 	}
 	
@@ -94,7 +94,7 @@ public class DStreamOperationsCollectorTests {
 		DStreamOperations contextA = (DStreamOperations) partitionStreamsA.get(0);
 		assertEquals(2, contextA.getOperations().size());
 		assertEquals("extract", contextA.getOperations().get(0).getLastOperationName());
-		assertEquals("map", contextA.getOperations().get(1).getLastOperationName());
+		assertEquals("load", contextA.getOperations().get(1).getLastOperationName());
 		resultA.close();
 		
 		//B

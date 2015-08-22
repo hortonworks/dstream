@@ -27,9 +27,9 @@ import java.util.stream.Stream;
 
 import org.junit.Test;
 
+import dstream.SerializableAssets.SerFunction;
+import dstream.SerializableAssets.SerPredicate;
 import dstream.function.DStreamToStreamAdapterFunction;
-import dstream.function.SerializableFunctionConverters.SerFunction;
-import dstream.function.SerializableFunctionConverters.SerPredicate;
 
 public class DStreamToStreamAdapterFunctionTests {
 	

@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import dstream.DStreamConstants;
-import dstream.function.SerializableFunctionConverters.SerSupplier;
+import dstream.SerializableAssets.SerSupplier;
 import dstream.utils.Assert;
 
 

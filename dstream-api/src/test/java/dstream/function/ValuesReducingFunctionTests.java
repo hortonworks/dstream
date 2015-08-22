@@ -28,8 +28,8 @@ import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
+import dstream.SerializableAssets.SerBinaryOperator;
 import dstream.function.ValuesReducingFunction;
-import dstream.function.SerializableFunctionConverters.SerBinaryOperator;
 import dstream.utils.KVUtils;
 
 public class ValuesReducingFunctionTests {

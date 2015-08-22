@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
-import dstream.function.SerializableFunctionConverters.SerFunction;
+import dstream.SerializableAssets.SerFunction;
 import dstream.utils.KVUtils;
 
 public class FunctionCompositionAndSerializationTests {
@@ -78,7 +78,7 @@ public class FunctionCompositionAndSerializationTests {
 			byte[] arr = bos.toByteArray();
 			
 			ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(arr));
-			function = (dstream.function.SerializableFunctionConverters.SerFunction) ois.readObject();
+			function = (dstream.SerializableAssets.SerFunction) ois.readObject();
 			return function;
 		} catch (Exception e) {
 			throw new RuntimeException(e);

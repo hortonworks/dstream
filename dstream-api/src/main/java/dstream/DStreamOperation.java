@@ -23,9 +23,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
+import dstream.SerializableAssets.SerFunction;
 import dstream.function.AbstractMultiStreamProcessingFunction;
 import dstream.function.KeyValueMappingFunction;
-import dstream.function.SerializableFunctionConverters.SerFunction;
 
 /**
  * Represents an assembled and final unit of work which should be used by a target 

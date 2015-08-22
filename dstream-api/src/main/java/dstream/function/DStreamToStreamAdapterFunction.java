@@ -26,8 +26,8 @@ import java.util.stream.Stream;
 
 import dstream.DStream;
 import dstream.Ops;
-import dstream.function.SerializableFunctionConverters.SerFunction;
-import dstream.function.SerializableFunctionConverters.SerPredicate;
+import dstream.SerializableAssets.SerFunction;
+import dstream.SerializableAssets.SerPredicate;
 import dstream.utils.Assert;
 import dstream.utils.ReflectionUtils;
 

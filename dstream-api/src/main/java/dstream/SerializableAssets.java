@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dstream.function;
+package dstream;
 
 import java.io.Serializable;
 import java.util.Comparator;
@@ -25,11 +25,11 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 /**
- * Defines {@link Serializable} equivalents to strategies defined in java.util.function package
- * that are used by this framework.
+ * Defines {@link Serializable} equivalents to strategies used by the {@link Stream} API.
  */
-public interface SerializableFunctionConverters {
+public interface SerializableAssets {
 	
 	/**
 	 * {@link Serializable} version of {@link Function}
