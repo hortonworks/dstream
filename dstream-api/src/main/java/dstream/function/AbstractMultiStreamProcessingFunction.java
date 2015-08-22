@@ -24,8 +24,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import dstream.function.SerializableFunctionConverters.SerFunction;
-import dstream.function.SerializableFunctionConverters.SerPredicate;
+import dstream.SerializableAssets.SerFunction;
+import dstream.SerializableAssets.SerPredicate;
 import dstream.utils.Assert;
 import dstream.utils.Tuples.Tuple2;
 

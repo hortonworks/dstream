@@ -37,7 +37,7 @@ import java.util.stream.Stream;
 import dstream.DStreamConstants;
 import dstream.DStreamOperation;
 import dstream.DStreamOperations;
-import dstream.function.SerializableFunctionConverters.SerFunction;
+import dstream.SerializableAssets.SerFunction;
 import dstream.local.ri.ShuffleHelper.RefHolder;
 import dstream.support.Aggregators;
 import dstream.support.Classifier;

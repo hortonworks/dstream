@@ -24,8 +24,8 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import dstream.function.SerializableFunctionConverters.SerBinaryOperator;
-import dstream.function.SerializableFunctionConverters.SerFunction;
+import dstream.SerializableAssets.SerBinaryOperator;
+import dstream.SerializableAssets.SerFunction;
 import dstream.utils.KVUtils;
 
 /**

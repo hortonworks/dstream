@@ -17,15 +17,14 @@
  */
 package dstream;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
-import dstream.function.SerializableFunctionConverters.SerBinaryOperator;
-import dstream.function.SerializableFunctionConverters.SerComparator;
-import dstream.function.SerializableFunctionConverters.SerFunction;
-import dstream.function.SerializableFunctionConverters.SerPredicate;
+import dstream.SerializableAssets.SerBinaryOperator;
+import dstream.SerializableAssets.SerComparator;
+import dstream.SerializableAssets.SerFunction;
+import dstream.SerializableAssets.SerPredicate;
 import dstream.support.Classifier;
 import dstream.support.HashClassifier;
 /**

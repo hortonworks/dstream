@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
-import dstream.function.SerializableFunctionConverters.SerFunction;
+import dstream.SerializableAssets.SerFunction;
 import dstream.support.Classifier;
 
 final class Task implements Serializable {
