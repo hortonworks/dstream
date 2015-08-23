@@ -21,10 +21,10 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
-import dstream.SerializableAssets.SerBinaryOperator;
-import dstream.SerializableAssets.SerComparator;
-import dstream.SerializableAssets.SerFunction;
-import dstream.SerializableAssets.SerPredicate;
+import dstream.SerializableStreamAssets.SerBinaryOperator;
+import dstream.SerializableStreamAssets.SerComparator;
+import dstream.SerializableStreamAssets.SerFunction;
+import dstream.SerializableStreamAssets.SerPredicate;
 import dstream.support.Classifier;
 import dstream.support.HashClassifier;
 /**

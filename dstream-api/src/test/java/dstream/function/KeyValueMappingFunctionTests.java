@@ -29,7 +29,7 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-import dstream.SerializableAssets.SerBinaryOperator;
+import dstream.SerializableStreamAssets.SerBinaryOperator;
 import dstream.function.KeyValueMappingFunction;
 import dstream.support.Aggregators;
 import dstream.utils.KVUtils;

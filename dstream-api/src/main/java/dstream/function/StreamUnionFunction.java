@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-import dstream.SerializableAssets.SerFunction;
+import dstream.SerializableStreamAssets.SerFunction;
 import dstream.utils.Tuples.Tuple2;
 
 /**

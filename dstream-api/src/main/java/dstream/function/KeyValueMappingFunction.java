@@ -22,7 +22,7 @@ import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import dstream.SerializableAssets.SerFunction;
+import dstream.SerializableStreamAssets.SerFunction;
 import dstream.utils.Assert;
 import dstream.utils.KVUtils;
 

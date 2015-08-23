@@ -16,7 +16,7 @@ import org.junit.After;
 import org.junit.Test;
 
 import dstream.DStream;
-import dstream.SerializableAssets.SerBinaryOperator;
+import dstream.SerializableStreamAssets.SerBinaryOperator;
 import dstream.utils.KVUtils;
 
 public class MapSideCombineTests extends BaseTezTests {

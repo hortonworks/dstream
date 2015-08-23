@@ -24,7 +24,7 @@ import dstream.DStream.DStream3.DStream3WithPredicate;
 import dstream.DStream.DStream4.DStream4WithPredicate;
 import dstream.DStream.DStream5.DStream5WithPredicate;
 import dstream.DStream.DStream6.DStream6WithPredicate;
-import dstream.SerializableAssets.SerPredicate;
+import dstream.SerializableStreamAssets.SerPredicate;
 import dstream.utils.Assert;
 
 /**

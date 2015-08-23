@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import dstream.SerializableAssets.SerBinaryOperator;
+import dstream.SerializableStreamAssets.SerBinaryOperator;
 
 /**
  * An extension to {@link ValuesReducingFunction} which simply ensures the 

@@ -27,16 +27,18 @@ import java.util.stream.Stream;
 public interface DStreamExecutionDelegate {
 
 	/**
-	 * Executes {@link DStreamOperations} group returning a {@link Future} of the results.
+	 * Executes {@link DStreamOperations} groups returning a {@link Future} of the results.
+	 * <br>
 	 * 
 	 * @param executionName the name of this execution
 	 * @param executionConfig execution configuration properties
 	 * @param operationsGroups array of {@link DStreamOperations} to execute
-	 * @return an array of {@link Stream}&lt;{@link Stream}&lt;?&gt;&gt; where each outer 
-	 * {@link Stream} represents the result of execution of individual {@link ExecutionSpec}.<br>
-	 * 
+	 * @return a {@link Future} of results, where result is represented as {@link Stream}
+	 *         containing {@link Stream}s representing each partition in the overall result.<br>
+	 *         While this method's signature implies <i>async</i> invocation, individual 
+	 *         implementations could still opt out for <i>sync</i> invocation always returning only 
+	 *         realized (completed) {@link Future}
 	 */
-	// add comment that while signature allows for async invocation, the actual style could still be controlled by the implementation
 	Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, DStreamOperations... operationsGroups);
 	
 	/**

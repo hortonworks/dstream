@@ -19,7 +19,7 @@ package dstream.support;
 
 import java.io.Serializable;
 
-import dstream.SerializableAssets.SerFunction;
+import dstream.SerializableStreamAssets.SerFunction;
 import dstream.utils.Assert;
 
 /**
