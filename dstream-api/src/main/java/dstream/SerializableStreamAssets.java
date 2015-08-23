@@ -29,7 +29,7 @@ import java.util.stream.Stream;
 /**
  * Defines {@link Serializable} equivalents to strategies used by the {@link Stream} API.
  */
-public interface SerializableAssets {
+public interface SerializableStreamAssets {
 	
 	/**
 	 * {@link Serializable} version of {@link Function}

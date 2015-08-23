@@ -26,7 +26,7 @@ import java.util.stream.Stream;
  * 
  * @param <T> the type of streamable elements of this {@link ExecutableDStream}
  */
-public interface ExecutableDStream<T>{
+interface ExecutableDStream<T>{
 	
 	/**
 	 * Will execute the task represented by this {@link ExecutableDStream} returning the result 

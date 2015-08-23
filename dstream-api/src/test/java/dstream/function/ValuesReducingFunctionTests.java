@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
-import dstream.SerializableAssets.SerBinaryOperator;
+import dstream.SerializableStreamAssets.SerBinaryOperator;
 import dstream.function.ValuesReducingFunction;
 import dstream.utils.KVUtils;
 

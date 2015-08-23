@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 
-import dstream.SerializableAssets.SerBinaryOperator;
+import dstream.SerializableStreamAssets.SerBinaryOperator;
 
 /**
  * Strategy which provides implementations of common aggregation functionality 

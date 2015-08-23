@@ -8,8 +8,8 @@ import java.util.stream.Stream;
 import org.apache.tez.dag.api.Vertex;
 
 import dstream.DStreamConstants;
-import dstream.SerializableAssets.SerFunction;
-import dstream.SerializableAssets.SerSupplier;
+import dstream.SerializableStreamAssets.SerFunction;
+import dstream.SerializableStreamAssets.SerSupplier;
 import dstream.support.Classifier;
 import dstream.support.HashClassifier;
 import dstream.utils.ReflectionUtils;

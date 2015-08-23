@@ -23,24 +23,29 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-import dstream.SerializableAssets.SerFunction;
+import dstream.SerializableStreamAssets.SerFunction;
 import dstream.function.AbstractMultiStreamProcessingFunction;
 import dstream.function.KeyValueMappingFunction;
 
 /**
- * Represents an assembled and final unit of work which should be used by a target 
- * execution environment to build a target specific execution (e.g., DAG in Tez or Spark).<br>
+ * Represents an assembled and final unit of work (i.e., execution stage) to be 
+ * used by a target execution environment when building target specific 
+ * execution (e.g., DAG in Tez or Spark).<br>
  * 
  * It consists of all attributes required to build a target specific execution. 
  * The two most important once are:<br>
  * <ol>
- * 
  * <li>
- *   The {@link Serializable} <i>lambda expression</i> provided by the user (see {@link #getStreamOperationFunction()}). 
+ *   The {@link Serializable} <i>lambda expression</i> which includes the lambda 
+ *   expression provided by the user (see {@link #getStreamOperationFunction()}). <br>
+ *   <i>NOTE: While preserving end user's intentions, the final lambda
+ *   may be the result of a composition with other implicit or explicit lambdas 
+ *   during optimization phase.</i>
  *    </li>
  * <li>
- *   Dependent operations which is a {@link List} of individual stream operations that in essence represents 
- *   another execution pipeline. Dependent operations can only be present if this operation is performing some
+ *   Dependent operations which is a {@link List} of individual {@link DStreamOperations} 
+ *   that in essence represents another execution pipeline. Dependent operations 
+ *   can only be present if this operation is performing some
  *   type of streams combine operation (e.g., join, union, unionAll)
  *    </li>
  * </ol>
@@ -56,22 +61,18 @@ public final class DStreamOperation {
 
 	private List<String> operationNames;
 	
-	private List<DStreamOperations> dependentStreamOperations;
+	private List<DStreamOperations> combinableStreamOperations;
 	
-	private boolean isMapPartition;
-
 	/**
-	 * 
-	 * @param id
+	 * Constructs this operation with the given <i>id</i>.
 	 */
 	DStreamOperation(int id){
 		this(id, null);
 	}
 	
 	/**
-	 * 
-	 * @param id
-	 * @param parent
+	 *  Constructs this operation with the given <i>id</i> and parent 
+	 *  operation.
 	 */
 	DStreamOperation(int id, DStreamOperation parent) {
 		this.parent = parent;
@@ -79,22 +80,16 @@ public final class DStreamOperation {
 		this.id = id;
 	}
 	
-	public boolean isMapPartition() {
-		return isMapPartition;
-	}
-	
 	/**
 	 * Returns <i>true</i> if this operation's function is an
 	 * instance of {@link AbstractMultiStreamProcessingFunction}
-	 * @return
 	 */
 	public boolean isStreamsCombiner() {
 		return this.streamOperationFunction instanceof AbstractMultiStreamProcessingFunction;
 	}
 	
 	/**
-	 * 
-	 * @return
+	 * Returns <i>id</i> of this operation. 
 	 */
 	public int getId(){
 		return this.id;
@@ -108,36 +103,42 @@ public final class DStreamOperation {
 	}
 	
 	/**
-	 * 
-	 * @return
+	 * Returns the {@link List} of combinable {@link DStreamOperations}
+	 * where each {@link DStreamOperations} implies some type of 
+	 * combine functionality with current operation (i.e., join, union, unionAll etc.)
 	 */
-	public List<DStreamOperations> getDependentStreamOperations(){
-		return dependentStreamOperations == null ? Collections.emptyList() : Collections.unmodifiableList(this.dependentStreamOperations);
+	public List<DStreamOperations> getCombinableStreamOperations(){
+		return combinableStreamOperations == null 
+				? Collections.emptyList() 
+						: Collections.unmodifiableList(this.combinableStreamOperations);
 	}
 	
 	/**
-	 * 
-	 * @return
+	 * Returns <i>true</i> if the last operation which composes this {@link DStreamOperation}
+	 * if {@link Ops#classify}
 	 */
 	public boolean isClassify(){
-		return this.operationNames.contains("classify");
+		return Ops.classify.name().equals(this.getLastOperationName());
 	}
 	
 	/**
-	 * 
-	 * @return
+	 * Returns <i>true</i> if this {@link DStreamOperation} represents a <i>shuffle</i>
+	 * operation (see {@link Ops#isShuffle(String)}
 	 */
 	public boolean isShuffle(){
 		if (this.operationNames.size() > 0){
 			String operationName = this.operationNames.get(0);
-			return this.isShuffle(operationName);
+			return Ops.isShuffle(operationName);
 		}
 		return false;
 	}
 	
 	/**
-	 * 
-	 * @return
+	 * Returns a {@link SerFunction} which includes the lambda expression provided by 
+	 * the user.<br>
+     * <i>NOTE: While preserving end user's intentions, the final lambda
+     * may be the result of a composition with other implicit or explicit lambdas 
+     * during optimization phase (see {@link #addStreamOperationFunction(String, SerFunction)}).</i>
 	 */
 	@SuppressWarnings("unchecked")
 	public SerFunction<Stream<?>, Stream<?>> getStreamOperationFunction() {
@@ -145,8 +146,7 @@ public final class DStreamOperation {
 	}
 	
 	/**
-	 * 
-	 * @return
+	 * Returns the last operation which composes this {@link DStreamOperation}.
 	 */
 	public String getLastOperationName() {
 		return this.operationNames.size() > 0 
@@ -155,19 +155,19 @@ public final class DStreamOperation {
 	}
 	
 	/**
-	 * 
-	 * @param operationName
-	 * @param function
+	 * Will add the given {@link SerFunction} to this {@link DStreamOperation} by 
+	 * composing it with the previous function. If previous function is <i>null</i>
+	 * the given function becomes the root function of this operation.<br>
+	 * It also adds teh given <i>operationName</i> to the list of operation names
+	 * which composes this {@link DStreamOperation}.
 	 */
 	@SuppressWarnings("unchecked")
 	void addStreamOperationFunction(String operationName, SerFunction<?,?> function){
-		if (this.streamOperationFunction != null){
-			this.streamOperationFunction = this.streamOperationFunction.andThen(function);
-		}
-		else {
-			this.streamOperationFunction = function;
-		}
 		this.operationNames.add(operationName);
+		this.streamOperationFunction = this.streamOperationFunction != null
+				? this.streamOperationFunction.andThen(function)
+						: function;
+		
 		if (function instanceof KeyValueMappingFunction){
 			if ( ((KeyValueMappingFunction<?,?,?>)function).aggregatesValues() ) {
 				String lastOperationName = this.operationNames.get(this.operationNames.size()-1);
@@ -178,19 +178,8 @@ public final class DStreamOperation {
 	}
 	
 	/**
-	 * 
-	 */
-	AbstractMultiStreamProcessingFunction getStreamsCombiner() {
-		if (isStreamsCombiner()) {
-			return (AbstractMultiStreamProcessingFunction) this.streamOperationFunction;
-		}
-		throw new IllegalStateException("THis operation is not streams combiner");
-	}
-
-	/**
-	 * 
-	 * @param operationName
-	 * @param streamsCombiner
+	 * Sets the given instance of {@link AbstractMultiStreamProcessingFunction} as the 
+	 * function of this {@link DStreamOperation}.
 	 */
 	void setStreamsCombiner(String operationName, AbstractMultiStreamProcessingFunction streamsCombiner) {
 		this.operationNames.add(operationName);
@@ -198,46 +187,21 @@ public final class DStreamOperation {
 	}
 	
 	/**
-	 * 
-	 * @return
+	 * Returns {@link DStreamOperation} which is a parent to this operation.
 	 */
 	DStreamOperation getParent(){
 		return this.parent;
 	}
-	
 
 	/**
-	 * 
-	 * @param dependentStreamOperations
+	 * Ads the given {@link DStreamOperations} to the {@link List} of combinable {@link DStreamOperations}.
+	 * Each added {@link DStreamOperations} implies some type of 
+	 * combine functionality with current operation (i.e., join, union, unionAll etc.)
 	 */
-	void addDependentStreamOperations(DStreamOperations dependentStreamOperations){
-		if (this.dependentStreamOperations == null){
-			this.dependentStreamOperations = new ArrayList<>();
+	void addCombinableStreamOperations(DStreamOperations combinableStreamOperations){
+		if (this.combinableStreamOperations == null){
+			this.combinableStreamOperations = new ArrayList<>();
 		}
-		this.dependentStreamOperations.add(dependentStreamOperations);
+		this.combinableStreamOperations.add(combinableStreamOperations);
 	}
-	
-	/**
-	 * 
-	 * @param isMapPartition
-	 */
-	void setMapPartition() {
-		this.isMapPartition = true;
-	}
-	
-	/**
-	 * 
-	 * @param operationName
-	 * @return
-	 */
-	private boolean isShuffle(String operationName){
-		return operationName.equals("reduceValues") ||
-			   operationName.equals("aggregateValues") ||
-			   operationName.equals("join") ||
-			   operationName.equals("union") ||
-			   operationName.equals("unionAll") ||
-			   operationName.equals("classify") ||
-			   operationName.equals("load");
-	}
-	
 }

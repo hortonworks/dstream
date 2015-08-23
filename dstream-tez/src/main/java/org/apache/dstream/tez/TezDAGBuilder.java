@@ -30,7 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
-import dstream.SerializableAssets.SerSupplier;
+import dstream.SerializableStreamAssets.SerSupplier;
 import dstream.support.SourceSupplier;
 import dstream.utils.Assert;
 

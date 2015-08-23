@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.ServiceLoader;
 import java.util.stream.Stream;
 
-import dstream.SerializableAssets.SerFunction;
+import dstream.SerializableStreamAssets.SerFunction;
 import dstream.support.CollectionFactory;
 import dstream.utils.Assert;
 import dstream.utils.Tuples.Tuple;

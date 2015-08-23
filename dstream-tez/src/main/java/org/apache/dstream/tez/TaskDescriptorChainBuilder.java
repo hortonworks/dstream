@@ -53,7 +53,7 @@ class TaskDescriptorChainBuilder {
 					throw new IllegalStateException("Unclassified stream combines (join/union) are not supported at the moment by Tez.");
 				}
 			}
-			if (!streamOperation.getDependentStreamOperations().isEmpty()){
+			if (!streamOperation.getCombinableStreamOperations().isEmpty()){
 				taskDescriptor = this.createTaskDescriptorForStreamCombineOperations(streamOperation);
 			}
 			else {
@@ -72,7 +72,7 @@ class TaskDescriptorChainBuilder {
 	private TaskDescriptor createTaskDescriptorForStreamCombineOperations(DStreamOperation streamOperation){
 
 		TaskDescriptor taskDescriptor = this.createTaskDescriptor(streamOperation.getLastOperationName());
-		for (DStreamOperations dependentOps : streamOperation.getDependentStreamOperations()) {
+		for (DStreamOperations dependentOps : streamOperation.getCombinableStreamOperations()) {
 			TaskDescriptorChainBuilder builder = new TaskDescriptorChainBuilder(executionName, dependentOps, executionConfig);
 			List<TaskDescriptor> dependentDescriptors = builder.build();
 			taskDescriptor.addDependentTasksChain(dependentDescriptors);

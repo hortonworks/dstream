@@ -30,37 +30,59 @@ public interface DStreamConstants {
 	
 	// Configuration constants
 	/**
-	 * Identifies the source {@link URI} of the individual pipeline
-	 * For example, <i>dstream.source.foo=hdfs://hadoop.com/demo/monte-cristo.txt</i><br>
+	 * Identifies the source {@link URI} of the individual pipeline.<br>
+	 * For example:
+	 * <pre>
+	 * dstream.source.foo=hdfs://hadoop.com/demo/monte-cristo.txt
+	 * </pre>
 	 * In the above 'foo' would be the name of the pipeline
 	 */
-	public static String SOURCE= DSTR_PREFIX + "source.";
+	public static String SOURCE = DSTR_PREFIX + "source.";
 	
 	/**
-	 * 
+	 * Identifies the {@link DStreamExecutionDelegate} implementation used 
+	 * by a given execution.<br>
+	 * For example:
+	 * <pre>
+	 * dstream.delegate=dstream.ValidationDelegate
+	 * </pre>
 	 */
-	public static String DELEGATE= DSTR_PREFIX + "delegate";
+	public static String DELEGATE = DSTR_PREFIX + "delegate";
 	
 	/**
 	 * Identifies the output directory {@link URI} of the execution identified by 
-	 * name (e.g., <i>stream.executeAs("myExecution")</i>).
-	 * For example, <i>dstream.output.myExecution=hdfs://hadoop.com/out</i><br>
+	 * name (e.g., <i>stream.executeAs("myExecution")</i>).<br>
+	 * For example:
+	 * <pre>
+	 * dstream.output.myExecution=hdfs://hadoop.com/out
+	 * </pre>
 	 */
 	public static String OUTPUT = DSTR_PREFIX + "output";
 
 	/**
-	 * Identifies execution parallelism (e.g., <i>dstream.parallelism=3</i>)<br>
+	 * Identifies execution parallelism size.<br>
+	 * For example:
+	 * <pre>
+	 * dstream.parallelism=3
+	 * </pre>
 	 */
 	public static String PARALLELISM = DSTR_PREFIX + "parallelism";
 	
 	/**
-	 * Identifies the implementation of the {@link Classifier} (e.g., <i>dstream.grouper=dstream.function.</i>)<br>
+	 * Identifies the implementation of the {@link Classifier}.<br>
+	 * For example:
+	 * <pre>
+	 * dstream.classifier=dstream.support.HashClassifier
+	 * </pre>
 	 */
 	public static String CLASSIFIER = DSTR_PREFIX + "classifier";
 	
 	/**
-	 * {@link #STAGE} related configuration.<br>
-	 * Provides a hint if map-side-combine should be attempted in a particular stage (e.g., <i>dstream.ms_combine.0_wc=true</i>)<br>
+	 * Provides a hint if map-side-combine should be attempted in a particular stage.<br>
+	 * For example:
+	 * <pre>
+	 * dstream.ms_combine.0_wc=true
+	 * </pre>
 	 * In the above '0_wc' identifies combination of 'stage id' + "_" + 'pipeline name' 
 	 */
 	public static String MAP_SIDE_COMBINE = DSTR_PREFIX + "ms_combine.";

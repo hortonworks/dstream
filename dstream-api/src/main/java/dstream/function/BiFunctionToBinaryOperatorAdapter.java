@@ -17,8 +17,8 @@
  */
 package dstream.function;
 
-import dstream.SerializableAssets.SerBiFunction;
-import dstream.SerializableAssets.SerBinaryOperator;
+import dstream.SerializableStreamAssets.SerBiFunction;
+import dstream.SerializableStreamAssets.SerBinaryOperator;
 
 /**
  * A conversion utility used to de-type and represent {@link SerBiFunction} 

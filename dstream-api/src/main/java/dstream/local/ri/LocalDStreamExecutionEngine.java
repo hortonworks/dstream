@@ -37,7 +37,7 @@ import java.util.stream.Stream;
 import dstream.DStreamConstants;
 import dstream.DStreamOperation;
 import dstream.DStreamOperations;
-import dstream.SerializableAssets.SerFunction;
+import dstream.SerializableStreamAssets.SerFunction;
 import dstream.local.ri.ShuffleHelper.RefHolder;
 import dstream.support.Aggregators;
 import dstream.support.Classifier;
@@ -124,14 +124,14 @@ final class LocalDStreamExecutionEngine {
 			Stream<Entry<Integer, List<Object>>> partitionedStreamResult = this.partitionStream(mergedStream);
 			Stream<Stream<?>> partitionedStreamResultNoId = this.unmapPartitions(partitionedStreamResult);
 			
-			if (streamOperation.getDependentStreamOperations().size() > 0){
+			if (streamOperation.getCombinableStreamOperations().size() > 0){
 				List<Stream<?>> currentPartitions = partitionedStreamResultNoId.collect(Collectors.toList());
 				Map<Integer, Object> matchedPartitions = new LinkedHashMap<>();
 				for (int i = 0; i < currentPartitions.size(); i++) {
 					matchedPartitions.merge(i, currentPartitions.get(i), Aggregators::aggregateToList);
 				}
 
-				List<DStreamOperations> dependentPipelines = streamOperation.getDependentStreamOperations();
+				List<DStreamOperations> dependentPipelines = streamOperation.getCombinableStreamOperations();
 				for (DStreamOperations dependentPipeline : dependentPipelines) {
 					LocalDStreamExecutionEngine e = new LocalDStreamExecutionEngine(this.executionName, this.executionConfig);
 					Stream<Stream<?>> dependentStream = e.execute(dependentPipeline, true);

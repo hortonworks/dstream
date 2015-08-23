@@ -29,9 +29,9 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import dstream.SerializableAssets.SerBinaryOperator;
-import dstream.SerializableAssets.SerComparator;
-import dstream.SerializableAssets.SerFunction;
+import dstream.SerializableStreamAssets.SerBinaryOperator;
+import dstream.SerializableStreamAssets.SerComparator;
+import dstream.SerializableStreamAssets.SerFunction;
 import dstream.function.AbstractMultiStreamProcessingFunction;
 import dstream.function.BiFunctionToBinaryOperatorAdapter;
 import dstream.function.DStreamToStreamAdapterFunction;
@@ -171,6 +171,7 @@ final class DStreamOperationsBuilder {
 	/**
 	 * 
 	 */
+	@SuppressWarnings("rawtypes")
 	private void addStreamsCombineOperation(DStreamInvocation invocation){
 		if (this.executionConfig.containsKey(DStreamConstants.PARALLELISM)){
 			int parallelism = Integer.parseInt(this.executionConfig.getProperty(DStreamConstants.PARALLELISM));
@@ -195,7 +196,7 @@ final class DStreamOperationsBuilder {
 			this.currentStreamOperation.setStreamsCombiner(operation.name(), streamsCombiner);
 		}
 		else if (this.currentStreamOperation.isStreamsCombiner()) {
-			streamsCombiner = this.currentStreamOperation.getStreamsCombiner();
+			streamsCombiner = (AbstractMultiStreamProcessingFunction)(SerFunction)this.currentStreamOperation.getStreamOperationFunction();
 		}
 		else {
 			streamsCombiner = this.createStreamCombiner(operation.name(), this.determineUnmapFunction(this.currentStreamOperation.getLastOperationName()));
@@ -210,7 +211,7 @@ final class DStreamOperationsBuilder {
 		DStreamOperations dependentOperations = dependentBuilder.doBuild(true);
 		int joiningStreamsSize = dependentPipeline.getStreamType().getTypeParameters().length;
 		
-		this.currentStreamOperation.addDependentStreamOperations(dependentOperations); 
+		this.currentStreamOperation.addCombinableStreamOperations(dependentOperations); 
 		streamsCombiner.addCheckPoint(joiningStreamsSize);
 		if (invocation.getSupplementaryOperation() != null){
 			streamsCombiner.addTransformationOrPredicate(Ops.filter.name(), invocation.getSupplementaryOperation());
