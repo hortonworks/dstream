@@ -23,14 +23,14 @@ import java.util.Properties;
 import java.util.stream.Stream;
 
 import dstream.AbstractDStreamExecutionDelegate;
+import dstream.DStreamExecutionDelegate;
 import dstream.DStreamOperations;
 import dstream.utils.Assert;
 
 /**
- * 
- * @param <T>
+ * In-JVM Implementation of {@link DStreamExecutionDelegate}. 
  */
-class LocalDStreamExecutionDelegate<T> extends AbstractDStreamExecutionDelegate {
+class LocalDStreamExecutionDelegate extends AbstractDStreamExecutionDelegate {
 	
 	@Override
 	public Runnable getCloseHandler() {
