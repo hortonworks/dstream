@@ -18,6 +18,7 @@
 package dstream.support;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -28,6 +29,7 @@ public class SharedReferenceTests {
 	@Test
 	public void validateProviderInitialization(){
 		SharedReference<Integer> sr = SharedReference.of(45);
+		assertTrue(sr instanceof SimpleSharedReference);
 		assertEquals((Integer)45, sr.get());
 	}
 	

@@ -161,11 +161,9 @@ public class ClassificationTests extends BaseTezTests {
 		
 		// spot check
 		List<String> rValues = resultStreams.get(0).collect(Collectors.toList());
-		assertEquals(4, rValues.size());
-		assertEquals("Chapter 61. How a Gardener May Get Rid of the Dormice that Eat His Peaches.", rValues.get(0));
-		assertEquals("great d'Aguesseau, [*] M. de Villefort, to come, but have not much hope of", rValues.get(3));
+		assertEquals(1, rValues.size());
+		assertEquals("so slowly and sedately between that the idlers, with that instinct which is", rValues.get(0));
 		
-
 		resultPartitionsStream.close();
 	}
 	
@@ -181,22 +179,10 @@ public class ClassificationTests extends BaseTezTests {
 		List<Stream<String>> resultStreams = resultPartitionsStream.collect(Collectors.toList());
 		assertEquals(4, resultStreams.size());
 		
-		List<String> rValues = resultStreams.get(0).collect(Collectors.toList());
+		List<String> rValues = resultStreams.get(1).collect(Collectors.toList());
 		assertEquals(1, rValues.size());
-		assertEquals("Chapter 61. How a Gardener May Get Rid of the Dormice that Eat His Peaches.", rValues.get(0));
-		
-		rValues = resultStreams.get(1).collect(Collectors.toList());
-		assertEquals(1, rValues.size());
-		assertEquals("great d'Aguesseau, [*] M. de Villefort, to come, but have not much hope of", rValues.get(0));
-		
-		rValues = resultStreams.get(2).collect(Collectors.toList());
-		assertEquals(2, rValues.size());
-		assertEquals("I wished to bury it during my whole life in my own bosom, but your brother", rValues.get(1));
-		assertEquals("End of Project Gutenberg's The Count of Monte Cristo, by Alexandre Dumas, Pere", rValues.get(0));
-		
-		rValues = resultStreams.get(3).collect(Collectors.toList());
-		assertTrue(rValues.isEmpty());
-		
+		assertEquals("so slowly and sedately between that the idlers, with that instinct which is", rValues.get(0));
+
 		resultPartitionsStream.close();
 	}
 	
