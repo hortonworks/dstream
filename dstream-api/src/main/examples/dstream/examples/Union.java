@@ -15,12 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dstream.tez.examples;
+package dstream.examples;
 
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
-
-import org.apache.dstream.tez.BaseTezTests;
 
 import dstream.DStream;
 import dstream.utils.ExecutionResultUtils;
@@ -84,7 +82,6 @@ public class Union {
 	 */
 	public static class SimpleTwoWayUnion {
 		public static void main(String... args) throws Exception {
-			BaseTezTests.clean(EXECUTION_NAME);
 			DStream<String> one = DStream.ofType(String.class, "one").classify(s -> s.split("\\s+")[0]);
 			DStream<String> two = DStream.ofType(String.class, "two").classify(s -> s.split("\\s+")[2]);
 			
@@ -94,9 +91,6 @@ public class Union {
 			
 			Stream<Stream<String>> resultPartitionsStream = resultFuture.get();
 			ExecutionResultUtils.printResults(resultPartitionsStream, true);
-			
-			resultPartitionsStream.close();// will close Tez client
-			BaseTezTests.clean(EXECUTION_NAME);
 		}
 	}
 }
