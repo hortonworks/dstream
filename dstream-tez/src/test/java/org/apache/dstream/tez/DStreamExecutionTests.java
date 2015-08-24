@@ -624,7 +624,7 @@ public class DStreamExecutionTests extends BaseTezTests {
 		assertEquals("[2 Amazon, Jeff Bezos 2]", p1Result.get(0).toString());
 		
 		List<Tuple2<String, String>> p2Result = resultPartitionsList.get(1).collect(Collectors.toList());
-		assertEquals("[3 Hortonworks, Tom McCuch 3]", p2Result.get(6).toString());
+		assertEquals("[3 Hortonworks, Arun Murthy 3]", p2Result.get(6).toString());
 	}
 	
 	@Test
@@ -656,7 +656,7 @@ public class DStreamExecutionTests extends BaseTezTests {
 		
 		// spot check
 		List<Tuple4<String, String, String, String>> p2Result = resultPartitionsList.get(1).collect(Collectors.toList());
-		assertEquals("[3 HORTONWORKS, ARUN MURTHY 3, 3 $1B, 3 5470 Great America Parkway Santa Clara, CA 95054]", p2Result.get(0).toString());
+		assertEquals("[3 HORTONWORKS, ROB BEARDEN 3, 3 $1B, 3 5470 Great America Parkway Santa Clara, CA 95054]", p2Result.get(0).toString());
 		
 		assertTrue(resultPartitionsList.get(0).collect(Collectors.toList()).isEmpty());
 	}
