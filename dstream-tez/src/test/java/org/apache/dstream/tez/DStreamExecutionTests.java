@@ -65,7 +65,7 @@ public class DStreamExecutionTests extends BaseTezTests {
 		
 		// spot check
 		List<String> p2Result = resultPartitionsList.get(1).collect(Collectors.toList());
-		assertEquals("The ship drew on and had safely passed the strait, which some volcanic", p2Result.get(1));
+		assertEquals("shock has made between the Calasareigne and Jaros islands; had doubled", p2Result.get(1));
 	}
 	
 	@Test
@@ -83,7 +83,7 @@ public class DStreamExecutionTests extends BaseTezTests {
 		// spot check
 		List<String> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
 		assertEquals("happened on board.", p1Result.get(0));
-		assertEquals("the forerunner of evil, asked one another what misfortune could have", p1Result.get(2));
+		assertEquals("the ship drew on and had safely passed the strait, which some volcanic", p1Result.get(2));
 	}
 	
 	@Test
@@ -141,7 +141,7 @@ public class DStreamExecutionTests extends BaseTezTests {
 		assertEquals(2, resultPartitionsList.size());
 		
 		List<Entry<String, Integer>> p2Result = resultPartitionsList.get(1).collect(Collectors.toList());
-		assertEquals(KVUtils.kv("asked", 1), p2Result.get(7));
+		assertEquals(KVUtils.kv("could", 1), p2Result.get(7));
 	}
 	
 	@Test
@@ -165,7 +165,7 @@ public class DStreamExecutionTests extends BaseTezTests {
 		assertEquals("j=[jib,=1]", p1Result.get(7).toString());
 		
 		List<Entry<String, List<Entry<String, Integer>>>> p2Result = resultPartitionsList.get(1).collect(Collectors.toList());
-		assertEquals("s=[strait,=1, safely=1, sedately=1, ship=1, shock=1, slowly=1, so=1, some=1, spanker,=1]", p2Result.get(7).toString());
+		assertEquals("s=[strait,=1, sedately=1, safely=1, ship=1, shock=1, slowly=1, so=1, some=1, spanker,=1]", p2Result.get(7).toString());
 	}
 	
 	@Test
@@ -256,7 +256,7 @@ public class DStreamExecutionTests extends BaseTezTests {
 		
 		// spot check
 		List<String> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
-		assertEquals("TUB ,REKNAPS DNA ,BIJ ,SLIASPOT REDNU ROBRAH EHT DEHCAORPPA DNA ,EUGEMOP", p1Result.get(2));
+		assertEquals(".DRAOB NO DENEPPAH", p1Result.get(2));
 	}
 	
 	@Test

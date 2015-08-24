@@ -69,7 +69,8 @@ final class DStreamOperationsBuilder {
 		this.invocationPipeline = invocationPipeline;
 		this.executionConfig = executionConfig;
 		this.shuffleResultNormalizer = stream -> stream
-				.flatMap(entry -> StreamSupport.stream(Spliterators.spliteratorUnknownSize((Iterator<Object>)entry.getValue(), Spliterator.ORDERED), false).sorted());
+				.flatMap(entry -> StreamSupport
+						.stream(Spliterators.spliteratorUnknownSize((Iterator<Object>)entry.getValue(), Spliterator.ORDERED), false));
 	}
 	
 	/**

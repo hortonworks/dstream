@@ -1,4 +1,4 @@
-package examples;
+package dstream.tez.examples;
 
 import java.util.Map.Entry;
 import java.util.concurrent.Future;
@@ -7,7 +7,6 @@ import java.util.stream.Stream;
 import org.apache.dstream.tez.BaseTezTests;
 
 import dstream.DStream;
-import dstream.utils.KVUtils;
 
 /**
  * A rudimentary WordCount

@@ -20,10 +20,11 @@ package dstream;
 import java.util.List;
 
 /**
- * Represents the <i>execution pipeline</i> built from the invocations on the {@link DStream}.<br>
- * <b><i>Execution pipeline</i></b> is a sort of an abstract syntax tree (AST) containing finalized 
- * operations ready to be executed by the target system with minimal to no modifications. <br>
- * Individual operations are represented by a {@link DStreamOperation}.
+ * Represents an <i>execution graph</i> built from the invocations on 
+ * the {@link DStream}.<br>
+ * <b><i>Execution graph</i></b> is a sort of an <i>abstract syntax tree</i> (AST)
+ * of finalized {@link DStreamOperation}s ready to be mapped to and executed by the 
+ * target system with minimal to no modifications. <br>
  *
  */
 public final class DStreamOperations {
@@ -32,38 +33,38 @@ public final class DStreamOperations {
 
 	private final Class<?> sourceElementType;
 
-	private final String pipelineName;
+	private final String executioniGraphName;
 	
 	/**
 	 * 
 	 */
-	DStreamOperations(Class<?> sourceElementType, String pipelineName, List<DStreamOperation> operations){
+	DStreamOperations(Class<?> sourceElementType, String executioniGraphName, List<DStreamOperation> operations){
 		this.sourceElementType = sourceElementType;
-		this.pipelineName = pipelineName;
+		this.executioniGraphName = executioniGraphName;
 		this.operations = operations;
 	}
 	
 	/**
 	 * Returns immutable {@link List} of {@link DStreamOperation}s.
-	 * @return
 	 */
 	public List<DStreamOperation> getOperations() {
 		return this.operations;
 	}
 
 	/**
-	 * Returns the type of the element the underlying pipeline was constructed with.
+	 * Returns the type of element of this execution graph. The type derives from the 
+	 * type declared by the {@link DStream} during its initial construction.
 	 */
 	public Class<?> getSourceElementType() {
 		return this.sourceElementType;
 	}
 
 	/**
-	 * Returns the name used during the construction of the {@link DStream} from which this 
-	 * execution pipeline was built.
+	 * Returns the name of this execution graph. The name derives from the name
+	 * given to the {@link DStream} during its initial construction.
 	 */
 	public String getName() {
-		return this.pipelineName;
+		return this.executioniGraphName;
 	}
 	
 	/**

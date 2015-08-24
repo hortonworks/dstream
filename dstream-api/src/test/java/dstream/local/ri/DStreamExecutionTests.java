@@ -73,7 +73,7 @@ public class DStreamExecutionTests {
 		
 		// spot check
 		List<String> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
-		assertEquals("The ship drew on and had safely passed the strait, which some volcanic", p1Result.get(1));
+		assertEquals("shock has made between the Calasareigne and Jaros islands; had doubled", p1Result.get(1));
 	}
 	
 	@Test
@@ -91,7 +91,7 @@ public class DStreamExecutionTests {
 		// spot check
 		List<String> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
 		assertEquals("happened on board.", p1Result.get(0));
-		assertEquals("the forerunner of evil, asked one another what misfortune could have", p1Result.get(2));
+		assertEquals("the ship drew on and had safely passed the strait, which some volcanic", p1Result.get(2));
 	}
 	
 	@Test
@@ -149,7 +149,7 @@ public class DStreamExecutionTests {
 		assertEquals(1, resultPartitionsList.size());
 		
 		List<Entry<String, Integer>> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
-		assertEquals(KVUtils.kv("asked", 1), p1Result.get(7));
+		assertEquals(KVUtils.kv("harbor", 1), p1Result.get(7));
 	}
 	
 	@Test
@@ -173,7 +173,7 @@ public class DStreamExecutionTests {
 		assertEquals("j=[jib,=1]", p1Result.get(7).toString());
 		
 		List<Entry<String, List<Entry<String, Integer>>>> p2Result = resultPartitionsList.get(1).collect(Collectors.toList());
-		assertEquals("s=[safely=1, sedately=1, ship=1, shock=1, slowly=1, so=1, some=1, spanker,=1, strait,=1]", p2Result.get(7).toString());
+		assertEquals("s=[safely=1, ship=1, shock=1, slowly=1, so=1, some=1, spanker,=1, sedately=1, strait,=1]", p2Result.get(7).toString());
 	}
 	
 	@Test
@@ -264,7 +264,7 @@ public class DStreamExecutionTests {
 		
 		// spot check
 		List<String> p1Result = resultPartitionsList.get(0).collect(Collectors.toList());
-		assertEquals("TUB ,REKNAPS DNA ,BIJ ,SLIASPOT REDNU ROBRAH EHT DEHCAORPPA DNA ,EUGEMOP", p1Result.get(2));
+		assertEquals(".DRAOB NO DENEPPAH", p1Result.get(2));
 	}
 	
 	@Test
@@ -700,7 +700,7 @@ public class DStreamExecutionTests {
 		assertEquals("[2 Amazon, Jeff Bezos 2]", p1Result.get(0).toString());
 		
 		List<Tuple2<String, String>> p2Result = resultPartitionsList.get(1).collect(Collectors.toList());
-		assertEquals("[3 Hortonworks, Tom McCuch 3]", p2Result.get(6).toString());
+		assertEquals("[3 Hortonworks, Arun Murthy 3]", p2Result.get(6).toString());
 	}
 	
 	@Test
@@ -772,7 +772,7 @@ public class DStreamExecutionTests {
 		
 		// spot check
 		List<Tuple4<String, String, String, String>> p2Result = resultPartitionsList.get(1).collect(Collectors.toList());
-		assertEquals("[3 HORTONWORKS, ARUN MURTHY 3, 3 $1B, 3 5470 Great America Parkway Santa Clara, CA 95054]", p2Result.get(0).toString());
+		assertEquals("[3 HORTONWORKS, ROB BEARDEN 3, 3 $1B, 3 5470 Great America Parkway Santa Clara, CA 95054]", p2Result.get(0).toString());
 		
 		assertTrue(resultPartitionsList.get(0).collect(Collectors.toList()).isEmpty());
 	}
