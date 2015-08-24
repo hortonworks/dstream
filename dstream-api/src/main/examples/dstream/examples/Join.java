@@ -36,8 +36,8 @@ public class Join {
 	
 	public static void main(String[] args) throws Exception {
 //		run all
-		SimpleTwoWayJoin.main();
-		FourWayJoinWithIntermediateTransformations.main();
+		TwoWayJoin.main();
+		FourWayJoin.main();
 	}
 	
 	/**
@@ -60,7 +60,7 @@ public class Join {
 	 * Classification is performed using the common "id", this ensuring that 
 	 * '1 Oracle' and 'Larry Ellison 1' will end up in the same partition.
 	 */
-	public static class SimpleTwoWayJoin {
+	public static class TwoWayJoin {
 		public static void main(String... args) throws Exception {
 			DStream<String> one = DStream.ofType(String.class, "one").classify(s -> s.split("\\s+")[0]);
 			DStream<String> two = DStream.ofType(String.class, "two").classify(s -> s.split("\\s+")[2]);
@@ -74,7 +74,11 @@ public class Join {
 		}
 	}
 	
-	public static class FourWayJoinWithIntermediateTransformations {
+	/**
+	 * This example shows a sample of joining more then two data sets with some transformation
+	 * as well as multiple predicates
+	 */
+	public static class FourWayJoin {
 		public static void main(String... args) throws Exception {
 			DStream<String> one = DStream.ofType(String.class, "one").classify(a -> a.split("\\s+")[0]);
 			DStream<String> two = DStream.ofType(String.class, "two").classify(a -> a.split("\\s+")[2]);
@@ -82,8 +86,7 @@ public class Join {
 			DStream<String> four = DStream.ofType(String.class, "four").classify(a -> a.split("\\s+")[0]);
 			
 			Future<Stream<Stream<Tuple4<String, String, String, String>>>> resultFuture = one
-					.join(two)
-					.filter(t2 -> t2._1().contains("Hortonworks"))
+					.join(two).on(t2 -> t2._1().contains("Hortonworks"))
 					.map(t2 -> tuple2(t2._1().toUpperCase(), t2._2().toUpperCase()))
 					.join(three)
 					.join(four).on(t3 -> {

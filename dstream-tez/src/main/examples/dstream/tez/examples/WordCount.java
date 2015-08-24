@@ -25,7 +25,7 @@ public class WordCount {
 		result.forEach(resultPartitionStream -> {
 			resultPartitionStream.forEach(System.out::println);
 		});
-		result.close();
+		result.close(); // will close Tez client
 		BaseTezTests.clean("WordCount");
 	}
 }

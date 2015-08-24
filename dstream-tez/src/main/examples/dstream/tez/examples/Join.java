@@ -23,7 +23,26 @@ public class Join {
 		BaseTezTests.clean(EXECUTION_NAME);
 	}
 	
-	
+	/**
+	 * This example demonstrates simple join between two streams.
+	 * To ensure correctness of joining data in the distributed environment, classification must 
+	 * precede any type of streams combine (i.e., join and/or union*). This will ensure 
+	 * the two+ streams represented as individual partitions have comparable data.
+	 * 
+	 * The following case has two data sets:
+	 * 	-one-
+	 * 1 Oracle
+	 * 2 Amazon
+	 * . . .
+	 * 
+	 *  - two-
+	 *  Arun Murthy 3
+	 *  Larry Ellison 1
+	 *  . . .
+	 *  
+	 * Classification is performed using the common "id", this ensuring that 
+	 * '1 Oracle' and 'Larry Ellison 1' will end up in the same partition.
+	 */
 	public static class TwoWayJoin{
 		public static void main(String... args) throws Exception {
 			BaseTezTests.clean(EXECUTION_NAME);
@@ -39,10 +58,16 @@ public class Join {
 			result.forEach(resultPartitionStream -> {
 				resultPartitionStream.forEach(System.out::println);
 			});
-			result.close();
+			result.close();// will close Tez client
+			
+			BaseTezTests.clean(EXECUTION_NAME);
 		}
 	}
 	
+	/**
+	 * This example shows a sample of joining more then two data sets with some transformation
+	 * as well as multiple predicates
+	 */
 	public static class FourWayJoin {
 		public static void main(String... args) throws Exception {
 			BaseTezTests.clean(EXECUTION_NAME);
@@ -71,7 +96,8 @@ public class Join {
 			result.forEach(resultPartitionStream -> {
 				resultPartitionStream.forEach(System.out::println);
 			});
-			result.close();
+			result.close();// will close Tez client
+			BaseTezTests.clean(EXECUTION_NAME);
 		}
 	}
 }
