@@ -28,10 +28,10 @@ import dstream.SerializableStreamAssets.SerPredicate;
 import dstream.utils.Assert;
 
 /**
- * A type-safe {@link Stream}-like strategy that exposes distributable data as the sequence of 
+ * A type-safe {@link Stream}-like strategy that exposes <i>distributable data</i> as the sequence of 
  * elements that support sequential and parallel aggregate operations.<br>
  * <br>
- * Below is the example of rudimentary <i>Word Count</i> written using this API:<br>
+ * Below is the example of rudimentary <i>Word Count</i> written using the API:<br>
  * <pre>
  * DStream.ofType(String.class, "wc")
  *     .flatMap(line -> Stream.of(line.split("\\s+")))
@@ -72,7 +72,8 @@ public interface DStream<A> extends BaseDStream<A, DStream<A>> {
 	 * 
 	 * @param sourceElementType the type of the elements of this stream
 	 * @param name the value which represents the name of this stream and is also used 
-	 * 			   in configuration to resolve the source of this stream 
+	 * 			   in configuration to resolve stream specific configuration values.
+	 *             For example, one such configuration properties is the source of this stream 
 	 *             (e.g., dstream.source.foo=file://foo.txt where 'foo' is the <i>name</i>). 
 	 *             See {@link DStreamConstants#SOURCE} for more details.<br>
 	 *             <b>Must be unique!</b>. If you simply want to point to the same source, map it 
