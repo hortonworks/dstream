@@ -64,14 +64,14 @@ public final class DStreamOperation {
 	private List<DStreamOperations> combinableStreamOperations;
 	
 	/**
-	 * Constructs this operation with the given <i>id</i>.
+	 * Constructs this {@link DStreamOperation} with the given <i>id</i>.
 	 */
 	DStreamOperation(int id){
 		this(id, null);
 	}
 	
 	/**
-	 *  Constructs this operation with the given <i>id</i> and parent 
+	 *  Constructs this {@link DStreamOperation} with the given <i>id</i> and parent 
 	 *  operation.
 	 */
 	DStreamOperation(int id, DStreamOperation parent) {
@@ -89,7 +89,7 @@ public final class DStreamOperation {
 	}
 	
 	/**
-	 * Returns <i>id</i> of this operation. 
+	 * Returns the <i>id</i> of this {@link DStreamOperation}. 
 	 */
 	public int getId(){
 		return this.id;
@@ -134,10 +134,11 @@ public final class DStreamOperation {
 	}
 	
 	/**
-	 * Returns a {@link SerFunction} which includes the lambda expression provided by 
-	 * the user.<br>
-     * <i>NOTE: While preserving end user's intentions, the final lambda
-     * may be the result of a composition with other implicit or explicit lambdas 
+	 * Returns a {@link SerFunction} to be applied on the localized {@link Stream} of data
+	 * processed by a target task.
+	 * It includes the lambda expression provided by the end user.<br>
+     * <i>NOTE: While preserving end user's intentions, the final function
+     * may be the result of a composition with other implicit or explicit functions 
      * during optimization phase (see {@link #addStreamOperationFunction(String, SerFunction)}).</i>
 	 */
 	@SuppressWarnings("unchecked")
@@ -146,7 +147,20 @@ public final class DStreamOperation {
 	}
 	
 	/**
-	 * Returns the last operation which composes this {@link DStreamOperation}.
+	 * Returns the last operation which composes this {@link DStreamOperation}.<br>
+	 * For example:
+	 * <pre>
+	 * DStream.ofType(String.class, "wc")
+	 *     .flatMap(..)
+	 *     .map(..)
+	 *     .filter(..)
+	 *     . . .
+	 * </pre>
+	 * In the above, all three operations are <i>composable-transformations</i>
+	 * and will be composed into a single {@link DStreamOperation} with the list of 
+	 * operation names - <i>[flatMap, map, filter]</i>. In the given scenario this method
+	 * will return 'filter' since it is the last operation name composing this 
+	 * {@link DStreamOperation}.
 	 */
 	public String getLastOperationName() {
 		return this.operationNames.size() > 0 
@@ -158,8 +172,10 @@ public final class DStreamOperation {
 	 * Will add the given {@link SerFunction} to this {@link DStreamOperation} by 
 	 * composing it with the previous function. If previous function is <i>null</i>
 	 * the given function becomes the root function of this operation.<br>
-	 * It also adds teh given <i>operationName</i> to the list of operation names
-	 * which composes this {@link DStreamOperation}.
+	 * It also adds the given <i>operationName</i> to the list of operation names
+	 * which composes this {@link DStreamOperation}.<br>
+	 * The final (composed) function represents the function to applied on the 
+	 * localized {@link Stream} of data processed by a target task.
 	 */
 	@SuppressWarnings("unchecked")
 	void addStreamOperationFunction(String operationName, SerFunction<?,?> function){
