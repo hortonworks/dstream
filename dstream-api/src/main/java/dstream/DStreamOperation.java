@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import dstream.SerializableStreamAssets.SerFunction;
-import dstream.function.AbstractMultiStreamProcessingFunction;
 import dstream.function.KeyValueMappingFunction;
 
 /**

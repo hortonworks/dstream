@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dstream.function;
+package dstream;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;

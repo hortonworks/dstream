@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dstream.function;
+package dstream;
 
 import java.util.Iterator;
 import java.util.List;
@@ -32,7 +32,7 @@ import dstream.utils.Tuples.Tuple2;
  * Implementation of {@link SerFunction} which will join multiple streams
  * while applying user functionality at check points (see this{@link #addCheckPoint(int)}.
  */
-public class StreamJoinerFunction extends AbstractMultiStreamProcessingFunction {
+class StreamJoinerFunction extends AbstractMultiStreamProcessingFunction {
 	private static final long serialVersionUID = -3615487628958776468L;
 	
 	private static CollectionFactory collectionFactory;

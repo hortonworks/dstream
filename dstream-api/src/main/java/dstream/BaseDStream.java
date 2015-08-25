@@ -165,11 +165,11 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
 	 * target partitioner as partition id.<br>
 	 * <br>
 	 * However, the actual <b><i>data partitioning</i></b> is the function of the system and 
-	 * exist primarily to facilitate greater parallelisation when it comes to actual data processing. 
+	 * exist primarily to facilitate greater parallelization when it comes to actual data processing. 
 	 * <b><i>Data classification</i></b> on the other hand, is the function of the application deriving its 
 	 * requirement from the use case at hand (e.g., group all 'foo's and 'bar's together).<br>
 	 * So, it is important to separate the two, since it is quite conceivable that to facilitate greater 
-	 * parallelisation in the truly distributed environment classification groups
+	 * parallelization in the truly distributed environment classification groups
 	 * could be further partitioned (e.g., 2 groups into 8 partitions).<br>
 	 * <br>
 	 * Another configuration property relevant to this and every other <i>shuffle</i>-style operation

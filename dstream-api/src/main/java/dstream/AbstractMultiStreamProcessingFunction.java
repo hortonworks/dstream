@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dstream.function;
+package dstream;
 
 import static dstream.utils.Tuples.Tuple2.tuple2;
 
@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 
 import dstream.SerializableStreamAssets.SerFunction;
 import dstream.SerializableStreamAssets.SerPredicate;
+import dstream.function.DStreamToStreamAdapterFunction;
 import dstream.utils.Assert;
 import dstream.utils.Tuples.Tuple2;
 
@@ -35,7 +36,7 @@ import dstream.utils.Tuples.Tuple2;
  * implementation.
  *
  */
-public abstract class AbstractMultiStreamProcessingFunction implements SerFunction<Stream<Stream<?>>, Stream<?>> {
+abstract class AbstractMultiStreamProcessingFunction implements SerFunction<Stream<Stream<?>>, Stream<?>> {
 	private static final long serialVersionUID = -7336517082191905937L;
 
 	private final SerFunction<Stream<?>, Stream<?>> streamPreProcessingFunction;
