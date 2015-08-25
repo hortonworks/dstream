@@ -32,12 +32,9 @@ import java.util.stream.StreamSupport;
 import dstream.SerializableStreamAssets.SerBinaryOperator;
 import dstream.SerializableStreamAssets.SerComparator;
 import dstream.SerializableStreamAssets.SerFunction;
-import dstream.function.AbstractMultiStreamProcessingFunction;
 import dstream.function.BiFunctionToBinaryOperatorAdapter;
 import dstream.function.DStreamToStreamAdapterFunction;
 import dstream.function.KeyValueMappingFunction;
-import dstream.function.StreamJoinerFunction;
-import dstream.function.StreamUnionFunction;
 import dstream.function.ValuesAggregatingFunction;
 import dstream.function.ValuesReducingFunction;
 import dstream.support.Aggregators;
@@ -179,7 +176,7 @@ final class DStreamOperationsBuilder {
 			if (this.currentStreamOperation == null || 
 				(this.currentStreamOperation.getParent() != null && !this.currentStreamOperation.getParent().isClassify()) ||
 				(this.currentStreamOperation.getParent() == null && !this.currentStreamOperation.isClassify())){
-				Assert.isTrue(parallelism == 1, "Combining streams without prior classification is not supported when parallelism is > 0");
+				Assert.isTrue(parallelism == 1, "Combining streams without prior classification is not supported when parallelism is > 1");
 			}
 		}
 		Method method = invocation.getMethod();
