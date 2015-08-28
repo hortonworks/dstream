@@ -24,7 +24,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD.rddToSequenceFileRDDFunctions
 import dstream.AbstractDStreamExecutionDelegate
-import dstream.DStreamOperations
+import dstream.DStreamExecutionGraph
 import org.apache.dstream.hadoop.KeyWritable
 import org.apache.dstream.hadoop.ValueWritable
 import org.apache.dstream.hadoop.SequenceFileOutputStreamsBuilder
@@ -58,7 +58,7 @@ class SparkDStreamExecutionDelegate extends AbstractDStreamExecutionDelegate wit
   /**
    * 
    */
-  override protected def doExecute(executionName:String, executionConfig:Properties, executionPipelines:DStreamOperations*)
+  override protected def doExecute(executionName:String, executionConfig:Properties, executionPipelines:DStreamExecutionGraph*)
       :java.util.List[java.util.stream.Stream[java.util.stream.Stream[_]]] = {
     Assert.notEmpty(executionPipelines, "'executionPipelines' must not be null or empty")
     Assert.isTrue(executionPipelines.length < 2, "Multiple 'executionPipelines' are not supported at the moment");

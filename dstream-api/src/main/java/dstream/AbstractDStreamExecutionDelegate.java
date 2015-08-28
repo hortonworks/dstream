@@ -29,13 +29,15 @@ import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
 /**
- * 
- * @param <T>
+ * Base implementation of {@link DStreamExecutionDelegate} which invokes
+ * {@link #doExecute(String, Properties, DStreamExecutionGraph...)} asynchronously 
+ * and wraps every result {@link Stream} in a proxy allowing calls to {@link Stream#close()}
+ * to be delegated to the the close handler returned by the {@link #getCloseHandler()}.
  */
 public abstract class AbstractDStreamExecutionDelegate implements DStreamExecutionDelegate {
 	@SuppressWarnings("unchecked")
 	@Override
-	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, DStreamOperations... executionPipelines) {
+	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, DStreamExecutionGraph... executionPipelines) {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 		
 		try {
@@ -89,7 +91,7 @@ public abstract class AbstractDStreamExecutionDelegate implements DStreamExecuti
 	 * @param invocationChains
 	 * @return
 	 */
-	protected abstract List<Stream<Stream<?>>> doExecute(String executionName, Properties executionConfig, DStreamOperations... executionPipelines);
+	protected abstract List<Stream<Stream<?>>> doExecute(String executionName, Properties executionConfig, DStreamExecutionGraph... executionGraphs);
 	
 	/**
 	 * Creates proxy over the result Stream to ensures that close() call is always delegated to

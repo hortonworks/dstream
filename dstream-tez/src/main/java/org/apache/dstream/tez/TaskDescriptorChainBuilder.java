@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Properties;
 
 import dstream.DStreamConstants;
+import dstream.DStreamExecutionGraph;
 import dstream.DStreamOperation;
-import dstream.DStreamOperations;
 import dstream.support.SourceSupplier;
 import dstream.utils.Assert;
 
@@ -17,7 +17,7 @@ class TaskDescriptorChainBuilder {
 	
 	private final List<TaskDescriptor> taskChain;
 	
-	private final DStreamOperations executionPipeline;
+	private final DStreamExecutionGraph executionGraph;
 	
 	private final String executionName;
 	
@@ -31,9 +31,9 @@ class TaskDescriptorChainBuilder {
 	 * @param invocationChain
 	 * @param executionConfig
 	 */
-	public TaskDescriptorChainBuilder(String executionName, DStreamOperations executionPipeline, Properties executionConfig){
+	public TaskDescriptorChainBuilder(String executionName, DStreamExecutionGraph executionGraph, Properties executionConfig){
 		this.taskChain = new ArrayList<>();
-		this.executionPipeline = executionPipeline;
+		this.executionGraph = executionGraph;
 		this.executionName = executionName;
 		this.executionConfig = executionConfig;
 	}
@@ -43,7 +43,7 @@ class TaskDescriptorChainBuilder {
 	 * @return
 	 */
 	public List<TaskDescriptor> build(){
-		List<DStreamOperation> streamOperations = this.executionPipeline.getOperations();
+		List<DStreamOperation> streamOperations = this.executionGraph.getOperations();
 
 		for (DStreamOperation streamOperation : streamOperations) {	
 			TaskDescriptor taskDescriptor;
@@ -53,7 +53,7 @@ class TaskDescriptorChainBuilder {
 					throw new IllegalStateException("Unclassified stream combines (join/union) are not supported at the moment by Tez.");
 				}
 			}
-			if (!streamOperation.getCombinableStreamOperations().isEmpty()){
+			if (!streamOperation.getCombinableExecutionGraphs().isEmpty()){
 				taskDescriptor = this.createTaskDescriptorForStreamCombineOperations(streamOperation);
 			}
 			else {
@@ -72,7 +72,7 @@ class TaskDescriptorChainBuilder {
 	private TaskDescriptor createTaskDescriptorForStreamCombineOperations(DStreamOperation streamOperation){
 
 		TaskDescriptor taskDescriptor = this.createTaskDescriptor(streamOperation.getLastOperationName());
-		for (DStreamOperations dependentOps : streamOperation.getCombinableStreamOperations()) {
+		for (DStreamExecutionGraph dependentOps : streamOperation.getCombinableExecutionGraphs()) {
 			TaskDescriptorChainBuilder builder = new TaskDescriptorChainBuilder(executionName, dependentOps, executionConfig);
 			List<TaskDescriptor> dependentDescriptors = builder.build();
 			taskDescriptor.addDependentTasksChain(dependentDescriptors);
@@ -86,12 +86,12 @@ class TaskDescriptorChainBuilder {
 	 */
 	private void initializeTaskInputsIfNecessary(TaskDescriptor td){
 		if (td.getId() == 0 && td.getSourceSupplier() == null){
-			String sourceProperty = executionConfig.getProperty(DStreamConstants.SOURCE + this.executionPipeline.getName());
-			Assert.notEmpty(sourceProperty, DStreamConstants.SOURCE + this.executionPipeline.getName() +  "' property can not be found in " + 
+			String sourceProperty = executionConfig.getProperty(DStreamConstants.SOURCE + this.executionGraph.getName());
+			Assert.notEmpty(sourceProperty, DStreamConstants.SOURCE + this.executionGraph.getName() +  "' property can not be found in " + 
 					this.executionName + ".cfg configuration file.");
 			SourceSupplier<?> sourceSupplier = SourceSupplier.create(sourceProperty, null);
 			td.setSourceSupplier(sourceSupplier);
-			td.setSourceElementType(this.executionPipeline.getSourceElementType());
+			td.setSourceElementType(this.executionGraph.getSourceElementType());
 		}
 	}
 	
@@ -110,7 +110,7 @@ class TaskDescriptorChainBuilder {
 	 */
 	private TaskDescriptor createTaskDescriptor(String operationName){
 		TaskDescriptor taskDescriptor = new TaskDescriptor(this.sequenceIdCounter++, 
-				this.executionPipeline.getName(), operationName, this.executionConfig, this.getCurrentTask());
+				this.executionGraph.getName(), operationName, this.executionConfig, this.getCurrentTask());
 		this.initializeTaskInputsIfNecessary(taskDescriptor);
 		return taskDescriptor;
 	}

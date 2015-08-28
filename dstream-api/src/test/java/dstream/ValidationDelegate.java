@@ -36,7 +36,7 @@ import java.util.stream.Stream;
 public class ValidationDelegate implements DStreamExecutionDelegate {
 	
 	@Override
-	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, DStreamOperations... operationsGroups) {
+	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, DStreamExecutionGraph... operationsGroups) {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 		CountDownLatch latch = new CountDownLatch(1);
 		Future<Stream<Stream<?>>> result = executor.submit(new Callable<Stream<Stream<?>>>() {

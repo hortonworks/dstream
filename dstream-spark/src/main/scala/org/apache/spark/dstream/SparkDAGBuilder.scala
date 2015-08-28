@@ -16,21 +16,23 @@
  */
 package org.apache.spark.dstream
 
-import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
-import dstream.DStreamOperation
-import dstream.DStreamConstants
-import dstream.support.SourceSupplier
-import java.util.Properties
 import java.net.URI
 import java.util.Arrays
-import dstream.utils.Assert
-import dstream.DStreamOperations
-import scala.collection.JavaConversions._
-import org.apache.spark.Partitioner
-import org.apache.spark.HashPartitioner
-import dstream.SerializableStreamAssets.SerFunction
 import java.util.Map.Entry
+import java.util.Properties
+
+import scala.collection.JavaConversions._
+
+import org.apache.spark.HashPartitioner
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
+
+import dstream.DStreamConstants
+import dstream.DStreamExecutionGraph
+import dstream.DStreamOperation
+import dstream.SerializableStreamAssets.SerFunction
+import dstream.support.SourceSupplier
+import dstream.utils.Assert
 
 /**
  * @author ozhurakousky
@@ -41,7 +43,7 @@ class SparkDAGBuilder(ctx:SparkContext, executionName:String, executionConfig:Pr
   
   private val partitionCount = 2
    
-  def build(ops:DStreamOperations):RDD[_] = {
+  def build(ops:DStreamExecutionGraph):RDD[_] = {
     for (operation <- ops.getOperations) {
       if (rdd == null){
        val path = this.getPath(ops.getName, executionConfig, executionName)
@@ -52,8 +54,8 @@ class SparkDAGBuilder(ctx:SparkContext, executionName:String, executionConfig:Pr
        rdd = stage1RDD
       }
       else {
-        if (!operation.getCombinableStreamOperations.isEmpty()) {
-          val dependentExecutionGraphs = operation.getCombinableStreamOperations
+        if (!operation.getCombinableExecutionGraphs.isEmpty()) {
+          val dependentExecutionGraphs = operation.getCombinableExecutionGraphs
           val dependentRDDs = (for (dependentExecutionGraph <- dependentExecutionGraphs) 
             yield new SparkDAGBuilder(ctx, executionName, executionConfig).build(dependentExecutionGraph).asInstanceOf[RDD[Product2[_, _]]]).toList
           

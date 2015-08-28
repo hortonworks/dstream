@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import dstream.AbstractDStreamExecutionDelegate;
 import dstream.DStreamConstants;
-import dstream.DStreamOperations;
+import dstream.DStreamExecutionGraph;
 
 /**
  * Implementation of {@link StreamExecutionDelegate} for Apache Tez.
@@ -66,9 +66,9 @@ public class TezExecutionDelegate extends AbstractDStreamExecutionDelegate {
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	protected List<Stream<Stream<?>>>  doExecute(String executionName, Properties executionConfig, DStreamOperations... executionPipelines) {		
-		for (DStreamOperations executionPipeline : executionPipelines) {
-			TaskDescriptorChainBuilder builder = new TaskDescriptorChainBuilder(executionName, executionPipeline, executionConfig);
+	protected List<Stream<Stream<?>>>  doExecute(String executionName, Properties executionConfig, DStreamExecutionGraph... executionGraphs) {		
+		for (DStreamExecutionGraph executionGraph : executionGraphs) {
+			TaskDescriptorChainBuilder builder = new TaskDescriptorChainBuilder(executionName, executionGraph, executionConfig);
 			List<TaskDescriptor> taskDescriptors = builder.build();
 			this.taskChains.add(taskDescriptors);
 		}
