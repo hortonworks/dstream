@@ -154,8 +154,6 @@ final class DStreamInvocationChainAssembler<T,R> {
 					
 			DStreamOperationsBuilder builder = new DStreamOperationsBuilder(this.invocationPipeline, executionConfig);
 			
-			
-			
 			DStreamOperations operations = builder.build();
 			
 			DStreamExecutionDelegate executionDelegate = (DStreamExecutionDelegate) ReflectionUtils

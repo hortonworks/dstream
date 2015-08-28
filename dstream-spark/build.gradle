@@ -1,0 +1,38 @@
+description = 'Spark Reference Implementation of the Distributable Stream API'
+
+group = 'org.apache.spark.dstream'
+
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'java'
+apply plugin: 'maven-publish'
+
+sourceCompatibility=1.8
+targetCompatibility=1.8
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+	mavenLocal();
+}
+
+sourceSets.main.java.srcDir 'src/main/examples'
+
+dependencies {
+	compile "dstream:dstream-api:1.0.0.M1"
+	compile "org.scala-lang:scala-compiler:2.10.5"
+	compile "org.scala-lang:scala-library:2.10.5"
+	compile "org.apache.spark:spark-core_2.10:1.4.1"
+}
+
+task wrapper(type: Wrapper) {
+    description = 'Generates gradlew[.bat] scripts'
+}
+

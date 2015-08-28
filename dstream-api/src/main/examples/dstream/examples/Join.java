@@ -20,10 +20,13 @@ package dstream.examples;
 import static dstream.utils.Tuples.Tuple2.tuple2;
 import static dstream.utils.Tuples.Tuple4.tuple4;
 
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
 import dstream.DStream;
+import dstream.support.Aggregators;
 import dstream.utils.ExecutionResultUtils;
 import dstream.utils.Tuples.Tuple2;
 import dstream.utils.Tuples.Tuple4;
@@ -85,8 +88,8 @@ public class Join {
 			DStream<String> three = DStream.ofType(String.class, "three").classify(a -> a.split("\\s+")[0]);
 			DStream<String> four = DStream.ofType(String.class, "four").classify(a -> a.split("\\s+")[0]);
 			
-			Future<Stream<Stream<Tuple4<String, String, String, String>>>> resultFuture = one
-					.join(two).on(t2 -> t2._1().contains("Hortonworks"))
+			Future<Stream<Stream<Entry<String, List<Tuple4<String, String, String, String>>>>>> resultFuture = one
+					.join(two)//.on(t2 -> t2._1().contains("Hortonworks"))
 					.map(t2 -> tuple2(t2._1().toUpperCase(), t2._2().toUpperCase()))
 					.join(three)
 					.join(four).on(t3 -> {
@@ -97,9 +100,10 @@ public class Join {
 						return v1.equals(v2) && v1.equals(v3) && v1.equals(v4);
 					 })
 					 .map(t3 -> tuple4(t3._1()._1(), t3._1()._2(), t3._2(), t3._3()))
+					 .aggregateValues(t4 -> t4._1(), t4 -> t4)
 					.executeAs(EXECUTION_NAME);
 			
-			Stream<Stream<Tuple4<String, String, String, String>>> resultPartitionsStream = resultFuture.get();
+			Stream<Stream<Entry<String, List<Tuple4<String, String, String, String>>>>> resultPartitionsStream = resultFuture.get();
 			ExecutionResultUtils.printResults(resultPartitionsStream, true);
 		}
 	}

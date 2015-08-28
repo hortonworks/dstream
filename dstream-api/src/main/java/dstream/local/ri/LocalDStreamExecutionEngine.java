@@ -24,7 +24,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +46,7 @@ import dstream.support.SourceSupplier;
 import dstream.utils.Assert;
 import dstream.utils.KVUtils;
 import dstream.utils.ReflectionUtils;
+import dstream.utils.SingleValueIterator;
 
 /**
  * 
@@ -259,24 +259,5 @@ final class LocalDStreamExecutionEngine {
 		return partitionerProp != null 
 				? ReflectionUtils.newInstance(partitionerProp, new Class[]{int.class}, new Object[]{parallelism}) 
 						: new HashClassifier(parallelism);
-	}
-	
-	/**
-	 */
-	private static class SingleValueIterator<T> implements Iterator<T>{
-		T v;
-		boolean hasNext = true;
-		SingleValueIterator(T v) {
-			this.v = v;
-		}
-		@Override
-		public boolean hasNext() {
-			return hasNext;
-		}
-		@Override
-		public T next() {
-			hasNext = false;
-			return v;
-		}
 	}
 }
