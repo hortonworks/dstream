@@ -27,7 +27,7 @@ import java.util.List;
  * target system with minimal to no modifications. <br>
  *
  */
-public final class DStreamOperations {
+public final class DStreamExecutionGraph {
 
 	private final List<DStreamOperation> operations;
 
@@ -38,7 +38,7 @@ public final class DStreamOperations {
 	/**
 	 * 
 	 */
-	DStreamOperations(Class<?> sourceElementType, String executioniGraphName, List<DStreamOperation> operations){
+	DStreamExecutionGraph(Class<?> sourceElementType, String executioniGraphName, List<DStreamOperation> operations){
 		this.sourceElementType = sourceElementType;
 		this.executioniGraphName = executioniGraphName;
 		this.operations = operations;

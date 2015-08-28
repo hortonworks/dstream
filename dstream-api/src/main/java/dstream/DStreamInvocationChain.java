@@ -17,12 +17,14 @@
  */
 package dstream;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * A sequence of {@link DStreamInvocation}s produced by the {@link DStreamInvocationChainAssembler}.
+ * A sequence of {@link DStreamInvocation}s
  */
 final class DStreamInvocationChain {
 
@@ -110,5 +112,70 @@ final class DStreamInvocationChain {
 			return null;
 		}
 		return this.invocations.get(this.invocations.size()-1);
+	}
+	
+	/**
+	 * 
+	 */
+	static class DStreamInvocation {
+		
+		private final Method method;
+
+		private final Object[] arguments;
+		
+		private Object supplementaryOperation;
+
+		/**
+		 * Constructs this invocation.
+		 * 
+		 * @param method - {@link Method} invoked on {@link DStream} operation.
+		 * @param arguments - arguments of the {@link Method} invoked on {@link DStream} operation.
+		 */
+		DStreamInvocation(Method method, Object... arguments){
+			this.method = method;
+			this.arguments = arguments;
+		}
+		
+		/**
+		 * Returns {@link Method} invoked on {@link DStream} operation.
+		 * @return {@link Method} invoked on {@link DStream} operation.
+		 */
+		public Method getMethod() {
+			return method;
+		}
+
+		/**
+		 * Returns arguments of the {@link Method} invoked on {@link DStream} operation.
+		 * @return arguments of the {@link Method} invoked on {@link DStream} operation.
+		 */
+		public Object[] getArguments() {
+			return arguments;
+		}
+		
+		/**
+		 * 
+		 * @return
+		 */
+		@SuppressWarnings("unchecked")
+		public <T> T getSupplementaryOperation(){
+			return (T) this.supplementaryOperation;
+		}
+		
+		/**
+		 * 
+		 * @param operation
+		 */
+		protected void setSupplementaryOperation(Object supplementaryOperation) {
+			this.supplementaryOperation = supplementaryOperation;
+		}
+		
+		/**
+		 * 
+		 */
+		@Override
+		public String toString(){
+			return "{OP:" + this.method.getName() + ", ARG:" + 
+					Arrays.asList(this.arguments) + ", SUP:" + this.supplementaryOperation + "}";
+		}
 	}
 }

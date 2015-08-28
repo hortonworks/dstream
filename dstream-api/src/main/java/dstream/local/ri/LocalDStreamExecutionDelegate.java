@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 
 import dstream.AbstractDStreamExecutionDelegate;
 import dstream.DStreamExecutionDelegate;
-import dstream.DStreamOperations;
+import dstream.DStreamExecutionGraph;
 import dstream.utils.Assert;
 
 /**
@@ -46,7 +46,7 @@ class LocalDStreamExecutionDelegate extends AbstractDStreamExecutionDelegate {
 	 * 
 	 */
 	@Override
-	protected List<Stream<Stream<?>>> doExecute(String executionName, Properties executionConfig, DStreamOperations... executionPipelines) {
+	protected List<Stream<Stream<?>>> doExecute(String executionName, Properties executionConfig, DStreamExecutionGraph... executionPipelines) {
 		Assert.notEmpty(executionName, "'executionName' must not be null or empty");
 		Assert.notNull(executionConfig, "'executionConfig' must not be null");
 		Assert.notEmpty(executionPipelines, "'executionPipelines' must not be null or empty");
@@ -56,7 +56,7 @@ class LocalDStreamExecutionDelegate extends AbstractDStreamExecutionDelegate {
 		
 		List<Stream<Stream<?>>> results = new ArrayList<>();
 		
-		for (DStreamOperations executionPipeline : executionPipelines) {
+		for (DStreamExecutionGraph executionPipeline : executionPipelines) {
 			results.add(executionEngine.execute(executionPipeline));
 		}
 		

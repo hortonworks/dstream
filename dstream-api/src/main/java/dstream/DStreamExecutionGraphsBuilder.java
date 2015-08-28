@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import dstream.DStreamInvocationChain.DStreamInvocation;
 import dstream.utils.Assert;
 import dstream.utils.PropertiesHelper;
 import dstream.utils.ReflectionUtils;
@@ -37,7 +38,7 @@ import dstream.utils.ReflectionUtils;
  * @param <T>
  * @param <R>
  */
-final class DStreamInvocationChainAssembler<T,R> {
+final class DStreamExecutionGraphsBuilder<T,R> {
 	
 	private final Logger logger  = Logger.getLogger(this.getClass().getName());
 
@@ -60,7 +61,7 @@ final class DStreamInvocationChainAssembler<T,R> {
 	static <T,R> R as(Class<T> sourceElementType, String sourceIdentifier, Class<R> streamType) {
 		StreamNameMonitor.add(sourceIdentifier);
 		@SuppressWarnings("unchecked")
-		DStreamInvocationChainAssembler<T,R> builder = new DStreamInvocationChainAssembler<T,R>(sourceElementType, sourceIdentifier, streamType);
+		DStreamExecutionGraphsBuilder<T,R> builder = new DStreamExecutionGraphsBuilder<T,R>(sourceElementType, sourceIdentifier, streamType);
 		return builder.targetStream;
 	}
 	
@@ -68,7 +69,7 @@ final class DStreamInvocationChainAssembler<T,R> {
 	 * 
 	 */
 	@SuppressWarnings("unchecked")
-	private DStreamInvocationChainAssembler(Class<?> sourceElementType, String sourceIdentifier, Class<R>... streamType) {
+	private DStreamExecutionGraphsBuilder(Class<?> sourceElementType, String sourceIdentifier, Class<R>... streamType) {
 		
 		this.currentStreamType = streamType[0];
 		this.targetStream =  this.generateStreamProxy(streamType);
@@ -101,7 +102,7 @@ final class DStreamInvocationChainAssembler<T,R> {
 			arguments = new Object[]{s.get()};
 		}
 
-		DStreamInvocationChainAssembler clonedDistributable = new DStreamInvocationChainAssembler(this.invocationPipeline.getSourceElementType(), this.invocationPipeline.getSourceIdentifier(), 
+		DStreamExecutionGraphsBuilder clonedDistributable = new DStreamExecutionGraphsBuilder(this.invocationPipeline.getSourceElementType(), this.invocationPipeline.getSourceIdentifier(), 
 				method.getReturnType().isInterface() ? method.getReturnType() : this.currentStreamType);	
 		clonedDistributable.invocationPipeline.addAllInvocations(this.invocationPipeline.getInvocations());	
 		if (operation.equals(Ops.on)){
@@ -152,9 +153,9 @@ final class DStreamInvocationChainAssembler<T,R> {
 			
 			logger.info("Delegating execution to: " + executionDelegateClassName);
 					
-			DStreamOperationsBuilder builder = new DStreamOperationsBuilder(this.invocationPipeline, executionConfig);
+			DStreamExecutionGraphBuilder builder = new DStreamExecutionGraphBuilder(this.invocationPipeline, executionConfig);
 			
-			DStreamOperations operations = builder.build();
+			DStreamExecutionGraph operations = builder.build();
 			
 			DStreamExecutionDelegate executionDelegate = (DStreamExecutionDelegate) ReflectionUtils
 					.newDefaultInstance(Class.forName(executionDelegateClassName, true, Thread.currentThread().getContextClassLoader()));
@@ -182,7 +183,7 @@ final class DStreamInvocationChainAssembler<T,R> {
 		@Override
 		public Object invoke(Object proxy, Method method, Object[] args)
 				throws Throwable {
-			return DStreamInvocationChainAssembler.this.invoke(proxy, method, args);
+			return DStreamExecutionGraphsBuilder.this.invoke(proxy, method, args);
 		}
 	}
 	

@@ -29,6 +29,7 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import dstream.DStreamInvocationChain.DStreamInvocation;
 import dstream.SerializableStreamAssets.SerBinaryOperator;
 import dstream.SerializableStreamAssets.SerComparator;
 import dstream.SerializableStreamAssets.SerFunction;
@@ -43,7 +44,7 @@ import dstream.utils.Assert;
 /**
  * Builder of DStreamOperations
  */
-final class DStreamOperationsBuilder {
+final class DStreamExecutionGraphBuilder {
 	
 	private final DStreamInvocationChain invocationPipeline;
 	
@@ -62,7 +63,7 @@ final class DStreamOperationsBuilder {
 	/**
 	 */
 	@SuppressWarnings("unchecked")
-	DStreamOperationsBuilder(DStreamInvocationChain invocationPipeline, Properties executionConfig){
+	DStreamExecutionGraphBuilder(DStreamInvocationChain invocationPipeline, Properties executionConfig){
 		this.invocationPipeline = invocationPipeline;
 		this.executionConfig = executionConfig;
 		this.shuffleResultNormalizer = stream -> stream
@@ -73,7 +74,7 @@ final class DStreamOperationsBuilder {
 	/**
 	 * 
 	 */
-	protected DStreamOperations build(){	
+	protected DStreamExecutionGraph build(){	
 		return this.doBuild(false);
 	}
 	
@@ -85,7 +86,7 @@ final class DStreamOperationsBuilder {
 	 * implicit (the operation that does the join, union etc.).
 	 */
 	@SuppressWarnings("rawtypes")
-	private DStreamOperations doBuild(boolean isDependent){	
+	private DStreamExecutionGraph doBuild(boolean isDependent){	
 		this.invocationPipeline.getInvocations().forEach(this::addInvocation);
 		
 		if (this.requiresInitialSetOfOperations()){
@@ -106,7 +107,7 @@ final class DStreamOperationsBuilder {
 		Collections.reverse(operationList);
 		//	
 		
-		DStreamOperations operations = new DStreamOperations(
+		DStreamExecutionGraph operations = new DStreamExecutionGraph(
 				this.invocationPipeline.getSourceElementType(), 
 				this.invocationPipeline.getSourceIdentifier(), 
 				Collections.unmodifiableList(operationList));
@@ -205,11 +206,11 @@ final class DStreamOperationsBuilder {
 		}
 		
 		DStreamInvocationChain dependentPipeline = (DStreamInvocationChain) arguments[0];
-		DStreamOperationsBuilder dependentBuilder = new DStreamOperationsBuilder(dependentPipeline, this.executionConfig);
-		DStreamOperations dependentOperations = dependentBuilder.doBuild(true);
+		DStreamExecutionGraphBuilder dependentBuilder = new DStreamExecutionGraphBuilder(dependentPipeline, this.executionConfig);
+		DStreamExecutionGraph dependentOperations = dependentBuilder.doBuild(true);
 		int joiningStreamsSize = dependentPipeline.getStreamType().getTypeParameters().length;
 		
-		this.currentStreamOperation.addCombinableStreamOperations(dependentOperations); 
+		this.currentStreamOperation.addCombinableExecutionGraph(dependentOperations); 
 		streamsCombiner.addCheckPoint(joiningStreamsSize);
 		if (invocation.getSupplementaryOperation() != null){
 			streamsCombiner.addTransformationOrPredicate(Ops.filter.name(), invocation.getSupplementaryOperation());

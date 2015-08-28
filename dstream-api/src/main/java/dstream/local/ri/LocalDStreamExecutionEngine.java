@@ -35,7 +35,7 @@ import java.util.stream.Stream;
 
 import dstream.DStreamConstants;
 import dstream.DStreamOperation;
-import dstream.DStreamOperations;
+import dstream.DStreamExecutionGraph;
 import dstream.SerializableStreamAssets.SerFunction;
 import dstream.local.ri.ShuffleHelper.RefHolder;
 import dstream.support.Aggregators;
@@ -78,14 +78,14 @@ final class LocalDStreamExecutionEngine {
 		}
 	}
 	
-	public Stream<Stream<?>> execute(DStreamOperations pipeline) {
+	public Stream<Stream<?>> execute(DStreamExecutionGraph pipeline) {
 		return this.execute(pipeline, false);
 	}
 	
 	/**
 	 * 
 	 */
-	private Stream<Stream<?>> execute(DStreamOperations pipeline, boolean partition) {
+	private Stream<Stream<?>> execute(DStreamExecutionGraph pipeline, boolean partition) {
 		List<DStreamOperation> streamOperations = pipeline.getOperations();
 		
 		for (int i = 0; i < streamOperations.size(); i++) {
@@ -124,15 +124,15 @@ final class LocalDStreamExecutionEngine {
 			Stream<Entry<Integer, List<Object>>> partitionedStreamResult = this.partitionStream(mergedStream);
 			Stream<Stream<?>> partitionedStreamResultNoId = this.unmapPartitions(partitionedStreamResult);
 			
-			if (streamOperation.getCombinableStreamOperations().size() > 0){
+			if (streamOperation.getCombinableExecutionGraphs().size() > 0){
 				List<Stream<?>> currentPartitions = partitionedStreamResultNoId.collect(Collectors.toList());
 				Map<Integer, Object> matchedPartitions = new LinkedHashMap<>();
 				for (int i = 0; i < currentPartitions.size(); i++) {
 					matchedPartitions.merge(i, currentPartitions.get(i), Aggregators::aggregateToList);
 				}
 
-				List<DStreamOperations> dependentPipelines = streamOperation.getCombinableStreamOperations();
-				for (DStreamOperations dependentPipeline : dependentPipelines) {
+				List<DStreamExecutionGraph> dependentPipelines = streamOperation.getCombinableExecutionGraphs();
+				for (DStreamExecutionGraph dependentPipeline : dependentPipelines) {
 					LocalDStreamExecutionEngine e = new LocalDStreamExecutionEngine(this.executionName, this.executionConfig);
 					Stream<Stream<?>> dependentStream = e.execute(dependentPipeline, true);
 					List<Stream<?>> dependentPartitions = dependentStream.collect(Collectors.toList());

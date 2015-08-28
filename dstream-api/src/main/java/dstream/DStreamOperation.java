@@ -42,7 +42,7 @@ import dstream.function.KeyValueMappingFunction;
  *   during optimization phase.</i>
  *    </li>
  * <li>
- *   Dependent operations which is a {@link List} of individual {@link DStreamOperations} 
+ *   Dependent operations which is a {@link List} of individual {@link DStreamExecutionGraph} 
  *   that in essence represents another execution pipeline. Dependent operations 
  *   can only be present if this operation is performing some
  *   type of streams combine operation (e.g., join, union, unionAll)
@@ -60,7 +60,7 @@ public final class DStreamOperation {
 
 	private List<String> operationNames;
 	
-	private List<DStreamOperations> combinableStreamOperations;
+	private List<DStreamExecutionGraph> combinableExecutionGraphs;
 	
 	/**
 	 * Constructs this {@link DStreamOperation} with the given <i>id</i>.
@@ -102,14 +102,14 @@ public final class DStreamOperation {
 	}
 	
 	/**
-	 * Returns the {@link List} of combinable {@link DStreamOperations}
-	 * where each {@link DStreamOperations} implies some type of 
+	 * Returns the {@link List} of combinable {@link DStreamExecutionGraph}
+	 * where each {@link DStreamExecutionGraph} implies some type of 
 	 * combine functionality with current operation (i.e., join, union, unionAll etc.)
 	 */
-	public List<DStreamOperations> getCombinableStreamOperations(){
-		return combinableStreamOperations == null 
+	public List<DStreamExecutionGraph> getCombinableExecutionGraphs(){
+		return this.combinableExecutionGraphs == null 
 				? Collections.emptyList() 
-						: Collections.unmodifiableList(this.combinableStreamOperations);
+						: Collections.unmodifiableList(this.combinableExecutionGraphs);
 	}
 	
 	/**
@@ -209,14 +209,14 @@ public final class DStreamOperation {
 	}
 
 	/**
-	 * Ads the given {@link DStreamOperations} to the {@link List} of combinable {@link DStreamOperations}.
-	 * Each added {@link DStreamOperations} implies some type of 
+	 * Ads the given {@link DStreamExecutionGraph} to the {@link List} of combinable {@link DStreamExecutionGraph}.
+	 * Each added {@link DStreamExecutionGraph} implies some type of 
 	 * combine functionality with current operation (i.e., join, union, unionAll etc.)
 	 */
-	void addCombinableStreamOperations(DStreamOperations combinableStreamOperations){
-		if (this.combinableStreamOperations == null){
-			this.combinableStreamOperations = new ArrayList<>();
+	void addCombinableExecutionGraph(DStreamExecutionGraph combinableExecutionGraph){
+		if (this.combinableExecutionGraphs == null){
+			this.combinableExecutionGraphs = new ArrayList<>();
 		}
-		this.combinableStreamOperations.add(combinableStreamOperations);
+		this.combinableExecutionGraphs.add(combinableExecutionGraph);
 	}
 }
