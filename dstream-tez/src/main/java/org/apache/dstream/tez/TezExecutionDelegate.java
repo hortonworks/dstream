@@ -101,12 +101,6 @@ public class TezExecutionDelegate extends AbstractDStreamExecutionDelegate {
 				return Stream.of(ob.build());
 			}).collect(Collectors.toList()).toArray(new Stream[]{});
 			
-//			if (resultStreams.length == 1){
-//				return resultStreams[0];
-//			}
-//			else {
-//				return Stream.of(resultStreams);
-//			}
 			return Arrays.asList(resultStreams);
 		} 
 		catch (Exception e) {
