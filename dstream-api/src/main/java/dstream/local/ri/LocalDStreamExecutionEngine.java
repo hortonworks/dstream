@@ -214,8 +214,8 @@ final class LocalDStreamExecutionEngine {
 		 * 		The resulting partition entry will look like this: {0={key1=[v,v,v,v],key2=v}}
 		 * If an element is not a Key/Value Entry,then values will be grouped into a List - List[Values]
 		 * 		The resulting partition entry will look like this: {0=[v1,v2,v1,v3],v4}
-		 */
-		Stream<Map<Integer, Object>> groupedPartitionsStream = Stream.of(partitionedStream)
+		 */  
+		Stream<Map<Integer, ?>> groupedPartitionsStream = Stream.of(partitionedStream)
 				.map(stream -> stream.collect(Collectors.toMap((Entry<Integer, Object> s) -> s.getKey(), s -> new RefHolder(s.getValue()), ShuffleHelper::group)));
 
 		Stream<Entry<Integer, List<Object>>> normalizedPartitionStream = groupedPartitionsStream.flatMap(map -> map.entrySet().stream()).map(entry -> {
