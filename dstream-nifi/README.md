@@ -6,6 +6,8 @@
 
 This project provides integration of DStream applications with [Apache NiFi](https://github.com/apache/nifi).
 
+### Integration
+
 ======
 
 For features overview and Getting started with _**DStream**_ project please follow [**Core Features Overview**](https://github.com/hortonworks/dstream/wiki/Core-Features-Overview) and [**Getting Started**](https://github.com/hortonworks/dstream/wiki) respectively.

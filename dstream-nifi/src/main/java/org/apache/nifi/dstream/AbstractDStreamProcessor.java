@@ -57,33 +57,33 @@ import dstream.DStreamConstants;
 import dstream.utils.Assert;
 
 /**
- * Base implementation of the {@link AbstractProcessor} to support {@link DStream}
- * applications. Handles most common functionality required by the {@link DStream}.<br>
+ * Base implementation of the {@link Processor} to support {@link DStream}
+ * applications.
  *
- * The only required method that needs to be implemented by a sub-class is
- * {@link #getDStream(String)} which returns an instance of an executable {@link DStream}.<br>
- *
- * This is an <a href="http://www.enterpriseintegrationpatterns.com/patterns/messaging/EventDrivenConsumer.html">Event Driven Consumer</a>
- * and it is triggered by an arrival of the execution configuration file. Once configuration
- * file has arrived it is added to the current classpath and an attempt is made to get an
+ * It handles most common functionality required by the {@link DStream} and
+ * sub-classes are only required to implement {@link #getDStream(String)} method,
+ * which returns an instance of an executable {@link DStream}.<br>
+ * <p>
+ * This {@link Processor} is an <a href="http://www.enterpriseintegrationpatterns.com/patterns/messaging/EventDrivenConsumer.html">Event Driven Consumer</a>
+ * and it's triggered by an arrival of the execution configuration file (e.g., WordCount.cfg).
+ * Once configuration file is arrived it's added to the current class-path and an attempt is made to get an
  * instance of a {@link DStream} (see {@link #getDStream(String)}) for a specific execution
  * name - determined based on the name of the configuration file minus extension
  * (e.g., WordCount.cfg -> 'WordCount'). <br>
- *
- * The {@link #getDStream(String)} essentially allows you to host multiple {@link DStream}
- * implementations within a single NAR bundle essentially grouping them based on some criteria.
- * <br>
+ * <p>
+ * <i>Basically, the {@link #getDStream(String)} method allows you to host multiple {@link DStream}
+ * implementations within a single NAR bundle essentially grouping them based on some criteria.</i>
+ * <p>
  * Once the executable {@link DStream} is determined, it's executed and its output path
  * is written as an attribute to the downstream {@link FlowFile} to ensure downstream components
  * will have access to the results of the execution. For additional convenience there is also
  * a {@link #postProcessResults(Stream)} method that could be implemented by a sub-class
  * if there is a need to gain access to the results before they are sent downstream (e.g., testing)<br>
- *
+ * <p>
  * This {@link Processor} defines a single configuration property - \"Execution completion timeout (milliseconds)\"
- * with default value of 0. This property indicates how long to wait for completion of DStream execution.
- * While it has a default value, it is highly recommended to set it to a value which indicates how long
- * are you willing to wait for the result completion. With default value it will wait indefinitely.
- *
+ * with default value of 0. This property indicates how long to wait for completion of {@link DStream} execution.
+ * While it has a default value, it is <b>highly recommended</b> to set it to a more realistic value indicating
+ * how long are you willing to wait for the result completion. With default value it will wait indefinitely.
  */
 @EventDriven
 public abstract class AbstractDStreamProcessor extends AbstractProcessor {
