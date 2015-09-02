@@ -40,7 +40,7 @@ _**Apache NiFi**_
 _DStream_ applications that need to be deployed to [Apache NiFi](https://nifi.apache.org/) need two things:
 
 1. Since Apache NiFi integration is based on realizing DStream application as NiFi _Processor_, the application must implement a _Processor_ and define it in ```META-INF/services/org.apache.nifi.processor.Processor``` file (sample is provided with this project).
-2. Application must be first packaged into a NAR bundle.
+2. Application must be packaged into a NAR bundle.
 
 To create a NAR bundle you can simply execute the following build command:
 
