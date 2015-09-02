@@ -1,8 +1,8 @@
-### DStream-Spark - Apache Spark Reference Implementation of the DStream API.
+### Apache Spark Reference Implementation of the DStream API.
 
 =======
 
-This project provides Reference Implementation of this API which uses [Apache Spark](http://spark.apache.org/) as its target execution environment.
+This project provides Reference Implementation of DSatrem API which uses [Apache Spark](http://spark.apache.org/) as its target execution environment.
 
 ======
 
