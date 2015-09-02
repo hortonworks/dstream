@@ -5,8 +5,7 @@ The primary focus of this project is to allow developer to quickly setup a [_**D
 environment to work on both stand-alone and [Apache NiFi](https://nifi.apache.org/) integrated _DStream_ applications. So as a result, this project comes with both samples.
 
 After cloning, your project will have all the required dependencies and build plug-ins to get started. You may then rename the project. 
-> IMPORTANT: When renaming the project, ensure you rename the relevant properties in ```settings.gradle```, ```build.gradle```, ```gradle.properties```. Just look for ```#RENAME``` 
-tag above the relevant property in these 3 files.
+> IMPORTANT: When renaming the project, ensure you rename the relevant properties in ```settings.gradle```, ```build.gradle```, ```gradle.properties```. Just look for ```#RENAME``` or ```//RENAME``` tags above the relevant property in these 3 files.
 
 
 #### Build and Dependency Management
