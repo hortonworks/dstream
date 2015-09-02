@@ -6,7 +6,6 @@ apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'java'
 apply plugin: 'maven-publish'
-apply plugin: 'de.fanero.gradle.plugin.nar'
 
 sourceCompatibility=1.8
 targetCompatibility=1.8
@@ -18,19 +17,6 @@ publishing {
         }
     }
 }
-
-buildscript {
-    repositories {
-        mavenCentral()
-        maven {
-            url 'http://dl.bintray.com/sponiro/gradle-plugins'
-        }
-    }
-    dependencies {
-        classpath group: 'de.fanero.gradle.plugin.nar', name: 'gradle-nar-plugin', version: '0.1' // https://github.com/sponiro/gradle-nar-plugin
-    }
-}
-
 
 repositories {
     mavenCentral()
@@ -46,12 +32,6 @@ dependencies {
 	compile "dstream:dstream-api:1.0.0.M1"
 	compile "commons-io:commons-io:2.4"
 	
-}
-
-task deploy(dependsOn: 'nar', type: Copy) {
-    from 'build/libs/'
-    into '/Users/ozhurakousky/Downloads/nifi-0.2.1/lib'
-    include ('*.nar')
 }
 
 task wrapper(type: Wrapper) {
