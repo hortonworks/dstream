@@ -56,6 +56,9 @@ to Apache NiFi:
 ```
 In the above you can see that we are supplying the NiFi home directory to the task.
 
+Once NiFi started you can now incorporate your processor as part of the NiFi flow. Below example illustrates how such flow may look like:
+![](https://github.com/olegz/general-resources/blob/master/DStream-sample-nifi-flow.png)
+
 For more details on NiFi integration, please follow documentation in [DStream-NiFi](https://github.com/hortonworks/dstream/tree/master/dstream-nifi) project.
 
 ======
