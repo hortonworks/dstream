@@ -1,12 +1,25 @@
-### DStream-NiFi - Integration point with Apache NiFi.
+### DStream Integration with Apache NiFi.
 ==========
 > IMPORTANT: At the moment this is a research project with the primary goal of investigating the feasibility of the approach.
 
 =======
 
-This project provides integration of DStream applications with [Apache NiFi](https://github.com/apache/nifi).
+This project provides all necessary components to realize DStream applications within the [Apache NiFi](https://github.com/apache/nifi). 
+![](https://github.com/olegz/general-resources/blob/master/DStream-sample-nifi-flow.png)
 
 ### Integration
+
+At the moment the integration model of DStream and Apache NiFi is based on implementing a custom NiFi _Processors_. However, as project evolves new integration points will be added as required.
+
+While implementing NiFi Processor from scrtatch is failrly simple, this project provides an abstract implementation of the NiFi Processor specific to DStream - [AbstractDStreamProcessor](https://github.com/hortonworks/dstream/blob/master/dstream-nifi/src/main/java/org/apache/nifi/dstream/AbstractDStreamProcessor.java). It handles all common functionality leaving user with a simple task of implementing a single operation ```getDStream(executionName)```. 
+```java
+private <T> DStream<T> getDStream() {
+		return (DStream<T>) DStream.ofType(String.class, "wc")
+				.flatMap(record -> Stream.of(record.split("\\s+")))
+				.reduceValues(word -> word, word -> 1, Integer::sum);
+}
+```
+For more details and examples please refer to a [Sample Template Project](https://github.com/hortonworks/dstream/tree/master/dstream-dev-template)
 
 ======
 
