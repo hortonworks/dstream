@@ -10,15 +10,19 @@ After cloning, your project will have all the required dependencies and build pl
 This project uses [Gradle](http://gradle.org/) for build and dependency management. To get the list of available build tasks simply execute ```./gradlew clean tasks```.
 
 **Stand-alone mode**
+
 Stand-alone applications could be executed right from IDE. If you want to package the application into a JAR 
-and execute it outside of IDE simply build it with 
+and execute it outside of IDE simply build it with:
+
 ```
 ./gradlew clean installApp
 ``` 
+
 or 
+
 ```
 ./gradlew clean distZip
-```. 
+```
 
 For more information on this feature please follow [Application Plug-in](https://docs.gradle.org/current/userguide/application_plugin.html) 
 
