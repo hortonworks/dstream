@@ -2,7 +2,7 @@
 
 =======
 
-This project provides Reference Implementation of DStream API which uses [Apache Tez](https://tez.apache.org/) as its target execution system.
+This module provides Reference Implementation of the DStream API which uses [Apache Tez](https://tez.apache.org/) as its target execution system.
 
 ======
 
