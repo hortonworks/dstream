@@ -1,10 +1,10 @@
-### DStream-Template - Template project for developing DStream Applications
+### Template project for developing DStream Applications
 ==========
 
 The primary focus of this project is to allow developer to quickly setup a [_**DStream**_](https://github.com/hortonworks/dstream) development 
 environment to work on both stand-alone and Apache NiFi integrated _DStream_ applications. 
 
-After cloning, your project will have all the required dependencies and build plug-ins to get started. 
+After cloning, your project will have all the required dependencies and build plug-ins to get started. You may then rename the project. 
 
 #### Build
 This project uses [Gradle](http://gradle.org/) for build and dependency management. To get the list of available build tasks simply execute ```./gradlew clean tasks```.
