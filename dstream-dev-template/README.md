@@ -9,7 +9,7 @@ After cloning, your project will have all the required dependencies and build pl
 #### Build
 This project uses [Gradle](http://gradle.org/) for build and dependency management. To get the list of available build tasks simply execute ```./gradlew clean tasks```.
 
-**Stand-alone mode**
+_**Stand-alone mode**_
 
 Stand-alone applications could be executed right from IDE. If you want to package the application into a JAR 
 and execute it outside of IDE simply build it with:
@@ -26,7 +26,8 @@ or
 
 For more information on this feature please follow [Application Plug-in](https://docs.gradle.org/current/userguide/application_plugin.html) 
 
-**Apache NiFi**
+_**Apache NiFi**_
+
 _DStream_ applications that need to be deployed to [Apache NiFi](https://nifi.apache.org/) needs to be first packaged into a NAR bundles.
 To create a NAR bundle you can simply execute the following build command:
 ```
