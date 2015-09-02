@@ -1,5 +1,7 @@
+#RENAME
 description = 'Template project for DStream Applications'
 
+#RENAME
 group = 'dstream' 
 
 apply plugin: 'eclipse'
@@ -12,6 +14,7 @@ apply plugin: 'de.fanero.gradle.plugin.nar'
 sourceCompatibility=1.8
 targetCompatibility=1.8
 
+#RENAME
 mainClassName = "sample.standalone.WordCount"
 
 publishing {
