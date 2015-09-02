@@ -1,0 +1,64 @@
+description = 'Template project for DStream Applications'
+
+group = 'dstream' 
+
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'java'
+apply plugin: 'maven-publish'
+apply plugin: 'de.fanero.gradle.plugin.nar'
+
+sourceCompatibility=1.8
+targetCompatibility=1.8
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            url 'http://dl.bintray.com/sponiro/gradle-plugins'
+        }
+    }
+    dependencies {
+        classpath group: 'de.fanero.gradle.plugin.nar', name: 'gradle-nar-plugin', version: '0.1' // https://github.com/sponiro/gradle-nar-plugin
+    }
+}
+
+repositories {
+    mavenCentral()
+	mavenLocal();
+}
+
+sourceSets.main.java.srcDir 'src/main/examples'
+
+dependencies {
+    //compile "dstream:dstream-api:1.0.0.M1" // required for stand alone projects
+	compile "dstream:dstream-nifi:1.0.0.M1"  // required for NiFi-based projects. 
+}
+
+task deploy(dependsOn: 'nar', type: Copy) {
+  description 'Deploys assembled "nar" archive to Apache NiFi installation. Will call "nar" task to assemble nar archive.'
+  if (project.hasProperty('nifi_home')) {
+     from 'build/libs/'
+     into nifi_home + '/lib'
+     include ('*.nar')
+     println("Deploying '" + project.name + "' to " + (nifi_home + '/lib'))
+  } 
+  else {
+     if (gradle.startParameter.taskNames.toString().contains('deploy')){
+        throw new java.lang.IllegalArgumentException("Failed to determine the value of 'nifi_home' property. Possible reasons: " +
+       "Property is not defined. You can define it in either 'gradle.properties' file or via command line argument 'gradlew deploy -Pnifi_home=/foo/bar/nifi'.")
+     }
+  }
+}
+
+task wrapper(type: Wrapper) {
+    description = 'Generates gradlew[.bat] scripts'
+}

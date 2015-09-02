@@ -1,6 +1,6 @@
 ### DStream-NiFi - Integration point with Apache NiFi.
 ==========
-> IMPORTANT: At the moment this is a research project with the primary goal of investigating the feasability of the approach.
+> IMPORTANT: At the moment this is a research project with the primary goal of investigating the feasibility of the approach.
 
 =======
 

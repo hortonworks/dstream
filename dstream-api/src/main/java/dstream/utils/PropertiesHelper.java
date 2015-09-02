@@ -30,7 +30,7 @@ public class PropertiesHelper {
 	
 	/**
 	 * Will create an instance of {@link Properties} object loaded from the properties file
-	 * identified by the given <i>propertyFilePath</i>
+	 * identified by the given <i>propertyFilePath</i> relative to the root of the classpath
 	 * 
 	 * @param propertyFilePath path to the property file.
 	 * @return
