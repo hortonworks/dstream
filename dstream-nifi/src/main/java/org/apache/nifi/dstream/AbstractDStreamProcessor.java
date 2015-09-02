@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -36,7 +35,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.nifi.annotation.behavior.EventDriven;
@@ -61,52 +59,52 @@ import dstream.utils.Assert;
 /**
  * Base implementation of the {@link AbstractProcessor} to support {@link DStream}
  * applications. Handles most common functionality required by the {@link DStream}.<br>
- * 
- * The only required method that needs to be implemented by a sub-class is 
+ *
+ * The only required method that needs to be implemented by a sub-class is
  * {@link #getDStream(String)} which returns an instance of an executable {@link DStream}.<br>
- * 
+ *
  * This is an <a href="http://www.enterpriseintegrationpatterns.com/patterns/messaging/EventDrivenConsumer.html">Event Driven Consumer</a>
- * and it is triggered by an arrival of the execution configuration file. Once configuration 
- * file has arrived it is added to the current classpath and an attempt is made to get an 
- * instance of a {@link DStream} (see {@link #getDStream(String)}) for a specific execution 
- * name - determined based on the name of the configuration file minus extension 
+ * and it is triggered by an arrival of the execution configuration file. Once configuration
+ * file has arrived it is added to the current classpath and an attempt is made to get an
+ * instance of a {@link DStream} (see {@link #getDStream(String)}) for a specific execution
+ * name - determined based on the name of the configuration file minus extension
  * (e.g., WordCount.cfg -> 'WordCount'). <br>
- * 
- * The {@link #getDStream(String)} essentially allows you to host multiple {@link DStream} 
- * implementations within a single NAR bundle essentially grouping them based on some criteria. 
+ *
+ * The {@link #getDStream(String)} essentially allows you to host multiple {@link DStream}
+ * implementations within a single NAR bundle essentially grouping them based on some criteria.
  * <br>
  * Once the executable {@link DStream} is determined, it's executed and its output path
- * is written as an attribute to the downstream {@link FlowFile} to ensure downstream components 
- * will have access to the results of the execution. For additional convenience there is also 
+ * is written as an attribute to the downstream {@link FlowFile} to ensure downstream components
+ * will have access to the results of the execution. For additional convenience there is also
  * a {@link #postProcessResults(Stream)} method that could be implemented by a sub-class
  * if there is a need to gain access to the results before they are sent downstream (e.g., testing)<br>
- *  
+ *
  * This {@link Processor} defines a single configuration property - \"Execution completion timeout (milliseconds)\"
  * with default value of 0. This property indicates how long to wait for completion of DStream execution.
- * While it has a default value, it is highly recommended to set it to a value which indicates how long 
- * are you willing to wait for the result completion. With default value it will wait indefinitely. 
- * 
+ * While it has a default value, it is highly recommended to set it to a value which indicates how long
+ * are you willing to wait for the result completion. With default value it will wait indefinitely.
+ *
  */
 @EventDriven
 public abstract class AbstractDStreamProcessor extends AbstractProcessor {
 
 	public static final Relationship OUTPUT = new Relationship.Builder().name("success")
 			.description("Upon successfull completion of DStream execution, its output path is forwarded to success").build();
-	
+
 	public static final PropertyDescriptor EXECUTION_COMPLETION_TIMEOUT = new PropertyDescriptor.Builder()
-            .name("Execution completion timeout (milliseconds)")
-            .description("Indicates how long to wait for completion of DStream execution. Defaults to 0 (wait indefinitely).")
-            .addValidator(StandardValidators.NON_NEGATIVE_INTEGER_VALIDATOR)
-            .defaultValue("0")
-            .required(true)
-            .build();
+			.name("Execution completion timeout (milliseconds)")
+			.description("Indicates how long to wait for completion of DStream execution. Defaults to 0 (wait indefinitely).")
+			.addValidator(StandardValidators.NON_NEGATIVE_INTEGER_VALIDATOR)
+			.defaultValue("0")
+			.required(true)
+			.build();
 
 	private volatile Set<Relationship> relationships;
-	
+
 	private volatile List<PropertyDescriptor> properties;
 
 	/**
-	 * 
+	 *
 	 */
 	@Override
 	public void onTrigger(ProcessContext context, ProcessSession session) throws ProcessException {
@@ -117,19 +115,19 @@ public abstract class AbstractDStreamProcessor extends AbstractProcessor {
 		if (flowFile != null){
 			try {
 				String configurationName = flowFile.getAttribute("filename");
-				Assert.isTrue(configurationName.endsWith(".cfg"), "Received invalid configuration file '" + 
+				Assert.isTrue(configurationName.endsWith(".cfg"), "Received invalid configuration file '" +
 						configurationName + "'. DStream configuration file must end with '.cfg'.");
-				
+
 				log.info("Recieved configuration '" + configurationName + "'");
 				AtomicReference<String> outputPathRef = new AtomicReference<String>();
 				session.read(flowFile, new InputStreamCallback() {
-			        @Override
-			        public void process(InputStream confFileInputStream) throws IOException {   	
-			        	outputPathRef.set(installConfiguration(configurationName, confFileInputStream));
-			        }
-			    });
+					@Override
+					public void process(InputStream confFileInputStream) throws IOException {
+						outputPathRef.set(installConfiguration(configurationName, confFileInputStream));
+					}
+				});
 				String executionName = configurationName.split("\\.")[0];
-				
+
 				DStream<?> dstream = this.getDStream(executionName);
 				if (dstream != null){
 					log.info("Executing DStream for '" + executionName + "'");
@@ -137,88 +135,89 @@ public abstract class AbstractDStreamProcessor extends AbstractProcessor {
 					FlowFile resultFlowFile = session.create();
 					resultFlowFile = session.putAttribute(resultFlowFile, CoreAttributes.FILENAME.key(), outputPathRef.get());
 					session.getProvenanceReporter().receive(resultFlowFile, outputPathRef.get());
-			        session.transfer(resultFlowFile, OUTPUT);
-				} else {  
+					session.transfer(resultFlowFile, OUTPUT);
+				} else {
 					log.warn("Failed to locate DStream for execution '" + executionName + "'"
-							+ ". Nothing was executed. Possible reasons: " + this.getClass().getSimpleName() 
+							+ ". Nothing was executed. Possible reasons: " + this.getClass().getSimpleName()
 							+ " may not have provided a DStream for '" + executionName + "'");
 				}
-			} 
+			}
 			catch (Exception e) {
 				throw new IllegalStateException("Failed DStream execution with unexpected exception ", e);
-			} 
+			}
 			finally {
 				session.remove(flowFile);
 				session.commit();
 			}
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	@Override
 	public Set<Relationship> getRelationships() {
 		return relationships;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	@Override
 	protected void init(final ProcessorInitializationContext context) {
 		Set<Relationship> relationships = new HashSet<>();
 		relationships.add(OUTPUT);
 		this.relationships = Collections.unmodifiableSet(relationships);
-		
+
 		final List<PropertyDescriptor> properties = new ArrayList<>();
-        properties.add(EXECUTION_COMPLETION_TIMEOUT);
-        this.properties = Collections.unmodifiableList(properties);
+		properties.add(EXECUTION_COMPLETION_TIMEOUT);
+		this.properties = Collections.unmodifiableList(properties);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	@Override
-    protected List<PropertyDescriptor> getSupportedPropertyDescriptors() {
-        return properties;
-    }
-	
+	protected List<PropertyDescriptor> getSupportedPropertyDescriptors() {
+		return properties;
+	}
+
 	/**
 	 * Returns an instance of the {@link DStream} for a given execution name.
 	 * May return 'null'.
-	 * @param executionName the execution name used when invoking {@link DStream#executeAs(String)} 
+	 * @param executionName the execution name used when invoking {@link DStream#executeAs(String)}
 	 *                      operation.
 	 */
 	protected abstract <T> DStream<T> getDStream(String executionName);
-	
+
 	/**
 	 * Gives you a handle to execution result partitions (see {@link DStream#executeAs(String)} )<br>
 	 * Typically used for testing/debugging
 	 * @param resultPartitions {@link Stream} of {@link Stream}s where each represents an individual partition.
 	 */
 	protected <T> void postProcessResults(Stream<Stream<T>> resultPartitions) {
-		
+		// default NOOP
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param dstream
 	 */
 	@SuppressWarnings("unchecked")
 	private <T> Stream<Stream<T>> executeDStream(DStream<?> dstream, String executionName, long executionCompletionTimeout) {
 		ProcessorLog log = this.getLogger();
-		Future<?> resultFuture = dstream.executeAs(executionName); 
+		Future<?> resultFuture = dstream.executeAs(executionName);
 		try {
 			if (executionCompletionTimeout > 0){
 				return (Stream<Stream<T>>) resultFuture.get(executionCompletionTimeout, TimeUnit.MILLISECONDS);
 			}
 			else {
 				log.warn("Waiting for completion of '" + executionName + "' indefinitely. "
-						+ "Consider setting 'Execution completion timeout' property of your processor." );
+						+ "Consider setting 'Execution completion timeout' property of your processor"
+						+ "when configured via UI." );
 				return (Stream<Stream<T>>) resultFuture.get();
 			}
-		} 
+		}
 		catch (InterruptedException | ExecutionException | TimeoutException e) {
 			if (e instanceof InterruptedException){
 				Thread.currentThread().interrupt();
@@ -226,7 +225,7 @@ public abstract class AbstractDStreamProcessor extends AbstractProcessor {
 			throw new IllegalStateException("Failed while waiting for execution to complete", e);
 		}
 	}
-	
+
 	/**
 	 * Will generate execution configuration and add it to the classpath
 	 * @param context
@@ -239,42 +238,34 @@ public abstract class AbstractDStreamProcessor extends AbstractProcessor {
 			File executionConfig = new File(confDir, configurationName);
 			executionConfig.deleteOnExit();
 			FileOutputStream confFileOs = new FileOutputStream(executionConfig);
-			
+
 			Properties configurationProperties = new Properties();
 			configurationProperties.load(confFileInputStream);
 			configurationProperties.store(confFileOs, configurationName + " configuration");
 
-			this.updateClassPath(confDir);
+			this.addToClassPath(confDir);
 
-			outputPath = configurationProperties.containsKey(DStreamConstants.OUTPUT) 
+			outputPath = configurationProperties.containsKey(DStreamConstants.OUTPUT)
 					? configurationProperties.getProperty(DStreamConstants.OUTPUT)
 							: configurationName.split("\\.")[0] + "/out";
-		} 
+		}
 		catch (Exception e) {
 			throw new IllegalStateException("Failed to generate execution config", e);
 		}
 		return outputPath;
 	}
-	
+
 	/**
-	 * 
-	 * @param files
+	 *
 	 */
-	private void updateClassPath(File... files){
+	private void addToClassPath(File configurationDir){
 		try {
-			URL[] urls = Stream.of(files).map(file -> {
-				try {
-					return file.toURI().toURL();
-				} 
-				catch (Exception e) {
-					throw new IllegalStateException(e);
-				}
-			}).collect(Collectors.toList()).toArray(new URL[]{});
-			URLClassLoader dstreamCl = URLClassLoader.newInstance(urls, Thread.currentThread().getContextClassLoader());
+			URLClassLoader dstreamCl = URLClassLoader
+					.newInstance(new URL[]{configurationDir.toURI().toURL()}, Thread.currentThread().getContextClassLoader());
 			Thread.currentThread().setContextClassLoader(dstreamCl);
-		} 
+		}
 		catch (Exception e) {
-			throw new IllegalStateException("Failed to update classpath with configuration " + Arrays.asList(files), e);
+			throw new IllegalStateException("Failed to update classpath with path '" + configurationDir + "'.", e);
 		}
 	}
 }
