@@ -6,10 +6,13 @@ apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'java'
 apply plugin: 'maven-publish'
+apply plugin: 'application'
 apply plugin: 'de.fanero.gradle.plugin.nar'
 
 sourceCompatibility=1.8
 targetCompatibility=1.8
+
+mainClassName = "sample.standalone.WordCount"
 
 publishing {
     publications {
