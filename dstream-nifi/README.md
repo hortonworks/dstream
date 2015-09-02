@@ -1,7 +1,7 @@
 ### DStream Integration with Apache NiFi.
 ==========
 
-This project provides all necessary components to realize DStream applications within the [Apache NiFi](https://github.com/apache/nifi). 
+This module provides all necessary components to support integration of DStream applications within the [Apache NiFi](https://github.com/apache/nifi). 
 ![](https://github.com/olegz/general-resources/blob/master/DStream-sample-nifi-flow.png)
 
 ### Integration
