@@ -1,7 +1,7 @@
-#RENAME
+//RENAME
 description = 'Template project for DStream Applications'
 
-#RENAME
+//RENAME
 group = 'dstream' 
 
 apply plugin: 'eclipse'
@@ -14,7 +14,7 @@ apply plugin: 'de.fanero.gradle.plugin.nar'
 sourceCompatibility=1.8
 targetCompatibility=1.8
 
-#RENAME
+//RENAME
 mainClassName = "sample.standalone.WordCount"
 
 publishing {
@@ -46,7 +46,7 @@ sourceSets.main.java.srcDir 'src/main/examples'
 
 dependencies {
     //compile "dstream:dstream-api:1.0.0.M1" // required for stand alone projects
-	compile "dstream:dstream-nifi:1.0.0.M1"  // required for NiFi-based projects. 
+    compile "dstream:dstream-nifi:1.0.0.M1"  // required for NiFi-based projects. 
 }
 
 task deploy(dependsOn: 'nar', type: Copy) {
