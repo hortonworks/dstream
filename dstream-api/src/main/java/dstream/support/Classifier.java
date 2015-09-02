@@ -24,17 +24,17 @@ import dstream.utils.Assert;
 
 /**
  * Base implementation of the classification functionality.<br>
- * Classification could be looked at as the process of distributed grouping and 
- * in the "distributable" reality, often coincides with data <i>partitioning</i>. 
+ * Classification could be looked at as the process of distributed grouping and
+ * in the "distributable" reality, often coincides with data <i>partitioning</i>.
  * Since {@link Classifier} is compliant with the general semantics of partitioners
- * by returning an {@link Integer} from {@link #getClassificationId(Object)} method, 
- * this id could be treated by a target partitioner as partition id.<br>. 
+ * by returning an {@link Integer} from {@link #getClassificationId(Object)} method,
+ * this id could be treated by a target partitioner as partition id.<br>.
  */
 public abstract class Classifier implements Serializable {
 	private static final long serialVersionUID = -250807397502312547L;
-	
+
 	private final int classificationSize;
-	
+
 	private SerFunction<Object, ?> classificationValueMapper;
 
 	/**
@@ -44,7 +44,7 @@ public abstract class Classifier implements Serializable {
 		Assert.isTrue(classificationSize > 0, "'classificationSize' must be > 0");
 		this.classificationSize = classificationSize;
 	}
-	
+
 	/**
 	 * Returns classification if computed on the instance of <i>input</i>.
 	 */
@@ -59,37 +59,37 @@ public abstract class Classifier implements Serializable {
 	public int getSize(){
 		return this.classificationSize;
 	}
-	
+
 	/**
-	 * Allows to set/reset an instance of the {@link SerFunction} which maps the value to be 
+	 * Allows to set/reset an instance of the {@link SerFunction} which maps the value to be
 	 * used to compute classification.
 	 * <pre>
-	 * dstream.classify(str -> str.substring(0, 5))
+	 * dstream.classify(str -&gt; str.substring(0, 5))
 	 * </pre>
-	 * Assuming that the value passed to the classify operation is "Hello Washington", the 
-	 * classification will be performed using only "Hello" string based on the 
-	 * given function (str -> str.substring(0, 5)).
+	 * Assuming that the value passed to the classify operation is "Hello Washington", the
+	 * classification will be performed using only "Hello" string based on the
+	 * given function (str -&gt; str.substring(0, 5)).
 	 */
 	public void setClassificationValueMapper(SerFunction<Object, ?> classificationValueMapper) {
 		this.classificationValueMapper = classificationValueMapper;
 	}
-	
+
 	/**
-	 * Returns and instance of the {@link SerFunction} which maps the value to be 
+	 * Returns and instance of the {@link SerFunction} which maps the value to be
 	 * used to compute classification.
 	 */
 	public SerFunction<Object, ?> getClassificationValueMapper() {
 		return this.classificationValueMapper;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	@Override
 	public String toString(){
 		return this.getClass().getSimpleName() + ":" + this.classificationSize;
 	}
-	
+
 	/**
 	 * An abstract delegate method to be implemented by sub-classes
 	 * which implements the actual classification logic.

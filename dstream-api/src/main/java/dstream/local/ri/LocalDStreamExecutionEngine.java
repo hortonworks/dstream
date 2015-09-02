@@ -34,8 +34,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import dstream.DStreamConstants;
-import dstream.DStreamOperation;
 import dstream.DStreamExecutionGraph;
+import dstream.DStreamOperation;
 import dstream.SerializableStreamAssets.SerFunction;
 import dstream.local.ri.ShuffleHelper.RefHolder;
 import dstream.support.Aggregators;
@@ -49,21 +49,21 @@ import dstream.utils.ReflectionUtils;
 import dstream.utils.SingleValueIterator;
 
 /**
- * 
+ *
  *
  */
 final class LocalDStreamExecutionEngine {
-	
+
 	private final Properties executionConfig;
-	
+
 	private final String executionName;
-	
+
 	private final Classifier classifier;
-	
+
 	private List<List<?>> realizedStageResults;
-	
+
 	private final ThreadLocal<Integer> partitionIdHolder;
-	
+
 	@SuppressWarnings("unchecked")
 	public LocalDStreamExecutionEngine(String executionName, Properties executionConfig){
 		this.executionName = executionName;
@@ -77,33 +77,33 @@ final class LocalDStreamExecutionEngine {
 			throw new IllegalStateException(e);
 		}
 	}
-	
+
 	public Stream<Stream<?>> execute(DStreamExecutionGraph pipeline) {
 		return this.execute(pipeline, false);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	private Stream<Stream<?>> execute(DStreamExecutionGraph pipeline, boolean partition) {
 		List<DStreamOperation> streamOperations = pipeline.getOperations();
-		
+
 		for (int i = 0; i < streamOperations.size(); i++) {
 			this.doExecuteStage(streamOperations.get(i), partition, pipeline.getName());
 		}
-		
+
 		return this.realizedStageResults.stream().map(list -> list.stream());
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param streamOperation
 	 * @param mapPartitions
 	 */
 	@SuppressWarnings("unchecked")
 	private void doExecuteStage(DStreamOperation streamOperation, boolean partition, String pipelineName){
 		SerFunction<Stream<?>, Stream<?>> streamFunction = streamOperation.getStreamOperationFunction();
-		
+
 		if (this.realizedStageResults == null){
 			List<List<?>> realizedIntermediateResult = Stream.of(streamFunction.apply(this.createInitialStream(pipelineName)))
 					.map(stream -> stream.collect(Collectors.toList()))
@@ -115,15 +115,15 @@ final class LocalDStreamExecutionEngine {
 				Stream<Stream<?>> partitionedStreamResultNoId = this.unmapPartitions(partitionedStreamResult);
 				realizedIntermediateResult = partitionedStreamResultNoId.map(stream -> stream.collect(Collectors.toList())).collect(Collectors.toList());
 			}
-			
+
 			this.realizedStageResults = realizedIntermediateResult;
 		}
 		else {
 			Stream<?> mergedStream = this.realizedStageResults.stream().map(list -> ((Stream<Object>)list.stream())).reduce((a,b) -> Stream.concat(a, b)).get();
-			
+
 			Stream<Entry<Integer, List<Object>>> partitionedStreamResult = this.partitionStream(mergedStream);
 			Stream<Stream<?>> partitionedStreamResultNoId = this.unmapPartitions(partitionedStreamResult);
-			
+
 			if (streamOperation.getCombinableExecutionGraphs().size() > 0){
 				List<Stream<?>> currentPartitions = partitionedStreamResultNoId.collect(Collectors.toList());
 				Map<Integer, Object> matchedPartitions = new LinkedHashMap<>();
@@ -142,36 +142,36 @@ final class LocalDStreamExecutionEngine {
 				}
 				partitionedStreamResultNoId = matchedPartitions.values().stream().map(list -> ((List<?>)list).stream());
 			}
-			
+
 			Stream<Stream<?>> transformedStreams = partitionedStreamResultNoId.map(stream -> streamFunction.apply(stream));
 			List<List<?>> realizedIntermediateResult = transformedStreams.map(stream -> stream.collect(Collectors.toList())).collect(Collectors.toList());
 			this.realizedStageResults = realizedIntermediateResult;
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param shuffledPartitionStream
 	 * @return
 	 */
 	private Stream<Stream<?>> unmapPartitions(Stream<Entry<Integer, List<Object>>> shuffledPartitionStream) {
 		return shuffledPartitionStream.map(entry -> entry.getValue().stream().map(val -> { this.partitionIdHolder.set(entry.getKey());  return val;}));
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param pipelineName
 	 * @return
 	 */
 	private Stream<?> createInitialStream(String pipelineName){
 		String sourceProperty = executionConfig.getProperty(DStreamConstants.SOURCE + pipelineName);
-		Assert.notEmpty(sourceProperty, DStreamConstants.SOURCE + pipelineName +  "' property can not be found in " + 
+		Assert.notEmpty(sourceProperty, DStreamConstants.SOURCE + pipelineName +  "' property can not be found in " +
 				executionName + ".cfg configuration file.");
-		
+
 		SourceSupplier<?> sourceSupplier = SourceSupplier.create(sourceProperty, null);
 		Object[] sources = sourceSupplier.get();
 		Assert.notEmpty(sources, "sources must not be null or empty");
-		
+
 		if (sources[0] instanceof URI){
 			URI[] uriSources = Arrays.copyOf(sources, sources.length, URI[].class);
 			return Stream.of(uriSources).map(this::buildStreamFromURI).reduce(Stream::concat).get();
@@ -180,48 +180,49 @@ final class LocalDStreamExecutionEngine {
 			throw new IllegalStateException("SourceSuppliers other then URISourceSupplier are not supported at the moment");
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	private Stream<?> buildStreamFromURI(URI uri) {
 		try {
 			return Files.lines(Paths.get(uri));
-		} 
+		}
 		catch (Exception e) {
 			throw new IllegalStateException("Failed to create Stream from URI: " + uri, e);
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param streamToShuffle
 	 * @return
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private Stream<Entry<Integer, List<Object>>> partitionStream(Stream<?> streamToShuffle){
-//		Map collectedPartitions = streamToShuffle.collect(Collectors.groupingBy(element -> this.classifier.getClassificationId(element), Collectors.toList()));
-//		Stream<Entry<Integer, List<Object>>> groupedPartitionsStream = collectedPartitions.entrySet().stream();
-//		return groupedPartitionsStream;
-		
+		//		Map collectedPartitions = streamToShuffle.collect(Collectors.groupingBy(element -> this.classifier.getClassificationId(element), Collectors.toList()));
+		//		Stream<Entry<Integer, List<Object>>> groupedPartitionsStream = collectedPartitions.entrySet().stream();
+		//		return groupedPartitionsStream;
+
 		Stream<Entry<Integer, Object>> partitionedStream = streamToShuffle
-			.map(element -> KVUtils.kv(this.classifier.getClassificationId(element), element)); 
-		
-		
+				.map(element -> KVUtils.kv(this.classifier.getClassificationId(element), element));
+
+
 		/*
 		 * Groups elements for each partition using ShuffleHelper
 		 * If an element is a Key/Value Entry, then ShuffleHelper will group it as Key/List[Values]
 		 * 		The resulting partition entry will look like this: {0={key1=[v,v,v,v],key2=v}}
 		 * If an element is not a Key/Value Entry,then values will be grouped into a List - List[Values]
 		 * 		The resulting partition entry will look like this: {0=[v1,v2,v1,v3],v4}
-		 */  
+		 */
+		//Stream<Map<Integer, Object>> groupedPartitionsStream =
 		Stream<Map<Integer, ?>> groupedPartitionsStream = Stream.of(partitionedStream)
-				.map(stream -> stream.collect(Collectors.toMap((Entry<Integer, Object> s) -> s.getKey(), s -> new RefHolder(s.getValue()), ShuffleHelper::group)));
+				.map(stream -> stream.collect(Collectors.toMap((Entry<Integer, Object> s) -> s.getKey(), s -> (Object)new RefHolder(s.getValue()), ShuffleHelper::group)));
 
 		Stream<Entry<Integer, List<Object>>> normalizedPartitionStream = groupedPartitionsStream.flatMap(map -> map.entrySet().stream()).map(entry -> {
-			Object value = entry.getValue();		
+			Object value = entry.getValue();
 			Entry<Integer, List<Object>> normalizedEntry = null;
-			
+
 			if (value instanceof RefHolder){
 				Object realValue = ((RefHolder) value).ref;
 				if (realValue instanceof Entry){
@@ -231,7 +232,7 @@ final class LocalDStreamExecutionEngine {
 					value = Stream.of(realValue).collect(Collectors.toList());
 				}
 			}
-		  
+
 			if (value instanceof Map){
 				Map vMap = (Map) value;
 				vMap.forEach((k,v) -> vMap.replace(k, v instanceof List ? ((List)v).iterator() : new SingleValueIterator(v) ));
@@ -241,23 +242,23 @@ final class LocalDStreamExecutionEngine {
 			else {
 				normalizedEntry = KVUtils.kv(entry.getKey(), (List)value);
 			}
-			
+
 			return normalizedEntry;
 		});
 		return normalizedPartitionStream;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	private Classifier determineClassifier(){
 		String parallelizmProp = this.executionConfig.getProperty(DStreamConstants.PARALLELISM);
 		String partitionerProp = this.executionConfig.getProperty(DStreamConstants.CLASSIFIER);
-		
+
 		int parallelism = parallelizmProp == null ? 1 : Integer.parseInt(parallelizmProp);
-	
-		return partitionerProp != null 
-				? ReflectionUtils.newInstance(partitionerProp, new Class[]{int.class}, new Object[]{parallelism}) 
+
+		return partitionerProp != null
+				? ReflectionUtils.newInstance(partitionerProp, new Class[]{int.class}, new Object[]{parallelism})
 						: new HashClassifier(parallelism);
 	}
 }

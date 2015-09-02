@@ -25,78 +25,64 @@ import java.util.Collection;
 public class Assert {
 
 	/**
-	 * 
-	 * @param number
+	 *
 	 */
 	public static void numberGreaterThenZero(Number number) {
 		if (number == null || number.intValue() == 0){
 			throw new IllegalArgumentException("'number' must not be null and > 0");
 		}
 	}
-	
+
 	/**
-	 * 
-	 * @param collection
+	 *
 	 */
 	public static void notEmpty(Collection<?> collection) {
 		notEmpty(collection, "'collection' must not be null or empty");
 	}
-	
+
 	/**
-	 * 
-	 * @param collection
-	 * @param message
+	 *
 	 */
 	public static void notEmpty(Collection<?> collection, String message) {
 		if (collection == null || collection.size() == 0){
 			throw new IllegalArgumentException(message);
 		}
 	}
-	
+
 	/**
-	 * 
-	 * @param array
+	 *
 	 */
 	public static <T> void notEmpty(T[] array) {
 		notEmpty(array, "'array' must not be null or empty");
 	}
-	
+
 	/**
-	 * 
-	 * @param array
-	 * @param message
+	 *
 	 */
 	public static <T> void notEmpty(T[] array, String message) {
 		if (array == null || array.length == 0){
 			throw new IllegalArgumentException(message);
 		}
 	}
-	
+
 	/**
-	 * 
-	 * @param string
-	 * @param message
+	 *
 	 */
 	public static void notEmpty(String string, String message) {
 		if (string == null || string.trim().length() == 0){
 			throw new IllegalArgumentException(message);
 		}
 	}
-	
+
 	/**
-	 * 
-	 * @param _true
-	 * @return
+	 *
 	 */
 	public static boolean isTrue(boolean _true){
 		return isTrue(_true, "Result of boolean expression is not true");
 	}
-	
+
 	/**
-	 * 
-	 * @param _true
-	 * @param message
-	 * @return
+	 *
 	 */
 	public static boolean isTrue(boolean _true, String message){
 		if (!_true){
@@ -104,21 +90,16 @@ public class Assert {
 		}
 		return true;
 	}
-	
+
 	/**
-	 * 
-	 * @param _false
-	 * @return
+	 *
 	 */
 	public static boolean isFalse(boolean _false){
 		return isFalse(_false, "Result of boolean expression is not false");
 	}
-	
+
 	/**
-	 * 
-	 * @param _false
-	 * @param message
-	 * @return
+	 *
 	 */
 	public static boolean isFalse(boolean _false, String message){
 		if (_false){
@@ -126,27 +107,24 @@ public class Assert {
 		}
 		return true;
 	}
-	
+
 	/**
-	 * 
-	 * @param string
+	 *
 	 */
 	public static void notEmpty(String string) {
 		notEmpty(string, "'string' must not be null or empty");
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param object
 	 */
 	public static <T> void notNull(T object) {
 		notNull(object, "'object' must not be null");
 	}
-	
+
 	/**
-	 * 
-	 * @param object
-	 * @param message
+	 *
 	 */
 	public static <T> void notNull(T object, String message) {
 		if (object == null){
