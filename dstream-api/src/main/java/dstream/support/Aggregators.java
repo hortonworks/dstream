@@ -19,28 +19,16 @@ package dstream.support;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiFunction;
-
-import dstream.SerializableStreamAssets.SerBinaryOperator;
 
 /**
- * Strategy which provides implementations of common aggregation functionality 
+ * Strategy which provides implementations of common aggregation functionality
  *
  */
 public abstract class Aggregators {
-	
+
 	/**
-	 * Aggregation operation which collects values into a {@link List}.<br>
-	 * If left value (v1) is not {@link List}, the new (accumulating) {@link List} will be created and 
-	 * left value added to it, otherwise left value is treated as accumulating {@link List}.
-	 * The right value (v2) is then added to the accumulating list following this rule:<br>
-	 * If right value (v2) is of type {@link List} its contents will be added (as {@link List#addAll(java.util.Collection)}) 
-	 * to the accumulating list essentially flattening the structure, otherwise single value is added to 
-	 * the accumulating list<br>
-	 * See {@link #aggregateSingleObjects(Object, Object)} when collected values are never {@link List}.<br>
-	 * <br>
-	 * It could be used as {@link BiFunction} or {@link SerBinaryOperator} (e.g., Aggregators::aggregateFlatten)
-	 * 
+	 * Aggregation operation which collects values into a {@link List}.
+	 *
 	 * @param v1 first value which on each subsequent invocation is of type {@link List}
 	 * @param v2 second value which could be single value or of type {@link List}
 	 * @return
@@ -51,9 +39,9 @@ public abstract class Aggregators {
 		aggregatedValues.add(v2);
 		return (List<T>) aggregatedValues;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	@SuppressWarnings("unchecked")
 	private static <T> List<T> toList(Object v1){
