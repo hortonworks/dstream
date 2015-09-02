@@ -2,7 +2,7 @@
 
 =======
 
-This project provides Reference Implementation of DSatrem API which uses [Apache Spark](http://spark.apache.org/) as its target execution environment.
+This module provides Reference Implementation of the DSatrem API which uses [Apache Spark](http://spark.apache.org/) as its target execution environment.
 
 ======
 
