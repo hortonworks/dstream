@@ -44,17 +44,13 @@ Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DStream.ofType(Str
     .reduceValues(word -> word, word -> 1, Integer::sum)
   .executeAs("WordCount");
 
-// each stream within a stream represents a partition essentially giving you access 
-// to each result partition
 Stream<Stream<Entry<String, Integer>>> result = resultFuture.get();
 result.forEach(resultPartitionStream -> {
    resultPartitionStream.forEach(System.out::println);
 });
 result.close();  
-  
 </pre>
+ <p class="view">Please visit the Project on<a href="https://github.com/hortonworks/dstream">GitHub</a> for more details.</p>
 
-
-    
   </body>
 </html>
