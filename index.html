@@ -36,16 +36,10 @@ The key distinction between <b><a href="http://docs.oracle.com/javase/8/docs/api
 The following code snippet shows an example of a quintessential <i>WordCount</i>:
 </p>
 <pre>
-Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DStream.ofType(String.class, "wc")
+DStream.ofType(String.class, "wc")
     .flatMap(line -> Stream.of(line.split("\\s+")))
     .reduceValues(word -> word, word -> 1, Integer::sum)
   .executeAs("WordCount");
-
-Stream<Stream<Entry<String, Integer>>> result = resultFuture.get();
-result.forEach(resultPartitionStream -> {
-   resultPartitionStream.forEach(System.out::println);
-});
-result.close();  
 </pre>
  <p class="view">Please visit the Project on <a href="https://github.com/hortonworks/dstream">GitHub</a> for more details.</p>
 
