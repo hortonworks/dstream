@@ -31,12 +31,14 @@
 The primary focus of the <i><b>DStream API</b></i> is to provide a <a href="http://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html">Stream-based</a> unified programming model to build <b>ETL-style distributable 
 data processes</b> to be executed in compatible execution environments. While agnostic to any specific type of execution 
 environment, the API aims to provide an extensible integration/delegation model to support variaty of execution environments.
-<br>
+</p>
+<p>
 The key distinction between <b><a href="http://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html">Java 8 Stream</a></b> and <b>DStream</b> is the notion of <i><b>distributable data</b></i>, which implies that the actual data may or may not be distributed, making DStream somewhat of a universal strategy to build ETL-style processes regardless of the location and/or the type of data as well as the execution environment it will be processed in.
-<br>
+</p>
+<p>
 The following code snippet shows an example of a quintessential <i>WordCount</i>:
 </p>
-<code>
+<pre>
 Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DStream.ofType(String.class, "wc")
     .flatMap(line -> Stream.of(line.split("\\s+")))
     .reduceValues(word -> word, word -> 1, Integer::sum)
@@ -50,7 +52,7 @@ result.forEach(resultPartitionStream -> {
 });
 result.close();  
   
-</code>
+</pre>
 
 
     
