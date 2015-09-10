@@ -19,74 +19,97 @@ package dstream.support;
 
 import java.net.URI;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import dstream.DStreamConstants;
 import dstream.utils.Assert;
 
 /**
  * {@link URI}-based implementation of the {@link SourceSupplier}
  */
-class UriSourceSupplier implements SourceSupplier<URI> {
+public final class UriSourceSupplier extends SourceSupplier<Stream<URI>> {
 	private static final long serialVersionUID = -4643164807046654114L;
-	
+
 	private final URI[] uris;
-	
-	private SourceFilter<URI> sourceFilter;
+
+	//private SourceFilter<Stream<URI>> sourceFilter;
 
 	/**
-	 * 
+	 * Validates that {@link URI} expressed as {@link String} is of proper
+	 * format and could be converted to an instance of the {@link URI}.
 	 */
-	private UriSourceSupplier(URI... uris){
-		Assert.notEmpty(uris, "'uris' must not be null or empty");
-		this.uris = uris;
+	public static boolean isURI(String source){
+		Pattern pattern = Pattern.compile("^[a-zA-Z0-9\\-_]+:");
+		return pattern.matcher(source).find();
 	}
-	
+
 	/**
-	 * Factory method which constructs this instance with an array of {@link URI}s.
-	 * The array argument must not be <i>null</i> or empty.
+	 * Converts {@link String} based representation of the {@link URI} to the actual
+	 * instance of the {@link URI}
 	 */
-	public static UriSourceSupplier from(URI... uris) {
-		return new UriSourceSupplier(uris);
+	public static URI toURI(String strURI){
+		try {
+			return new URI(strURI.trim());
+		}
+		catch (Exception e) {
+			throw new IllegalArgumentException(e);
+		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
+	public UriSourceSupplier(Properties executionConfig, String executionGraphName){
+		super(executionConfig, executionGraphName);
+		String sourceProperty = executionConfig.getProperty(DStreamConstants.SOURCE + executionGraphName);
+		Assert.notEmpty(sourceProperty, "'" + (DStreamConstants.SOURCE + executionGraphName) +  "' property can not be found in execution configuration file.");
+		Assert.isTrue(UriSourceSupplier.isURI(sourceProperty), "When defaulting to UriSourceSupplier the system had determined "
+				+ "that the value of the '" + (DStreamConstants.SOURCE + executionGraphName) + "' property is not a valid URI.\nWas '" + sourceProperty
+				+ "'. \nExample of valid definition - "
+				+ "'dstream.source.wc=file:${user.dir}/src/main/examples/dstream/examples/sample.txt' \nwhere 'wc' represents the pipeline "
+				+ "name set during the initial construction of the pipeline.");
+		List<URI> uris = Stream.of(sourceProperty.split(";")).map(uriStr -> UriSourceSupplier.toURI(uriStr)).collect(Collectors.toList());
+		this.uris = uris.toArray(new URI[uris.size()]);
+	}
+
+
+	/**
+	 *
+	 */
+	@Override
 	public boolean equals(Object obj) {
-        return (obj instanceof UriSourceSupplier && 
-        		Arrays.equals(((UriSourceSupplier)obj).get(), this.get()));
-    }
-	
+		return (obj instanceof UriSourceSupplier &&
+				Arrays.equals(((UriSourceSupplier)obj).get().toArray(), this.get().toArray()));
+	}
+
 	/**
 	 * Returns an array of {@link URI} provided during the construction of this instance.
 	 */
 	@Override
-	public URI[] get() {
-		return this.uris;
+	public Stream<URI> get() {
+		return Stream.of(this.uris);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	@Override
 	public String toString(){
 		return ":src" + Arrays.asList(this.uris).toString();
 	}
 
-	/**
-	 * Sets the instance of the {@link SourceFilter} which filters
-	 * the {@link URI}s held by this instance.
-	 */
-	@Override
-	public void setSourceFilter(SourceFilter<URI> sourceFilter) {
-		this.sourceFilter = sourceFilter;
+
+	public void setSourceFilter(SourceFilter<Stream<URI>> sourceFilter) {
+		// TODO Auto-generated method stub
+
 	}
 
-	/**
-	 * Returns an instance of the {@link SourceFilter} which filters
-	 * the {@link URI}s held by this instance.
-	 */
-	@Override
-	public SourceFilter<URI> getSourceFilter() {
-		return this.sourceFilter;
+	public SourceFilter<Stream<URI>> getSourceFilter() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

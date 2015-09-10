@@ -10,21 +10,27 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
 import dstream.SerializableStreamAssets.SerFunction;
+import dstream.support.AbstractPartitionedStreamProducingSourceSupplier;
 import dstream.support.Classifier;
 
+/**
+ *
+ */
 final class Task implements Serializable {
 	private static final long serialVersionUID = -1800812882885490376L;
 
 	private final SerFunction<Stream<?>, Stream<?>> function;
 
 	private final Classifier classifier;
-	
+
 	private final String name;
-	
+
 	private final int id;
-	
+
+	private AbstractPartitionedStreamProducingSourceSupplier<?> streamProducingSourceSupplier;
+
 	/**
-	 * 
+	 *
 	 * @param id
 	 * @param name
 	 * @param partitioner
@@ -36,20 +42,23 @@ final class Task implements Serializable {
 		this.classifier = classifier;
 		this.function = function;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param taskDescriptor
 	 * @return
 	 */
 	static Task build(TaskDescriptor taskDescriptor) {
 		SerFunction<Stream<?>, Stream<?>> taskFunction = adjustTaskFunction(taskDescriptor);
 		Task task = new Task(taskDescriptor.getId(), taskDescriptor.getName(), taskDescriptor.getClassifier(), taskFunction);
+		if (taskDescriptor.getSourceSupplier() instanceof AbstractPartitionedStreamProducingSourceSupplier){
+			task.setStreamProducingSourceSupplier((AbstractPartitionedStreamProducingSourceSupplier<?>) taskDescriptor.getSourceSupplier());
+		}
 		return task;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @return
 	 */
 	public SerFunction<Stream<?>, Stream<?>> getFunction() {
@@ -57,7 +66,7 @@ final class Task implements Serializable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return
 	 */
 	public Classifier getClassifier() {
@@ -65,7 +74,7 @@ final class Task implements Serializable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return
 	 */
 	public String getName() {
@@ -73,13 +82,29 @@ final class Task implements Serializable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return
 	 */
 	public int getId() {
 		return id;
 	}
-	
+
+	/**
+	 *
+	 * @return
+	 */
+	public AbstractPartitionedStreamProducingSourceSupplier<?> getStreamProducingSourceSupplier() {
+		return streamProducingSourceSupplier;
+	}
+
+	/**
+	 *
+	 * @param streamProducingSourceSupplier
+	 */
+	void setStreamProducingSourceSupplier(AbstractPartitionedStreamProducingSourceSupplier<?> streamProducingSourceSupplier) {
+		this.streamProducingSourceSupplier = streamProducingSourceSupplier;
+	}
+
 	/**
 	 * This will adjust task function to ensure that it is compatible with Hadoop KV readers and types expected by user.
 	 * For example, reading Text file Tez will produce KV pairs (offset, line), while user is only expected the value.
@@ -87,25 +112,27 @@ final class Task implements Serializable {
 	@SuppressWarnings("rawtypes")
 	private static SerFunction<Stream<?>, Stream<?>> adjustTaskFunction(TaskDescriptor taskDescriptor){
 		SerFunction<Stream<?>, Stream<?>> modifiedFunction = taskDescriptor.getFunction();
-		if (taskDescriptor.getId() == 0 && !Entry.class.isAssignableFrom(taskDescriptor.getSourceElementType())){	
+		if (taskDescriptor.getId() == 0 && !Entry.class.isAssignableFrom(taskDescriptor.getSourceElementType())){
 			if (Writable.class.isAssignableFrom(taskDescriptor.getSourceElementType())){
 				modifiedFunction = modifiedFunction.compose(stream -> stream.map(s -> ((Entry)s).getValue()));
-			} 
+			}
 			else {
-				ParameterizedType parameterizedType = (ParameterizedType) taskDescriptor.getInputFormatClass().getGenericSuperclass();
-				Type type = parameterizedType.getActualTypeArguments()[1];
-				
-				if (Text.class.getName().equals(type.getTypeName())){
-					if (modifiedFunction == null) {
-						modifiedFunction = stream -> stream.map(s -> ((Entry) s).getValue().toString());
-					} else {
-						modifiedFunction = modifiedFunction.compose(stream -> stream.map(s -> ((Entry) s)
-										.getValue().toString()));
+				if (taskDescriptor.getInputFormatClass() != null){// only URI based sources will have Input Format
+					ParameterizedType parameterizedType = (ParameterizedType) taskDescriptor.getInputFormatClass().getGenericSuperclass();
+					Type type = parameterizedType.getActualTypeArguments()[1];
+
+					if (Text.class.getName().equals(type.getTypeName())){
+						if (modifiedFunction == null) {
+							modifiedFunction = stream -> stream.map(s -> ((Entry) s).getValue().toString());
+						} else {
+							modifiedFunction = modifiedFunction.compose(stream -> stream.map(s -> ((Entry) s)
+									.getValue().toString()));
+						}
 					}
-				} 
-				else {
-					//TODO need to design some type of extensible converter to support multiple types of Writable
-					throw new IllegalStateException("Can't determine modified function");
+					else {
+						//TODO need to design some type of extensible converter to support multiple types of Writable
+						throw new IllegalStateException("Can't determine modified function");
+					}
 				}
 			}
 		}

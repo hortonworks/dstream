@@ -18,14 +18,11 @@
 package dstream.support;
 
 import java.net.URI;
-import java.util.List;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Properties;
 
 import dstream.DStreamConstants;
 import dstream.SerializableStreamAssets.SerSupplier;
-import dstream.utils.Assert;
+import dstream.utils.ReflectionUtils;
 
 
 /**
@@ -33,64 +30,46 @@ import dstream.utils.Assert;
  *
  * @param <T>
  */
-public interface SourceSupplier<T> extends SerSupplier<T[]> {
-	
+public abstract class SourceSupplier<T> implements SerSupplier<T> {
+	private static final long serialVersionUID = 1041398921739932285L;
+
+	protected final Properties executionConfig;
+
+	protected final String executionGraphName;
+
 	/**
-	 * Validates that {@link URI} expressed as {@link String} is of proper 
-	 * format and could be converted to an instance of the {@link URI}.
+	 *
 	 */
-	public static boolean isURI(String source){
-		Pattern pattern = Pattern.compile("^[a-zA-Z0-9\\-_]+:");
-		return pattern.matcher(source).find();
+	public SourceSupplier(Properties executionConfig, String executionGraphName) {
+		this.executionConfig = executionConfig;
+		this.executionGraphName = executionGraphName;
 	}
-	
+
 	/**
-	 * Converts {@link String} based representation of the {@link URI} to the actual 
-	 * instance of the {@link URI}
-	 */
-	public static URI toURI(String strURI){
-		try {
-			return new URI(strURI.trim());
-		} 
-		catch (Exception e) {
-			throw new IllegalArgumentException(e);
-		}
-	}
-	
-	/**
-	 * Factory method that creates an instance of the {@link SourceSupplier} from 
+	 * Factory method that creates an instance of the {@link SourceSupplier} from
 	 * the {@link DStreamConstants#SOURCE} property.<br>
 	 * The value of the {@link DStreamConstants#SOURCE} property could be either a {@link URI} or
-	 * the fully qualified class name of the {@link SourceSupplier} implementation, essentially 
+	 * the fully qualified class name of the {@link SourceSupplier} implementation, essentially
 	 * providing a mechanism to support multiple types of sources.
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static <T> SourceSupplier<T> create(String sourceProperty, SourceFilter<?> sourceFilter){
-		Assert.notEmpty(sourceProperty, "'sourceProperty' must not be null or empty");
+	public static <T> SourceSupplier<T> create(Properties executionConfig, String pipelineName, SourceFilter<?> sourceFilter){
 		try {
-			SourceSupplier sourceSupplier;
-			if (isURI(sourceProperty)){
-				 List<URI> uris = Stream.of(sourceProperty.split(";")).map(uriStr -> SourceSupplier.toURI(uriStr)).collect(Collectors.toList());
-				 sourceSupplier = UriSourceSupplier.from(uris.toArray(new URI[uris.size()]));
+			Class<? extends SourceSupplier<?>> sourceSupplierClass;
+			if (executionConfig.containsKey(DStreamConstants.SOURCE_SUPPLIER + pipelineName)){
+				sourceSupplierClass = (Class<? extends SourceSupplier<?>>) Class
+						.forName(executionConfig.getProperty(DStreamConstants.SOURCE_SUPPLIER + pipelineName), false, Thread.currentThread().getContextClassLoader());
 			}
 			else {
-				sourceSupplier = (SourceSupplier) Class.forName(sourceProperty, false, Thread.currentThread().getContextClassLoader()).newInstance();
+				sourceSupplierClass = UriSourceSupplier.class;
 			}
-			sourceSupplier.setSourceFilter(sourceFilter);
+
+			SourceSupplier sourceSupplier = ReflectionUtils.newInstance(sourceSupplierClass,
+					new Class[]{Properties.class, String.class}, new Object[]{executionConfig, pipelineName});
 			return sourceSupplier;
-		} 
+		}
 		catch (Exception e) {
-			throw new IllegalStateException("Failed to create SourceSupplier", e);
+			throw new IllegalStateException("Failure while creating SurceSupplier.", e);
 		}
 	}
-	
-	/**
-	 */
-	void setSourceFilter(SourceFilter<T> sourceFilter);
-	
-	/**
-	 * 
-	 * @return
-	 */
-	SourceFilter<T> getSourceFilter();
 }

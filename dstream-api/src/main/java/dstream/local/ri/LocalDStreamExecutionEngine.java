@@ -22,7 +22,6 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,12 +37,13 @@ import dstream.DStreamExecutionGraph;
 import dstream.DStreamOperation;
 import dstream.SerializableStreamAssets.SerFunction;
 import dstream.local.ri.ShuffleHelper.RefHolder;
+import dstream.support.AbstractPartitionedStreamProducingSourceSupplier;
 import dstream.support.Aggregators;
 import dstream.support.Classifier;
 import dstream.support.HashClassifier;
 import dstream.support.PartitionIdHelper;
 import dstream.support.SourceSupplier;
-import dstream.utils.Assert;
+import dstream.support.UriSourceSupplier;
 import dstream.utils.KVUtils;
 import dstream.utils.ReflectionUtils;
 import dstream.utils.SingleValueIterator;
@@ -105,7 +105,7 @@ final class LocalDStreamExecutionEngine {
 		SerFunction<Stream<?>, Stream<?>> streamFunction = streamOperation.getStreamOperationFunction();
 
 		if (this.realizedStageResults == null){
-			List<List<?>> realizedIntermediateResult = Stream.of(streamFunction.apply(this.createInitialStream(pipelineName)))
+			List<List<?>> realizedIntermediateResult = Stream.of( streamFunction.apply(this.createInitialStream(pipelineName)) )
 					.map(stream -> stream.collect(Collectors.toList()))
 					.collect(Collectors.toList());
 
@@ -163,28 +163,27 @@ final class LocalDStreamExecutionEngine {
 	 * @param pipelineName
 	 * @return
 	 */
-	private Stream<?> createInitialStream(String pipelineName){
-		String sourceProperty = executionConfig.getProperty(DStreamConstants.SOURCE + pipelineName);
-		Assert.notEmpty(sourceProperty, DStreamConstants.SOURCE + pipelineName +  "' property can not be found in " +
-				executionName + ".cfg configuration file.");
-
-		SourceSupplier<?> sourceSupplier = SourceSupplier.create(sourceProperty, null);
-		Object[] sources = sourceSupplier.get();
-		Assert.notEmpty(sources, "sources must not be null or empty");
-
-		if (sources[0] instanceof URI){
-			URI[] uriSources = Arrays.copyOf(sources, sources.length, URI[].class);
-			return Stream.of(uriSources).map(this::buildStreamFromURI).reduce(Stream::concat).get();
+	@SuppressWarnings("unchecked")
+	private <R> Stream<R> createInitialStream(String pipelineName){
+		SourceSupplier<R> sourceSupplier = SourceSupplier.<R> create(this.executionConfig, pipelineName, null);
+		if (sourceSupplier instanceof UriSourceSupplier) {
+			UriSourceSupplier uriSupplier = (UriSourceSupplier) sourceSupplier;
+			Stream<URI> uriSources = uriSupplier.get();
+			return (Stream<R>) uriSources.map(this::buildStreamFromURI).reduce(Stream::concat).get();
+		}
+		else if (sourceSupplier instanceof AbstractPartitionedStreamProducingSourceSupplier) {
+			AbstractPartitionedStreamProducingSourceSupplier<R> spSourceSupplier = (AbstractPartitionedStreamProducingSourceSupplier<R>) sourceSupplier;
+			return spSourceSupplier.get();
 		}
 		else {
-			throw new IllegalStateException("SourceSuppliers other then URISourceSupplier are not supported at the moment");
+			throw new IllegalStateException("Unsupported SourceSupplier " + sourceSupplier.getClass().getName());
 		}
 	}
 
 	/**
 	 *
 	 */
-	private Stream<?> buildStreamFromURI(URI uri) {
+	private Stream<String> buildStreamFromURI(URI uri) {
 		try {
 			return Files.lines(Paths.get(uri));
 		}

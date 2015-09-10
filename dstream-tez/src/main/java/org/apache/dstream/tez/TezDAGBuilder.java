@@ -32,29 +32,29 @@ import org.springframework.util.StringUtils;
 
 import dstream.SerializableStreamAssets.SerSupplier;
 import dstream.support.SourceSupplier;
-import dstream.utils.Assert;
+import dstream.support.UriSourceSupplier;
 
 /**
- * 
+ *
  */
 public class TezDAGBuilder {
-	
+
 	private final Logger logger = LoggerFactory.getLogger(TezDAGBuilder.class);
-	
+
 	private final DAG dag;
-	
+
 	private final ExecutionContextAwareTezClient tezClient;
-	
+
 	private final OrderedPartitionedKVEdgeConfig edgeConf;
-	
+
 	private final TezDagExecutor dagExecutor;
-	
+
 	private Vertex lastVertex;
-	
+
 	private int inputOrderCounter;
-	
+
 	/**
-	 * 
+	 *
 	 * @param pipelineName
 	 * @param tezClient
 	 * @param inputFormatClass
@@ -62,162 +62,153 @@ public class TezDAGBuilder {
 	public TezDAGBuilder(String executionName, ExecutionContextAwareTezClient tezClient, Properties executionConfig) {
 		this.dag = DAG.create(executionName + "_" + System.currentTimeMillis());
 		this.tezClient = tezClient;
-		
-		//TODO need to figure out when and why would the Edge be different and how to configure it
-		this.edgeConf = OrderedPartitionedKVEdgeConfig
-				.newBuilder("org.apache.dstream.tez.io.KeyWritable",
-						"org.apache.dstream.tez.io.ValueWritable",
-						TezDelegatingPartitioner.class.getName(), null).build();
+
+		// TODO need to figure out when and why would the Edge be different and
+		// how to configure it
+		this.edgeConf = OrderedPartitionedKVEdgeConfig.newBuilder("org.apache.dstream.tez.io.KeyWritable",
+				"org.apache.dstream.tez.io.ValueWritable", TezDelegatingPartitioner.class.getName(), null).build();
 		this.dagExecutor = new TezDagExecutor(this.tezClient, this.dag);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param stage
 	 * @param parallelizm
 	 */
-	public void addTask(TaskDescriptor taskDescriptor) {	
-		String vertexName = taskDescriptor.getName() + "_" + taskDescriptor.getOperationName();
-		if (taskDescriptor.getId() == 0){
+	public void addTask(TaskDescriptor taskDescriptor) {
+		if (taskDescriptor.getId() == 0) {
 			this.determineInputFormatClass(taskDescriptor);
 		}
 		UserPayload payload = this.createPayloadFromTaskSerPath(Task.build(taskDescriptor), this.dag.getName());
 		ProcessorDescriptor pd = ProcessorDescriptor.create(TezTaskProcessor.class.getName()).setUserPayload(payload);
-	
-		int parallelism = taskDescriptor.getParallelism();
+		SerSupplier<?> sourceSupplier = taskDescriptor.getSourceSupplier();
 
-		// inputOrderCounter needed to maintain the order of inputs for joins
-		Vertex vertex = taskDescriptor.getId() == 0 
-				? Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd) 
-						: Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd, parallelism);
-		
-		vertex.addTaskLocalFiles(this.tezClient.getLocalResources());
-		
+		Vertex vertex = this.createVertex(taskDescriptor, pd);
+
 		this.dag.addVertex(vertex);
-		
-		if (taskDescriptor.getId() == 0){	
-			SerSupplier<?> sourceSupplier = taskDescriptor.getSourceSupplier();
-			
-			if (sourceSupplier instanceof SourceSupplier){
-				Object[] sources = ((SourceSupplier<?>)sourceSupplier).get();
-				Assert.notEmpty(sources, "Task with ID=0 must have non-null SourceSupplier");	
-				if (sources[0] instanceof URI){
-					URI[] uris = Arrays.copyOf(sources, sources.length, URI[].class);
-					DataSourceDescriptor dataSource = this.buildDataSourceDescriptorFromUris(taskDescriptor.getInputFormatClass(), uris);
-					vertex.addDataSource(this.inputOrderCounter++ + ":" + vertexName + "_INPUT_" + Arrays.asList(uris), dataSource);
-				} 
-				else {
-					throw new IllegalArgumentException("Unsupported sources: " + Arrays.asList(taskDescriptor.getSourceSupplier()));
-				}
-			} 
-			else {
-				throw new IllegalArgumentException("Urecognized source supplier: " + sourceSupplier);
-			}	
-		} 
+
+		if (taskDescriptor.getId() == 0) {
+			if (sourceSupplier instanceof UriSourceSupplier) {
+				UriSourceSupplier uriSourceSupplier = (UriSourceSupplier) sourceSupplier;
+				Stream<URI> uris = uriSourceSupplier.get();
+				DataSourceDescriptor dataSource = this.buildDataSourceDescriptorFromUris(taskDescriptor.getInputFormatClass(), uris);
+				vertex.addDataSource(this.inputOrderCounter++ + ":" + vertex.getName() + "_INPUT_" + Arrays.asList(uris), dataSource);
+			}
+		}
 		else {
 			this.addEdge(vertex);
 		}
-		
-		if (taskDescriptor.getDependentTasksChains() != null){
+
+		if (taskDescriptor.getDependentTasksChains() != null) {
 			List<List<TaskDescriptor>> dependentTasksChains = taskDescriptor.getDependentTasksChains();
 			dependentTasksChains.forEach(dependentTasks -> {
 				dependentTasks.forEach(this::addTask);
 				this.addEdge(vertex);
 			});
 		}
-		
-		if (logger.isDebugEnabled()){
+
+		if (logger.isDebugEnabled()) {
 			logger.debug("Created Vertex: " + vertex);
 		}
 		this.lastVertex = vertex;
 	}
-	
+
 	/**
-	 * 
+	 *
+	 */
+	private Vertex createVertex(TaskDescriptor taskDescriptor, ProcessorDescriptor pd) {
+		String vertexName = taskDescriptor.getName() + "_" + taskDescriptor.getOperationName();
+		Vertex vertex = (taskDescriptor.getId() == 0 && taskDescriptor.getSourceSupplier() instanceof UriSourceSupplier)
+				? Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd)
+						: Vertex.create(this.inputOrderCounter++ + ":" + vertexName, pd, taskDescriptor.getParallelism());
+				vertex.addTaskLocalFiles(this.tezClient.getLocalResources());
+				return vertex;
+	}
+
+	/**
+	 *
 	 * @param vertex
 	 */
-	private void addEdge(Vertex vertex){
+	private void addEdge(Vertex vertex) {
 		Edge edge = Edge.create(this.lastVertex, vertex, this.edgeConf.createDefaultEdgeProperty());
 		this.dag.addEdge(edge);
 	}
 
 	/**
-	 * 
+	 *
 	 */
-	public void addDataSink(String outputPath){
-		this.createDataSink(this.lastVertex, 
-				this.tezClient.getClientName() + "_OUTPUT", 
-				KeyWritable.class, 
-				ValueWritable.class, 
-				SequenceFileOutputFormat.class, outputPath);
-		
+	public void addDataSink(String outputPath) {
+		this.createDataSink(this.lastVertex, this.tezClient.getClientName() + "_OUTPUT", KeyWritable.class,
+				ValueWritable.class, SequenceFileOutputFormat.class, outputPath);
+
 		this.lastVertex = null;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @return
 	 */
-	public Runnable build(){
+	public Runnable build() {
 		return this.dagExecutor;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
-	private DataSourceDescriptor buildDataSourceDescriptorFromUris(Class<?> inputFormatClass, URI[] sources) {
-		String inputPath = 
-				StringUtils.collectionToCommaDelimitedString(Stream.of(sources).map(uri -> uri.getPath()).collect(Collectors.toList()));
-		return MRInput.createConfigBuilder(this.tezClient.getTezConfiguration(), inputFormatClass, inputPath).groupSplits(false).build();
+	private DataSourceDescriptor buildDataSourceDescriptorFromUris(Class<?> inputFormatClass, Stream<URI> sources) {
+		String inputPath = StringUtils
+				.collectionToCommaDelimitedString(sources.map(uri -> uri.getPath()).collect(Collectors.toList()));
+		return MRInput.createConfigBuilder(this.tezClient.getTezConfiguration(), inputFormatClass, inputPath)
+				.groupSplits(false).build();
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
-	private UserPayload createPayloadFromTaskSerPath(Task task, String dagName){
-		org.apache.hadoop.fs.Path mapTaskPath = 
-				HdfsSerializerUtils.serialize(task, this.tezClient.getFileSystem(), 
-						new org.apache.hadoop.fs.Path(dagName + "/tasks/" + task.getId() + "_" + task.getName() + ".ser"));
+	private UserPayload createPayloadFromTaskSerPath(Task task, String dagName) {
+		org.apache.hadoop.fs.Path mapTaskPath = HdfsSerializerUtils.serialize(task, this.tezClient.getFileSystem(),
+				new org.apache.hadoop.fs.Path(dagName + "/tasks/" + task.getId() + "_" + task.getName() + ".ser"));
 		return UserPayload.create(ByteBuffer.wrap(mapTaskPath.toString().getBytes()));
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
-	private void createDataSink(Vertex vertex, String name, Class<? extends Writable> keyClass, Class<? extends Writable> valueClass, 
-				Class<?> outputFormatClass, String outputPath){
+	private void createDataSink(Vertex vertex, String name, Class<? extends Writable> keyClass,
+			Class<? extends Writable> valueClass, Class<?> outputFormatClass, String outputPath) {
 		JobConf dsConfig = this.buildJobConf(keyClass, valueClass);
 		DataSinkDescriptor dataSink = MROutput.createConfigBuilder(dsConfig, outputFormatClass, outputPath).build();
 		vertex.addDataSink(name, dataSink);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
-	private JobConf buildJobConf(Class<? extends Writable> keyClass, Class<? extends Writable> valueClass){
+	private JobConf buildJobConf(Class<? extends Writable> keyClass, Class<? extends Writable> valueClass) {
 		JobConf jobConf = new JobConf(this.tezClient.getTezConfiguration());
 		jobConf.setOutputKeyClass(keyClass);
 		jobConf.setOutputValueClass(valueClass);
 		return jobConf;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
-	private void determineInputFormatClass(TaskDescriptor firstTask){
+	private void determineInputFormatClass(TaskDescriptor firstTask) {
 		SourceSupplier<?> sourceSupplier = (SourceSupplier<?>) firstTask.getSourceSupplier();
-		Class<?> sourceElementType = (Class<?>) firstTask.getSourceElementType();
-		if (sourceSupplier.get()[0] instanceof URI){
-			if (sourceElementType.isAssignableFrom(String.class)){
+		Class<?> sourceElementType = firstTask.getSourceElementType();
+		if (sourceSupplier instanceof UriSourceSupplier) {
+			if (sourceElementType.isAssignableFrom(String.class)) {
 				firstTask.setInputFormatClass(TextInputFormat.class);
-			} 
+			}
 			else {
-				// TODO design a configurable component to handle other standard and custom input types
+				// TODO design a configurable component to handle other standard
+				// and custom input types
 				throw new IllegalArgumentException("Failed to determine Input Format class for source item type " + sourceElementType);
 			}
-		} 
-		else {
-			throw new IllegalArgumentException("Non URI sources are not supported yet");
 		}
+		//		else {
+		//			throw new IllegalArgumentException("Non URI sources are not supported yet");
+		//		}
 	}
 }
