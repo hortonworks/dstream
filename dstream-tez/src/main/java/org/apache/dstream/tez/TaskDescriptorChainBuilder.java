@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import dstream.DStreamExecutionGraph;
-import dstream.DStreamOperation;
-import dstream.support.SourceSupplier;
+import io.dstream.DStreamExecutionGraph;
+import io.dstream.DStreamOperation;
+import io.dstream.support.SourceSupplier;
 
 /**
  *

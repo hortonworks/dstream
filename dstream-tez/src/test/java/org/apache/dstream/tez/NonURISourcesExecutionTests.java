@@ -7,10 +7,10 @@ import java.util.stream.Stream;
 
 import org.junit.Test;
 
-import dstream.DStream;
-import dstream.support.AbstractPartitionedStreamProducingSourceSupplier;
-import dstream.support.PartitionIdHelper;
-import dstream.utils.ExecutionResultUtils;
+import io.dstream.DStream;
+import io.dstream.support.AbstractPartitionedStreamProducingSourceSupplier;
+import io.dstream.support.PartitionIdHelper;
+import io.dstream.utils.ExecutionResultUtils;
 
 public class NonURISourcesExecutionTests extends BaseTezTests {
 
@@ -21,7 +21,7 @@ public class NonURISourcesExecutionTests extends BaseTezTests {
 		clean(executionName);
 		DStream<String> ds = DStream.ofType(String.class, "wc");
 		Future<Stream<Stream<String>>> resultFuture = ds.executeAs(executionName);
-		Stream<Stream<String>> resultPartitionedStream = resultFuture.get(1000000, TimeUnit.MILLISECONDS);
+		Stream<Stream<String>> resultPartitionedStream = resultFuture.get(10000, TimeUnit.MILLISECONDS);
 		ExecutionResultUtils.printResults(resultPartitionedStream, true);
 		clean(executionName);
 	}

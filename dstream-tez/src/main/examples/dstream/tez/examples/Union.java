@@ -22,43 +22,43 @@ import java.util.stream.Stream;
 
 import org.apache.dstream.tez.BaseTezTests;
 
-import dstream.DStream;
-import dstream.utils.ExecutionResultUtils;
+import io.dstream.DStream;
+import io.dstream.utils.ExecutionResultUtils;
 /**
  * Contains various examples of join operation
  */
 public class Union {
-	
+
 	static String EXECUTION_NAME = "Union";
-	
+
 	public static void main(String[] args) throws Exception {
-//		run all
+		//		run all
 		SimpleTwoWayUnion.main();
 	}
-	
+
 	/**
 	 * This example demonstrates simple join between two streams.
-	 * To ensure correctness of joining data in the distributed environment, classification must 
-	 * precede any type of streams combine (i.e., join and/or union*). This will ensure 
+	 * To ensure correctness of joining data in the distributed environment, classification must
+	 * precede any type of streams combine (i.e., join and/or union*). This will ensure
 	 * the two+ streams represented as individual partitions have comparable data.
-	 * 
+	 *
 	 * The following case has two data sets:
 	 * <pre>
 	 * -one-
 	 * 1 Oracle
 	 * 2 Amazon
 	 * . . .
-	 * 
+	 *
 	 *  - two-
 	 *  Arun Murthy 3
 	 *  Larry Ellison 1
 	 *  . . .
 	 *  </pre>
-	 * Classification is performed using the common "id", this ensuring that 
+	 * Classification is performed using the common "id", this ensuring that
 	 * <i>'1 Oracle' and 'Larry Ellison 1'</i> will end up in the same partition.
-	 * 
-	 * In this example you can also see a nice side-effect of 'classification', 
-	 * since this example uses 'dstream.parallelism=3' configuration. 
+	 *
+	 * In this example you can also see a nice side-effect of 'classification',
+	 * since this example uses 'dstream.parallelism=3' configuration.
 	 * Since variation of classification values matches the 'parallelism' value (3)
 	 * the result resembles 'join' behavior since each of the three partitions
 	 * only contain data relevant to classification id, giving you the following result:
@@ -70,12 +70,12 @@ public class Union {
 	 * Tom McCuch 3
 	 * Oleg Zhurakousky 3
 	 * Arun Murthy 3
-	 * 
+	 *
 	 * => PARTITION:1
 	 * 1 Oracle
 	 * Larry Ellison 1
 	 * Thomas Kurian 1
-	 * 
+	 *
 	 * => PARTITION:2
 	 * 2 Amazon
 	 * Jeff Bezos 2
@@ -87,14 +87,14 @@ public class Union {
 			BaseTezTests.clean(EXECUTION_NAME);
 			DStream<String> one = DStream.ofType(String.class, "one").classify(s -> s.split("\\s+")[0]);
 			DStream<String> two = DStream.ofType(String.class, "two").classify(s -> s.split("\\s+")[2]);
-			
+
 			Future<Stream<Stream<String>>> resultFuture = one
 					.union(two)
-				.executeAs(EXECUTION_NAME);
-			
+					.executeAs(EXECUTION_NAME);
+
 			Stream<Stream<String>> resultPartitionsStream = resultFuture.get();
 			ExecutionResultUtils.printResults(resultPartitionsStream, true);
-			
+
 			resultPartitionsStream.close();// will close Tez client
 			BaseTezTests.clean(EXECUTION_NAME);
 		}

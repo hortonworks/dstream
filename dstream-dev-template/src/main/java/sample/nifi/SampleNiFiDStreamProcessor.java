@@ -24,10 +24,10 @@ import org.apache.nifi.annotation.documentation.Tags;
 import org.apache.nifi.dstream.AbstractDStreamProcessor;
 import org.apache.nifi.logging.ProcessorLog;
 
-import dstream.DStream;
+import io.dstream.DStream;
 
 /**
- * Sample implementation of {@link AbstractDStreamProcessor} with its primary 
+ * Sample implementation of {@link AbstractDStreamProcessor} with its primary
  * goal to serve as an example of how to implement {@link DStream} NAR bundle
  * to be deployed in Apache NiFi.<br>
  */
@@ -36,7 +36,7 @@ import dstream.DStream;
 public class SampleNiFiDStreamProcessor extends AbstractDStreamProcessor {
 
 	/**
-	 * 
+	 *
 	 */
 	@Override
 	protected <T> DStream<T> getDStream(String executionName) {
@@ -47,9 +47,9 @@ public class SampleNiFiDStreamProcessor extends AbstractDStreamProcessor {
 		}
 		throw new IllegalStateException("Failed to build DStream for execution '" + executionName + "'");
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")

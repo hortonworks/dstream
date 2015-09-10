@@ -52,9 +52,9 @@ import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.io.InputStreamCallback;
 import org.apache.nifi.processor.util.StandardValidators;
 
-import dstream.DStream;
-import dstream.DStreamConstants;
-import dstream.utils.Assert;
+import io.dstream.DStream;
+import io.dstream.DStreamConstants;
+import io.dstream.utils.Assert;
 
 /**
  * Base implementation of the {@link Processor} to support {@link DStream}

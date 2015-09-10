@@ -9,9 +9,9 @@ import java.util.stream.Stream;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
-import dstream.SerializableStreamAssets.SerFunction;
-import dstream.support.AbstractPartitionedStreamProducingSourceSupplier;
-import dstream.support.Classifier;
+import io.dstream.SerializableStreamAssets.SerFunction;
+import io.dstream.support.AbstractPartitionedStreamProducingSourceSupplier;
+import io.dstream.support.Classifier;
 
 /**
  *

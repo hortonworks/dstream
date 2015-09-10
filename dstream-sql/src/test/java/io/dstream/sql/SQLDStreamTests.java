@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 
 import org.junit.Test;
 
-import dstream.DStream;
+import io.dstream.DStream;
 
 /**
  *

@@ -20,8 +20,8 @@ package dstream.examples;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
-import dstream.DStream;
-import dstream.utils.ExecutionResultUtils;
+import io.dstream.DStream;
+import io.dstream.utils.ExecutionResultUtils;
 /**
  * Contains various examples of join operation
  */

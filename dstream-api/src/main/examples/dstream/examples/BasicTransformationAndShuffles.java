@@ -16,16 +16,16 @@
  * limitations under the License.
  */
 package dstream.examples;
-import static dstream.utils.Tuples.Tuple2.tuple2;
+import static io.dstream.utils.Tuples.Tuple2.tuple2;
 
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
-import dstream.DStream;
-import dstream.utils.ExecutionResultUtils;
-import dstream.utils.Tuples.Tuple2;
+import io.dstream.DStream;
+import io.dstream.utils.ExecutionResultUtils;
+import io.dstream.utils.Tuples.Tuple2;
 
 /**
  * Contains various examples of basic transformation and shuffle operations
