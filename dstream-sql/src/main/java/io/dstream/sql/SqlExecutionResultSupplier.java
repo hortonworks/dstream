@@ -32,10 +32,10 @@ import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import dstream.DStreamConstants;
-import dstream.support.AbstractPartitionedStreamProducingSourceSupplier;
-import dstream.support.SourceSupplier;
-import dstream.utils.Assert;
+import io.dstream.DStreamConstants;
+import io.dstream.support.AbstractPartitionedStreamProducingSourceSupplier;
+import io.dstream.support.SourceSupplier;
+import io.dstream.utils.Assert;
 
 /**
  * Implementation of the {@link SourceSupplier} which executes SQL statement and returns a

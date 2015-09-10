@@ -17,22 +17,22 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.tez.dag.api.TezConfiguration;
 
-import dstream.utils.KVUtils;
+import io.dstream.utils.KVUtils;
 
 public class SequenceFileOutputStreamsBuilder<T> implements OutputStreamsBuilder<T> {
 
 	private final FileSystem fs;
-	
+
 	private final String outputPath;
-	
+
 	private final TezConfiguration tezConfiguration;
-	
+
 	public SequenceFileOutputStreamsBuilder(FileSystem fs, String outputPath, TezConfiguration tezConfiguration){
 		this.fs = fs;
 		this.outputPath = outputPath;
 		this.tezConfiguration = tezConfiguration;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public Stream<T>[] build() {
@@ -67,7 +67,7 @@ public class SequenceFileOutputStreamsBuilder<T> implements OutputStreamsBuilder
 								this.reader.close();
 							} catch (Exception ex) {/*ignore*/}
 							throw new IllegalStateException("Failed reade Sequence File: " + fileStatus.getPath(), e);
-						} 
+						}
 						if (!hasNext){
 							try {
 								this.reader.close();
@@ -88,7 +88,7 @@ public class SequenceFileOutputStreamsBuilder<T> implements OutputStreamsBuilder
 						}
 					}
 				};
-				Stream<T> targetStream = (Stream<T>) StreamSupport.stream(Spliterators.spliteratorUnknownSize(resultIterator, Spliterator.ORDERED), false);
+				Stream<T> targetStream = StreamSupport.stream(Spliterators.spliteratorUnknownSize(resultIterator, Spliterator.ORDERED), false);
 				outputStreams.add(targetStream);
 			}
 		}

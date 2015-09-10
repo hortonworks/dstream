@@ -30,9 +30,9 @@ import org.apache.tez.runtime.library.api.KeyValuesReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dstream.SerializableStreamAssets.SerFunction;
-import dstream.support.PartitionIdHelper;
-import dstream.utils.ReflectionUtils;
+import io.dstream.SerializableStreamAssets.SerFunction;
+import io.dstream.support.PartitionIdHelper;
+import io.dstream.utils.ReflectionUtils;
 
 /**
  *

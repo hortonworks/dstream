@@ -17,19 +17,19 @@
  */
 package dstream.examples;
 
-import static dstream.utils.Tuples.Tuple2.tuple2;
-import static dstream.utils.Tuples.Tuple4.tuple4;
+import static io.dstream.utils.Tuples.Tuple2.tuple2;
+import static io.dstream.utils.Tuples.Tuple4.tuple4;
 
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
-import dstream.DStream;
-import dstream.support.Aggregators;
-import dstream.utils.ExecutionResultUtils;
-import dstream.utils.Tuples.Tuple2;
-import dstream.utils.Tuples.Tuple4;
+import io.dstream.DStream;
+import io.dstream.support.Aggregators;
+import io.dstream.utils.ExecutionResultUtils;
+import io.dstream.utils.Tuples.Tuple2;
+import io.dstream.utils.Tuples.Tuple4;
 /**
  * Contains various examples of join operation
  */

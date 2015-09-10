@@ -2,28 +2,28 @@ package org.apache.dstream.tez.io;
 
 import org.apache.tez.runtime.library.partitioner.HashPartitioner;
 
-import dstream.support.Classifier;
+import io.dstream.support.Classifier;
 
 
 
 public class TezDelegatingPartitioner extends HashPartitioner {
-	
+
 	private static Classifier delegatingClassifier;
-	
+
 	public static void setDelegator(Classifier classifier){
 		delegatingClassifier = classifier;
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	@Override
 	public int getPartition(Object key, Object value, int numPartitions) {
 		return this.doGetPartition((KeyWritable)key, (ValueWritable<?>)value, numPartitions);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	private int doGetPartition(KeyWritable key, ValueWritable<?> value, int numPartitions) {
 		int partitionId;
@@ -36,7 +36,7 @@ public class TezDelegatingPartitioner extends HashPartitioner {
 		}
 		if (delegatingClassifier != null){
 			partitionId = delegatingClassifier.getClassificationId(valueToUse);
-		} 
+		}
 		else {
 			partitionId = super.getPartition(valueToUse, null, numPartitions);
 		}

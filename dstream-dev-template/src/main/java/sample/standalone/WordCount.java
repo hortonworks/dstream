@@ -22,8 +22,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import dstream.DStream;
-import dstream.utils.ExecutionResultUtils;
+import io.dstream.DStream;
+import io.dstream.utils.ExecutionResultUtils;
 
 /**
  * Sample of stand-alone {@link DStream} application.

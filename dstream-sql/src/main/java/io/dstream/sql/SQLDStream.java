@@ -17,7 +17,7 @@
  */
 package io.dstream.sql;
 
-import dstream.DStream;
+import io.dstream.DStream;
 
 /**
  *

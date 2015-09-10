@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 
 import org.apache.dstream.tez.BaseTezTests;
 
-import dstream.DStream;
+import io.dstream.DStream;
 
 /**
  * A rudimentary WordCount
@@ -18,8 +18,8 @@ public class WordCount {
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DStream.ofType(String.class, "wc")
 				.flatMap(line -> Stream.of(line.split("\\s+")))
 				.reduceValues(word -> word, word -> 1, Integer::sum)
-			.executeAs("WordCount");
-		
+				.executeAs("WordCount");
+
 		// each stream within a stream represents a partition essentially giving you access to each result partition
 		Stream<Stream<Entry<String, Integer>>> result = resultFuture.get();
 		result.forEach(resultPartitionStream -> {

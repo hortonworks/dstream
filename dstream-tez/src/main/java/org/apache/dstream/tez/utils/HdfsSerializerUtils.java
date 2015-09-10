@@ -6,14 +6,14 @@ import java.io.OutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
-import dstream.utils.Assert;
-import dstream.utils.SerializationUtils;
+import io.dstream.utils.Assert;
+import io.dstream.utils.SerializationUtils;
 
 public class HdfsSerializerUtils {
-	
+
 	/**
 	 * Will serialize object to HDFS returning its {@link Path}.
-	 * 
+	 *
 	 * @param source
 	 * @param fs
 	 * @param targetPath
@@ -23,21 +23,21 @@ public class HdfsSerializerUtils {
 		Assert.notNull(targetPath, "'targetPath' must not be null");
 		Assert.notNull(fs, "'fs' must not be null");
 		Assert.notNull(source, "'source' must not be null");
-		
+
 		Path resultPath = targetPath.makeQualified(fs.getUri(), fs.getWorkingDirectory());
 		OutputStream targetOutputStream = null;
 		try {
 			targetOutputStream = fs.create(targetPath);
 			SerializationUtils.serialize(source, targetOutputStream);
-		} 
+		}
 		catch (Exception e) {
 			throw new IllegalStateException("Failed to serialize " + source + " to " + resultPath, e);
 		}
 		return resultPath;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param sourcePath
 	 * @param fs
 	 * @param resultType
@@ -53,7 +53,7 @@ public class HdfsSerializerUtils {
 			sourceInputStream = fs.open(sourcePath);
 			T result = SerializationUtils.deserialize(sourceInputStream, resultType);
 			return result;
-		} 
+		}
 		catch (Exception e) {
 			throw new IllegalStateException("Failed to de-serialize from " + sourcePath + " object type " + resultType, e);
 		}

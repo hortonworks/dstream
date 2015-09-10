@@ -17,7 +17,7 @@
  */
 package io.dstream.sql;
 
-import dstream.DStreamConstants;
+import io.dstream.DStreamConstants;
 /**
  *
  */
