@@ -1,0 +1,40 @@
+description = 'SQL SOURCES'
+
+group = 'dstream'
+
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'java'
+apply plugin: 'maven-publish'
+
+sourceCompatibility=1.8
+targetCompatibility=1.8
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+	mavenLocal();
+}
+
+sourceSets.main.java.srcDir 'src/main/examples'
+
+dependencies {
+	compile "dstream:dstream-api:1.0.0.M1"
+	testCompile ("junit:junit:4.8.2") {
+		exclude group: 'org.hamcrest'
+	}
+	testCompile "org.apache.derby:derby:10.11.1.1"
+	testCompile "commons-io:commons-io:2.4"
+}
+
+task wrapper(type: Wrapper) {
+    description = 'Generates gradlew[.bat] scripts'
+}
+

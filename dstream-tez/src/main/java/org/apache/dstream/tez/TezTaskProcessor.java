@@ -35,22 +35,24 @@ import dstream.support.PartitionIdHelper;
 import dstream.utils.ReflectionUtils;
 
 /**
- * 
+ *
  */
 public class TezTaskProcessor extends SimpleMRProcessor {
-	
+
 	private final Logger logger = LoggerFactory.getLogger(TezTaskProcessor.class);
-	
+
 	private final String dagName;
-	
+
 	private final int taskIndex;
-	
+
 	private final String vertexName;
-	
+
 	private final Configuration configuration;
-	
+
+	private final ThreadLocal<Integer> partitionIdHolder;
+
 	/**
-	 * 
+	 *
 	 * @param context
 	 */
 	@SuppressWarnings("unchecked")
@@ -63,7 +65,7 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 		try {
 			Field tl = ReflectionUtils.findField(PartitionIdHelper.class, "partitionIdHolder", ThreadLocal.class);
 			tl.setAccessible(true);
-			ThreadLocal<Integer> partitionIdHolder = (ThreadLocal<Integer>) tl.get(null);
+			this.partitionIdHolder = (ThreadLocal<Integer>) tl.get(null);
 			partitionIdHolder.set(this.taskIndex);
 		} catch (Exception e) {
 			throw new IllegalStateException(e);
@@ -71,42 +73,47 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public void run() throws Exception {
 		if (logger.isInfoEnabled()){
-			logger.info("Executing processor for task: " + this.taskIndex + "; DAG " 
+			logger.info("Executing processor for task: " + this.taskIndex + "; DAG "
 					+ this.dagName + "; Vertex " + this.vertexName);
 		}
-		
+
 		List<LogicalInput> sortedInputs = this.getOrderedInputs();
-		
+
 		List<?> listOfStreams = sortedInputs.stream()
-			.map(input -> {
-				try {
-					return input.getReader();
-				} catch (Exception e) {
-					throw new IllegalStateException("Failed to get reader", e);
-				}
-			})
-			.map(reader -> {
-				return reader instanceof KeyValueReader ? StreamUtils.toStream((KeyValueReader) reader) 
-						: StreamUtils.toStream((KeyValuesReader) reader);
-			}).collect(Collectors.toList());
-		
-		
-		if (listOfStreams.size() > 1){
-			System.out.println();
-			
+				.map(input -> {
+					try {
+						return input.getReader();
+					} catch (Exception e) {
+						throw new IllegalStateException("Failed to get reader", e);
+					}
+				})
+				.map(reader -> {
+					return reader instanceof KeyValueReader ? StreamUtils.toStream((KeyValueReader) reader)
+							: StreamUtils.toStream((KeyValuesReader) reader);
+				}).collect(Collectors.toList());
+
+		Task task = this.getTask();
+		Stream<?> functionArgument;
+		if (listOfStreams.size() > 0){
+			functionArgument = (Stream<?>) listOfStreams.get(0);
+			if (listOfStreams.size() > 1){
+				functionArgument = listOfStreams.stream();
+			}
 		}
-		
-		Object functionArgument = listOfStreams.get(0);
-		if (listOfStreams.size() > 1){
-			functionArgument = listOfStreams.stream();
+		else if (task.getStreamProducingSourceSupplier() != null){
+			int partitionId = this.getContext().getTaskIndex();
+			functionArgument = task.getStreamProducingSourceSupplier().get();
 		}
-		
+		else {
+			throw new IllegalStateException("Unexpected condition. Can't determine input Stream for task");
+		}
+
 		SerFunction<Object, Stream<?>> streamProcessingFunction = this.extractTaskFunction();
 		KeyValueWriter kvWriter = (KeyValueWriter) this.getOutputs().values().iterator().next().getWriter();
 		WritingConsumer consume = new WritingConsumer(kvWriter);
@@ -119,7 +126,7 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 			else {
 				streamProcessingFunction.apply(functionArgument).forEach(consume);
 			}
-		} 
+		}
 		catch (Exception e) {
 			e.printStackTrace();
 			throw new IllegalStateException("Failed to process Tez task", e);
@@ -127,9 +134,10 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 
 		logger.info("Finished processing task-[" + this.dagName + ":" + this.vertexName + ":" + this.taskIndex + "]");
 	}
-	
+
+
 	/**
-	 * 
+	 *
 	 */
 	private List<LogicalInput> getOrderedInputs(){
 		Map<String, LogicalInput> orderedInputMap = new TreeMap<String, LogicalInput>(new Comparator<String>() {
@@ -147,18 +155,25 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 				return -1;
 			}
 		});
-		
+
 		orderedInputMap.putAll(this.inputs);
 		return orderedInputMap.entrySet().stream().map(s -> s.getValue()).collect(Collectors.toList());
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	@SuppressWarnings("rawtypes")
 	private SerFunction extractTaskFunction() throws Exception {
+		Task task = this.getTask();
+		return task.getFunction();
+	}
+
+	/**
+	 *
+	 */
+	private Task getTask() throws Exception {
 		ObjectRegistry registry = this.getContext().getObjectRegistry();
-		
 		Task task = (Task) registry.get(this.vertexName);
 		if (task == null){
 			FileSystem fs = FileSystem.get(this.configuration);
@@ -167,34 +182,35 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 			payloadBuffer.get(payloadBytes);
 			String taskPath = new String(payloadBytes);
 			task = HdfsSerializerUtils.deserialize(new Path(taskPath), fs, Task.class);
-			registry.cacheForDAG(this.vertexName, task);	
+			registry.cacheForDAG(this.vertexName, task);
 			TezDelegatingPartitioner.setDelegator(task.getClassifier());
 		}
-		return task.getFunction();
+		return task;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	private static class WritingConsumer implements Consumer<Object> {
 		private final KeyWritable kw = new KeyWritable();
 		private final ValueWritable<Object> vw = new ValueWritable<>();
 		private final KeyValueWriter kvWriter;
-		
+
 		/**
-		 * 
+		 *
 		 */
 		public WritingConsumer(KeyValueWriter kvWriter){
 			this.kvWriter = kvWriter;
 		}
 		/**
-		 * 
+		 *
 		 */
+		@Override
 		@SuppressWarnings("rawtypes")
 		public void accept(Object input) {
 			try {
-				
-				if (input instanceof Entry){	
+
+				if (input instanceof Entry){
 					Entry inEntry = (Entry) input;
 					if (inEntry.getKey() == null){
 						Iterator iter = (Iterator) inEntry.getValue();
@@ -214,7 +230,7 @@ public class TezTaskProcessor extends SimpleMRProcessor {
 					this.vw.setValue(input);
 					this.kvWriter.write(this.kw, this.vw);
 				}
-			} 
+			}
 			catch (Exception e) {
 				e.printStackTrace();
 				throw new IllegalStateException("Failed to write " + input + " to KV Writer", e);
