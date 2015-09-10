@@ -8,7 +8,7 @@ This module provides all necessary components to support integration of DStream 
 Unlike typical DStream processing which defines a language to simplify sequential data processing patterns, relational data processing alreadu has a language - SQL.
 This module's focus is to integrate the result set of the query processing into DStream API.
 
-```java
+```
 DStream<Row> sqlDs = SQLDStream.create("sqlDs”); // Convenience factory method. Same as DStream.ofType(Row.class, "sqlDs");
 DStream<String> txtDs = DStream.ofType(String.class, "txtDs");
 
