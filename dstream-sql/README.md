@@ -5,8 +5,8 @@ This module provides all necessary components to support integration of DStream 
 
 ### Integration
 
-Unlike typical DStream processing which defines a language to simplify sequential data processing patterns, relational data processing alreadu has a language - SQL.
-This module's focus is to integrate the result set of the query processing into DStream API.
+Unlike typical DStream processing which defines a language to support sequential data processing patterns, relational data processing already has a language - SQL.
+This module's focus is to integrate the _result set_ of the SQL query within DStream API.
 
 ```
 DStream<Row> sqlDs = SQLDStream.create("sqlDs”); // Convenience factory method. Same as DStream.ofType(Row.class, "sqlDs");
@@ -18,6 +18,8 @@ Future<Stream<Stream<Entry<String, List<Row>>>>> resultFuture = sqlDs
   .executeAs("SQLDStreamTests”);
 ```
 The above example demonstrates the join between the _**relational**_ and _**non-relational**_ data. 
+
+Check out a complete [example](https://github.com/hortonworks/dstream/blob/master/dstream-sql/src/test/java/io/dstream/sql/SQLDStreamTests.java#L38) and its [configuration](https://github.com/hortonworks/dstream/blob/master/dstream-sql/src/test/java/SQLDStreamTests.cfg)
 
 ======
 
