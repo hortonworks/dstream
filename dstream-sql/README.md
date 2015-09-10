@@ -1,22 +1,23 @@
-### DStream Integration with Apache NiFi.
+### DStream Integration with SQL sources
 ==========
 
-This module provides all necessary components to support integration of DStream applications within the [Apache NiFi](https://github.com/apache/nifi). 
-![](https://github.com/olegz/general-resources/blob/master/DStream-sample-nifi-flow.png)
+This module provides all necessary components to support integration of DStream with relational data sources
 
 ### Integration
 
-At the moment the integration model of DStream and Apache NiFi is based on implementing a custom NiFi _Processors_. However, as project evolves new integration points will be added as required.
+Unlike typical DStream processing which defines a language to simplify sequential data processing patterns, relational data processing alreadu has a language - SQL.
+This module's focus is to integrate the result set of the query processing into DStream API.
 
-While implementing NiFi Processor from scrtatch is failrly simple, this project provides an abstract implementation of the NiFi Processor specific to DStream - [AbstractDStreamProcessor](https://github.com/hortonworks/dstream/blob/master/dstream-nifi/src/main/java/org/apache/nifi/dstream/AbstractDStreamProcessor.java). It handles all common functionality leaving sub-classes with a simple task of providing an implementation of a single operation ```getDStream(executionName)```. 
 ```java
-private <T> DStream<T> getDStream(String executionName) {
-		return (DStream<T>) DStream.ofType(String.class, "wc")
-				.flatMap(record -> Stream.of(record.split("\\s+")))
-				.reduceValues(word -> word, word -> 1, Integer::sum);
-}
+DStream<Row> sqlDs = SQLDStream.create("sqlDs”); // Convenience factory method. Same as DStream.ofType(Row.class, "sqlDs");
+DStream<String> txtDs = DStream.ofType(String.class, "txtDs");
+
+Future<Stream<Stream<Entry<String, List<Row>>>>> resultFuture = sqlDs
+	.join(txtDs).on(t2 -> t2._1().get(0).equals(Integer.parseInt(t2._2().split("\\s+")[0])))
+	.aggregateValues(t2 -> t2._2().split("\\s+")[1], t2 -> t2._1())
+  .executeAs("SQLDStreamTests”);
 ```
-For more details and examples please refer to a [Sample Template Project](https://github.com/hortonworks/dstream/tree/master/dstream-dev-template) which aside from examples provides you with the deployment instructions and utilities. 
+The above example demonstrates the join between the _**relational**_ and _**non-relational**_ data. 
 
 ======
 
