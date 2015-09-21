@@ -9,7 +9,6 @@ import org.junit.Test;
 
 import io.dstream.DStream;
 import io.dstream.support.AbstractPartitionedStreamProducingSourceSupplier;
-import io.dstream.support.PartitionIdHelper;
 import io.dstream.utils.ExecutionResultUtils;
 
 public class NonURISourcesExecutionTests extends BaseTezTests {
@@ -36,8 +35,7 @@ public class NonURISourcesExecutionTests extends BaseTezTests {
 			super(executionConfig, executionGraphName);
 		}
 		@Override
-		public Stream<String> get() {
-			int partitionId = PartitionIdHelper.getPartitionId();
+		protected Stream<String> doGet(int partitionId) {
 			return Stream.of("foo bar baz".split("\\s+"));
 		}
 	}

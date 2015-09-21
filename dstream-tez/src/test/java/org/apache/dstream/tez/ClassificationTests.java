@@ -148,7 +148,7 @@ public class ClassificationTests extends BaseTezTests {
 				.filter(line -> line.length() > 73)
 				.classify(s -> s.substring(0, 7))
 				.executeAs(this.applicationName + "-default");
-		Stream<Stream<String>> resultPartitionsStream = resultFuture.get(10000, TimeUnit.MILLISECONDS);
+		Stream<Stream<String>> resultPartitionsStream = resultFuture.get(100000, TimeUnit.MILLISECONDS);
 		//		ExecutionResultUtils.printResults(resultPartitionsStream, true);
 		List<Stream<String>> resultStreams = resultPartitionsStream.collect(Collectors.toList());
 		assertEquals(1, resultStreams.size());

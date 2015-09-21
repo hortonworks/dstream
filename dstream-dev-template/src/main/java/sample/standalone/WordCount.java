@@ -19,7 +19,6 @@ package sample.standalone;
 
 import java.util.Map.Entry;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import io.dstream.DStream;
@@ -36,9 +35,8 @@ public class WordCount {
 				.reduceValues(word -> word, word -> 1, Integer::sum)
 				.executeAs("WordCount");
 
-		Stream<Stream<Entry<String, Integer>>> resultPartitionsStream = resultFuture.get(1000, TimeUnit.MILLISECONDS);
-		ExecutionResultUtils.printResults(resultPartitionsStream);
-
+		Stream<Stream<Entry<String, Integer>>> resultPartitionsStream = resultFuture.get();
+		ExecutionResultUtils.printResults(resultPartitionsStream, true);
 	}
 
 }

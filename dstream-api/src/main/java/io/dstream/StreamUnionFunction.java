@@ -28,7 +28,7 @@ import io.dstream.utils.Tuples.Tuple2;
  * Implementation of {@link SerFunction} which will union multiple streams
  * while applying user functionality at check points (see this{@link #addCheckPoint(int)}.
  */
-class StreamUnionFunction extends AbstractMultiStreamProcessingFunction {
+class StreamUnionFunction extends AbstractStreamMergingFunction {
 	private static final long serialVersionUID = -2955908820407886806L;
 	
 	private final boolean distinct;

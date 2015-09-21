@@ -184,7 +184,7 @@ final class DStreamExecutionGraphBuilder {
 		Object[] arguments = invocation.getArguments();
 		Ops operation = Ops.valueOf(method.getName());
 		
-		AbstractMultiStreamProcessingFunction streamsCombiner;
+		AbstractStreamMergingFunction streamsCombiner;
 		if (this.currentStreamOperation == null){
 			this.createDefaultExtractOperation();
 			// this condition possible when doing join without classification, so no need to 
@@ -195,7 +195,7 @@ final class DStreamExecutionGraphBuilder {
 			this.currentStreamOperation.setStreamsCombiner(operation.name(), streamsCombiner);
 		}
 		else if (this.currentStreamOperation.isStreamsCombiner()) {
-			streamsCombiner = (AbstractMultiStreamProcessingFunction)(SerFunction)this.currentStreamOperation.getStreamOperationFunction();
+			streamsCombiner = (AbstractStreamMergingFunction)(SerFunction)this.currentStreamOperation.getStreamOperationFunction();
 		}
 		else {
 			streamsCombiner = this.createStreamCombiner(operation.name(), this.determineUnmapFunction(this.currentStreamOperation.getLastOperationName()));
@@ -232,7 +232,7 @@ final class DStreamExecutionGraphBuilder {
 		
 		if (this.combiningStreams){
 			SerFunction<?,?> currentFunction = this.currentStreamOperation.getStreamOperationFunction();
-			AbstractMultiStreamProcessingFunction joiner = (AbstractMultiStreamProcessingFunction) currentFunction;
+			AbstractStreamMergingFunction joiner = (AbstractStreamMergingFunction) currentFunction;
 			joiner.addTransformationOrPredicate(currentStreamFunction);
 		}
 		else {
@@ -334,7 +334,7 @@ final class DStreamExecutionGraphBuilder {
 	 * 
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes" })
-	private AbstractMultiStreamProcessingFunction createStreamCombiner(String operationName, SerFunction firstStreamPreProcessingFunction) {
+	private AbstractStreamMergingFunction createStreamCombiner(String operationName, SerFunction firstStreamPreProcessingFunction) {
 		return operationName.equals(Ops.join.name())
 				? new StreamJoinerFunction(firstStreamPreProcessingFunction)
 					: new StreamUnionFunction(operationName.equals(Ops.union.name()), firstStreamPreProcessingFunction);

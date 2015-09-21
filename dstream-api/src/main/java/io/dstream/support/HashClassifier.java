@@ -20,17 +20,17 @@ package io.dstream.support;
 import java.util.Map.Entry;
 
 /**
- * Implementation of the {@link Classifier} for hash based classifications 
+ * Implementation of the {@link Classifier} for hash based classifications
  *
  */
 public class HashClassifier extends Classifier {
 	private static final long serialVersionUID = -3799649258371438298L;
-	
+
 	/**
 	 * Constructs this instance with <i>classificationSize</i>
 	 */
-	public HashClassifier(int groupSize){
-		super(groupSize);
+	public HashClassifier(int classificationSize){
+		super(classificationSize);
 	}
 
 	/**
@@ -41,7 +41,7 @@ public class HashClassifier extends Classifier {
 	@Override
 	public int doGetClassificationId(Object input) {
 		Object hashValue = input instanceof Entry ? ((Entry)input).getKey() : input;
-		
+
 		int groupId = (hashValue.hashCode() & Integer.MAX_VALUE) % this.getSize();
 		return groupId;
 	}

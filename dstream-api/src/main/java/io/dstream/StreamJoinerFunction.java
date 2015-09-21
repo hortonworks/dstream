@@ -32,7 +32,7 @@ import io.dstream.utils.Tuples.Tuple2;
  * Implementation of {@link SerFunction} which will join multiple streams
  * while applying user functionality at check points (see this{@link #addCheckPoint(int)}.
  */
-class StreamJoinerFunction extends AbstractMultiStreamProcessingFunction {
+class StreamJoinerFunction extends AbstractStreamMergingFunction {
 	private static final long serialVersionUID = -3615487628958776468L;
 	
 	private static CollectionFactory collectionFactory;

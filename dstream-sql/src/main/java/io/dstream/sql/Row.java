@@ -20,7 +20,7 @@ package io.dstream.sql;
 import java.io.Serializable;
 
 /**
- * Strategy to define columnar record structure
+ * Strategy to define generic columnar record structure
  */
 public interface Row extends Serializable {
 

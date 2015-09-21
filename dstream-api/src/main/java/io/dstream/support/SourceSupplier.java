@@ -17,40 +17,45 @@
  */
 package io.dstream.support;
 
-import java.net.URI;
 import java.util.Properties;
 
 import io.dstream.DStreamConstants;
 import io.dstream.SerializableStreamAssets.SerSupplier;
+import io.dstream.utils.Assert;
 import io.dstream.utils.ReflectionUtils;
 
 
 /**
  * Specialized definition of {@link SerSupplier} to return an array of sources of type T
  *
- * @param <T>
+ * @param <T> the type of sources
  */
 public abstract class SourceSupplier<T> implements SerSupplier<T> {
 	private static final long serialVersionUID = 1041398921739932285L;
 
 	protected final Properties executionConfig;
 
-	protected final String executionGraphName;
+	protected final String pipelineName;
 
 	/**
-	 *
+	 * Constructs this instance using execution configuration
+	 * properties and the name of the pipeline to which it is supplying sources to.
+	 * See {@link DStreamConstants#SOURCE} and {@link DStreamConstants#SOURCE_SUPPLIER}
+	 * properties.
 	 */
-	public SourceSupplier(Properties executionConfig, String executionGraphName) {
+	public SourceSupplier(Properties executionConfig, String pipelineName) {
+		Assert.notNull(executionConfig, "'executionConfig' must not be null");
+		Assert.notEmpty(pipelineName, "'pipelineName' must not be null or empty");
 		this.executionConfig = executionConfig;
-		this.executionGraphName = executionGraphName;
+		this.pipelineName = pipelineName;
 	}
 
 	/**
-	 * Factory method that creates an instance of the {@link SourceSupplier} from
-	 * the {@link DStreamConstants#SOURCE} property.<br>
-	 * The value of the {@link DStreamConstants#SOURCE} property could be either a {@link URI} or
-	 * the fully qualified class name of the {@link SourceSupplier} implementation, essentially
-	 * providing a mechanism to support multiple types of sources.
+	 * Factory method that constructs the instance of the SourceSupplier by using
+	 * execution configuration properties and the name of the pipeline to which it
+	 * is supplying sources to.
+	 * See {@link DStreamConstants#SOURCE} and {@link DStreamConstants#SOURCE_SUPPLIER}
+	 * properties.
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static <T> SourceSupplier<T> create(Properties executionConfig, String pipelineName, SourceFilter<?> sourceFilter){
