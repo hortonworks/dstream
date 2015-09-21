@@ -78,6 +78,9 @@ final class LocalDStreamExecutionEngine {
 		}
 	}
 
+	/**
+	 *
+	 */
 	public Stream<Stream<?>> execute(DStreamExecutionGraph pipeline) {
 		return this.execute(pipeline, false);
 	}
@@ -214,7 +217,6 @@ final class LocalDStreamExecutionEngine {
 		 * If an element is not a Key/Value Entry,then values will be grouped into a List - List[Values]
 		 * 		The resulting partition entry will look like this: {0=[v1,v2,v1,v3],v4}
 		 */
-		//Stream<Map<Integer, Object>> groupedPartitionsStream =
 		Stream<Map<Integer, ?>> groupedPartitionsStream = Stream.of(partitionedStream)
 				.map(stream -> stream.collect(Collectors.toMap((Entry<Integer, Object> s) -> s.getKey(), s -> (Object)new RefHolder(s.getValue()), ShuffleHelper::group)));
 

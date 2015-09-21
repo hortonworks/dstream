@@ -20,11 +20,11 @@ package io.dstream;
 import java.util.List;
 
 /**
- * Represents an <i>execution graph</i> built from the invocations on 
+ * Represents an <i>execution graph</i> built from the invocations on
  * the {@link DStream}.<br>
  * <b><i>Execution graph</i></b> is a sort of an <i>abstract syntax tree</i> (AST)
- * of finalized {@link DStreamOperation}s ready to be mapped to and executed by the 
- * target system with minimal to no modifications. <br>
+ * of finalized {@link DStreamOperation}s ready to be mapped to the
+ * target system for execution with minimal to no modifications. <br>
  *
  */
 public final class DStreamExecutionGraph {
@@ -34,16 +34,16 @@ public final class DStreamExecutionGraph {
 	private final Class<?> sourceElementType;
 
 	private final String executioniGraphName;
-	
+
 	/**
-	 * 
+	 *
 	 */
 	DStreamExecutionGraph(Class<?> sourceElementType, String executioniGraphName, List<DStreamOperation> operations){
 		this.sourceElementType = sourceElementType;
 		this.executioniGraphName = executioniGraphName;
 		this.operations = operations;
 	}
-	
+
 	/**
 	 * Returns immutable {@link List} of {@link DStreamOperation}s.
 	 */
@@ -52,7 +52,7 @@ public final class DStreamExecutionGraph {
 	}
 
 	/**
-	 * Returns the type of element of this execution graph. The type derives from the 
+	 * Returns the type of element of this execution graph. The type derives from the
 	 * type declared by the {@link DStream} during its initial construction.
 	 */
 	public Class<?> getSourceElementType() {
@@ -66,9 +66,9 @@ public final class DStreamExecutionGraph {
 	public String getName() {
 		return this.executioniGraphName;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	@Override
 	public String toString(){

@@ -47,23 +47,26 @@ public class SqlExecutionResultSupplier extends AbstractPartitionedStreamProduci
 
 	private Logger logger = Logger.getLogger(SqlExecutionResultSupplier.class.getName());
 
-	public SqlExecutionResultSupplier(Properties executionConfig, String executionGraphName) {
-		super(executionConfig, executionGraphName);
+	/**
+	 *
+	 */
+	public SqlExecutionResultSupplier(Properties executionConfig, String pipelineName) {
+		super(executionConfig, pipelineName);
 	}
 
 	/**
 	 *
 	 */
 	@Override
-	public Stream<Row> get() {
-		String sql = executionConfig.getProperty(DStreamConstants.SOURCE + executionGraphName);
-		Assert.notEmpty(sql, "'" + (DStreamConstants.SOURCE + this.executionGraphName) +  "' property can not be found in execution configuration file.");
+	protected Stream<Row> doGet(int partitionId) {
+		String sql = this.executionConfig.getProperty(DStreamConstants.SOURCE + this.pipelineName);
+		Assert.notEmpty(sql, "'" + (DStreamConstants.SOURCE + this.pipelineName) +  "' property can not be found in execution configuration file.");
 
-		String driver = this.executionConfig.getProperty(DStreamSQLConstants.SQL_DRIVER + this.executionGraphName);
-		Assert.notEmpty(driver, "'" + (DStreamSQLConstants.SQL_DRIVER + this.executionGraphName) +  "' property can not be found in execution configuration file.");
+		String driver = this.executionConfig.getProperty(DStreamSQLConstants.SQL_DRIVER + this.pipelineName);
+		Assert.notEmpty(driver, "'" + (DStreamSQLConstants.SQL_DRIVER + this.pipelineName) +  "' property can not be found in execution configuration file.");
 
-		String url = this.executionConfig.getProperty(DStreamSQLConstants.SQL_URL + this.executionGraphName);
-		Assert.notEmpty(url, "'" + (DStreamSQLConstants.SQL_URL + this.executionGraphName) +  "' property can not be found in execution configuration file.");
+		String url = this.executionConfig.getProperty(DStreamSQLConstants.SQL_URL + this.pipelineName);
+		Assert.notEmpty(url, "'" + (DStreamSQLConstants.SQL_URL + this.pipelineName) +  "' property can not be found in execution configuration file.");
 
 		Connection connection = null;
 		try {
@@ -84,8 +87,8 @@ public class SqlExecutionResultSupplier extends AbstractPartitionedStreamProduci
 							close(rs, c);
 						}
 						return hasNext;
-					} catch (Exception e) {
-
+					}
+					catch (Exception e) {
 						close(rs, c);
 						throw new IllegalStateException(e);
 					}
@@ -98,7 +101,8 @@ public class SqlExecutionResultSupplier extends AbstractPartitionedStreamProduci
 						for (int i = 1; i <= rsmd.getColumnCount(); i++) {
 							columnValues.add(rs.getObject(i));
 						}
-					} catch (Exception e) {
+					}
+					catch (Exception e) {
 						close(rs, c);
 						throw new IllegalStateException(e);
 					}

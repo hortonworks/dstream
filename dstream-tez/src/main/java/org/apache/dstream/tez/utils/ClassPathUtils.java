@@ -1,12 +1,13 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,16 +42,16 @@ import org.apache.commons.logging.LogFactory;
 import com.google.common.base.Preconditions;
 
 /**
- * Utility class which contains methods related to generating JAR file 
+ * Utility class which contains methods related to generating JAR file
  * and/or byte stream from passed directory.
- * Currently used as a dev feature allowing auto-generation of the JAR filr from 
+ * Currently used as a dev feature allowing auto-generation of the JAR filr from
  * local dev workspace when submitting Tez jobs directly from the IDE.
  */
 public class ClassPathUtils {
 	private final static Log logger = LogFactory.getLog(ClassPathUtils.class);
-	
+
 	/**
-	 * 
+	 *
 	 * @param resource
 	 */
 	public static void addResourceToClassPath(File resource) {
@@ -64,7 +65,7 @@ public class ClassPathUtils {
 			throw new IllegalStateException(e);
 		}
 	}
-	
+
 	/**
 	 * Will create a JAR file from base dir
 	 *
@@ -90,9 +91,9 @@ public class ClassPathUtils {
 		}
 		return jarFile;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param applicationName
 	 * @return
 	 */
@@ -150,7 +151,7 @@ public class ClassPathUtils {
 					target.write(buffer, 0, count);
 				}
 				target.closeEntry();
-			} 
+			}
 			catch (Exception e) {
 				String message = e.getMessage();
 				if (message != null){
@@ -169,9 +170,9 @@ public class ClassPathUtils {
 				in.close();
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param exclusionFile
 	 * @return
 	 */
@@ -187,8 +188,8 @@ public class ClassPathUtils {
 					exclusionPatterns.add(line.trim());
 				}
 				classpathExclusions = exclusionPatterns.toArray(new String[]{});
-				reader.close();	
-			}			
+				reader.close();
+			}
 		} catch (Exception e) {
 			logger.warn("Failed to build the list of classpath exclusion. ", e);
 		}

@@ -48,8 +48,7 @@ public abstract class AbstractDStreamExecutionDelegate implements DStreamExecuti
 						List<Stream<Stream<?>>> resultStreamsList = doExecute(executionName, executionConfig, executionPipelines);
 
 						@SuppressWarnings("rawtypes")
-						Stream resultStreams = resultStreamsList.size() == 1
-						? resultStreamsList.get(0)
+						Stream resultStreams = resultStreamsList.size() == 1 ? resultStreamsList.get(0)
 								: resultStreamsList.stream();
 
 						return (Stream<Stream<?>>) mixinWithCloseHandler(resultStreams, new Runnable() {

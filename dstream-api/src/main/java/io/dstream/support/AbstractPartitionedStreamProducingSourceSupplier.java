@@ -21,18 +21,37 @@ import java.util.Properties;
 import java.util.stream.Stream;
 
 /**
+ * Primary goal of this implementation of {@link SourceSupplier} is to provide sub-classes with
+ * current partition identifier enabling them to supply the correct {@link Stream}.
+ * It does so by providing an additional {@link #doGet(int)} method which is called by
+ * {@link #get()} after partition identifier is determined. It also makes {@link #get()}
+ * 'final' ensuring there is no confusing which method must be implemented by sub-classes.
  *
- * @param <T>
+ * @param <T> the type of elements in the returned {@link Stream}
  */
 public abstract class AbstractPartitionedStreamProducingSourceSupplier<T> extends SourceSupplier<Stream<T>>{
 
 	private static final long serialVersionUID = -7671596834377215486L;
 
-	public AbstractPartitionedStreamProducingSourceSupplier(Properties executionConfig, String executionGraphName) {
-		super(executionConfig, executionGraphName);
+	/**
+	 *
+	 */
+	public AbstractPartitionedStreamProducingSourceSupplier(Properties executionConfig, String pipelineName) {
+		super(executionConfig, pipelineName);
 	}
 
-	protected String getSourceProperty() {
-		return null;
+	/**
+	 * Returns the {@link Stream} representing current partition.
+	 */
+	@Override
+	public final Stream<T> get() {
+		return this.doGet(PartitionIdHelper.getPartitionId());
 	}
+
+	/**
+	 * Returns the {@link Stream} representing partition identified by the 'partitionId'.
+	 * @param partitionId partition identifier
+	 * @return {@link Stream} representing partition identified by the 'partitionId'.
+	 */
+	protected abstract Stream<T> doGet(int partitionId) ;
 }

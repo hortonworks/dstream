@@ -19,20 +19,43 @@ package io.dstream.utils;
 
 import java.util.Iterator;
 
+/**
+ * Implementation of the {@link Iterator} over a single value.
+ * Primarily used by aggregate operations to ensure type consistency of the
+ * values in Key/Value pairs. <br>
+ * When two or more values are aggregated they form
+ * a natural collection which provides an {@link Iterator}.
+ * If a particular value didn't get a chance to be combined with another value,
+ * collection is not formed and value (in Key/Value pair) is represented <i>as is</i>
+ * resulting in inconsistent value types.
+ *
+ * @param <T> the type of elements returned by this iterator
+ */
 public class SingleValueIterator<T> implements Iterator<T>{
 	private final T v;
 	boolean hasNext = true;
-	
+
+	/**
+	 * Constructs a new {@link SingleValueIterator} over a value 'v'.
+	 */
 	public SingleValueIterator(T v) {
 		this.v = v;
 	}
+
+	/**
+	 *
+	 */
 	@Override
 	public boolean hasNext() {
-		return hasNext;
+		return this.hasNext;
 	}
+
+	/**
+	 *
+	 */
 	@Override
 	public T next() {
-		hasNext = false;
+		this.hasNext = false;
 		return v;
 	}
 }

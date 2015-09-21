@@ -1,12 +1,13 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -44,16 +45,16 @@ import org.apache.tez.dag.api.TezConfiguration;
  */
 public class HadoopUtils {
 	private static final Log logger = LogFactory.getLog(HadoopUtils.class);
-	
+
 	/**
-	 * 
+	 *
 	 * @param configuration
 	 * @return
 	 */
 	public static FileSystem getFileSystem(Configuration configuration){
-		try {		
+		try {
 			return FileSystem.get(configuration);
-		} 
+		}
 		catch (Exception e) {
 			throw new IllegalStateException("Failed to access FileSystem", e);
 		}
@@ -61,7 +62,7 @@ public class HadoopUtils {
 
 	/**
 	 * Creates {@link LocalResource}s based on the current user's classpath
-	 * 
+	 *
 	 * @param fs
 	 * @param classPathDir
 	 * @return
@@ -70,10 +71,10 @@ public class HadoopUtils {
 		Map<String, LocalResource> localResources = provisionAndLocalizeCurrentClasspath(fs, classPathDir);
 		return localResources;
 	}
-	
+
 	/**
 	 * Provisions resource represented as {@link File} to the {@link FileSystem} for a given application
-	 * 
+	 *
 	 * @param localResource
 	 * @param fs
 	 * @param applicationName
@@ -85,10 +86,10 @@ public class HadoopUtils {
 		provisioinResourceToFs(fs, new Path(localResource.getAbsolutePath()), provisionedPath);
 		return provisionedPath;
 	}
-	
+
 	/**
 	 * Creates a single {@link LocalResource} for the provisioned resource identified with {@link Path}
-	 * 
+	 *
 	 * @param fs
 	 * @param provisionedResourcePath
 	 * @return
@@ -102,16 +103,16 @@ public class HadoopUtils {
 					LocalResourceVisibility.APPLICATION, scFileStatus.getLen(),
 					scFileStatus.getModificationTime());
 			return localResource;
-		} 
+		}
 		catch (Exception e) {
 			throw new IllegalStateException("Failed to communicate with FileSystem while creating LocalResource: " + fs, e);
 		}
 	}
-	
+
 	/**
-	 * Will provision current classpath to YARN and return an array of 
+	 * Will provision current classpath to YARN and return an array of
 	 * {@link Path}s representing provisioned resources
-	 * If 'generate-jar' system property is set it will also generate the JAR for the current 
+	 * If 'generate-jar' system property is set it will also generate the JAR for the current
 	 * working directory (mainly used when executing from IDE)
 	 */
 	private static Path[] provisionClassPath(FileSystem fs, String applicationName, String[] classPathExclusions){
@@ -119,9 +120,9 @@ public class HadoopUtils {
 		boolean generateJar = genJarProperty != null && Boolean.parseBoolean(genJarProperty);
 		List<Path> provisionedPaths = new ArrayList<Path>();
 		List<File> generatedJars = new ArrayList<File>();
-		
+
 		boolean confFromHadoopConfDir = generateConfigJarFromHadoopConfDir(fs, applicationName, provisionedPaths, generatedJars);
-		
+
 		TezConfiguration tezConf = new TezConfiguration(fs.getConf());
 		boolean provisionTez = true;
 		if (tezConf.get("tez.lib.uris") != null){
@@ -130,11 +131,11 @@ public class HadoopUtils {
 		URL[] classpath = ((URLClassLoader) ClassLoader.getSystemClassLoader()).getURLs();
 		for (URL classpathUrl : classpath) {
 			File f = new File(classpathUrl.getFile());
-			if (f.isDirectory()) {			
+			if (f.isDirectory()) {
 				if (generateJar){
 					String jarFileName = ClassPathUtils.generateJarFileName("application");
 					f = doGenerateJar(f, jarFileName, generatedJars, "application");
-				} 
+				}
 				else if (f.getName().equals("conf") && !confFromHadoopConfDir){
 					String jarFileName = ClassPathUtils.generateJarFileName("conf_application");
 					f = doGenerateJar(f, jarFileName, generatedJars, "configuration");
@@ -142,7 +143,7 @@ public class HadoopUtils {
 				else {
 					f = null;
 				}
-			} 
+			}
 			if (f != null){
 				if (f.getName().startsWith("tez-") && !provisionTez){
 					logger.info("Skipping provisioning of " + f.getName() + " since Tez libraries are already provisioned");
@@ -162,21 +163,21 @@ public class HadoopUtils {
 					}
 				}
 			}
-			
+
 		}
-		
+
 		for (File generatedJar : generatedJars) {
 			try {
-				generatedJar.delete(); 
+				generatedJar.delete();
 			} catch (Exception e) {
 				logger.warn("Failed to delete generated jars", e);
 			}
 		}
 		return provisionedPaths.toArray(new Path[]{});
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	private static File doGenerateJar(File f, String jarFileName, List<File> generatedJars, String subMessage) {
 		if (logger.isDebugEnabled()){
@@ -186,9 +187,9 @@ public class HadoopUtils {
 		generatedJars.add(jarFile);
 		return jarFile;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	private static boolean generateConfigJarFromHadoopConfDir(FileSystem fs, String applicationName, List<Path> provisionedPaths, List<File> generatedJars){
 		boolean generated = false;
@@ -199,38 +200,7 @@ public class HadoopUtils {
 			File jarFile = doGenerateJar(confDir, jarFileName, generatedJars, "configuration (HADOOP_CONF_DIR)");
 			String destinationFilePath = applicationName + "/" + jarFile.getName();
 			Path provisionedPath = new Path(fs.getHomeDirectory(), destinationFilePath);
-			
-			try {
-				provisioinResourceToFs(fs, new Path(jarFile.getAbsolutePath()), provisionedPath);
-				provisionedPaths.add(provisionedPath);
-				generated = true;
-			} catch (Exception e) {
-				logger.warn("Failed to provision " + provisionedPath + "; " + e.getMessage());
-				if (logger.isDebugEnabled()){
-					logger.warn("Failed to provision " + provisionedPath, e);
-				}	
-				throw new IllegalStateException(e);
-			}
-		}
-		
-		String tezConfDir = System.getenv().get("TEZ_CONF_DIR");
-		if (tezConfDir != null && tezConfDir.trim().length() > 0){
-			String jarFileName = ClassPathUtils.generateJarFileName("conf_tez");
-			File confDir = new File(tezConfDir.trim());
-			File jarFile = doGenerateJar(confDir, jarFileName, generatedJars, "configuration (TEZ_CONF_DIR)");
-			
-			try {
-				URLClassLoader cl = (URLClassLoader) ClassLoader.getSystemClassLoader();
-				Method m = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
-				m.setAccessible(true);
-				m.invoke(cl, jarFile.toURI().toURL());
-			} catch (Exception e) {
-				throw new IllegalStateException(e);
-			}
-			
-			String destinationFilePath = applicationName + "/" + jarFile.getName();
-			Path provisionedPath = new Path(fs.getHomeDirectory(), destinationFilePath);
-			
+
 			try {
 				provisioinResourceToFs(fs, new Path(jarFile.getAbsolutePath()), provisionedPath);
 				provisionedPaths.add(provisionedPath);
@@ -242,13 +212,44 @@ public class HadoopUtils {
 				}
 				throw new IllegalStateException(e);
 			}
-			
+		}
+
+		String tezConfDir = System.getenv().get("TEZ_CONF_DIR");
+		if (tezConfDir != null && tezConfDir.trim().length() > 0){
+			String jarFileName = ClassPathUtils.generateJarFileName("conf_tez");
+			File confDir = new File(tezConfDir.trim());
+			File jarFile = doGenerateJar(confDir, jarFileName, generatedJars, "configuration (TEZ_CONF_DIR)");
+
+			try {
+				URLClassLoader cl = (URLClassLoader) ClassLoader.getSystemClassLoader();
+				Method m = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
+				m.setAccessible(true);
+				m.invoke(cl, jarFile.toURI().toURL());
+			} catch (Exception e) {
+				throw new IllegalStateException(e);
+			}
+
+			String destinationFilePath = applicationName + "/" + jarFile.getName();
+			Path provisionedPath = new Path(fs.getHomeDirectory(), destinationFilePath);
+
+			try {
+				provisioinResourceToFs(fs, new Path(jarFile.getAbsolutePath()), provisionedPath);
+				provisionedPaths.add(provisionedPath);
+				generated = true;
+			} catch (Exception e) {
+				logger.warn("Failed to provision " + provisionedPath + "; " + e.getMessage());
+				if (logger.isDebugEnabled()){
+					logger.warn("Failed to provision " + provisionedPath, e);
+				}
+				throw new IllegalStateException(e);
+			}
+
 		}
 		return generated;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	private static boolean shouldProvision(String path, String[] classPathExclusions){
 		if (classPathExclusions != null){
@@ -265,7 +266,7 @@ public class HadoopUtils {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	private static Map<String, LocalResource> createLocalResources(FileSystem fs, Path[] provisionedResourcesPaths) {
 		Map<String, LocalResource> localResources = new LinkedHashMap<String, LocalResource>();
@@ -277,7 +278,7 @@ public class HadoopUtils {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	private static synchronized void provisioinResourceToFs(FileSystem fs, Path sourcePath, Path destPath) throws Exception {
 		if (logger.isDebugEnabled()){
@@ -290,9 +291,9 @@ public class HadoopUtils {
 			logger.debug("Skipping provisioning of " + destPath + " since it already exists.");
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	private static Map<String, LocalResource> provisionAndLocalizeCurrentClasspath(FileSystem fs, String appName) {
 		Path[] provisionedResourcesPaths = HadoopUtils.provisionClassPath(fs, appName, ClassPathUtils.initClasspathExclusions(TezConstants.CLASSPATH_EXCLUSIONS));

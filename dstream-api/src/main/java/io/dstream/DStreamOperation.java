@@ -81,10 +81,10 @@ public final class DStreamOperation {
 	
 	/**
 	 * Returns <i>true</i> if this operation's function is an
-	 * instance of {@link AbstractMultiStreamProcessingFunction}
+	 * instance of {@link AbstractStreamMergingFunction}
 	 */
 	public boolean isStreamsCombiner() {
-		return this.streamOperationFunction instanceof AbstractMultiStreamProcessingFunction;
+		return this.streamOperationFunction instanceof AbstractStreamMergingFunction;
 	}
 	
 	/**
@@ -193,10 +193,10 @@ public final class DStreamOperation {
 	}
 	
 	/**
-	 * Sets the given instance of {@link AbstractMultiStreamProcessingFunction} as the 
+	 * Sets the given instance of {@link AbstractStreamMergingFunction} as the 
 	 * function of this {@link DStreamOperation}.
 	 */
-	void setStreamsCombiner(String operationName, AbstractMultiStreamProcessingFunction streamsCombiner) {
+	void setStreamsCombiner(String operationName, AbstractStreamMergingFunction streamsCombiner) {
 		this.operationNames.add(operationName);
 		this.streamOperationFunction = streamsCombiner;
 	}

@@ -1,12 +1,13 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,37 +28,39 @@ import java.nio.ByteBuffer;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 
 /**
- * 
+ *
  */
 @SuppressWarnings("unchecked")
 public abstract class TypeAwareWritable<T> implements NewWritable<T> {
-	
-    protected T value;
-	
+
+	protected T value;
+
 	private byte valueType = NULL;
-	
+
 	private final ValueEncoder valueEncoder = new ValueEncoder();
 
 	/**
-	 * 
+	 *
 	 */
+	@Override
 	public void setValue(T value) {
 		this.value = value;
 		this.determineValueType(value);
 		this.valueType = this.valueEncoder.valueType;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
+	@Override
 	public T getValue() {
 		return this.value;
 	}
-	
-	
-	
+
+
+
 	/**
-	 * 
+	 *
 	 */
 	@Override
 	public int hashCode() {
@@ -67,9 +70,9 @@ public abstract class TypeAwareWritable<T> implements NewWritable<T> {
 		}
 		return hashCode;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	@Override
 	public void write(DataOutput out) throws IOException {
@@ -77,7 +80,7 @@ public abstract class TypeAwareWritable<T> implements NewWritable<T> {
 		if (this.valueType != NULL){
 			try {
 				out.write(this.valueEncoder.valueBytes);
-			} 
+			}
 			catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -85,7 +88,7 @@ public abstract class TypeAwareWritable<T> implements NewWritable<T> {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	@Override
 	public void readFields(DataInput in) throws IOException {
@@ -104,7 +107,7 @@ public abstract class TypeAwareWritable<T> implements NewWritable<T> {
 			try {
 				ObjectInputStream ois = new ObjectInputStream((DataInputStream) in);
 				T value = (T) ois.readObject();
-				this.value = (T) value;
+				this.value = value;
 			} catch (Exception e) {
 				throw new IllegalStateException(
 						"Failed to deserialize value", e);
@@ -116,9 +119,9 @@ public abstract class TypeAwareWritable<T> implements NewWritable<T> {
 							+ this.valueType);
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	@Override
 	public String toString(){
@@ -128,11 +131,11 @@ public abstract class TypeAwareWritable<T> implements NewWritable<T> {
 			return this.value.toString();
 		}
 	}
-	
+
 	/**
-	 * NOTE: The below code is temporary and both conversion and ser/deser will be exposed through externally 
+	 * NOTE: The below code is temporary and both conversion and ser/deser will be exposed through externally
 	 * configurable framework!
-	 * 
+	 *
 	 * @param value
 	 * @return
 	 */
@@ -140,7 +143,7 @@ public abstract class TypeAwareWritable<T> implements NewWritable<T> {
 		if (value instanceof Integer){
 			this.valueEncoder.valueType = INTEGER;
 			this.valueEncoder.valueBytes = ByteBuffer.allocate(4).putInt((Integer)value).array();
-		} 
+		}
 		else if (value instanceof Long) {
 			this.valueEncoder.valueType = LONG;
 			this.valueEncoder.valueBytes = ByteBuffer.allocate(8).putLong((Long)value).array();
@@ -167,13 +170,13 @@ public abstract class TypeAwareWritable<T> implements NewWritable<T> {
 			}
 		}
 	}
-	
+
 	private final static byte INTEGER = -128;
 	private final static byte STRING = -127;
 	private final static byte LONG = -126;
 	private final static byte OBJECT = -125;
 	private final static byte NULL = -124;
-	
+
 	/**
 	 */
 	private class ValueEncoder {
