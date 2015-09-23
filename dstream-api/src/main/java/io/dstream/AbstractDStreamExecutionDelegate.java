@@ -35,6 +35,9 @@ import java.util.stream.Stream;
  * to be delegated to the the close handler returned by the {@link #getCloseHandler()}.
  */
 public abstract class AbstractDStreamExecutionDelegate implements DStreamExecutionDelegate {
+	/**
+	 *
+	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public Future<Stream<Stream<?>>> execute(String executionName, Properties executionConfig, DStreamExecutionGraph... executionPipelines) {
@@ -84,6 +87,8 @@ public abstract class AbstractDStreamExecutionDelegate implements DStreamExecuti
 	}
 
 	/**
+	 * A delegate operation invoked by {@link #execute(String, Properties, DStreamExecutionGraph...)} to
+	 * be implemented by sub-classes.
 	 *
 	 * @param executionName the name of this execution
 	 * @param executionConfig properties representing execution configuration
