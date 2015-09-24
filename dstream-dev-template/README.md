@@ -18,6 +18,7 @@ Simply import the project into your IDE as Maven project
 From the root of the project execute the following command:
 
 For Eclipse: ```./gradlew clean eclipse ```
+
 For Idea: ```./gradlew clean idea```
 
 Then import the project as regular project (no extra plug-ins required). For more details see [IDE Integration](Getting-Started#ide-integration) section.
