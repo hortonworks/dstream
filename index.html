@@ -41,7 +41,6 @@ DStream.ofType(String.class, "wc")
     .reduceValues(word -> word, word -> 1, Integer::sum)
   .executeAs("WordCount");
 </pre>
- <p class="view">Please visit the Project on <a href="https://github.com/hortonworks/dstream">GitHub</a> for more details.</p>
  
 <h3>
 <a id="welcome-to-dstream" class="anchor" href="#welcome-to-dstream" aria-hidden="true"><span class="octicon octicon-link"></span></a>Lates release - 1.0.0.M2</h3>
@@ -53,5 +52,6 @@ DStream.ofType(String.class, "wc")
  <b>ArtifactIDs:</b> dstream-api, dstream-tez, dstream-sql, dstream-spark, dstream-nifi
  </pre>
 </p>
+<p class="view">Please visit the Project on <a href="https://github.com/hortonworks/dstream">GitHub</a> for more details.</p>
   </body>
 </html>
