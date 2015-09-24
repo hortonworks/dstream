@@ -2,37 +2,25 @@
 ==========
 
 The primary focus of this project is to allow developer to quickly setup a [_**DStream**_](https://github.com/hortonworks/dstream) development 
-environment to work on both stand-alone and [Apache NiFi](https://nifi.apache.org/) integrated _DStream_ applications. So as a result, this project comes with both samples.
+environment to work on stand-alone Apache Tez as well as  [Apache NiFi](https://nifi.apache.org/) integrated _DStream_ applications. So as a result, this project comes with samples for each.
 
-After cloning, your project will have all the required dependencies and build plug-ins to get started. You may then rename the project. 
-> IMPORTANT: When renaming the project, ensure you rename the relevant properties in ```settings.gradle```, ```build.gradle```, ```gradle.properties```. Just look for ```#RENAME``` or ```//RENAME``` tags above the relevant property in these 3 files.
+After cloning, your project will have all the required dependencies and build plug-ins to get started. 
 
+#### Build and IDE Integration
+This project is configured to work with both Maven and [Gradle](http://gradle.org/) for build and dependency management. 
 
-#### Build and Dependency Management
-This project uses [Gradle](http://gradle.org/) for build and dependency management. To get the list of available build tasks simply execute ```./gradlew clean tasks``` from the root directory of the project.
+**_Maven users:_**
 
+Simply import the project into your IDE as Maven project
 
-_**Development environment setup**_
+**_Gradle users (RECOMMENDED):_**
 
-To setup an integrated development environment (i.e., Eclipse, Idea etc) please follow the [IDE Integration](Getting-Started#ide-integration) section.
+From the root of the project execute the following command:
 
+For Eclipse: ```./gradlew clean eclipse ```
+For Idea: ```./gradlew clean idea```
 
-_**Stand-alone mode**_
-
-Stand-alone applications could be executed right from the IDE. If you want to package the application into a JAR 
-and execute it outside of IDE simply build it with:
-
-```
-./gradlew clean installApp
-``` 
-
-or 
-
-```
-./gradlew clean distZip
-```
-
-For more information on this feature please follow [Application Plug-in](https://docs.gradle.org/current/userguide/application_plugin.html) 
+Then import the project as regular project (no extra plug-ins required). For more details see [IDE Integration](Getting-Started#ide-integration) section.
 
 
 _**Apache NiFi**_
