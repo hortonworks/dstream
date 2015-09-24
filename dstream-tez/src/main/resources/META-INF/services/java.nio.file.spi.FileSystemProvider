@@ -1,1 +1,1 @@
-org.apache.hadoop.fs.spi.HdfsFileSystemProvider
+io.dstream.hadoop.fs.spi.HdfsFileSystemProvider

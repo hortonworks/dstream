@@ -4,7 +4,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
-import dstream.DStream;
+import io.dstream.DStream;
 
 /**
  * A rudimentary WordCount

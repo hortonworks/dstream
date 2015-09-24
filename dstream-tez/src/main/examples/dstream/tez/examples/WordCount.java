@@ -4,8 +4,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
-import org.apache.dstream.tez.BaseTezTests;
-
 import io.dstream.DStream;
 
 /**
@@ -26,6 +24,6 @@ public class WordCount {
 			resultPartitionStream.forEach(System.out::println);
 		});
 		result.close(); // will close Tez client
-		BaseTezTests.clean("WordCount");
+		SampleUtils.clean("WordCount");
 	}
 }

@@ -1,11 +1,13 @@
-description = 'Tez Reference Implementation of the Distributable Stream API'
+description = 'Tez Reference Implementation of the DStream Stream API'
 
-group = 'org.apache.tez.dstream'
+group = 'io.dstream.tez'
 
 apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'java'
 apply plugin: 'maven-publish'
+apply plugin: 'maven'
+apply plugin: 'signing'
 
 sourceCompatibility=1.8
 targetCompatibility=1.8
@@ -42,10 +44,9 @@ dependencies {
 		exclude group: 'com.google.guava'
 	}
 	compile "com.google.guava:guava:14.0.1"
-	compile "dstream:dstream-api:1.0.0.M1"
+	compile "io.dstream:dstream-api:1.0.0.M2"
 }
 
 task wrapper(type: Wrapper) {
     description = 'Generates gradlew[.bat] scripts'
 }
-

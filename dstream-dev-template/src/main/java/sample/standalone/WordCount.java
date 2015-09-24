@@ -33,7 +33,7 @@ public class WordCount {
 		Future<Stream<Stream<Entry<String, Integer>>>> resultFuture = DStream.ofType(String.class, "wc")
 				.flatMap(record -> Stream.of(record.split("\\s+")))
 				.reduceValues(word -> word, word -> 1, Integer::sum)
-				.executeAs("WordCount");
+			.executeAs("WordCount");
 
 		Stream<Stream<Entry<String, Integer>>> resultPartitionsStream = resultFuture.get();
 		ExecutionResultUtils.printResults(resultPartitionsStream, true);

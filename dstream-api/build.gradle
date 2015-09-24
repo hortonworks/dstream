@@ -1,11 +1,13 @@
 description = 'Distributable Stream API'
 
-group = 'dstream'
+group = 'io.dstream'
 
 apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'java'
 apply plugin: 'maven-publish'
+apply plugin: 'maven'
+apply plugin: 'signing'
 
 sourceCompatibility=1.8
 targetCompatibility=1.8
@@ -25,7 +27,6 @@ repositories {
 
 sourceSets.main.java.srcDir 'src/main/examples'
 
-
 dependencies {
 	testCompile ("junit:junit:4.8.2") {
 		exclude group: 'org.hamcrest'
@@ -35,4 +36,3 @@ dependencies {
 task wrapper(type: Wrapper) {
     description = 'Generates gradlew[.bat] scripts'
 }
-

@@ -1,11 +1,13 @@
-description = 'NiFi integration'
+description = 'Apache NiFi integration'
 
-group = 'dstream'
+group = 'io.dstream.nifi'
 
 apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'java'
 apply plugin: 'maven-publish'
+apply plugin: 'maven'
+apply plugin: 'signing'
 
 sourceCompatibility=1.8
 targetCompatibility=1.8
@@ -26,10 +28,10 @@ repositories {
 sourceSets.main.java.srcDir 'src/main/examples'
 
 dependencies {
-	compile "org.apache.nifi:nifi-api:0.3.0-SNAPSHOT"
-	compile "org.apache.nifi:nifi-processor-utils:0.3.0-SNAPSHOT"
+	compile "org.apache.nifi:nifi-api:0.3.0"
+	compile "org.apache.nifi:nifi-processor-utils:0.3.0"
 	
-	compile "dstream:dstream-api:1.0.0.M1"
+	compile "io.dstream:dstream-api:1.0.0.M2"
 	compile "commons-io:commons-io:2.4"
 	
 }
@@ -37,4 +39,3 @@ dependencies {
 task wrapper(type: Wrapper) {
     description = 'Generates gradlew[.bat] scripts'
 }
-
