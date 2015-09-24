@@ -42,16 +42,21 @@ DStream.ofType(String.class, "wc")
   .executeAs("WordCount");
 </pre>
  <p class="view">Please visit the Project on <a href="https://github.com/hortonworks/dstream">GitHub</a> for more details.</p>
+ 
+<a id="welcome-to-dstream" class="anchor" href="#welcome-to-dstream" aria-hidden="true"><span class="octicon octicon-link"></span></a>Lates release - 1.0.0.M2</h3>
 <p>
-  Maven:
+  <b>Maven:</b>
   <pre>
-      <dependency>
-        <groupId>io.dstream</groupId>
-        <artifactId>dstream-nifi</artifactId>
-        <version>1.0.0.M2</version>
-      </dependency>
+      &lt;dependency&gt;
+        &lt;groupId&gt;io.dstream&lt;/groupId&gt;
+        &lt;artifactId&gt;dstream-api&lt;/artifactId&gt; &lt;!-- dstream-tez, dstream-sql, dstream-spark, dstream-nifi--&gt;
+        &lt;version&gt;1.0.0.M2&lt;/version&gt;
+      &lt;/dependency&gt;
   </pre>
-  
+  <b>Gradle:</b>
+  <pre>
+    compile "io.dstream:dstream-api:1.0.0.M2" // dstream-tez, dstream-sql, dstream-spark, dstream-nifi
+  </pre>
 </p>
   </body>
 </html>
