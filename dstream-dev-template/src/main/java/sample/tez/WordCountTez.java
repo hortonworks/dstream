@@ -25,7 +25,7 @@ import io.dstream.DStream;
 import io.dstream.utils.ExecutionResultUtils;
 
 /**
- * Sample of stand-alone {@link DStream} application.
+ * Sample of {@link DStream} application pre-configured to run on Apache Tez.
  */
 public class WordCountTez {
 
@@ -39,5 +39,4 @@ public class WordCountTez {
 		ExecutionResultUtils.printResults(resultPartitionsStream, true);
 		resultPartitionsStream.close();
 	}
-
 }

@@ -38,8 +38,7 @@ repositories {
 sourceSets.main.java.srcDir 'src/main/examples'
 
 dependencies {
-    //compile "io.dstream:dstream-api:1.0.0.M2" // required for stand alone projects
-    compile "io.dstream.nifi:dstream-nifi:1.0.0.M2"  // required for NiFi-based projects. 
+    //compile "io.dstream.nifi:dstream-nifi:1.0.0.M2"  // required for NiFi-based projects. 
     compile "io.dstream.tez:dstream-tez:1.0.0.M2"  // required for Tez Integration
 }
 
