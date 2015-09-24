@@ -21,10 +21,10 @@ import java.util.stream.Stream;
 
 import org.apache.nifi.annotation.documentation.CapabilityDescription;
 import org.apache.nifi.annotation.documentation.Tags;
-import org.apache.nifi.dstream.AbstractDStreamProcessor;
 import org.apache.nifi.logging.ProcessorLog;
 
 import io.dstream.DStream;
+import io.dstream.nifi.AbstractDStreamProcessor;
 
 /**
  * Sample implementation of {@link AbstractDStreamProcessor} with its primary

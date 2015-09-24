@@ -28,7 +28,7 @@ import io.dstream.SerializableStreamAssets.SerPredicate;
 import io.dstream.support.Classifier;
 import io.dstream.support.HashClassifier;
 /**
- * Base strategy for all variants of {@link DStream} and defines all common operations.
+ * Base strategy for variants of {@link DStream}. It defines all common operations.
  *
  * @param <A> the type of the stream elements
  * @param <T> the actual type of the instance of this {@link BaseDStream}.

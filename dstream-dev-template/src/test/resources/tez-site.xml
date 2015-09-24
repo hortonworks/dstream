@@ -1,0 +1,30 @@
+<configuration>
+	<property>
+		<name>tez.local.mode</name>
+		<value>true</value>
+	</property>
+	<property>
+		<name>tez.runtime.optimize.local.fetch</name>
+		<value>true</value>
+	</property>
+	<property>
+		<name>tez.am.mode.session</name>
+		<value>true</value>
+	</property>
+	<property>
+		<name>tez.ignore.lib.uris</name>
+		<value>true</value>
+		<description>ignore tez libs</description>
+	</property>
+	<!-- The below setting is needed to prevent the following exception -->
+<!-- 	java.nio.BufferOverflowException -->
+<!-- 	at java.nio.HeapByteBuffer.put(HeapByteBuffer.java:189) -->
+<!-- 	at org.apache.tez.runtime.library.common.sort.impl.PipelinedSorter$BufferStreamWrapper.write(PipelinedSorter.java:554) -->
+<!-- 	at java.io.DataOutputStream.write(DataOutputStream.java:107) -->
+<!-- 	at java.io.FilterOutputStream.write(FilterOutputStream.java:97) -->
+<!-- 	at org.apache.dstream.tez.io.TypeAwareWritable.write(TypeAwareWritable.java:79) -->
+	<property>
+		<name>tez.runtime.io.sort.mb</name>
+		<value>1800</value>
+	</property>
+</configuration>

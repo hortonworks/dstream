@@ -20,8 +20,6 @@ package dstream.tez.examples;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
-import org.apache.dstream.tez.BaseTezTests;
-
 import io.dstream.DStream;
 import io.dstream.utils.ExecutionResultUtils;
 /**
@@ -63,7 +61,7 @@ public class Union {
 	 * the result resembles 'join' behavior since each of the three partitions
 	 * only contain data relevant to classification id, giving you the following result:
 	 * <pre>
-	 * => PARTITION:0
+	 * =&gt; PARTITION:0
 	 * 3 Hortonworks
 	 * Rob Bearden 3
 	 * Herb Cunitz 3
@@ -71,12 +69,12 @@ public class Union {
 	 * Oleg Zhurakousky 3
 	 * Arun Murthy 3
 	 *
-	 * => PARTITION:1
+	 * =&gt; PARTITION:1
 	 * 1 Oracle
 	 * Larry Ellison 1
 	 * Thomas Kurian 1
 	 *
-	 * => PARTITION:2
+	 * =&gt; PARTITION:2
 	 * 2 Amazon
 	 * Jeff Bezos 2
 	 * Jeffrey Blackburn 2
@@ -84,7 +82,7 @@ public class Union {
 	 */
 	public static class SimpleTwoWayUnion {
 		public static void main(String... args) throws Exception {
-			BaseTezTests.clean(EXECUTION_NAME);
+			SampleUtils.clean(EXECUTION_NAME);
 			DStream<String> one = DStream.ofType(String.class, "one").classify(s -> s.split("\\s+")[0]);
 			DStream<String> two = DStream.ofType(String.class, "two").classify(s -> s.split("\\s+")[2]);
 
@@ -96,7 +94,7 @@ public class Union {
 			ExecutionResultUtils.printResults(resultPartitionsStream, true);
 
 			resultPartitionsStream.close();// will close Tez client
-			BaseTezTests.clean(EXECUTION_NAME);
+			SampleUtils.clean(EXECUTION_NAME);
 		}
 	}
 }

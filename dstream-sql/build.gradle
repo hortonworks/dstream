@@ -1,11 +1,13 @@
-description = 'SQL SOURCES'
+description = 'Support for SQL accessible sources'
 
-group = 'dstream'
+group = 'io.dstream.sql'
 
 apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'java'
 apply plugin: 'maven-publish'
+apply plugin: 'maven'
+apply plugin: 'signing'
 
 sourceCompatibility=1.8
 targetCompatibility=1.8
@@ -26,7 +28,7 @@ repositories {
 sourceSets.main.java.srcDir 'src/main/examples'
 
 dependencies {
-	compile "dstream:dstream-api:1.0.0.M1"
+	compile "io.dstream:dstream-api:1.0.0.M2"
 	testCompile ("junit:junit:4.8.2") {
 		exclude group: 'org.hamcrest'
 	}
@@ -37,4 +39,3 @@ dependencies {
 task wrapper(type: Wrapper) {
     description = 'Generates gradlew[.bat] scripts'
 }
-

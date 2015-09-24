@@ -6,8 +6,6 @@ import static io.dstream.utils.Tuples.Tuple4.tuple4;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
-import org.apache.dstream.tez.BaseTezTests;
-
 import io.dstream.DStream;
 import io.dstream.utils.Tuples.Tuple2;
 import io.dstream.utils.Tuples.Tuple4;
@@ -20,7 +18,7 @@ public class Join {
 		//run all
 		TwoWayJoin.main();
 		FourWayJoin.main();
-		BaseTezTests.clean(EXECUTION_NAME);
+		SampleUtils.clean(EXECUTION_NAME);
 	}
 
 	/**
@@ -45,7 +43,7 @@ public class Join {
 	 */
 	public static class TwoWayJoin{
 		public static void main(String... args) throws Exception {
-			BaseTezTests.clean(EXECUTION_NAME);
+			SampleUtils.clean(EXECUTION_NAME);
 
 			DStream<String> hash = DStream.ofType(String.class, "one").classify(a -> a.split("\\s+")[0]);;
 			DStream<String> probe = DStream.ofType(String.class, "two").classify(a -> a.split("\\s+")[2]);;
@@ -60,7 +58,7 @@ public class Join {
 			});
 			result.close();// will close Tez client
 
-			BaseTezTests.clean(EXECUTION_NAME);
+			SampleUtils.clean(EXECUTION_NAME);
 		}
 	}
 
@@ -70,7 +68,7 @@ public class Join {
 	 */
 	public static class FourWayJoin {
 		public static void main(String... args) throws Exception {
-			BaseTezTests.clean(EXECUTION_NAME);
+			SampleUtils.clean(EXECUTION_NAME);
 
 			DStream<String> one = DStream.ofType(String.class, "one").classify(a -> a.split("\\s+")[0]);
 			DStream<String> two = DStream.ofType(String.class, "two").classify(a -> a.split("\\s+")[2]);
@@ -97,7 +95,7 @@ public class Join {
 				resultPartitionStream.forEach(System.out::println);
 			});
 			result.close();// will close Tez client
-			BaseTezTests.clean(EXECUTION_NAME);
+			SampleUtils.clean(EXECUTION_NAME);
 		}
 	}
 }

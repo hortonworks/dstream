@@ -2,12 +2,11 @@
 description = 'Template project for DStream Applications'
 
 //RENAME
-group = 'dstream' 
+group = 'dstream-dev' 
 
 apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'java'
-apply plugin: 'maven-publish'
 apply plugin: 'application'
 apply plugin: 'de.fanero.gradle.plugin.nar'
 
@@ -16,14 +15,6 @@ targetCompatibility=1.8
 
 //RENAME
 mainClassName = "sample.standalone.WordCount"
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-        }
-    }
-}
 
 buildscript {
     repositories {
@@ -39,14 +30,17 @@ buildscript {
 
 repositories {
     mavenCentral()
-	mavenLocal();
+    maven {
+           url 'https://oss.sonatype.org/content/groups/staging'
+    }
 }
 
 sourceSets.main.java.srcDir 'src/main/examples'
 
 dependencies {
-    //compile "dstream:dstream-api:1.0.0.M1" // required for stand alone projects
-    compile "dstream:dstream-nifi:1.0.0.M1"  // required for NiFi-based projects. 
+    //compile "io.dstream:dstream-api:1.0.0.M2" // required for stand alone projects
+    compile "io.dstream.nifi:dstream-nifi:1.0.0.M2"  // required for NiFi-based projects. 
+    compile "io.dstream.tez:dstream-tez:1.0.0.M2"  // required for Tez Integration
 }
 
 task deploy(dependsOn: 'nar', type: Copy) {
