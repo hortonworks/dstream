@@ -1,0 +1,104 @@
+description = 'DStream'
+
+allprojects {
+	group = 'io.dstream'
+
+	repositories {
+		mavenCentral()
+	}
+}
+
+subprojects { subproject ->
+
+	apply plugin: 'java'
+	apply plugin: 'eclipse'
+	apply plugin: 'idea'
+	apply plugin: 'maven'
+	//apply from: '../publish.gradle'
+	
+	sourceCompatibility=1.8
+	targetCompatibility=1.8
+	
+	dependencies {
+		testCompile ("junit:junit:4.8.2") {
+			exclude group: 'org.hamcrest'
+		}
+	}
+	
+	javadoc {
+		logging.captureStandardError LogLevel.INFO
+		logging.captureStandardOutput LogLevel.INFO // suppress "## warnings" message
+	}
+	
+	task javadocJar(type: Jar) {
+    	classifier = 'javadoc'
+    	from javadoc	
+	}
+
+	task sourcesJar(type: Jar) {
+    	classifier = 'sources'
+    	from sourceSets.main.allSource
+	}
+
+	artifacts {
+    	archives javadocJar, sourcesJar
+	}
+}
+
+project('dstream-api') {
+	description = 'DStream Core API'
+}
+
+project('dstream-sql') {
+	description = 'DStream SQL Sources'
+	dependencies {
+		compile project(":dstream-api")
+		testCompile "org.apache.derby:derby:10.11.1.1"
+		testCompile "commons-io:commons-io:2.4"
+	}
+}
+
+project('dstream-nifi') {
+	description = 'DStream NiFi Integration'
+	dependencies {
+		compile project(":dstream-api")
+		compile "org.apache.nifi:nifi-api:0.3.0"
+		compile "org.apache.nifi:nifi-processor-utils:0.3.0"
+		compile "commons-io:commons-io:2.4"
+	}
+}
+
+project('dstream-tez') {
+	description = 'DStream Tez RI'
+	dependencies {
+		compile project(":dstream-api")
+		compile "log4j:log4j:1.2.17"
+		compile "org.slf4j:slf4j-log4j12:1.7.10"
+		compile "commons-io:commons-io:2.4"
+		compile ("org.apache.tez:tez-common:0.7.0"){
+			exclude group: 'com.google.guava'	
+		}
+		compile ("org.apache.tez:tez-dag:0.7.0"){
+			exclude group: 'com.google.guava'
+		}
+		compile ("org.apache.tez:tez-mapreduce:0.7.0"){
+			exclude group: 'com.google.guava'
+		}
+		compile "com.google.guava:guava:14.0.1"
+	}
+}
+
+project('dstream-spark') {
+	description = 'DStream Spark RI'
+	dependencies {
+		compile project(":dstream-api")
+		compile "org.scala-lang:scala-compiler:2.10.5"
+		compile "org.scala-lang:scala-library:2.10.5"
+		compile "org.apache.spark:spark-core_2.10:1.4.1"
+	}
+}
+
+
+task wrapper(type: Wrapper) {
+    description = 'Generates gradlew[.bat] scripts'
+}
