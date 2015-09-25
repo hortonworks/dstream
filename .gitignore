@@ -36,3 +36,4 @@ derby.log
 *.out
 target
 atic
+publish.gradle

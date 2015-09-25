@@ -1,0 +1,6 @@
+rootProject.name = 'dstream'
+rootDir.eachDir { dir ->
+	if (dir.name.startsWith('dstream-') && !dir.name.startsWith('dstream-dev-template')) {
+		include ":${dir.name}"
+	}
+}
