@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -82,4 +83,9 @@ public interface SerializableStreamAssets {
 	 * {@link Serializable} version of {@link Comparator}
 	 */
 	public static interface SerComparator<T> extends Comparator<T>, Serializable{}
+
+	/**
+	 * {@link Serializable} version of {@link Consumer}
+	 */
+	public static interface SerConsumer<T> extends Consumer<T>, Serializable{}
 }

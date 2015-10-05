@@ -47,7 +47,8 @@ public class DStreamToStreamAdapterFunction implements SerFunction<Stream<?>, St
 			Ops.distinct,
 			Ops.min,
 			Ops.max,
-			Ops.sorted));
+			Ops.sorted,
+			Ops.peek));
 	
 	private final String streamOperationName;
 	

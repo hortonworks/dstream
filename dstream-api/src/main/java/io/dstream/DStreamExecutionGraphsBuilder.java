@@ -54,7 +54,7 @@ final class DStreamExecutionGraphsBuilder<T,R> {
 	/**
 	 * 
 	 * @param sourceElementType
-	 * @param sourceProperty
+	 * @param sourceIdentifier
 	 * @param streamType
 	 * @return
 	 */

@@ -97,7 +97,7 @@ final class DStreamInvocationChain {
 	
 	/**
 	 * 
-	 * @param invocation
+	 * @param invocations
 	 */
 	protected void addAllInvocations(List<DStreamInvocation> invocations){
 		this.invocations.addAll(invocations);
@@ -163,7 +163,7 @@ final class DStreamInvocationChain {
 		
 		/**
 		 * 
-		 * @param operation
+		 * @param supplementaryOperation
 		 */
 		protected void setSupplementaryOperation(Object supplementaryOperation) {
 			this.supplementaryOperation = supplementaryOperation;

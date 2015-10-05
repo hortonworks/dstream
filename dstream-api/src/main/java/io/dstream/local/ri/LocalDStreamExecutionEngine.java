@@ -101,7 +101,7 @@ final class LocalDStreamExecutionEngine {
 	/**
 	 *
 	 * @param streamOperation
-	 * @param mapPartitions
+	 * @param partition
 	 */
 	@SuppressWarnings("unchecked")
 	private void doExecuteStage(DStreamOperation streamOperation, boolean partition, String pipelineName){

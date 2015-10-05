@@ -32,6 +32,7 @@ import java.util.stream.StreamSupport;
 import io.dstream.DStreamInvocationChain.DStreamInvocation;
 import io.dstream.SerializableStreamAssets.SerBinaryOperator;
 import io.dstream.SerializableStreamAssets.SerComparator;
+import io.dstream.SerializableStreamAssets.SerConsumer;
 import io.dstream.SerializableStreamAssets.SerFunction;
 import io.dstream.function.BiFunctionToBinaryOperatorAdapter;
 import io.dstream.function.DStreamToStreamAdapterFunction;
@@ -144,6 +145,9 @@ final class DStreamExecutionGraphBuilder {
 		}
 		else if (Ops.isStreamComparator(operation)){
 			this.addStreamComparatorOperation(invocation);
+		}
+		else if (Ops.isStreamConsumer(operation)){
+			this.addStreamConsumerOperation(invocation);
 		}
 	}
 	
@@ -288,6 +292,19 @@ final class DStreamExecutionGraphBuilder {
 		SerComparator<?> comparator = invocation.getArguments().length == 1 ? (SerComparator<?>)invocation.getArguments()[0] : null ;
 		this.adjustCurrentStreamState();
 		DStreamToStreamAdapterFunction streamAdaperFunc = new DStreamToStreamAdapterFunction(invocation.getMethod().getName(), comparator);
+		this.currentStreamOperation.addStreamOperationFunction(invocation.getMethod().getName(), streamAdaperFunc);
+	}
+
+	/**
+	 *
+	 * @param invocation
+	 */
+	private void addStreamConsumerOperation(DStreamInvocation invocation){
+		SerConsumer<?> consumer = invocation.getArguments().length == 1 ? (SerConsumer<?>)invocation
+				.getArguments()[0] :
+				null ;
+		this.adjustCurrentStreamState();
+		DStreamToStreamAdapterFunction streamAdaperFunc = new DStreamToStreamAdapterFunction(invocation.getMethod().getName(), consumer);
 		this.currentStreamOperation.addStreamOperationFunction(invocation.getMethod().getName(), streamAdaperFunc);
 	}
 	
