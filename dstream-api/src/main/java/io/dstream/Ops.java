@@ -42,6 +42,7 @@ public enum Ops {
 	reduce,
 	reduceValues,
 	sorted,
+	peek,
 	union,
 	unionAll;
 	
@@ -76,6 +77,10 @@ public enum Ops {
 	public static boolean isStreamComparator(String operationName){
 		return isStreamComparator(Ops.valueOf(operationName));
 	}
+
+	public static boolean isStreamConsumer(String operationName) {
+		return isStreamConsumer(Ops.valueOf(operationName));
+	}
 	
 	/**
 	 * Returns <i>true</i> if the operation identified by the given {@link Ops} is 
@@ -87,6 +92,11 @@ public enum Ops {
 			   operation.equals(distinct) ||
 			   operation.equals(sorted);
 	}
+
+	public static boolean isStreamConsumer(Ops operation) {
+		return operation.equals(peek);
+	}
+
 	
 	/**
 	 * Returns <i>true</i> if the operation identified by the given {@link Ops} is 

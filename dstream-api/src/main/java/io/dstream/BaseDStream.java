@@ -23,6 +23,7 @@ import java.util.stream.Stream;
 
 import io.dstream.SerializableStreamAssets.SerBinaryOperator;
 import io.dstream.SerializableStreamAssets.SerComparator;
+import io.dstream.SerializableStreamAssets.SerConsumer;
 import io.dstream.SerializableStreamAssets.SerFunction;
 import io.dstream.SerializableStreamAssets.SerPredicate;
 import io.dstream.support.Classifier;
@@ -312,6 +313,23 @@ interface BaseDStream<A, T> extends ExecutableDStream<A> {
 	 * @return new {@link DStream} of the same type
 	 */
 	DStream<A> sorted(SerComparator<? super A> comparator);
+
+	/**
+	 * Returns a stream consisting of the elements of this stream, additionally
+	 * performing the provided action on each element as elements are consumed
+	 * from the resulting stream provided by {@code SerConsumer}.
+	 * <br>
+	 * This operation is consistent with
+	 * <i>Stream.peek(Consumer)</i>.<br>
+	 * <br>
+	 * This is an <i>intermediate</i> operation.
+	 * <br>
+	 *
+	 * @param action is an non-interfering action to be performed
+	 *                 on the stream as they are consumed from the stream
+	 * @return new {@link DStream} of the same type
+	 */
+	DStream<A> peek(SerConsumer<? super A> action);
 
 	/**
 	 * Returns a {@link DStream} of Key/Value pairs, where values mapped from the individual
