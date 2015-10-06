@@ -1,0 +1,85 @@
+#!/bin/bash
+
+CURR_DIR=`pwd`
+REPL_JAR_NAME="javarepl.jar"
+EXT_LIB_FOLDER_NAME="lib"
+EXT_LIB_FOLDER_PATH="$CURR_DIR/$EXT_LIB_FOLDER_NAME"
+PATH_TO_REPL_JAR="$CURR_DIR/$EXT_LIB_FOLDER_NAME/$REPL_JAR_NAME"
+
+DSTREAM_API_DIR="dstream-api"
+DSTREAM_API_BUILD_DIR="$CURR_DIR/$DSTREAM_API_DIR/build/libs"
+
+# create a lib dir, for external jars
+mkdir -p "${EXT_LIB_FOLDER_PATH}"
+
+isJarExists() {
+	echo "Checking if Java REPL exists ..."
+	test -f "$1" && echo "OK."
+}
+
+installJar() {
+	echo "Java REPL not found! Installing ..."
+	echo
+	shift
+	pushd "${EXT_LIB_FOLDER_PATH}" > /dev/null
+	"$@"
+	popd > /dev/null
+	if [ $? -eq 0 ]; then
+		echo "OK."
+	fi
+}
+
+# Determine if java repl jar exists or else install
+if ! isJarExists "$PATH_TO_REPL_JAR" ; then
+	installJar javarepl wget 'http://albertlatacz.published.s3.amazonaws.com/javarepl/javarepl.jar' -O "$PATH_TO_REPL_JAR"
+fi
+
+# Determine the Java command to use to start the JVM.
+if [ -n "$JAVA_HOME" ] ; then
+	if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
+		# IBM's JDK on AIX uses strange locations for the executables
+		JAVACMD="$JAVA_HOME/jre/sh/java"
+	else
+		JAVACMD="$JAVA_HOME/bin/java"
+	fi
+	if [ ! -x "$JAVACMD" ] ; then
+		die "ERROR: JAVA_HOME is set to an invalid directory: $JAVA_HOME
+
+		Please set the JAVA_HOME variable in your environment to match the
+		location of your Java installation."
+	fi
+else
+	JAVACMD="java"
+	which java >/dev/null 2>&1 || die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
+
+	Please set the JAVA_HOME variable in your environment to match the
+	location of your Java installation."
+fi
+
+# Add all the required jars to classpath
+if [[ -d "${EXT_LIB_FOLDER_PATH}" ]]; then
+	for jar in "${EXT_LIB_FOLDER_PATH}"/*.jar; do
+		echo "[INFO] : Adding $jar to the CLASSPATH ..."
+		if [ -z $CLASSPATH ]; then
+			export CLASSPATH="$jar"
+		else
+			export CLASSPATH="$jar:$CLASSPATH"
+		fi
+	done
+fi
+
+if [[ -d "${DSTREAM_API_BUILD_DIR}" ]]; then
+	for jar in "${DSTREAM_API_BUILD_DIR}"/*.jar; do
+		echo "[INFO] : Adding $jar to the CLASSPATH ..."
+		if [ -z $CLASSPATH ]; then
+			export CLASSPATH="$jar"
+		else
+			export CLASSPATH="$jar:$CLASSPATH"
+		fi
+	done
+fi
+
+# List in the CLASSPATH
+echo -e "[INFO] : CLASSPATH : ${CLASSPATH}"
+
+exec ${JAVACMD} -cp ${CLASSPATH} javarepl.Main
